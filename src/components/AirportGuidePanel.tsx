@@ -17,7 +17,6 @@ type Props = {
   boardingLabel: string;
   timesLabel: string;
   connectionLabel: string;
-  destinationLabel: string;
   focusActionLabel: string;
   fallbackTitle: string;
   fallbackBody: string;
@@ -79,7 +78,6 @@ export function AirportGuidePanel({
   boardingLabel,
   timesLabel,
   connectionLabel,
-  destinationLabel,
   focusActionLabel,
   fallbackTitle,
   fallbackBody,
@@ -134,6 +132,23 @@ export function AirportGuidePanel({
             <h3>{pick(guide.headline, lang)}</h3>
             <p>{pick(guide.summary, lang)}</p>
 
+            {guide.bestMatch ? (
+              <div className="airport-guide__match airport-guide__match--inline">
+                <div>
+                  <span>{destinationLabel}</span>
+                  <strong>{pick(guide.bestMatch.areaLabel, lang)}</strong>
+                  <small>
+                    {getRouteLabel(guide.bestMatch.routeId, lang)}
+                    {guide.bestMatch.travelMinutes !== null
+                      ? lang === "th"
+                        ? ` · ประมาณ ${guide.bestMatch.travelMinutes} นาที`
+                        : ` · about ${guide.bestMatch.travelMinutes} min`
+                      : ""}
+                  </small>
+                </div>
+              </div>
+            ) : null}
+
             <div className="airport-guide__stats" aria-label={title}>
               <article className="airport-stat airport-stat--primary">
                 <span>{departureLabel}</span>
@@ -164,13 +179,8 @@ export function AirportGuidePanel({
               <div className="airport-guide__match">
                 <div>
                   <span>{connectionLabel}</span>
-                  <strong>{getRouteLabel(guide.bestMatch.routeId, lang)}</strong>
-                </div>
-                <div>
-                  <span>{destinationLabel}</span>
-                  <strong>{pick(guide.bestMatch.areaLabel, lang)}</strong>
                   <small>
-                    {pick(guide.bestMatch.stopName, lang)}
+                    {getRouteLabel(guide.bestMatch.routeId, lang)} · {pick(guide.bestMatch.stopName, lang)}
                     {guide.bestMatch.travelMinutes !== null
                       ? lang === "th"
                         ? ` · ประมาณ ${guide.bestMatch.travelMinutes} นาที`
@@ -194,11 +204,9 @@ export function AirportGuidePanel({
               <span>{timesLabel}</span>
               <strong>{guide.followingDepartures.join(" · ") || "--"}</strong>
             </div>
-            <ul className="airport-guide__notes">
-              {guide.boardingNotes.map((note, index) => (
-                <li key={`${guide.recommendation}-${index}`}>{pick(note, lang)}</li>
-              ))}
-            </ul>
+            {guide.boardingNotes[0] ? (
+              <p className="airport-guide__note">{pick(guide.boardingNotes[0], lang)}</p>
+            ) : null}
           </div>
         </div>
       ) : null}

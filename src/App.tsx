@@ -427,7 +427,6 @@ export default function App() {
             boardingLabel={pick(ui.airportBoardingLabel, lang)}
             timesLabel={pick(ui.airportTimesLabel, lang)}
             connectionLabel={pick(ui.airportConnectionLabel, lang)}
-            destinationLabel={pick(ui.airportDestinationLabel, lang)}
             focusActionLabel={pick(ui.airportFocusAction, lang)}
             fallbackTitle={pick(ui.airportGuideFallbackTitle, lang)}
             fallbackBody={pick(ui.airportGuideFallbackBody, lang)}
@@ -435,15 +434,6 @@ export default function App() {
             onQueryChange={setAirportQuery}
             onFocusMatch={focusRouteStop}
           />
-
-          <section className="action-strip card" aria-label={pick(ui.airportStoryTitle, lang)}>
-            <button className="story-card__action is-primary" type="button" onClick={() => navigate("map")}>
-              {pick(ui.airportStorySecondary, lang)}
-            </button>
-            <button className="story-card__action" type="button" onClick={() => navigate("ride")}>
-              {pick(ui.airportStoryPrimary, lang)}
-            </button>
-          </section>
         </main>
       ) : null}
 
