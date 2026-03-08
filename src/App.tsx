@@ -213,18 +213,51 @@ export default function App() {
       ? [...filteredStops, selectedStop]
       : filteredStops;
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
+  const activeRouteName = activeRoute ? pick(activeRoute.name, lang) : pick(ui.mapLoading, lang);
+  const activeStopName = selectedStop ? pick(selectedStop.name, lang) : pick(ui.mapLoading, lang);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
+    <div className="app-shell app-shell--wild">
+      <header className="topbar topbar--wild">
         <div className="brand-lockup">
           <BrandLogo className="brand-logo" />
+          <span className="wild-badge">{lang === "th" ? "สาขาทดลอง" : "Signal Lab"}</span>
           <span className="topbar__eyebrow">{pick(ui.appSubtitle, lang)}</span>
           <h1 className="sr-only">{pick(ui.appTitle, lang)}</h1>
           <p className="topbar__intro">{pick(ui.appBody, lang)}</p>
         </div>
         <LanguageToggle lang={lang} onChange={setLang} />
       </header>
+
+      <section className="wild-banner card">
+        <div className="wild-banner__copy">
+          <p className="hero__eyebrow">{lang === "th" ? "โหมดทดลอง" : "Experimental branch"}</p>
+          <h2>{lang === "th" ? "อินสแตนซ์นี้ตั้งใจให้ต่าง" : "This instance is intentionally loud"}</h2>
+          <p>
+            {lang === "th"
+              ? "เก็บเส้นทางสดไว้เหมือนเดิม แต่ย้ายประสบการณ์ทั้งหมดไปอยู่ในโหมดแล็บสำหรับการทดลองภาพลักษณ์และจังหวะการตัดสินใจ"
+              : "The live rider logic stays intact, but the whole surface shifts into a bolder lab mode for testing a more energetic transit interface."}
+          </p>
+        </div>
+        <div className="wild-banner__stats" aria-label={lang === "th" ? "สถานะแล็บ" : "Lab status"}>
+          <article className="wild-stat">
+            <span>{lang === "th" ? "เส้นทางหลัก" : "Active route"}</span>
+            <strong>{activeRouteName}</strong>
+          </article>
+          <article className="wild-stat">
+            <span>{lang === "th" ? "โฟกัสปัจจุบัน" : "Current focus"}</span>
+            <strong>{activeStopName}</strong>
+          </article>
+          <article className="wild-stat">
+            <span>{lang === "th" ? "รถสด" : "Live buses"}</span>
+            <strong>{totalLiveVehicles}</strong>
+          </article>
+          <article className="wild-stat">
+            <span>{lang === "th" ? "คำเตือน" : "Live alerts"}</span>
+            <strong>{activeAdvisoryCount}</strong>
+          </article>
+        </div>
+      </section>
 
       <main className="layout">
         <section className="map-stage card">
