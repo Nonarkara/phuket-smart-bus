@@ -226,8 +226,20 @@ export const ui = {
     th: "สายหลัก"
   },
   mapTitle: {
-    en: "Live route map",
-    th: "แผนที่เส้นทางสด"
+    en: "Live network map",
+    th: "แผนที่เครือข่ายแบบสด"
+  },
+  mapNetworkLabel: {
+    en: "Two main lines",
+    th: "สองสายหลัก"
+  },
+  mapAllLinesTitle: {
+    en: "Airport Line + Patong Line",
+    th: "สายสนามบิน + สายป่าตอง"
+  },
+  mapFocusLabel: {
+    en: "Line focus",
+    th: "โฟกัสเส้นทาง"
   },
   mapModeRoute: {
     en: "Route view",

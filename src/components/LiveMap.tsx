@@ -5,12 +5,16 @@ import { pick, ui } from "@/lib/i18n";
 
 type Props = {
   lang: Lang;
-  route: Route | null;
+  routes: Route[];
   stops: Stop[];
   vehicles: VehiclePosition[];
   userLocation: LatLngTuple | null;
   selectedStop: Stop | null;
   mode: "route" | "stop";
+  bounds: [LatLngTuple, LatLngTuple] | null;
+  toolbarEyebrow: string;
+  toolbarTitle: string;
+  toolbarMeta: string;
   onModeChange: (mode: "route" | "stop") => void;
 };
 
@@ -43,27 +47,28 @@ function SyncMapView({
 
 export function LiveMap({
   lang,
-  route,
+  routes,
   stops,
   vehicles,
   userLocation,
   selectedStop,
   mode,
+  bounds,
+  toolbarEyebrow,
+  toolbarTitle,
+  toolbarMeta,
   onModeChange
 }: Props) {
-  const center: LatLngTuple = route?.bounds?.[0] ?? [7.88, 98.39];
+  const center: LatLngTuple = selectedStop?.coordinates ?? routes[0]?.bounds?.[0] ?? [7.88, 98.39];
+  const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
 
   return (
     <div className="map-frame">
       <div className="map-frame__toolbar">
         <div className="map-frame__copy">
-          <span className="map-frame__eyebrow">{pick(ui.mapSelectionLabel, lang)}</span>
-          <strong>{selectedStop ? pick(selectedStop.name, lang) : pick(ui.mapTitle, lang)}</strong>
-          <small>
-            {selectedStop
-              ? `${vehicles.length} ${lang === "th" ? "คันที่กำลังรายงาน" : "vehicles reporting"}`
-              : pick(ui.mapLoading, lang)}
-          </small>
+          <span className="map-frame__eyebrow">{toolbarEyebrow}</span>
+          <strong>{toolbarTitle}</strong>
+          <small>{toolbarMeta}</small>
         </div>
         <div className="map-frame__toggle" aria-label={pick(ui.mapTitle, lang)}>
           <button
@@ -89,14 +94,16 @@ export function LiveMap({
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <SyncMapView bounds={route?.bounds ?? null} mode={mode} selectedStop={selectedStop} />
-        {route?.pathSegments.map((segment, index) => (
-          <Polyline
-            key={`${route.id}-${index}`}
-            positions={segment}
-            pathOptions={{ color: route.color, weight: 5, opacity: 0.92 }}
-          />
-        ))}
+        <SyncMapView bounds={bounds} mode={mode} selectedStop={selectedStop} />
+        {routes.flatMap((route) =>
+          route.pathSegments.map((segment, index) => (
+            <Polyline
+              key={`${route.id}-${index}`}
+              positions={segment}
+              pathOptions={{ color: route.color, weight: 5, opacity: 0.92 }}
+            />
+          ))
+        )}
         {stops.map((stop) => (
           <CircleMarker
             key={stop.id}
@@ -104,7 +111,8 @@ export function LiveMap({
             radius={stop.id === selectedStop?.id ? 9 : 6}
             pathOptions={{
               color: stop.id === selectedStop?.id ? "#ffffff" : "#d9f7ff",
-              fillColor: stop.id === selectedStop?.id ? "#ff8a3d" : "#0d1b2a",
+              fillColor:
+                stop.id === selectedStop?.id ? "#ff8a3d" : routeColorById[stop.routeId] ?? "#0d1b2a",
               fillOpacity: 1,
               weight: 2
             }}

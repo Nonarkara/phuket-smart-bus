@@ -47,6 +47,7 @@ const VIEW_PATHS: Record<AppView, string> = {
 };
 
 type LocationState = "requesting" | "granted" | "denied" | "unsupported" | "error";
+type MapRouteFilter = RouteId | "all-core";
 
 type NearestStopMatch = {
   routeId: RouteId;
@@ -115,19 +116,48 @@ function findNearestStopMatch(
   return candidates.sort((left, right) => left.distanceMeters - right.distanceMeters)[0] ?? null;
 }
 
+function mergeRouteBounds(routes: Route[]) {
+  if (routes.length === 0) {
+    return null;
+  }
+
+  const [firstRoute] = routes;
+
+  if (!firstRoute) {
+    return null;
+  }
+
+  let minLat = firstRoute.bounds[0][0];
+  let minLng = firstRoute.bounds[0][1];
+  let maxLat = firstRoute.bounds[1][0];
+  let maxLng = firstRoute.bounds[1][1];
+
+  for (const route of routes) {
+    minLat = Math.min(minLat, route.bounds[0][0]);
+    minLng = Math.min(minLng, route.bounds[0][1]);
+    maxLat = Math.max(maxLat, route.bounds[1][0]);
+    maxLng = Math.max(maxLng, route.bounds[1][1]);
+  }
+
+  return [
+    [minLat, minLng],
+    [maxLat, maxLng]
+  ] as [LatLngTuple, LatLngTuple];
+}
+
 export default function App() {
   const [lang, setLang] = useState<Lang>("en");
   const [view, setView] = useState<AppView>(getInitialView);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<RouteId | null>(null);
-  const [stops, setStops] = useState<Stop[]>([]);
-  const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
-  const [advisories, setAdvisories] = useState<Advisory[]>([]);
+  const [mapRouteFilter, setMapRouteFilter] = useState<MapRouteFilter>("all-core");
   const [decisionSummary, setDecisionSummary] = useState<DecisionSummary | null>(null);
   const [airportGuide, setAirportGuide] = useState<AirportGuidePayload | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [routeStopsById, setRouteStopsById] = useState<Partial<Record<RouteId, Stop[]>>>({});
+  const [routeVehiclesById, setRouteVehiclesById] = useState<Partial<Record<RouteId, VehiclePosition[]>>>({});
+  const [routeAdvisoriesById, setRouteAdvisoriesById] = useState<Partial<Record<RouteId, Advisory[]>>>({});
   const [userLocation, setUserLocation] = useState<LatLngTuple | null>(null);
   const [locationState, setLocationState] = useState<LocationState>("requesting");
   const [hasAppliedLocation, setHasAppliedLocation] = useState(false);
@@ -243,13 +273,18 @@ export default function App() {
 
         const activeRoute = routes.find((route) => route.id === routeId);
         setRouteError(null);
-        setStops(stopData);
         setRouteStopsById((current) => ({
           ...current,
           [routeId]: stopData
         }));
-        setVehicles(vehicleData.vehicles);
-        setAdvisories(advisoryData.advisories);
+        setRouteVehiclesById((current) => ({
+          ...current,
+          [routeId]: vehicleData.vehicles
+        }));
+        setRouteAdvisoriesById((current) => ({
+          ...current,
+          [routeId]: advisoryData.advisories
+        }));
         setSelectedStopId((current) =>
           stopData.some((stop) => stop.id === current) ? current : activeRoute?.defaultStopId ?? stopData[0]?.id ?? null
         );
@@ -269,7 +304,12 @@ export default function App() {
 
   useEffect(() => {
     const primaryRouteIds = routes.filter((route) => isPrimaryRoute(route.id)).map((route) => route.id);
-    const missingRouteIds = primaryRouteIds.filter((routeId) => !(routeId in routeStopsById));
+    const missingRouteIds = primaryRouteIds.filter(
+      (routeId) =>
+        !(routeId in routeStopsById) ||
+        !(routeId in routeVehiclesById) ||
+        !(routeId in routeAdvisoriesById)
+    );
 
     if (missingRouteIds.length === 0) {
       return;
@@ -280,7 +320,20 @@ export default function App() {
     async function primeRouteStops() {
       try {
         const entries = await Promise.all(
-          missingRouteIds.map(async (routeId) => [routeId, await getStops(routeId)] as const)
+          missingRouteIds.map(async (routeId) => {
+            const [stopData, vehicleData, advisoryData] = await Promise.all([
+              getStops(routeId),
+              getVehicles(routeId),
+              getAdvisories(routeId)
+            ]);
+
+            return {
+              routeId,
+              stopData,
+              vehicleData: vehicleData.vehicles,
+              advisoryData: advisoryData.advisories
+            };
+          })
         );
 
         if (!alive) {
@@ -289,7 +342,15 @@ export default function App() {
 
         setRouteStopsById((current) => ({
           ...current,
-          ...Object.fromEntries(entries)
+          ...Object.fromEntries(entries.map((entry) => [entry.routeId, entry.stopData]))
+        }));
+        setRouteVehiclesById((current) => ({
+          ...current,
+          ...Object.fromEntries(entries.map((entry) => [entry.routeId, entry.vehicleData]))
+        }));
+        setRouteAdvisoriesById((current) => ({
+          ...current,
+          ...Object.fromEntries(entries.map((entry) => [entry.routeId, entry.advisoryData]))
         }));
       } catch {
         // Keep the app usable even if one stop list takes longer to load.
@@ -301,7 +362,7 @@ export default function App() {
     return () => {
       alive = false;
     };
-  }, [routeStopsById, routes]);
+  }, [routeAdvisoriesById, routeStopsById, routeVehiclesById, routes]);
 
   useEffect(() => {
     let alive = true;
@@ -402,27 +463,38 @@ export default function App() {
     }
   }, [hasAppliedLocation, isAirportLocation, locationState, nearestStopMatch]);
 
-  const refreshRouteSnapshot = useEffectEvent(async (routeId: RouteId) => {
+  const refreshPrimaryRoutes = useEffectEvent(async (routeIds: RouteId[]) => {
     try {
-      const [routeData, healthData, vehicleData, advisoryData] = await Promise.all([
+      const [routeData, healthData, entries] = await Promise.all([
         getRoutes(),
         getHealth(),
-        getVehicles(routeId),
-        getAdvisories(routeId)
-      ]);
+        Promise.all(
+          routeIds.map(async (routeId) => {
+            const [vehicleData, advisoryData] = await Promise.all([getVehicles(routeId), getAdvisories(routeId)]);
 
-      if (selectedRouteId !== routeId) {
-        return;
-      }
+            return {
+              routeId,
+              vehicles: vehicleData.vehicles,
+              advisories: advisoryData.advisories
+            };
+          })
+        )
+      ]);
 
       startTransition(() => {
         setRoutes(routeData);
         setHealth(healthData);
-        setVehicles(vehicleData.vehicles);
-        setAdvisories(advisoryData.advisories);
+        setRouteVehiclesById((current) => ({
+          ...current,
+          ...Object.fromEntries(entries.map((entry) => [entry.routeId, entry.vehicles]))
+        }));
+        setRouteAdvisoriesById((current) => ({
+          ...current,
+          ...Object.fromEntries(entries.map((entry) => [entry.routeId, entry.advisories]))
+        }));
       });
     } catch {
-      // Preserve the last visible route state if background refresh fails.
+      // Preserve the last visible network state if background refresh fails.
     }
   });
 
@@ -455,18 +527,20 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (!selectedRouteId) {
+    const pollingRouteIds = routes.filter((route) => isPrimaryRoute(route.id)).map((route) => route.id);
+
+    if (pollingRouteIds.length === 0) {
       return;
     }
 
     const intervalId = window.setInterval(() => {
-      void refreshRouteSnapshot(selectedRouteId);
+      void refreshPrimaryRoutes(pollingRouteIds);
     }, LIVE_POLL_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [selectedRouteId]);
+  }, [refreshPrimaryRoutes, routes]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -492,6 +566,9 @@ export default function App() {
     };
   }, [selectedRouteId, selectedStopId]);
 
+  const stops = selectedRouteId ? routeStopsById[selectedRouteId] ?? [] : [];
+  const vehicles = selectedRouteId ? routeVehiclesById[selectedRouteId] ?? [] : [];
+  const advisories = selectedRouteId ? routeAdvisoriesById[selectedRouteId] ?? [] : [];
   const filteredStops = stops.filter((stop) => {
     const value = deferredStopSearch.trim().toLowerCase();
 
@@ -505,20 +582,62 @@ export default function App() {
       stop.nearbyPlace.name.toLowerCase().includes(value)
     );
   });
-
   const visibleRoutes = routes.filter((route) => PRIMARY_ROUTE_IDS.includes(route.id));
   const activeRoute = routes.find((route) => route.id === selectedRouteId) ?? null;
   const selectedStop = stops.find((stop) => stop.id === selectedStopId) ?? null;
   const activeAdvisoryCount = advisories.filter((advisory) => advisory.active).length;
-  const totalLiveVehicles = visibleRoutes.reduce((sum, route) => sum + route.activeVehicles, 0);
-  const mapStops =
-    selectedStop && !filteredStops.some((stop) => stop.id === selectedStop.id)
-      ? [...filteredStops, selectedStop]
-      : filteredStops;
+  const mapVisibleRoutes =
+    mapMode === "stop"
+      ? activeRoute
+        ? [activeRoute]
+        : visibleRoutes
+      : mapRouteFilter === "all-core"
+        ? visibleRoutes
+        : visibleRoutes.filter((route) => route.id === mapRouteFilter);
+  const mapVisibleStops =
+    mapMode === "stop"
+      ? stops
+      : mapVisibleRoutes.flatMap((route) => routeStopsById[route.id] ?? []);
+  const mapVisibleVehicles = mapVisibleRoutes.flatMap((route) => routeVehiclesById[route.id] ?? []);
+  const mapBounds =
+    mapMode === "stop" && activeRoute ? activeRoute.bounds : mergeRouteBounds(mapVisibleRoutes);
+  const totalLiveVehicles =
+    mapVisibleVehicles.length > 0
+      ? mapVisibleVehicles.length
+      : mapVisibleRoutes.reduce((sum, route) => sum + route.activeVehicles, 0);
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
   const statusMessage = bootError ?? routeError;
+  let mapToolbarEyebrow = pick(ui.mapNetworkLabel, lang);
+  let mapToolbarTitle = pick(ui.mapAllLinesTitle, lang);
+  let mapToolbarMeta =
+    lang === "th"
+      ? "กำลังแสดงสองสายหลักพร้อมกัน"
+      : "Both main lines are visible now.";
+
+  if (mapMode === "stop" && selectedStop) {
+    mapToolbarEyebrow = pick(ui.mapSelectionLabel, lang);
+    mapToolbarTitle = pick(selectedStop.name, lang);
+    mapToolbarMeta =
+      lang === "th"
+        ? `${vehicles.length} คันที่กำลังรายงานใกล้ป้ายนี้`
+        : `${vehicles.length} vehicles reporting near this stop`;
+  } else if (mapRouteFilter !== "all-core") {
+    mapToolbarEyebrow = pick(ui.mapFocusLabel, lang);
+    mapToolbarTitle = getRouteLabel(mapRouteFilter, lang);
+    mapToolbarMeta =
+      lang === "th"
+        ? `${totalLiveVehicles} คันที่เห็นบนเส้นทางนี้`
+        : `${totalLiveVehicles} vehicles visible on this line`;
+  }
 
   function navigate(nextView: AppView) {
+    if (nextView === "map") {
+      startTransition(() => {
+        setMapMode("route");
+        setMapRouteFilter("all-core");
+      });
+    }
+
     setView(nextView);
 
     if (typeof window !== "undefined") {
@@ -686,9 +805,12 @@ export default function App() {
             <RouteRail
               lang={lang}
               routes={visibleRoutes}
-              activeRouteId={selectedRouteId}
+              activeRouteId={mapRouteFilter}
               onSelect={(routeId) => {
+                const nextMapRouteFilter = mapRouteFilter === routeId ? "all-core" : routeId;
+
                 startTransition(() => {
+                  setMapRouteFilter(nextMapRouteFilter);
                   setSelectedRouteId(routeId);
                   setDecisionSummary(null);
                   setDecisionError(null);
@@ -701,12 +823,16 @@ export default function App() {
             <div className="map-stage__map">
               <LiveMap
                 lang={lang}
-                route={activeRoute}
-                stops={mapStops}
-                vehicles={vehicles}
+                routes={mapVisibleRoutes}
+                stops={mapVisibleStops}
+                vehicles={mapVisibleVehicles}
                 userLocation={userLocation}
                 selectedStop={selectedStop}
                 mode={mapMode}
+                bounds={mapBounds}
+                toolbarEyebrow={mapToolbarEyebrow}
+                toolbarTitle={mapToolbarTitle}
+                toolbarMeta={mapToolbarMeta}
                 onModeChange={setMapMode}
               />
             </div>

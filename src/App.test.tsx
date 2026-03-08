@@ -3,7 +3,32 @@ import userEvent from "@testing-library/user-event";
 import App from "./App";
 
 vi.mock("./components/LiveMap", () => ({
-  LiveMap: () => <div data-testid="live-map">map</div>
+  LiveMap: ({
+    routes,
+    mode,
+    userLocation,
+    selectedStop,
+    onModeChange
+  }: {
+    routes: Array<{ id: string }>;
+    mode: "route" | "stop";
+    userLocation: [number, number] | null;
+    selectedStop: { id: string } | null;
+    onModeChange: (mode: "route" | "stop") => void;
+  }) => (
+    <div data-testid="live-map">
+      <div>{`routes:${routes.map((route) => route.id).join(",")}`}</div>
+      <div>{`mode:${mode}`}</div>
+      <div>{userLocation ? "user-location:on" : "user-location:off"}</div>
+      <div>{selectedStop ? `selected-stop:${selectedStop.id}` : "selected-stop:none"}</div>
+      <button type="button" onClick={() => onModeChange("route")}>
+        mock-route-view
+      </button>
+      <button type="button" onClick={() => onModeChange("stop")}>
+        mock-stop-focus
+      </button>
+    </div>
+  )
 }));
 
 const routes = [
@@ -41,10 +66,45 @@ const routes = [
       updatedAt: "2026-03-08T14:00:00Z",
       detail: { en: "Live vehicle feed healthy", th: "ระบบรถสดทำงานปกติ" }
     }
+  },
+  {
+    id: "patong-old-bus-station",
+    name: { en: "Patong - Terminal 1", th: "ป่าตอง - บขส.1" },
+    shortName: { en: "Patong Line", th: "สายป่าตอง" },
+    overview: {
+      en: "City corridor",
+      th: "คอร์ริดอร์ในเมือง"
+    },
+    axis: "east_west",
+    axisLabel: {
+      en: "East-west corridor",
+      th: "แนวเส้นทางตะวันออกตะวันตก"
+    },
+    tier: "core",
+    color: "#ffcc33",
+    accentColor: "#fff8dc",
+    bounds: [
+      [7.84, 98.28],
+      [7.91, 98.41]
+    ],
+    pathSegments: [],
+    stopCount: 2,
+    defaultStopId: "patong-old-bus-station-1",
+    activeVehicles: 2,
+    status: {
+      en: "2 buses reporting live",
+      th: "มีรถออนไลน์ 2 คัน"
+    },
+    sourceStatus: {
+      source: "bus",
+      state: "live",
+      updatedAt: "2026-03-08T14:00:00Z",
+      detail: { en: "Live vehicle feed healthy", th: "ระบบรถสดทำงานปกติ" }
+    }
   }
 ];
 
-const stops = [
+const airportStops = [
   {
     id: "rawai-airport-42",
     routeId: "rawai-airport",
@@ -82,6 +142,48 @@ const stops = [
     }
   }
 ];
+
+const patongStops = [
+  {
+    id: "patong-old-bus-station-1",
+    routeId: "patong-old-bus-station",
+    sequence: 1,
+    name: { en: "Patong Beach", th: "หาดป่าตอง" },
+    direction: { en: "Bus to Terminal 1", th: "รถไป บขส.1" },
+    routeDirection: {
+      en: "Patong to Terminal 1",
+      th: "ป่าตองไป บขส.1"
+    },
+    coordinates: [7.895, 98.298],
+    scheduleText: "05:37AM,06:37AM",
+    nextBus: {
+      label: "3:11 PM",
+      minutesUntil: 15,
+      basis: "schedule",
+      notes: { en: "Schedule based", th: "อิงตารางเวลา" }
+    },
+    timetable: {
+      firstDepartureLabel: "5:37 AM",
+      lastDepartureLabel: "6:37 AM",
+      nextDepartures: ["3:11 PM", "4:11 PM", "5:11 PM"],
+      serviceWindowLabel: "5:37 AM - 6:37 AM",
+      sourceLabel: { en: "Official timetable", th: "ตารางเวลาอย่างเป็นทางการ" },
+      sourceUrl: "https://example.com/timetable",
+      sourceUpdatedAt: "2025-01-18",
+      notes: { en: "Official schedule", th: "ตารางทางการ" }
+    },
+    nearbyPlace: {
+      name: "Patong Beachfront",
+      mapUrl: "https://example.com/patong",
+      openingHours: "Always open",
+      distanceMeters: 120,
+      walkMinutes: 2
+    }
+  }
+];
+
+const airportVehicles = [{ id: "veh-airport-1" }];
+const patongVehicles = [{ id: "veh-patong-1" }];
 
 const advisories = {
   advisories: [
@@ -305,15 +407,27 @@ describe("App", () => {
         }
 
         if (url.includes("/api/routes/rawai-airport/stops")) {
-          return Promise.resolve(new Response(JSON.stringify(stops)));
+          return Promise.resolve(new Response(JSON.stringify(airportStops)));
         }
 
         if (url.includes("/api/routes/rawai-airport/vehicles")) {
-          return Promise.resolve(new Response(JSON.stringify({ vehicles: [] })));
+          return Promise.resolve(new Response(JSON.stringify({ vehicles: airportVehicles })));
         }
 
         if (url.includes("/api/routes/rawai-airport/advisories")) {
           return Promise.resolve(new Response(JSON.stringify(advisories)));
+        }
+
+        if (url.includes("/api/routes/patong-old-bus-station/stops")) {
+          return Promise.resolve(new Response(JSON.stringify(patongStops)));
+        }
+
+        if (url.includes("/api/routes/patong-old-bus-station/vehicles")) {
+          return Promise.resolve(new Response(JSON.stringify({ vehicles: patongVehicles })));
+        }
+
+        if (url.includes("/api/routes/patong-old-bus-station/advisories")) {
+          return Promise.resolve(new Response(JSON.stringify({ advisories: [] })));
         }
 
         if (url.includes("/api/airport-guide")) {
@@ -357,6 +471,20 @@ describe("App", () => {
 
     expect(screen.getByTestId("live-map")).toBeInTheDocument();
     expect(screen.getByText("North-south corridor")).toBeInTheDocument();
+    expect(await screen.findByText("routes:rawai-airport,patong-old-bus-station")).toBeInTheDocument();
+    expect(screen.getByText("mode:route")).toBeInTheDocument();
+    expect(screen.getByText("user-location:on")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "mock-stop-focus" }));
+
+    expect(await screen.findByText("mode:stop")).toBeInTheDocument();
+    expect(screen.getByText("routes:rawai-airport")).toBeInTheDocument();
+    expect(screen.getByText("selected-stop:rawai-airport-42")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "mock-route-view" }));
+    await userEvent.click(screen.getByRole("button", { name: /Patong Line/i }));
+
+    expect(await screen.findByText("routes:patong-old-bus-station")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));

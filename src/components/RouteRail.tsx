@@ -4,21 +4,20 @@ import { pick } from "@/lib/i18n";
 type Props = {
   lang: Lang;
   routes: Route[];
-  activeRouteId: RouteId | null;
+  activeRouteId: RouteId | "all-core";
   onSelect: (routeId: RouteId) => void;
 };
 
 export function RouteRail({ lang, routes, activeRouteId, onSelect }: Props) {
   return (
-    <div className="route-rail" role="tablist" aria-label="Routes">
+    <div className="route-rail" role="group" aria-label={pick({ en: "Map focus", th: "โฟกัสแผนที่" }, lang)}>
       {routes.map((route) => (
         <button
           key={route.id}
           className={route.id === activeRouteId ? "route-card is-active" : "route-card"}
           onClick={() => onSelect(route.id)}
-          role="tab"
           type="button"
-          aria-selected={route.id === activeRouteId}
+          aria-pressed={route.id === activeRouteId}
         >
           <span className="route-card__line" style={{ backgroundColor: route.color }} />
           <span className="route-card__eyebrow">{pick(route.axisLabel, lang)}</span>
