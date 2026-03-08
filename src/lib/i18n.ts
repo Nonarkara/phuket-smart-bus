@@ -62,8 +62,8 @@ export const ui = {
     th: "ป้ายที่เหมาะ"
   },
   airportFocusAction: {
-    en: "Show on map",
-    th: "แสดงบนแผนที่"
+    en: "Open stop",
+    th: "เปิดดูป้าย"
   },
   airportGuideFallbackTitle: {
     en: "Airport guidance unavailable",
@@ -80,6 +80,42 @@ export const ui = {
   airportSecondaryBody: {
     en: "Use the live map only when you are already on the corridor and need to see where buses are now.",
     th: "ใช้แผนที่สดเมื่อคุณอยู่บนเส้นทางแล้วและต้องการดูว่ารถอยู่ตรงไหนในตอนนี้"
+  },
+  navAirport: {
+    en: "Airport",
+    th: "สนามบิน"
+  },
+  navMap: {
+    en: "Live map",
+    th: "แผนที่สด"
+  },
+  navRide: {
+    en: "My stop",
+    th: "ป้ายของฉัน"
+  },
+  airportStoryTitle: {
+    en: "Scan, decide, board",
+    th: "สแกน ตัดสินใจ แล้วขึ้นรถ"
+  },
+  airportStoryBody: {
+    en: "A rider lands, checks that the bus is real, then opens one stop card before the taxi pitch starts.",
+    th: "ผู้โดยสารลงจากเครื่อง เห็นว่ารถบัสใช้งานได้จริง แล้วเปิดดูป้ายเดียวก่อนจะโดนชวนขึ้นแท็กซี่"
+  },
+  airportStoryPrimary: {
+    en: "Open stop details",
+    th: "เปิดรายละเอียดป้าย"
+  },
+  airportStorySecondary: {
+    en: "See live map",
+    th: "ดูแผนที่สด"
+  },
+  ridePageTitle: {
+    en: "Stop details",
+    th: "รายละเอียดป้าย"
+  },
+  ridePageBody: {
+    en: "Once a destination is chosen, keep the next bus, timetable, and walking cue on their own screen.",
+    th: "เมื่อเลือกปลายทางแล้ว ให้แยกหน้าที่มีรถคันถัดไป ตารางเวลา และทางเดินไว้ชัดเจน"
   },
   journeyTitle: {
     en: "Rider journey",

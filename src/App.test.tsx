@@ -201,6 +201,8 @@ const airportGuide = {
 
 describe("App", () => {
   beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+
     const mockFetch = vi.fn((input: string | URL) => {
         const url = String(input);
 
@@ -256,13 +258,22 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
     expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
+    expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "My stop" }));
 
     expect(await screen.findByText("Airport approach is slower")).toBeInTheDocument();
+    expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Live map" }));
+
     expect(screen.getByTestId("live-map")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
+    await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
 
     expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
-    expect(screen.getByText("ทางเข้าสนามบินช้าลง")).toBeInTheDocument();
+    expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
   });
 });

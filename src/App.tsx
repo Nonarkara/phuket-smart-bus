@@ -30,12 +30,36 @@ import { AdvisoryStack } from "./components/AdvisoryStack";
 import { StopSpotlight } from "./components/StopSpotlight";
 import { BrandLogo } from "./components/BrandLogo";
 import { AirportGuidePanel } from "./components/AirportGuidePanel";
+import { AppNav, type AppView } from "./components/AppNav";
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = ["rawai-airport", "patong-old-bus-station"];
 
+const VIEW_PATHS: Record<AppView, string> = {
+  airport: "/",
+  map: "/live-map",
+  ride: "/ride"
+};
+
+function getInitialView(): AppView {
+  if (typeof window === "undefined") {
+    return "airport";
+  }
+
+  if (window.location.pathname.startsWith("/live-map")) {
+    return "map";
+  }
+
+  if (window.location.pathname.startsWith("/ride")) {
+    return "ride";
+  }
+
+  return "airport";
+}
+
 export default function App() {
   const [lang, setLang] = useState<Lang>("en");
+  const [view, setView] = useState<AppView>(getInitialView);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<RouteId | null>(null);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -165,6 +189,18 @@ export default function App() {
       alive = false;
     };
   }, [deferredAirportQuery]);
+
+  useEffect(() => {
+    function handlePopState() {
+      setView(getInitialView());
+    }
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedRouteId || !selectedStopId) {
@@ -317,6 +353,18 @@ export default function App() {
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
   const statusMessage = bootError ?? routeError;
 
+  function navigate(nextView: AppView) {
+    setView(nextView);
+
+    if (typeof window !== "undefined") {
+      const nextPath = VIEW_PATHS[nextView];
+
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({ view: nextView }, "", nextPath);
+      }
+    }
+  }
+
   function focusRouteStop(routeId: RouteId, stopId: string) {
     startTransition(() => {
       setSelectedRouteId(routeId);
@@ -326,7 +374,12 @@ export default function App() {
       setRouteError(null);
       setMapMode("stop");
       setStopSearch("");
+      setView("ride");
     });
+
+    if (typeof window !== "undefined") {
+      window.history.pushState({ view: "ride" }, "", VIEW_PATHS.ride);
+    }
   }
 
   return (
@@ -347,153 +400,200 @@ export default function App() {
         </div>
       ) : null}
 
-      <AirportGuidePanel
+      <AppNav
         lang={lang}
-        guide={airportGuide}
-        loading={isGuideLoading || isBooting}
-        errorMessage={guideError ? pick(ui.airportGuideFallbackBody, lang) : null}
-        title={pick(ui.airportTitle, lang)}
-        eyebrow={pick(ui.airportEyebrow, lang)}
-        body={pick(ui.airportBody, lang)}
-        searchPlaceholder={pick(ui.airportSearchPlaceholder, lang)}
-        quickTitle={pick(ui.airportQuickTitle, lang)}
-        departureLabel={pick(ui.airportDepartureLabel, lang)}
-        seatsLabel={pick(ui.airportSeatsLabel, lang)}
-        seatsPendingLabel={pick(ui.airportSeatsPending, lang)}
-        boardingLabel={pick(ui.airportBoardingLabel, lang)}
-        timesLabel={pick(ui.airportTimesLabel, lang)}
-        connectionLabel={pick(ui.airportConnectionLabel, lang)}
-        destinationLabel={pick(ui.airportDestinationLabel, lang)}
-        focusActionLabel={pick(ui.airportFocusAction, lang)}
-        fallbackTitle={pick(ui.airportGuideFallbackTitle, lang)}
-        fallbackBody={pick(ui.airportGuideFallbackBody, lang)}
-        query={airportQuery}
-        onQueryChange={setAirportQuery}
-        onFocusMatch={focusRouteStop}
+        view={view}
+        airportLabel={pick(ui.navAirport, lang)}
+        mapLabel={pick(ui.navMap, lang)}
+        rideLabel={pick(ui.navRide, lang)}
+        onChange={navigate}
       />
 
-      <main className="layout">
-        <section className="map-stage card">
-          <div className="section-heading map-stage__heading">
-            <div>
-              <p className="hero__eyebrow">{pick(ui.airportSecondaryTitle, lang)}</p>
-              <h3>{pick(ui.mapHeroTitle, lang)}</h3>
-            </div>
-            <p>{pick(ui.airportSecondaryBody, lang)}</p>
-          </div>
-          <div className="map-stage__summary" aria-label={pick(ui.mapHeroTitle, lang)}>
-            <strong>{totalLiveVehicles}</strong>
-            <span>{pick(ui.mapLiveCountLabel, lang)}</span>
-          </div>
-          <RouteRail
+      {view === "airport" ? (
+        <main className="page-shell">
+          <AirportGuidePanel
             lang={lang}
-            routes={visibleRoutes}
-            activeRouteId={selectedRouteId}
-            onSelect={(routeId) => {
-              startTransition(() => {
-                setSelectedRouteId(routeId);
-                setDecisionSummary(null);
-                setDecisionError(null);
-                setRouteError(null);
-                setMapMode("route");
-                setStopSearch("");
-              });
-            }}
+            guide={airportGuide}
+            loading={isGuideLoading || isBooting}
+            errorMessage={guideError ? pick(ui.airportGuideFallbackBody, lang) : null}
+            title={pick(ui.airportTitle, lang)}
+            eyebrow={pick(ui.airportEyebrow, lang)}
+            body={pick(ui.airportBody, lang)}
+            searchPlaceholder={pick(ui.airportSearchPlaceholder, lang)}
+            quickTitle={pick(ui.airportQuickTitle, lang)}
+            departureLabel={pick(ui.airportDepartureLabel, lang)}
+            seatsLabel={pick(ui.airportSeatsLabel, lang)}
+            seatsPendingLabel={pick(ui.airportSeatsPending, lang)}
+            boardingLabel={pick(ui.airportBoardingLabel, lang)}
+            timesLabel={pick(ui.airportTimesLabel, lang)}
+            connectionLabel={pick(ui.airportConnectionLabel, lang)}
+            destinationLabel={pick(ui.airportDestinationLabel, lang)}
+            focusActionLabel={pick(ui.airportFocusAction, lang)}
+            fallbackTitle={pick(ui.airportGuideFallbackTitle, lang)}
+            fallbackBody={pick(ui.airportGuideFallbackBody, lang)}
+            query={airportQuery}
+            onQueryChange={setAirportQuery}
+            onFocusMatch={focusRouteStop}
           />
-          <div className="map-stage__map">
-            <LiveMap
+
+          <section className="story-card card">
+            <div>
+              <span className="hero__eyebrow">{pick(ui.airportStoryTitle, lang)}</span>
+              <h3>{pick(ui.airportStoryTitle, lang)}</h3>
+              <p>{pick(ui.airportStoryBody, lang)}</p>
+            </div>
+            <div className="story-card__actions">
+              <button className="story-card__action is-primary" type="button" onClick={() => navigate("map")}>
+                {pick(ui.airportStorySecondary, lang)}
+              </button>
+              <button
+                className="story-card__action"
+                type="button"
+                onClick={() => navigate("ride")}
+              >
+                {pick(ui.airportStoryPrimary, lang)}
+              </button>
+            </div>
+          </section>
+        </main>
+      ) : null}
+
+      {view === "map" ? (
+        <main className="page-shell">
+          <section className="map-stage card">
+            <div className="section-heading map-stage__heading">
+              <div>
+                <p className="hero__eyebrow">{pick(ui.airportSecondaryTitle, lang)}</p>
+                <h3>{pick(ui.mapHeroTitle, lang)}</h3>
+              </div>
+              <p>{pick(ui.airportSecondaryBody, lang)}</p>
+            </div>
+            <div className="map-stage__summary" aria-label={pick(ui.mapHeroTitle, lang)}>
+              <strong>{totalLiveVehicles}</strong>
+              <span>{pick(ui.mapLiveCountLabel, lang)}</span>
+            </div>
+            <RouteRail
               lang={lang}
-              route={activeRoute}
-              stops={mapStops}
-              vehicles={vehicles}
-              selectedStop={selectedStop}
-              mode={mapMode}
-              onModeChange={setMapMode}
+              routes={visibleRoutes}
+              activeRouteId={selectedRouteId}
+              onSelect={(routeId) => {
+                startTransition(() => {
+                  setSelectedRouteId(routeId);
+                  setDecisionSummary(null);
+                  setDecisionError(null);
+                  setRouteError(null);
+                  setMapMode("route");
+                  setStopSearch("");
+                });
+              }}
             />
-          </div>
-          <div className="map-stage__footer">
-            <SourcePills lang={lang} sources={sourceStatuses} />
-          </div>
-        </section>
-
-        <section className="stops-section">
-          <div className="section-heading">
-            <h3>{pick(ui.stopTitle, lang)}</h3>
-          </div>
-          <StopList
-            lang={lang}
-            stops={filteredStops}
-            selectedStopId={selectedStopId}
-            onSelect={(stopId) =>
-              startTransition(() => {
-                setSelectedStopId(stopId);
-                setDecisionError(null);
-                setMapMode("stop");
-              })
-            }
-            searchValue={stopSearch}
-            onSearchChange={setStopSearch}
-            searchPlaceholder={pick(ui.searchPlaceholder, lang)}
-            openMapsLabel={pick(ui.openMaps, lang)}
-            nearbyLabel={pick(ui.nearby, lang)}
-            emptyState={pick(ui.stopEmpty, lang)}
-          />
-        </section>
-
-        <section className="decision-section">
-          <div className="section-heading">
-            <div>
-              <p className="hero__eyebrow">{pick(ui.heroTitle, lang)}</p>
-              <h3>{pick(ui.heroTitle, lang)}</h3>
+            <div className="map-stage__map">
+              <LiveMap
+                lang={lang}
+                route={activeRoute}
+                stops={mapStops}
+                vehicles={vehicles}
+                selectedStop={selectedStop}
+                mode={mapMode}
+                onModeChange={setMapMode}
+              />
             </div>
-            <p>{selectedStop ? pick(selectedStop.name, lang) : pick(ui.journeyChooseStop, lang)}</p>
-          </div>
-          <DecisionPanel
+            <div className="map-stage__footer">
+              <SourcePills lang={lang} sources={sourceStatuses} />
+            </div>
+          </section>
+        </main>
+      ) : null}
+
+      {view === "ride" ? (
+        <main className="layout">
+          <section className="story-card card ride-story">
+            <div>
+              <span className="hero__eyebrow">{pick(ui.ridePageTitle, lang)}</span>
+              <h3>{pick(ui.ridePageTitle, lang)}</h3>
+              <p>{pick(ui.ridePageBody, lang)}</p>
+            </div>
+          </section>
+
+          <section className="stops-section">
+            <div className="section-heading">
+              <h3>{pick(ui.stopTitle, lang)}</h3>
+            </div>
+            <StopList
+              lang={lang}
+              stops={filteredStops}
+              selectedStopId={selectedStopId}
+              onSelect={(stopId) =>
+                startTransition(() => {
+                  setSelectedStopId(stopId);
+                  setDecisionError(null);
+                  setMapMode("stop");
+                })
+              }
+              searchValue={stopSearch}
+              onSearchChange={setStopSearch}
+              searchPlaceholder={pick(ui.searchPlaceholder, lang)}
+              openMapsLabel={pick(ui.openMaps, lang)}
+              nearbyLabel={pick(ui.nearby, lang)}
+              emptyState={pick(ui.stopEmpty, lang)}
+            />
+          </section>
+
+          <section className="decision-section">
+            <div className="section-heading">
+              <div>
+                <p className="hero__eyebrow">{pick(ui.heroTitle, lang)}</p>
+                <h3>{pick(ui.heroTitle, lang)}</h3>
+              </div>
+              <p>{selectedStop ? pick(selectedStop.name, lang) : pick(ui.journeyChooseStop, lang)}</p>
+            </div>
+            <DecisionPanel
+              lang={lang}
+              summary={decisionSummary}
+              alertCount={activeAdvisoryCount}
+              loading={isDecisionLoading || isBooting}
+              errorMessage={decisionError ? pick(ui.decisionUnavailableBody, lang) : null}
+            />
+          </section>
+
+          <StopSpotlight
             lang={lang}
+            stop={selectedStop}
             summary={decisionSummary}
-            alertCount={activeAdvisoryCount}
+            advisoryCount={activeAdvisoryCount}
+            title={pick(ui.trackingTitle, lang)}
+            body={pick(ui.trackingBody, lang)}
+            nextBusLabel={pick(ui.nextBusLabel, lang)}
+            liveBusesLabel={pick(ui.liveBusesLabel, lang)}
+            activeAlertsLabel={pick(ui.activeAlertsLabel, lang)}
+            nearbyLabel={pick(ui.nearby, lang)}
+            walkLabel={pick(ui.walkLabel, lang)}
+            routeDirectionLabel={pick(ui.routeDirectionLabel, lang)}
+            openMapsLabel={pick(ui.openMaps, lang)}
+            timetableTitle={pick(ui.timetableTitle, lang)}
+            timetableFirstLabel={pick(ui.timetableFirst, lang)}
+            timetableLastLabel={pick(ui.timetableLast, lang)}
+            timetableWindowLabel={pick(ui.timetableWindow, lang)}
+            timetableNextLabel={pick(ui.timetableNext, lang)}
+            timetableUpdatedLabel={pick(ui.timetableUpdated, lang)}
+            timetableSourceLabel={pick(ui.timetableSource, lang)}
+            timetableOpenSourceLabel={pick(ui.timetableOpenSource, lang)}
+            summaryUnavailableLabel={pick(ui.decisionUnavailableBody, lang)}
             loading={isDecisionLoading || isBooting}
-            errorMessage={decisionError ? pick(ui.decisionUnavailableBody, lang) : null}
           />
-        </section>
 
-        <StopSpotlight
-          lang={lang}
-          stop={selectedStop}
-          summary={decisionSummary}
-          advisoryCount={activeAdvisoryCount}
-          title={pick(ui.trackingTitle, lang)}
-          body={pick(ui.trackingBody, lang)}
-          nextBusLabel={pick(ui.nextBusLabel, lang)}
-          liveBusesLabel={pick(ui.liveBusesLabel, lang)}
-          activeAlertsLabel={pick(ui.activeAlertsLabel, lang)}
-          nearbyLabel={pick(ui.nearby, lang)}
-          walkLabel={pick(ui.walkLabel, lang)}
-          routeDirectionLabel={pick(ui.routeDirectionLabel, lang)}
-          openMapsLabel={pick(ui.openMaps, lang)}
-          timetableTitle={pick(ui.timetableTitle, lang)}
-          timetableFirstLabel={pick(ui.timetableFirst, lang)}
-          timetableLastLabel={pick(ui.timetableLast, lang)}
-          timetableWindowLabel={pick(ui.timetableWindow, lang)}
-          timetableNextLabel={pick(ui.timetableNext, lang)}
-          timetableUpdatedLabel={pick(ui.timetableUpdated, lang)}
-          timetableSourceLabel={pick(ui.timetableSource, lang)}
-          timetableOpenSourceLabel={pick(ui.timetableOpenSource, lang)}
-          summaryUnavailableLabel={pick(ui.decisionUnavailableBody, lang)}
-          loading={isDecisionLoading || isBooting}
-        />
-
-        <section className="advisory-section">
-          <div className="section-heading">
-            <h3>{pick(ui.advisoryTitle, lang)}</h3>
-          </div>
-          <AdvisoryStack
-            lang={lang}
-            advisories={advisories}
-            emptyState={pick(ui.advisoryNone, lang)}
-          />
-        </section>
-      </main>
+          <section className="advisory-section">
+            <div className="section-heading">
+              <h3>{pick(ui.advisoryTitle, lang)}</h3>
+            </div>
+            <AdvisoryStack
+              lang={lang}
+              advisories={advisories}
+              emptyState={pick(ui.advisoryNone, lang)}
+            />
+          </section>
+        </main>
+      ) : null}
     </div>
   );
 }
