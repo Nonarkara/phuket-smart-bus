@@ -10,8 +10,8 @@ export const ui = {
     th: "เว็บแอปสำหรับสแกนที่สนามบิน"
   },
   appBody: {
-    en: "Show two real lines and the next airport bus before taxis take the decision away.",
-    th: "แสดงให้เห็นสองเส้นทางจริงและรถคันถัดไปจากสนามบินก่อนที่แท็กซี่จะตัดสินใจแทน"
+    en: "See the next airport bus before you leave the terminal.",
+    th: "ดูรถคันถัดไปจากสนามบินก่อนออกจากอาคาร"
   },
   airportEyebrow: {
     en: "From Phuket Airport",
@@ -22,8 +22,8 @@ export const ui = {
     th: "รถบัสไปถึงที่นั่นไหม?"
   },
   airportBody: {
-    en: "Search a beach, hotel belt, or landmark. We will tell you if Smart Bus is available, when it leaves, and whether seats are still open.",
-    th: "ค้นหาหาด ย่านโรงแรม หรือจุดสังเกต แล้วเราจะบอกว่าควรใช้ Smart Bus หรือไม่ รถจะออกเมื่อไร และยังพอมีที่นั่งหรือไม่"
+    en: "Search a beach, hotel, or landmark. We will tell you if the bus works for that trip.",
+    th: "ค้นหาหาด โรงแรม หรือจุดสังเกต แล้วเราจะบอกว่ารถบัสใช้ไปถึงได้หรือไม่"
   },
   airportSearchPlaceholder: {
     en: "Search beach, hotel, or landmark",
@@ -78,8 +78,8 @@ export const ui = {
     th: "ถ้าคุณกำลังรอที่อื่นอยู่แล้ว"
   },
   airportSecondaryBody: {
-    en: "Use the live map only when you are already on the corridor and need to see where buses are now.",
-    th: "ใช้แผนที่สดเมื่อคุณอยู่บนเส้นทางแล้วและต้องการดูว่ารถอยู่ตรงไหนในตอนนี้"
+    en: "Use the map only if you are already waiting on the route.",
+    th: "ใช้แผนที่เมื่อคุณรออยู่บนเส้นทางแล้วเท่านั้น"
   },
   navAirport: {
     en: "Airport",
@@ -102,12 +102,12 @@ export const ui = {
     th: "ผู้โดยสารลงจากเครื่อง เห็นว่ารถสนามบินใช้งานได้จริง และรู้ได้ทันทีว่าควรใช้สายสนามบินแนวเหนือใต้หรือสายเมืองแนวตะวันออกตะวันตก"
   },
   airportStoryPrimary: {
-    en: "Open stop details",
-    th: "เปิดรายละเอียดป้าย"
+    en: "Stop details",
+    th: "รายละเอียดป้าย"
   },
   airportStorySecondary: {
-    en: "See live map",
-    th: "ดูแผนที่สด"
+    en: "Live map",
+    th: "แผนที่สด"
   },
   ridePageTitle: {
     en: "Stop details",

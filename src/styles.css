@@ -350,29 +350,11 @@ a {
   background: var(--sand);
 }
 
-.story-card {
-  padding: 1rem;
+.action-strip {
   display: grid;
-  gap: 0.85rem;
-}
-
-.story-card h3 {
-  margin: 0.3rem 0 0;
-  font-size: clamp(1.45rem, 6vw, 2rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
-}
-
-.story-card p {
-  margin: 0.45rem 0 0;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.story-card__actions {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
+  padding: 0.7rem;
 }
 
 .story-card__action {
@@ -389,10 +371,6 @@ a {
   background: #101418;
   border-color: #101418;
   color: #ffffff;
-}
-
-.ride-story {
-  grid-column: 1 / -1;
 }
 
 .journey-strip {
@@ -642,14 +620,6 @@ a {
   line-height: 1.35;
 }
 
-.route-card__axis {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--text);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
 .route-card__copy {
   display: -webkit-box;
   margin-top: 0.32rem;
@@ -737,134 +707,6 @@ a {
 
 .map-stage__footer {
   display: flex;
-}
-
-.operations-panel {
-  padding: 1rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.operations-panel__heading {
-  margin-bottom: 0;
-}
-
-.operations-panel__routes {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.operations-route-card {
-  position: relative;
-  padding: 0.95rem;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: var(--card-muted);
-}
-
-.operations-route-card__line {
-  display: block;
-  width: 2.4rem;
-  height: 0.28rem;
-  border-radius: 999px;
-  margin-bottom: 0.75rem;
-}
-
-.operations-route-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.operations-route-card__eyebrow {
-  display: block;
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.operations-route-card__count {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.operations-route-card__stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin-top: 0.85rem;
-}
-
-.operations-route-card__stats span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.operations-route-card__stats strong {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 1.15rem;
-  letter-spacing: -0.04em;
-}
-
-.operations-events {
-  display: grid;
-  gap: 0.75rem;
-  padding-top: 0.95rem;
-  border-top: 1px solid var(--line);
-}
-
-.operations-events__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-}
-
-.operations-events__header span,
-.operations-events__empty {
-  color: var(--muted);
-}
-
-.operations-events__empty {
-  margin: 0;
-  line-height: 1.45;
-}
-
-.operations-events__list {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.operations-event {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: #ffffff;
-}
-
-.operations-event__type {
-  display: block;
-  color: var(--muted);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.operations-event strong {
-  display: block;
-}
-
-.operations-event small {
-  color: var(--muted);
 }
 
 .source-pills {

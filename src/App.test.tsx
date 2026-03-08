@@ -218,41 +218,6 @@ const airportGuide = {
   checkedAt: "2026-03-08T14:00:00Z"
 };
 
-const operationsOverview = {
-  checkedAt: "2026-03-08T14:00:00Z",
-  routes: [
-    {
-      routeId: "rawai-airport",
-      routeName: { en: "Rawai - Phuket Airport", th: "ราไวย์ - สนามบินภูเก็ต" },
-      shortName: { en: "Airport Line", th: "สายสนามบิน" },
-      axisLabel: { en: "North-south corridor", th: "แนวเส้นทางเหนือใต้" },
-      tier: "core",
-      vehiclesOnline: 3,
-      gpsDevicesLive: 3,
-      seatCamerasLive: 0,
-      seatsLeftVisible: 11,
-      boardingsLastHour: 0,
-      alightingsLastHour: 0,
-      lastEventAt: null
-    },
-    {
-      routeId: "patong-old-bus-station",
-      routeName: { en: "Patong - Phuket Bus Terminal 1", th: "ป่าตอง - สถานีขนส่งภูเก็ต 1" },
-      shortName: { en: "Patong Line", th: "สายป่าตอง" },
-      axisLabel: { en: "East-west corridor", th: "แนวเส้นทางตะวันออกตะวันตก" },
-      tier: "core",
-      vehiclesOnline: 1,
-      gpsDevicesLive: 1,
-      seatCamerasLive: 0,
-      seatsLeftVisible: 6,
-      boardingsLastHour: 0,
-      alightingsLastHour: 0,
-      lastEventAt: null
-    }
-  ],
-  recentEvents: []
-};
-
 describe("App", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
@@ -292,10 +257,6 @@ describe("App", () => {
           return Promise.resolve(new Response(JSON.stringify(airportGuide)));
         }
 
-        if (url.includes("/api/operations/overview")) {
-          return Promise.resolve(new Response(JSON.stringify(operationsOverview)));
-        }
-
         if (url.includes("/api/decision-summary")) {
           return Promise.resolve(new Response(JSON.stringify(decision)));
         }
@@ -327,8 +288,7 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Live map" }));
 
     expect(screen.getByTestId("live-map")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Plug-in ready network" })).toBeInTheDocument();
-    expect(screen.getAllByText("North-south corridor").length).toBeGreaterThan(0);
+    expect(screen.getByText("North-south corridor")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));

@@ -5,7 +5,6 @@ import type {
   DecisionSummary,
   HealthPayload,
   Lang,
-  OperationsOverviewPayload,
   Route,
   RouteId,
   Stop,
@@ -16,7 +15,6 @@ import {
   getAirportGuide,
   getDecisionSummary,
   getHealth,
-  getOperationsOverview,
   getRoutes,
   getStops,
   getVehicles
@@ -33,7 +31,6 @@ import { StopSpotlight } from "./components/StopSpotlight";
 import { BrandLogo } from "./components/BrandLogo";
 import { AirportGuidePanel } from "./components/AirportGuidePanel";
 import { AppNav, type AppView } from "./components/AppNav";
-import { OperationsPanel } from "./components/OperationsPanel";
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = ["rawai-airport", "patong-old-bus-station"];
@@ -70,7 +67,6 @@ export default function App() {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [decisionSummary, setDecisionSummary] = useState<DecisionSummary | null>(null);
   const [airportGuide, setAirportGuide] = useState<AirportGuidePayload | null>(null);
-  const [operationsOverview, setOperationsOverview] = useState<OperationsOverviewPayload | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"route" | "stop">("route");
@@ -79,7 +75,6 @@ export default function App() {
   const [isBooting, setIsBooting] = useState(true);
   const [isDecisionLoading, setIsDecisionLoading] = useState(false);
   const [isGuideLoading, setIsGuideLoading] = useState(false);
-  const [isOperationsLoading, setIsOperationsLoading] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [decisionError, setDecisionError] = useState<string | null>(null);
@@ -196,35 +191,6 @@ export default function App() {
   }, [deferredAirportQuery]);
 
   useEffect(() => {
-    let alive = true;
-    setIsOperationsLoading(true);
-
-    async function loadOperationsOverview() {
-      try {
-        const overview = await getOperationsOverview();
-
-        if (alive) {
-          setOperationsOverview(overview);
-        }
-      } catch {
-        if (alive) {
-          setOperationsOverview(null);
-        }
-      } finally {
-        if (alive) {
-          setIsOperationsLoading(false);
-        }
-      }
-    }
-
-    void loadOperationsOverview();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  useEffect(() => {
     function handlePopState() {
       setView(getInitialView());
     }
@@ -323,18 +289,6 @@ export default function App() {
     }
   });
 
-  const refreshOperationsSnapshot = useEffectEvent(async () => {
-    try {
-      const overview = await getOperationsOverview();
-
-      startTransition(() => {
-        setOperationsOverview(overview);
-      });
-    } catch {
-      // Keep the current operations summary visible while integration feeds reconnect.
-    }
-  });
-
   useEffect(() => {
     if (!selectedRouteId) {
       return;
@@ -372,16 +326,6 @@ export default function App() {
       window.clearInterval(intervalId);
     };
   }, [selectedRouteId, selectedStopId]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      void refreshOperationsSnapshot();
-    }, LIVE_POLL_MS);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, []);
 
   const filteredStops = stops.filter((stop) => {
     const value = deferredStopSearch.trim().toLowerCase();
@@ -492,24 +436,13 @@ export default function App() {
             onFocusMatch={focusRouteStop}
           />
 
-          <section className="story-card card">
-            <div>
-              <span className="hero__eyebrow">{pick(ui.airportStoryTitle, lang)}</span>
-              <h3>{pick(ui.airportStoryTitle, lang)}</h3>
-              <p>{pick(ui.airportStoryBody, lang)}</p>
-            </div>
-            <div className="story-card__actions">
-              <button className="story-card__action is-primary" type="button" onClick={() => navigate("map")}>
-                {pick(ui.airportStorySecondary, lang)}
-              </button>
-              <button
-                className="story-card__action"
-                type="button"
-                onClick={() => navigate("ride")}
-              >
-                {pick(ui.airportStoryPrimary, lang)}
-              </button>
-            </div>
+          <section className="action-strip card" aria-label={pick(ui.airportStoryTitle, lang)}>
+            <button className="story-card__action is-primary" type="button" onClick={() => navigate("map")}>
+              {pick(ui.airportStorySecondary, lang)}
+            </button>
+            <button className="story-card__action" type="button" onClick={() => navigate("ride")}>
+              {pick(ui.airportStoryPrimary, lang)}
+            </button>
           </section>
         </main>
       ) : null}
@@ -558,24 +491,11 @@ export default function App() {
               <SourcePills lang={lang} sources={sourceStatuses} />
             </div>
           </section>
-          <OperationsPanel
-            lang={lang}
-            overview={operationsOverview}
-            loading={isOperationsLoading || isBooting}
-          />
         </main>
       ) : null}
 
       {view === "ride" ? (
         <main className="layout">
-          <section className="story-card card ride-story">
-            <div>
-              <span className="hero__eyebrow">{pick(ui.ridePageTitle, lang)}</span>
-              <h3>{pick(ui.ridePageTitle, lang)}</h3>
-              <p>{pick(ui.ridePageBody, lang)}</p>
-            </div>
-          </section>
-
           <section className="stops-section">
             <div className="section-heading">
               <h3>{pick(ui.stopTitle, lang)}</h3>
