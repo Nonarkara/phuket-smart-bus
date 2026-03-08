@@ -104,7 +104,7 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
         </div>
       </div>
       <ul className="decision-panel__reasons">
-        {summary.reasons.map((reason, index) => (
+        {summary.reasons.slice(0, 2).map((reason, index) => (
           <li key={`${summary.level}-${index}`}>{pick(reason, lang)}</li>
         ))}
       </ul>

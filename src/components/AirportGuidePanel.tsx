@@ -106,38 +106,6 @@ export function AirportGuidePanel({
         />
       </label>
 
-      {guide?.quickDestinations.length ? (
-        <div className="airport-quick">
-          <strong>{quickTitle}</strong>
-          <div className="airport-quick__grid">
-            {guide.quickDestinations.map((item) => (
-              <button
-                key={item.id}
-                className="airport-quick-card"
-                type="button"
-                onClick={() => onQueryChange(pick(item.label, lang))}
-              >
-                <span>{pick(item.label, lang)}</span>
-                <strong>{getRouteLabel(item.routeId, lang)}</strong>
-                <small>
-                  {item.travelMinutes === null
-                    ? getKindLabel(
-                        {
-                          ...guide,
-                          recommendation: item.kind
-                        },
-                        lang
-                      )
-                    : lang === "th"
-                      ? `${item.travelMinutes} นาทีจากสนามบิน`
-                      : `${item.travelMinutes} min from airport`}
-                </small>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       {loading && !guide ? (
         <div className="airport-guide card airport-guide--loading">
           <div className="skeleton skeleton--headline" />
@@ -167,10 +135,12 @@ export function AirportGuidePanel({
             <p>{pick(guide.summary, lang)}</p>
 
             <div className="airport-guide__stats" aria-label={title}>
-              <article className="airport-stat">
+              <article className="airport-stat airport-stat--primary">
                 <span>{departureLabel}</span>
                 <strong>{getDepartureLabel(guide)}</strong>
-                <small>{guide.nextDeparture.label}</small>
+                <small>
+                  {guide.nextDeparture.label} · {getRouteLabel(guide.nextDeparture.routeId, lang)}
+                </small>
               </article>
               <article className="airport-stat">
                 <span>{seatsLabel}</span>
@@ -229,6 +199,31 @@ export function AirportGuidePanel({
                 <li key={`${guide.recommendation}-${index}`}>{pick(note, lang)}</li>
               ))}
             </ul>
+          </div>
+        </div>
+      ) : null}
+
+      {guide?.quickDestinations.length ? (
+        <div className="airport-quick">
+          <strong>{quickTitle}</strong>
+          <div className="airport-quick__grid">
+            {guide.quickDestinations.map((item) => (
+              <button
+                key={item.id}
+                className="airport-quick-card"
+                type="button"
+                onClick={() => onQueryChange(pick(item.label, lang))}
+              >
+                <strong>{pick(item.label, lang)}</strong>
+                <small>
+                  {item.travelMinutes === null
+                    ? getRouteLabel(item.routeId, lang)
+                    : lang === "th"
+                      ? `${getRouteLabel(item.routeId, lang)} · ${item.travelMinutes} นาที`
+                      : `${getRouteLabel(item.routeId, lang)} · ${item.travelMinutes} min`}
+                </small>
+              </button>
+            ))}
           </div>
         </div>
       ) : null}
