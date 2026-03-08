@@ -28,6 +28,10 @@ function getAlertChipLabel(count: number, lang: Lang) {
   return lang === "th" ? `${count} คำเตือน` : `${count} alerts`;
 }
 
+function getSeatChipLabel(count: number, lang: Lang) {
+  return lang === "th" ? `${count} ที่นั่งว่าง` : `${count} seats left`;
+}
+
 export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage }: Props) {
   if (loading && !summary) {
     return (
@@ -65,6 +69,11 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
         <span className="decision-chip">{getLiveChipLabel(summary.liveVehicles, lang)}</span>
         <span className="decision-chip">{getAlertChipLabel(alertCount, lang)}</span>
         <span className="decision-chip">{getBasisLabel(summary, lang)}</span>
+        {summary.seatAvailability?.seatsLeft !== null ? (
+          <span className="decision-chip">
+            {getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)}
+          </span>
+        ) : null}
       </div>
       <h2 className="decision-panel__headline">{pick(summary.headline, lang)}</h2>
       <p className="decision-panel__summary">{pick(summary.summary, lang)}</p>
@@ -74,7 +83,14 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
         </span>
         <div>
           <strong>{summary.nextBus.label}</strong>
-          <p>{pick(summary.nextBus.notes, lang)}</p>
+          <p>
+            {pick(summary.nextBus.notes, lang)}
+            {summary.seatAvailability?.seatsLeft !== null
+              ? lang === "th"
+                ? ` · เหลือประมาณ ${summary.seatAvailability.seatsLeft} ที่นั่ง`
+                : ` · about ${summary.seatAvailability.seatsLeft} seats left`
+              : ""}
+          </p>
         </div>
       </div>
       <div className="decision-panel__timetable">

@@ -2,6 +2,7 @@ import type { RouteId, VehiclePosition, DataSourceStatus } from "../../../shared
 import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, PUBLIC_TRACKER_TOKEN } from "../../config.js";
 import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { routeDestinationLabel, text } from "../../lib/i18n.js";
+import { getTelemetryVehicles } from "../operationsStore.js";
 
 type RawBusRecord = {
   id: number;
@@ -85,11 +86,13 @@ export function normalizeRecord(record: RawBusRecord): VehiclePosition | null {
     routeId,
     licensePlate: record.data.vhc.lc || record.licence,
     vehicleId: record.data.vhc.id,
+    deviceId: null,
     coordinates: [record.data.pos[1], record.data.pos[0]],
     heading: Number(record.data.azm ?? 0),
     speedKph: Number(record.data.spd ?? 0),
     destination: routeDestinationLabel(routeId, destinationHint),
     updatedAt,
+    telemetrySource: "public_tracker",
     freshness: isFresh ? "fresh" : "stale",
     status:
       record.data.spd > 4 ? "moving" : record.data.spd === 0 ? "dwelling" : "unknown",
@@ -99,12 +102,33 @@ export function normalizeRecord(record: RawBusRecord): VehiclePosition | null {
 }
 
 function buildStatus(state: DataSourceStatus["state"], updatedAt: string, detail: string): DataSourceStatus {
+  const thaiDetail =
+    detail === "Live vehicle feed healthy"
+      ? "ระบบรถสดทำงานปกติ"
+      : detail === "Using direct GPS telemetry"
+        ? "กำลังใช้ข้อมูล GPS ตรงจากอุปกรณ์บนรถ"
+        : "กำลังใช้ตัวอย่างข้อมูลแทน";
+
   return {
     source: "bus",
     state,
     updatedAt,
-    detail: text(detail, detail === "Live vehicle feed healthy" ? "ระบบรถสดทำงานปกติ" : "กำลังใช้ตัวอย่างข้อมูลแทน")
+    detail: text(detail, thaiDetail)
   };
+}
+
+export function mergeVehiclesWithTelemetry(baseVehicles: VehiclePosition[]) {
+  const merged = new Map(baseVehicles.map((vehicle) => [vehicle.vehicleId, vehicle]));
+
+  for (const telemetryVehicle of getTelemetryVehicles()) {
+    const existing = merged.get(telemetryVehicle.vehicleId);
+
+    if (!existing || new Date(telemetryVehicle.updatedAt).getTime() >= new Date(existing.updatedAt).getTime()) {
+      merged.set(telemetryVehicle.vehicleId, telemetryVehicle);
+    }
+  }
+
+  return Array.from(merged.values());
 }
 
 async function fetchLiveRecords() {
@@ -127,9 +151,13 @@ export async function getBusSnapshot() {
     return cache;
   }
 
+  const telemetryVehicles = getTelemetryVehicles();
+
   try {
     const records = await fetchLiveRecords();
-    const vehicles = records.map(normalizeRecord).filter((item): item is VehiclePosition => Boolean(item));
+    const vehicles = mergeVehiclesWithTelemetry(
+      records.map(normalizeRecord).filter((item): item is VehiclePosition => Boolean(item))
+    );
     const latestUpdate =
       vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
@@ -141,6 +169,19 @@ export async function getBusSnapshot() {
 
     return cache;
   } catch {
+    if (telemetryVehicles.length > 0) {
+      const latestTelemetryUpdate =
+        telemetryVehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
+
+      cache = {
+        expiresAt: Date.now() + BUS_CACHE_MS,
+        vehicles: telemetryVehicles,
+        status: buildStatus("live", latestTelemetryUpdate, "Using direct GPS telemetry")
+      };
+
+      return cache;
+    }
+
     const vehicles = fallbackSample
       .map(normalizeRecord)
       .filter((item): item is VehiclePosition => Boolean(item));
@@ -155,6 +196,10 @@ export async function getBusSnapshot() {
 
     return cache;
   }
+}
+
+export function clearBusSnapshotCache() {
+  cache = undefined;
 }
 
 export async function getVehiclesForRoute(routeId: RouteId) {

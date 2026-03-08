@@ -1,5 +1,6 @@
 import type { SeatAvailability, VehiclePosition } from "../../../shared/types.js";
 import { text } from "../../lib/i18n.js";
+import { getLiveSeatAvailability } from "../operationsStore.js";
 
 const DEFAULT_CAPACITY = 23;
 
@@ -18,6 +19,12 @@ export function estimateSeatAvailability(vehicle: VehiclePosition | null): SeatA
     return null;
   }
 
+  const liveSeatAvailability = getLiveSeatAvailability(vehicle.vehicleId);
+
+  if (liveSeatAvailability) {
+    return liveSeatAvailability;
+  }
+
   const seed = hashSeed(`${vehicle.vehicleId}:${vehicle.updatedAt}:${vehicle.status}`);
   const occupancyFloor = vehicle.status === "dwelling" ? 7 : 4;
   const occupancyRange = vehicle.status === "dwelling" ? 10 : 13;
@@ -27,7 +34,10 @@ export function estimateSeatAvailability(vehicle: VehiclePosition | null): SeatA
   return {
     seatsLeft,
     capacity: DEFAULT_CAPACITY,
+    occupiedSeats,
+    loadFactor: DEFAULT_CAPACITY > 0 ? occupiedSeats / DEFAULT_CAPACITY : null,
     basis: "camera_ready_estimate",
+    cameraId: null,
     confidenceLabel: text(
       "Estimated until the seat camera feed is connected.",
       "เป็นค่าประมาณจนกว่าจะเชื่อมต่อกล้องนับที่นั่ง"

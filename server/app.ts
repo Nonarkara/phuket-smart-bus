@@ -3,12 +3,24 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getRoutes, getStopById, getStopsForRoute } from "./services/routes.js";
-import { getBusSnapshot, getVehiclesForRoute } from "./services/providers/busProvider.js";
+import { clearBusSnapshotCache, getBusSnapshot, getVehiclesForRoute } from "./services/providers/busProvider.js";
 import { getTrafficAdvisories } from "./services/providers/trafficProvider.js";
 import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/weatherProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
-import type { HealthPayload, RouteId } from "../shared/types.js";
+import { getOperationsOverview } from "./services/operationsService.js";
+import {
+  recordPassengerFlowSamples,
+  recordSeatCameraSamples,
+  recordVehicleTelemetry
+} from "./services/operationsStore.js";
+import type {
+  HealthPayload,
+  PassengerFlowSample,
+  RouteId,
+  SeatCameraSample,
+  VehicleTelemetrySample
+} from "../shared/types.js";
 
 const validRoutes = new Set<RouteId>([
   "rawai-airport",
@@ -95,6 +107,47 @@ export function createApp() {
       advisories: [...traffic.advisories, ...weather.advisories],
       sourceStatuses: [traffic.status, weather.status]
     });
+  });
+
+  app.get("/api/operations/overview", async (_request, response) => {
+    response.json(await getOperationsOverview());
+  });
+
+  app.post("/api/integrations/vehicle-telemetry", (request, response) => {
+    const samples = request.body?.samples;
+
+    if (!Array.isArray(samples)) {
+      response.status(400).json({ error: "samples array is required" });
+      return;
+    }
+
+    recordVehicleTelemetry(samples as VehicleTelemetrySample[]);
+    clearBusSnapshotCache();
+    response.status(202).json({ accepted: samples.length });
+  });
+
+  app.post("/api/integrations/seat-camera", (request, response) => {
+    const samples = request.body?.samples;
+
+    if (!Array.isArray(samples)) {
+      response.status(400).json({ error: "samples array is required" });
+      return;
+    }
+
+    recordSeatCameraSamples(samples as SeatCameraSample[]);
+    response.status(202).json({ accepted: samples.length });
+  });
+
+  app.post("/api/integrations/passenger-flow", (request, response) => {
+    const events = request.body?.events;
+
+    if (!Array.isArray(events)) {
+      response.status(400).json({ error: "events array is required" });
+      return;
+    }
+
+    recordPassengerFlowSamples(events as PassengerFlowSample[]);
+    response.status(202).json({ accepted: events.length });
   });
 
   app.get("/api/airport-guide", async (request, response) => {

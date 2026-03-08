@@ -10,8 +10,8 @@ export const ui = {
     th: "เว็บแอปสำหรับสแกนที่สนามบิน"
   },
   appBody: {
-    en: "Show riders the bus is real before taxis take the decision away.",
-    th: "ทำให้ผู้โดยสารเห็นว่ารถบัสใช้งานได้จริงก่อนที่แท็กซี่จะตัดสินใจแทน"
+    en: "Show two real lines and the next airport bus before taxis take the decision away.",
+    th: "แสดงให้เห็นสองเส้นทางจริงและรถคันถัดไปจากสนามบินก่อนที่แท็กซี่จะตัดสินใจแทน"
   },
   airportEyebrow: {
     en: "From Phuket Airport",
@@ -98,8 +98,8 @@ export const ui = {
     th: "สแกน ตัดสินใจ แล้วขึ้นรถ"
   },
   airportStoryBody: {
-    en: "A rider lands, checks that the bus is real, then opens one stop card before the taxi pitch starts.",
-    th: "ผู้โดยสารลงจากเครื่อง เห็นว่ารถบัสใช้งานได้จริง แล้วเปิดดูป้ายเดียวก่อนจะโดนชวนขึ้นแท็กซี่"
+    en: "A rider lands, sees the airport bus is real, and learns whether the north-south airport line or the east-west city line is the right move.",
+    th: "ผู้โดยสารลงจากเครื่อง เห็นว่ารถสนามบินใช้งานได้จริง และรู้ได้ทันทีว่าควรใช้สายสนามบินแนวเหนือใต้หรือสายเมืองแนวตะวันออกตะวันตก"
   },
   airportStoryPrimary: {
     en: "Open stop details",
@@ -188,6 +188,54 @@ export const ui = {
   mapLiveCountLabel: {
     en: "visible now",
     th: "คันที่เห็นตอนนี้"
+  },
+  opsTitle: {
+    en: "Plug-in ready network",
+    th: "เครือข่ายที่พร้อมต่อระบบ"
+  },
+  opsBody: {
+    en: "These two lines are ready for direct GPS, seat cameras, and boarding or alighting events by stop.",
+    th: "สองเส้นทางนี้พร้อมเชื่อมต่อ GPS ตรง กล้องนับที่นั่ง และเหตุการณ์ขึ้นหรือลงรถตามป้าย"
+  },
+  opsGpsLabel: {
+    en: "GPS live",
+    th: "GPS ที่กำลังรายงาน"
+  },
+  opsCameraLabel: {
+    en: "Cameras live",
+    th: "กล้องที่กำลังรายงาน"
+  },
+  opsSeatsLabel: {
+    en: "Seats visible",
+    th: "ที่นั่งที่มองเห็น"
+  },
+  opsBoardingsLabel: {
+    en: "Boarded 1h",
+    th: "ขึ้นรถใน 1 ชม."
+  },
+  opsAlightingsLabel: {
+    en: "Got off 1h",
+    th: "ลงรถใน 1 ชม."
+  },
+  opsRecentTitle: {
+    en: "Recent stop activity",
+    th: "กิจกรรมล่าสุดตามป้าย"
+  },
+  opsRecentEmpty: {
+    en: "Camera events will appear here once boarding data is connected.",
+    th: "เหตุการณ์จากกล้องจะปรากฏที่นี่เมื่อเชื่อมข้อมูลการขึ้นลงรถแล้ว"
+  },
+  opsRecentBoarding: {
+    en: "Boarding",
+    th: "ขึ้นรถ"
+  },
+  opsRecentAlighting: {
+    en: "Alighting",
+    th: "ลงรถ"
+  },
+  opsRecentUnknownStop: {
+    en: "Unknown stop",
+    th: "ป้ายไม่ทราบชื่อ"
   },
   stopTitle: {
     en: "Choose a stop",

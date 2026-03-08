@@ -1,4 +1,4 @@
-import type { LocalizedText, RouteId } from "../shared/types.js";
+import type { LocalizedText, RouteAxis, RouteId, RouteTier } from "../shared/types.js";
 
 export const BANGKOK_TIME_ZONE = "Asia/Bangkok";
 
@@ -29,6 +29,9 @@ export const ROUTE_DEFINITIONS: Record<
     name: LocalizedText;
     shortName: LocalizedText;
     overview: LocalizedText;
+    axis: RouteAxis;
+    axisLabel: LocalizedText;
+    tier: RouteTier;
     defaultStopName: string;
     timetableSource: {
       label: LocalizedText;
@@ -55,6 +58,12 @@ export const ROUTE_DEFINITIONS: Record<
       en: "Best for airport transfers and the west-coast hotel belt.",
       th: "เหมาะสำหรับเดินทางไปสนามบินและแนวโรงแรมชายฝั่งตะวันตก"
     },
+    axis: "north_south",
+    axisLabel: {
+      en: "North-south corridor",
+      th: "แนวเส้นทางเหนือใต้"
+    },
+    tier: "core",
     defaultStopName: "Phuket Airport",
     timetableSource: {
       label: {
@@ -86,6 +95,12 @@ export const ROUTE_DEFINITIONS: Record<
       en: "Good for moving between Patong, hospitals, schools, and old-town links.",
       th: "เหมาะสำหรับเชื่อมป่าตอง โรงพยาบาล โรงเรียน และเข้าเมือง"
     },
+    axis: "east_west",
+    axisLabel: {
+      en: "East-west corridor",
+      th: "แนวเส้นทางตะวันออกตะวันตก"
+    },
+    tier: "core",
     defaultStopName: "Patong",
     timetableSource: {
       label: {
@@ -117,6 +132,12 @@ export const ROUTE_DEFINITIONS: Record<
       en: "Short-hop loop around Phuket Old Town landmarks and hotels.",
       th: "เส้นทางสั้นสำหรับย่านเมืองเก่าภูเก็ต โรงแรม และจุดท่องเที่ยว"
     },
+    axis: "loop",
+    axisLabel: {
+      en: "Old-town loop",
+      th: "เส้นทางวนเมืองเก่า"
+    },
+    tier: "auxiliary",
     defaultStopName: "Old Town Intersection",
     timetableSource: {
       label: {

@@ -5,6 +5,10 @@ export type RouteId =
   | "patong-old-bus-station"
   | "dragon-line";
 
+export type RouteAxis = "north_south" | "east_west" | "loop";
+
+export type RouteTier = "core" | "auxiliary";
+
 export type DecisionLevel =
   | "go_now"
   | "leave_early"
@@ -22,11 +26,15 @@ export type NextBusBasis = "live" | "schedule" | "fallback";
 
 export type AirportGuideKind = "ready" | "direct" | "transfer" | "not_supported";
 
-export type SeatAvailabilityBasis = "camera_ready_estimate" | "unavailable";
+export type SeatAvailabilityBasis = "camera_live" | "camera_ready_estimate" | "unavailable";
 
 export type AirportDepartureState = "boarding" | "scheduled";
 
 export type LatLngTuple = [number, number];
+
+export type TelemetrySource = "public_tracker" | "direct_gps";
+
+export type PassengerFlowEventType = "boarding" | "alighting";
 
 export interface LocalizedText {
   en: string;
@@ -69,7 +77,10 @@ export interface TimetableSummary {
 export interface SeatAvailability {
   seatsLeft: number | null;
   capacity: number | null;
+  occupiedSeats: number | null;
+  loadFactor: number | null;
   basis: SeatAvailabilityBasis;
+  cameraId: string | null;
   confidenceLabel: LocalizedText;
   updatedAt: string;
 }
@@ -124,6 +135,9 @@ export interface Route {
   name: LocalizedText;
   shortName: LocalizedText;
   overview: LocalizedText;
+  axis: RouteAxis;
+  axisLabel: LocalizedText;
+  tier: RouteTier;
   color: string;
   accentColor: string;
   bounds: [LatLngTuple, LatLngTuple];
@@ -140,11 +154,13 @@ export interface VehiclePosition {
   routeId: RouteId;
   licensePlate: string;
   vehicleId: string;
+  deviceId: string | null;
   coordinates: LatLngTuple;
   heading: number;
   speedKph: number;
   destination: LocalizedText;
   updatedAt: string;
+  telemetrySource: TelemetrySource;
   freshness: "fresh" | "stale";
   status: "moving" | "dwelling" | "unknown";
   distanceToDestinationMeters: number | null;
@@ -172,6 +188,7 @@ export interface DecisionSummary {
   summary: LocalizedText;
   reasons: LocalizedText[];
   nextBus: NextBusContext;
+  seatAvailability: SeatAvailability | null;
   timetable: TimetableSummary;
   liveVehicles: number;
   routeStatus: LocalizedText;
@@ -199,4 +216,71 @@ export interface HealthPayload {
   status: "ok" | "degraded";
   checkedAt: string;
   sources: DataSourceStatus[];
+}
+
+export interface VehicleTelemetrySample {
+  deviceId: string;
+  vehicleId: string;
+  routeId: RouteId;
+  licensePlate: string | null;
+  coordinates: LatLngTuple;
+  heading: number;
+  speedKph: number;
+  destinationHint: string | null;
+  capturedAt: string;
+}
+
+export interface SeatCameraSample {
+  cameraId: string;
+  vehicleId: string;
+  routeId: RouteId;
+  capacity: number;
+  occupiedSeats: number;
+  seatsLeft: number;
+  capturedAt: string;
+}
+
+export interface PassengerFlowSample {
+  cameraId: string;
+  vehicleId: string;
+  routeId: RouteId;
+  stopId: string | null;
+  coordinates: LatLngTuple;
+  eventType: PassengerFlowEventType;
+  passengers: number;
+  capturedAt: string;
+}
+
+export interface PassengerFlowEvent {
+  id: string;
+  routeId: RouteId;
+  vehicleId: string;
+  stopId: string | null;
+  stopName: LocalizedText | null;
+  cameraId: string;
+  coordinates: LatLngTuple;
+  eventType: PassengerFlowEventType;
+  passengers: number;
+  updatedAt: string;
+}
+
+export interface OperationsRouteSummary {
+  routeId: RouteId;
+  routeName: LocalizedText;
+  shortName: LocalizedText;
+  axisLabel: LocalizedText;
+  tier: RouteTier;
+  vehiclesOnline: number;
+  gpsDevicesLive: number;
+  seatCamerasLive: number;
+  seatsLeftVisible: number | null;
+  boardingsLastHour: number;
+  alightingsLastHour: number;
+  lastEventAt: string | null;
+}
+
+export interface OperationsOverviewPayload {
+  checkedAt: string;
+  routes: OperationsRouteSummary[];
+  recentEvents: PassengerFlowEvent[];
 }

@@ -109,6 +109,9 @@ const routeBase = Object.fromEntries(
         name: config.name,
         shortName: config.shortName,
         overview: config.overview,
+        axis: config.axis,
+        axisLabel: config.axisLabel,
+        tier: config.tier,
         color: config.color,
         accentColor: config.accentColor,
         bounds: getBounds(flat),
@@ -141,16 +144,27 @@ export function getStopById(routeId: RouteId, stopId: string) {
 }
 
 export function getRoutes(sourceStatus: DataSourceStatus, activeVehicles: Record<RouteId, number>) {
-  return (Object.keys(routeBase) as RouteId[]).map<Route>((routeId) => ({
-    ...routeBase[routeId],
-    activeVehicles: activeVehicles[routeId] ?? 0,
-    status:
-      activeVehicles[routeId] > 0
-        ? text(
-            `${activeVehicles[routeId]} buses reporting live`,
-            `มีรถออนไลน์ ${activeVehicles[routeId]} คัน`
-          )
-        : text("Falling back to schedule confidence", "กำลังใช้ความเชื่อมั่นจากตารางเวลาแทน"),
-    sourceStatus
-  }));
+  return (Object.keys(routeBase) as RouteId[])
+    .sort((left, right) => {
+      const leftTier = routeBase[left].tier;
+      const rightTier = routeBase[right].tier;
+
+      if (leftTier === rightTier) {
+        return 0;
+      }
+
+      return leftTier === "core" ? -1 : 1;
+    })
+    .map<Route>((routeId) => ({
+      ...routeBase[routeId],
+      activeVehicles: activeVehicles[routeId] ?? 0,
+      status:
+        activeVehicles[routeId] > 0
+          ? text(
+              `${activeVehicles[routeId]} buses reporting live`,
+              `มีรถออนไลน์ ${activeVehicles[routeId]} คัน`
+            )
+          : text("Falling back to schedule confidence", "กำลังใช้ความเชื่อมั่นจากตารางเวลาแทน"),
+      sourceStatus
+    }));
 }

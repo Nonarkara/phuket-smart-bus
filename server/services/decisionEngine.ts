@@ -9,6 +9,7 @@ import type {
 } from "../../shared/types.js";
 import { haversineDistanceMeters } from "../lib/geo.js";
 import { text } from "../lib/i18n.js";
+import { estimateSeatAvailability } from "./providers/seatProvider.js";
 
 function rankLevel(
   stop: Stop,
@@ -91,7 +92,8 @@ function buildReasons(
   stop: Stop,
   vehicles: VehiclePosition[],
   advisories: Advisory[],
-  busStatus: DataSourceStatus
+  busStatus: DataSourceStatus,
+  seatsLeft: number | null
 ) {
   const reasons = [
     text(
@@ -109,6 +111,15 @@ function buildReasons(
       text(
         `Published service window: ${stop.timetable.serviceWindowLabel}.`,
         `ช่วงเวลาตามตารางที่เผยแพร่: ${stop.timetable.serviceWindowLabel}`
+      )
+    );
+  }
+
+  if (seatsLeft !== null) {
+    reasons.push(
+      text(
+        `${seatsLeft} seats are currently visible on the nearest reporting bus.`,
+        `ขณะนี้เห็นที่นั่งเหลือ ${seatsLeft} ที่บนรถที่รายงานใกล้ที่สุด`
       )
     );
   }
@@ -138,6 +149,14 @@ export function buildDecisionSummary(
 ) {
   const busStatus = sourceStatuses.find((status) => status.source === "bus")!;
   const level = rankLevel(stop, vehicles, advisories, busStatus);
+  const nearestVehicle = vehicles.length
+    ? [...vehicles].sort(
+        (left, right) =>
+          haversineDistanceMeters(left.coordinates, stop.coordinates) -
+          haversineDistanceMeters(right.coordinates, stop.coordinates)
+      )[0]
+    : null;
+  const seatAvailability = estimateSeatAvailability(nearestVehicle);
   const updatedAt = sourceStatuses
     .map((status) => status.updatedAt)
     .sort()
@@ -149,8 +168,9 @@ export function buildDecisionSummary(
     level,
     headline: buildHeadline(level),
     summary: buildSummary(level, stop),
-    reasons: buildReasons(stop, vehicles, advisories, busStatus),
+    reasons: buildReasons(stop, vehicles, advisories, busStatus, seatAvailability?.seatsLeft ?? null),
     nextBus: stop.nextBus,
+    seatAvailability,
     timetable: stop.timetable,
     liveVehicles: vehicles.length,
     routeStatus:

@@ -23,6 +23,7 @@ export function RouteRail({ lang, routes, activeRouteId, onSelect }: Props) {
           <span className="route-card__line" style={{ backgroundColor: route.color }} />
           <span className="route-card__eyebrow">{pick(route.shortName, lang)}</span>
           <strong className="route-card__title">{pick(route.name, lang)}</strong>
+          <span className="route-card__axis">{pick(route.axisLabel, lang)}</span>
           <span className="route-card__copy">{pick(route.overview, lang)}</span>
           <div className="route-card__meta">
             <span>

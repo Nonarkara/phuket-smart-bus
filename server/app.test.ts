@@ -14,6 +14,10 @@ describe("server app", () => {
         "/api/routes/:routeId/stops",
         "/api/routes/:routeId/vehicles",
         "/api/routes/:routeId/advisories",
+        "/api/operations/overview",
+        "/api/integrations/vehicle-telemetry",
+        "/api/integrations/seat-camera",
+        "/api/integrations/passenger-flow",
         "/api/decision-summary",
         "*"
       ])

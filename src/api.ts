@@ -3,6 +3,7 @@ import type {
   AirportGuidePayload,
   DecisionSummary,
   HealthPayload,
+  OperationsOverviewPayload,
   Route,
   RouteId,
   Stop,
@@ -48,4 +49,8 @@ export function getDecisionSummary(routeId: RouteId, stopId: string) {
 export function getAirportGuide(destination = "") {
   const query = new URLSearchParams({ destination });
   return fetchJson<AirportGuidePayload>(`/api/airport-guide?${query.toString()}`);
+}
+
+export function getOperationsOverview() {
+  return fetchJson<OperationsOverviewPayload>("/api/operations/overview");
 }

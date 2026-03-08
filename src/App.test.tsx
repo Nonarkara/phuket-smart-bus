@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 
@@ -15,6 +15,12 @@ const routes = [
       en: "Airport corridor",
       th: "คอร์ริดอร์สนามบิน"
     },
+    axis: "north_south",
+    axisLabel: {
+      en: "North-south corridor",
+      th: "แนวเส้นทางเหนือใต้"
+    },
+    tier: "core",
     color: "#16b8b0",
     accentColor: "#e8fff9",
     bounds: [
@@ -124,6 +130,19 @@ const decision = {
     basis: "schedule",
     notes: { en: "Schedule based", th: "อิงตารางเวลา" }
   },
+  seatAvailability: {
+    seatsLeft: 11,
+    capacity: 23,
+    occupiedSeats: 12,
+    loadFactor: 12 / 23,
+    basis: "camera_ready_estimate",
+    cameraId: null,
+    confidenceLabel: {
+      en: "Estimated until the seat camera feed is connected.",
+      th: "เป็นค่าประมาณจนกว่าจะเชื่อมต่อกล้องนับที่นั่ง"
+    },
+    updatedAt: "2026-03-08T14:00:00Z"
+  },
   timetable: {
     firstDepartureLabel: "5:37 AM",
     lastDepartureLabel: "6:37 AM",
@@ -199,6 +218,41 @@ const airportGuide = {
   checkedAt: "2026-03-08T14:00:00Z"
 };
 
+const operationsOverview = {
+  checkedAt: "2026-03-08T14:00:00Z",
+  routes: [
+    {
+      routeId: "rawai-airport",
+      routeName: { en: "Rawai - Phuket Airport", th: "ราไวย์ - สนามบินภูเก็ต" },
+      shortName: { en: "Airport Line", th: "สายสนามบิน" },
+      axisLabel: { en: "North-south corridor", th: "แนวเส้นทางเหนือใต้" },
+      tier: "core",
+      vehiclesOnline: 3,
+      gpsDevicesLive: 3,
+      seatCamerasLive: 0,
+      seatsLeftVisible: 11,
+      boardingsLastHour: 0,
+      alightingsLastHour: 0,
+      lastEventAt: null
+    },
+    {
+      routeId: "patong-old-bus-station",
+      routeName: { en: "Patong - Phuket Bus Terminal 1", th: "ป่าตอง - สถานีขนส่งภูเก็ต 1" },
+      shortName: { en: "Patong Line", th: "สายป่าตอง" },
+      axisLabel: { en: "East-west corridor", th: "แนวเส้นทางตะวันออกตะวันตก" },
+      tier: "core",
+      vehiclesOnline: 1,
+      gpsDevicesLive: 1,
+      seatCamerasLive: 0,
+      seatsLeftVisible: 6,
+      boardingsLastHour: 0,
+      alightingsLastHour: 0,
+      lastEventAt: null
+    }
+  ],
+  recentEvents: []
+};
+
 describe("App", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
@@ -238,6 +292,10 @@ describe("App", () => {
           return Promise.resolve(new Response(JSON.stringify(airportGuide)));
         }
 
+        if (url.includes("/api/operations/overview")) {
+          return Promise.resolve(new Response(JSON.stringify(operationsOverview)));
+        }
+
         if (url.includes("/api/decision-summary")) {
           return Promise.resolve(new Response(JSON.stringify(decision)));
         }
@@ -269,6 +327,8 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Live map" }));
 
     expect(screen.getByTestId("live-map")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plug-in ready network" })).toBeInTheDocument();
+    expect(screen.getAllByText("North-south corridor").length).toBeGreaterThan(0);
 
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));

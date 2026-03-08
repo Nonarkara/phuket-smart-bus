@@ -41,11 +41,13 @@ const vehicles: VehiclePosition[] = [
     routeId: "rawai-airport",
     licensePlate: "10-1148",
     vehicleId: "008800B133",
+    deviceId: null,
     coordinates: [8.099, 98.2995] as [number, number],
     heading: 50,
     speedKph: 30,
     destination: { en: "To Phuket Airport", th: "ไปสนามบินภูเก็ต" },
     updatedAt: "2026-03-08T14:00:00Z",
+    telemetrySource: "public_tracker",
     freshness: "fresh" as const,
     status: "moving" as const,
     distanceToDestinationMeters: 400,
@@ -80,6 +82,7 @@ describe("decisionEngine", () => {
 
     expect(summary.level).toBe("go_now");
     expect(summary.headline.en).toBe("Go now");
+    expect(summary.seatAvailability?.basis).toBe("camera_ready_estimate");
   });
 
   it("drops to expect delay when warnings are active", () => {
