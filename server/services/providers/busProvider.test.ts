@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearOperationsStore, recordVehicleTelemetry } from "../operationsStore.js";
-import { inferRoute, mergeVehiclesWithTelemetry, normalizeRecord } from "./busProvider.js";
+import {
+  clearBusSnapshotCache,
+  getBusSnapshot,
+  inferRoute,
+  mergeVehiclesWithTelemetry,
+  normalizeRecord
+} from "./busProvider.js";
 
 const rawRecord = {
   id: 1,
@@ -30,6 +36,12 @@ const rawRecord = {
 describe("busProvider", () => {
   beforeEach(() => {
     clearOperationsStore();
+    clearBusSnapshotCache();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    clearBusSnapshotCache();
   });
 
   it("infers the Phuket route from buffer hints", () => {
@@ -70,5 +82,16 @@ describe("busProvider", () => {
     expect(merged[0]?.coordinates).toEqual([7.91, 98.35]);
     expect(merged[0]?.telemetrySource).toBe("direct_gps");
     expect(merged[0]?.deviceId).toBe("gps-22");
+  });
+
+  it("falls back to the timetable-shaped mock fleet when the live feed is unavailable", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
+
+    const snapshot = await getBusSnapshot();
+
+    expect(snapshot.status.state).toBe("fallback");
+    expect(snapshot.status.detail.en).toContain("timetable-shaped mock fleet");
+    expect(snapshot.vehicles.length).toBeGreaterThan(0);
+    expect(snapshot.vehicles.every((vehicle) => vehicle.telemetrySource === "schedule_mock")).toBe(true);
   });
 });

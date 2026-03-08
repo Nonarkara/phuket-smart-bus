@@ -32,7 +32,7 @@ export type AirportDepartureState = "boarding" | "scheduled";
 
 export type LatLngTuple = [number, number];
 
-export type TelemetrySource = "public_tracker" | "direct_gps";
+export type TelemetrySource = "public_tracker" | "direct_gps" | "schedule_mock";
 
 export type PassengerFlowEventType = "boarding" | "alighting";
 

@@ -1,8 +1,8 @@
 import type { RouteId, VehiclePosition, DataSourceStatus } from "../../../shared/types.js";
 import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, PUBLIC_TRACKER_TOKEN } from "../../config.js";
-import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { routeDestinationLabel, text } from "../../lib/i18n.js";
 import { getTelemetryVehicles } from "../operationsStore.js";
+import { buildScheduleMockFleet } from "./mockFleetProvider.js";
 
 type RawBusRecord = {
   id: number;
@@ -22,10 +22,6 @@ type RawBusRecord = {
     };
   };
 };
-
-const fallbackSample = readJsonFile<RawBusRecord[]>(
-  fromRoot("server", "data", "fixtures", "bus_live_sample.json")
-);
 
 let cache:
   | {
@@ -107,6 +103,8 @@ function buildStatus(state: DataSourceStatus["state"], updatedAt: string, detail
       ? "ระบบรถสดทำงานปกติ"
       : detail === "Using direct GPS telemetry"
         ? "กำลังใช้ข้อมูล GPS ตรงจากอุปกรณ์บนรถ"
+        : detail === "Using timetable-shaped mock fleet"
+          ? "กำลังใช้ฝูงรถจำลองตามตารางเวลา"
         : "กำลังใช้ตัวอย่างข้อมูลแทน";
 
   return {
@@ -182,16 +180,14 @@ export async function getBusSnapshot() {
       return cache;
     }
 
-    const vehicles = fallbackSample
-      .map(normalizeRecord)
-      .filter((item): item is VehiclePosition => Boolean(item));
+    const vehicles = buildScheduleMockFleet();
     const latestUpdate =
       vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
     cache = {
       expiresAt: Date.now() + BUS_CACHE_MS,
       vehicles,
-      status: buildStatus("fallback", latestUpdate, "Using cached live sample")
+      status: buildStatus("fallback", latestUpdate, "Using timetable-shaped mock fleet")
     };
 
     return cache;

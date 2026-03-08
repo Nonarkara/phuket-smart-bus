@@ -9,7 +9,7 @@ type TimetableMetadata = {
   notes: LocalizedText;
 };
 
-function getBangkokNow(date = new Date()) {
+export function getBangkokNowMinutes(date = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-GB", {
     timeZone: BANGKOK_TIME_ZONE,
     hour: "2-digit",
@@ -25,7 +25,7 @@ function getBangkokNow(date = new Date()) {
   return hour * 60 + minute;
 }
 
-function parseClockLabel(value: string) {
+export function parseClockMinutes(value: string) {
   const match = value.trim().match(/^(\d{1,2}):(\d{2})(AM|PM)?$/i);
 
   if (!match) {
@@ -48,7 +48,7 @@ function parseClockLabel(value: string) {
   return hour * 60 + minute;
 }
 
-function formatClockLabel(totalMinutes: number) {
+export function formatClockLabel(totalMinutes: number) {
   const normalized = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
   const hour24 = Math.floor(normalized / 60);
   const minute = normalized % 60;
@@ -57,11 +57,11 @@ function formatClockLabel(totalMinutes: number) {
   return `${hour12}:${String(minute).padStart(2, "0")} ${meridiem}`;
 }
 
-function parseScheduleEntries(scheduleText: string) {
+export function parseScheduleEntries(scheduleText: string) {
   if (scheduleText.includes("Running Every")) {
-    const [, rawStart = "", rawEnd = ""] = scheduleText.split("~");
-    const startMinutes = parseClockLabel(rawStart.trim());
-    const endMinutes = parseClockLabel(rawEnd.split("Running")[0].trim());
+    const [rawStart = "", rawEnd = ""] = scheduleText.split("~");
+    const startMinutes = parseClockMinutes(rawStart.trim());
+    const endMinutes = parseClockMinutes(rawEnd.split("Running")[0].trim());
     const intervalMatch = scheduleText.match(/(\d+)\s*Minutes/i);
     const interval = intervalMatch ? Number(intervalMatch[1]) : 15;
 
@@ -82,7 +82,7 @@ function parseScheduleEntries(scheduleText: string) {
   return {
     departures: scheduleText
       .split(",")
-      .map((value) => parseClockLabel(value.trim()))
+      .map((value) => parseClockMinutes(value.trim()))
       .filter((value): value is number => value !== null)
       .sort((a, b) => a - b),
     interval: null
@@ -125,7 +125,7 @@ export function buildTimetableSummary(
   nextBus: NextBusContext;
   timetable: TimetableSummary;
 } {
-  const currentMinutes = getBangkokNow(now);
+  const currentMinutes = getBangkokNowMinutes(now);
   const { departures, interval } = parseScheduleEntries(scheduleText);
 
   if (departures.length > 0) {
