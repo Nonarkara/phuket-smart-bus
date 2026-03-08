@@ -1,6 +1,10 @@
 import type { SeatAvailability, VehiclePosition } from "../../../shared/types.js";
 import { text } from "../../lib/i18n.js";
-import { getLiveSeatAvailability } from "../operationsStore.js";
+import {
+  getDriverAttention,
+  getLiveSeatAvailability,
+  getVehiclePassengerFlowSummary
+} from "../operationsStore.js";
 
 const DEFAULT_CAPACITY = 23;
 
@@ -42,6 +46,8 @@ export function estimateSeatAvailability(vehicle: VehiclePosition | null): SeatA
       "Estimated until the seat camera feed is connected.",
       "เป็นค่าประมาณจนกว่าจะเชื่อมต่อกล้องนับที่นั่ง"
     ),
+    passengerFlow: getVehiclePassengerFlowSummary(vehicle.vehicleId),
+    driverAttention: getDriverAttention(vehicle.vehicleId),
     updatedAt: vehicle.updatedAt
   };
 }

@@ -1,4 +1,4 @@
-import type { AirportGuidePayload, Lang, RouteId } from "@shared/types";
+import type { AirportGuidePayload, Lang, RouteId, SeatAvailability } from "@shared/types";
 import { formatUpdateTime, pick } from "@/lib/i18n";
 
 type Props = {
@@ -62,6 +62,43 @@ function getRouteLabel(routeId: RouteId, lang: Lang) {
   return lang === "th" ? "ดราก้อน ไลน์" : "Dragon Line";
 }
 
+function getCabinMeta(seats: SeatAvailability | null, lang: Lang) {
+  if (!seats) {
+    return null;
+  }
+
+  const parts: string[] = [];
+
+  if (seats.occupiedSeats !== null) {
+    parts.push(lang === "th" ? `นั่งอยู่ ${seats.occupiedSeats} คน` : `${seats.occupiedSeats} seated`);
+  }
+
+  if (seats.passengerFlow) {
+    parts.push(
+      lang === "th"
+        ? `ขึ้น ${seats.passengerFlow.boardingsRecent} · ลง ${seats.passengerFlow.alightingsRecent}`
+        : `${seats.passengerFlow.boardingsRecent} on · ${seats.passengerFlow.alightingsRecent} off`
+    );
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function getDriverMeta(seats: SeatAvailability | null, lang: Lang) {
+  if (!seats?.driverAttention) {
+    return null;
+  }
+
+  const confidence =
+    seats.driverAttention.confidence !== null
+      ? lang === "th"
+        ? ` · มั่นใจ ${Math.round(seats.driverAttention.confidence * 100)}%`
+        : ` · ${Math.round(seats.driverAttention.confidence * 100)}% confidence`
+      : "";
+
+  return `${pick(seats.driverAttention.label, lang)}${confidence}`;
+}
+
 export function AirportGuidePanel({
   lang,
   guide,
@@ -85,6 +122,9 @@ export function AirportGuidePanel({
   onQueryChange,
   onFocusMatch
 }: Props) {
+  const cabinMeta = getCabinMeta(guide?.nextDeparture.seats ?? null, lang);
+  const driverMeta = getDriverMeta(guide?.nextDeparture.seats ?? null, lang);
+
   return (
     <section className="airport-shell card">
       <div className="airport-shell__intro">
@@ -174,6 +214,8 @@ export function AirportGuidePanel({
                     ? pick(guide.nextDeparture.seats.confidenceLabel, lang)
                     : seatsPendingLabel}
                 </small>
+                {cabinMeta ? <small className="airport-stat__meta">{cabinMeta}</small> : null}
+                {driverMeta ? <small className="airport-stat__meta">{driverMeta}</small> : null}
               </article>
               <article className="airport-stat">
                 <span>{boardingLabel}</span>

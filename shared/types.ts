@@ -36,6 +36,12 @@ export type TelemetrySource = "public_tracker" | "direct_gps" | "schedule_mock";
 
 export type PassengerFlowEventType = "boarding" | "alighting";
 
+export type DriverAttentionState =
+  | "alert"
+  | "watch"
+  | "drowsy_detected"
+  | "camera_offline";
+
 export interface LocalizedText {
   en: string;
   th: string;
@@ -82,6 +88,22 @@ export interface SeatAvailability {
   basis: SeatAvailabilityBasis;
   cameraId: string | null;
   confidenceLabel: LocalizedText;
+  passengerFlow: PassengerFlowSummary | null;
+  driverAttention: DriverAttentionStatus | null;
+  updatedAt: string;
+}
+
+export interface PassengerFlowSummary {
+  boardingsRecent: number;
+  alightingsRecent: number;
+  updatedAt: string | null;
+}
+
+export interface DriverAttentionStatus {
+  state: DriverAttentionState;
+  cameraId: string | null;
+  confidence: number | null;
+  label: LocalizedText;
   updatedAt: string;
 }
 
@@ -240,6 +262,15 @@ export interface SeatCameraSample {
   capturedAt: string;
 }
 
+export interface DriverMonitorSample {
+  cameraId: string;
+  vehicleId: string;
+  routeId: RouteId;
+  attentionState: DriverAttentionState;
+  confidence: number | null;
+  capturedAt: string;
+}
+
 export interface PassengerFlowSample {
   cameraId: string;
   vehicleId: string;
@@ -274,8 +305,11 @@ export interface OperationsRouteSummary {
   gpsDevicesLive: number;
   seatCamerasLive: number;
   seatsLeftVisible: number | null;
+  occupiedSeatsVisible: number | null;
   boardingsLastHour: number;
   alightingsLastHour: number;
+  driverAttentionLive: number;
+  driverAttentionWarnings: number;
   lastEventAt: string | null;
 }
 

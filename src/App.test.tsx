@@ -141,6 +141,21 @@ const decision = {
       en: "Estimated until the seat camera feed is connected.",
       th: "เป็นค่าประมาณจนกว่าจะเชื่อมต่อกล้องนับที่นั่ง"
     },
+    passengerFlow: {
+      boardingsRecent: 4,
+      alightingsRecent: 1,
+      updatedAt: "2026-03-08T14:00:00Z"
+    },
+    driverAttention: {
+      state: "alert",
+      cameraId: "driver-01",
+      confidence: 0.94,
+      label: {
+        en: "Driver alert",
+        th: "คนขับพร้อม"
+      },
+      updatedAt: "2026-03-08T14:00:00Z"
+    },
     updatedAt: "2026-03-08T14:00:00Z"
   },
   timetable: {
@@ -191,7 +206,34 @@ const airportGuide = {
     state: "scheduled",
     liveBusId: null,
     liveLicensePlate: null,
-    seats: null
+    seats: {
+      seatsLeft: 11,
+      capacity: 23,
+      occupiedSeats: 12,
+      loadFactor: 12 / 23,
+      basis: "camera_live",
+      cameraId: "cabin-01",
+      confidenceLabel: {
+        en: "Live seats from the bus camera feed.",
+        th: "จำนวนที่นั่งสดจากกล้องบนรถ"
+      },
+      passengerFlow: {
+        boardingsRecent: 4,
+        alightingsRecent: 1,
+        updatedAt: "2026-03-08T14:00:00Z"
+      },
+      driverAttention: {
+        state: "alert",
+        cameraId: "driver-01",
+        confidence: 0.96,
+        label: {
+          en: "Driver alert",
+          th: "คนขับพร้อม"
+        },
+        updatedAt: "2026-03-08T14:00:00Z"
+      },
+      updatedAt: "2026-03-08T14:00:00Z"
+    }
   },
   followingDepartures: ["3:05 PM", "4:05 PM", "5:05 PM"],
   airportBoardingLabel: {
@@ -277,12 +319,16 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
     expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
+    expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
+    expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
     expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "My stop" }));
 
     expect(await screen.findByText("Airport approach is slower")).toBeInTheDocument();
+    expect(screen.getByText("12 seated")).toBeInTheDocument();
+    expect(screen.getByText("4 on · 1 off")).toBeInTheDocument();
     expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Live map" }));

@@ -32,6 +32,20 @@ function getSeatChipLabel(count: number, lang: Lang) {
   return lang === "th" ? `${count} ที่นั่งว่าง` : `${count} seats left`;
 }
 
+function getOccupancyChipLabel(count: number, lang: Lang) {
+  return lang === "th" ? `นั่งอยู่ ${count}` : `${count} seated`;
+}
+
+function getFlowChipLabel(boardings: number, alightings: number, lang: Lang) {
+  return lang === "th" ? `ขึ้น ${boardings} · ลง ${alightings}` : `${boardings} on · ${alightings} off`;
+}
+
+function getDriverChipLabel(summary: DecisionSummary, lang: Lang) {
+  return summary.seatAvailability?.driverAttention
+    ? pick(summary.seatAvailability.driverAttention.label, lang)
+    : null;
+}
+
 export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage }: Props) {
   if (loading && !summary) {
     return (
@@ -73,6 +87,23 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           <span className="decision-chip">
             {getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)}
           </span>
+        ) : null}
+        {summary.seatAvailability?.occupiedSeats !== null ? (
+          <span className="decision-chip">
+            {getOccupancyChipLabel(summary.seatAvailability.occupiedSeats, lang)}
+          </span>
+        ) : null}
+        {summary.seatAvailability?.passengerFlow ? (
+          <span className="decision-chip">
+            {getFlowChipLabel(
+              summary.seatAvailability.passengerFlow.boardingsRecent,
+              summary.seatAvailability.passengerFlow.alightingsRecent,
+              lang
+            )}
+          </span>
+        ) : null}
+        {getDriverChipLabel(summary, lang) ? (
+          <span className="decision-chip">{getDriverChipLabel(summary, lang)}</span>
         ) : null}
       </div>
       <h2 className="decision-panel__headline">{pick(summary.headline, lang)}</h2>

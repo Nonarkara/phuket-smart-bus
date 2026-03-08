@@ -59,8 +59,18 @@ function buildRouteSummary(routeId: RouteId, events: PassengerFlowEvent[], vehic
       seatSummaries.length > 0
         ? seatSummaries.reduce((sum, seat) => sum + (seat.seatsLeft ?? 0), 0)
         : null,
+    occupiedSeatsVisible:
+      seatSummaries.length > 0
+        ? seatSummaries.reduce((sum, seat) => sum + (seat.occupiedSeats ?? 0), 0)
+        : null,
     boardingsLastHour,
     alightingsLastHour,
+    driverAttentionLive: seatSummaries.filter((seat) => Boolean(seat.driverAttention)).length,
+    driverAttentionWarnings: seatSummaries.filter(
+      (seat) =>
+        seat.driverAttention?.state === "watch" ||
+        seat.driverAttention?.state === "drowsy_detected"
+    ).length,
     lastEventAt: routeEvents[0]?.updatedAt ?? null
   } satisfies OperationsRouteSummary;
 }

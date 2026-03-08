@@ -10,11 +10,13 @@ import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
+  recordDriverMonitorSamples,
   recordPassengerFlowSamples,
   recordSeatCameraSamples,
   recordVehicleTelemetry
 } from "./services/operationsStore.js";
 import type {
+  DriverMonitorSample,
   HealthPayload,
   PassengerFlowSample,
   RouteId,
@@ -135,6 +137,18 @@ export function createApp() {
     }
 
     recordSeatCameraSamples(samples as SeatCameraSample[]);
+    response.status(202).json({ accepted: samples.length });
+  });
+
+  app.post("/api/integrations/driver-monitor", (request, response) => {
+    const samples = request.body?.samples;
+
+    if (!Array.isArray(samples)) {
+      response.status(400).json({ error: "samples array is required" });
+      return;
+    }
+
+    recordDriverMonitorSamples(samples as DriverMonitorSample[]);
     response.status(202).json({ accepted: samples.length });
   });
 

@@ -1,5 +1,8 @@
 import type {
+  DriverAttentionStatus,
+  DriverMonitorSample,
   PassengerFlowEvent,
+  PassengerFlowSummary,
   PassengerFlowSample,
   SeatAvailability,
   SeatCameraSample,
@@ -10,9 +13,11 @@ import { LIVE_STALE_AFTER_MS } from "../config.js";
 import { routeDestinationLabel, text } from "../lib/i18n.js";
 
 const MAX_EVENT_HISTORY = 250;
+const FLOW_SUMMARY_LOOKBACK_MS = 30 * 60 * 1000;
 
 const telemetryByVehicleId = new Map<string, VehicleTelemetrySample>();
 const seatCameraByVehicleId = new Map<string, SeatCameraSample>();
+const driverMonitorByVehicleId = new Map<string, DriverMonitorSample>();
 const passengerFlowEvents: PassengerFlowEvent[] = [];
 
 function toTimestamp(value: string) {
@@ -66,6 +71,27 @@ function buildSeatAvailability(sample: SeatCameraSample): SeatAvailability {
       "Live seats from the bus camera feed.",
       "จำนวนที่นั่งสดจากกล้องบนรถ"
     ),
+    passengerFlow: getVehiclePassengerFlowSummary(sample.vehicleId),
+    driverAttention: getDriverAttention(sample.vehicleId),
+    updatedAt: sample.capturedAt
+  };
+}
+
+function buildDriverAttention(sample: DriverMonitorSample): DriverAttentionStatus {
+  const state = sample.attentionState;
+
+  return {
+    state,
+    cameraId: sample.cameraId,
+    confidence: sample.confidence,
+    label:
+      state === "alert"
+        ? text("Driver alert", "คนขับพร้อม")
+        : state === "watch"
+          ? text("Driver attention watch", "เฝ้าระวังความล้าของคนขับ")
+          : state === "drowsy_detected"
+            ? text("Driver drowsiness detected", "ตรวจพบความง่วงของคนขับ")
+            : text("Driver camera offline", "กล้องคนขับออฟไลน์"),
     updatedAt: sample.capturedAt
   };
 }
@@ -73,6 +99,7 @@ function buildSeatAvailability(sample: SeatCameraSample): SeatAvailability {
 export function clearOperationsStore() {
   telemetryByVehicleId.clear();
   seatCameraByVehicleId.clear();
+  driverMonitorByVehicleId.clear();
   passengerFlowEvents.splice(0, passengerFlowEvents.length);
 }
 
@@ -85,6 +112,12 @@ export function recordVehicleTelemetry(samples: VehicleTelemetrySample[]) {
 export function recordSeatCameraSamples(samples: SeatCameraSample[]) {
   for (const sample of samples) {
     seatCameraByVehicleId.set(getVehicleKey(sample.vehicleId), sample);
+  }
+}
+
+export function recordDriverMonitorSamples(samples: DriverMonitorSample[]) {
+  for (const sample of samples) {
+    driverMonitorByVehicleId.set(getVehicleKey(sample.vehicleId), sample);
   }
 }
 
@@ -125,6 +158,42 @@ export function getLiveSeatAvailability(vehicleId: string) {
   }
 
   return buildSeatAvailability(sample);
+}
+
+export function getDriverAttention(vehicleId: string) {
+  const sample = driverMonitorByVehicleId.get(getVehicleKey(vehicleId));
+
+  if (!sample || !isFresh(sample.capturedAt)) {
+    return null;
+  }
+
+  return buildDriverAttention(sample);
+}
+
+export function getVehiclePassengerFlowSummary(
+  vehicleId: string,
+  lookbackMs = FLOW_SUMMARY_LOOKBACK_MS
+): PassengerFlowSummary | null {
+  const now = Date.now();
+  const recentEvents = passengerFlowEvents.filter(
+    (event) =>
+      event.vehicleId === getVehicleKey(vehicleId) &&
+      now - toTimestamp(event.updatedAt) <= lookbackMs
+  );
+
+  if (recentEvents.length === 0) {
+    return null;
+  }
+
+  return {
+    boardingsRecent: recentEvents
+      .filter((event) => event.eventType === "boarding")
+      .reduce((sum, event) => sum + event.passengers, 0),
+    alightingsRecent: recentEvents
+      .filter((event) => event.eventType === "alighting")
+      .reduce((sum, event) => sum + event.passengers, 0),
+    updatedAt: recentEvents[0]?.updatedAt ?? null
+  };
 }
 
 export function getRecentPassengerFlowEvents(limit = 12) {

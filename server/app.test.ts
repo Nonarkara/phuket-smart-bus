@@ -17,6 +17,7 @@ describe("server app", () => {
         "/api/operations/overview",
         "/api/integrations/vehicle-telemetry",
         "/api/integrations/seat-camera",
+        "/api/integrations/driver-monitor",
         "/api/integrations/passenger-flow",
         "/api/decision-summary",
         "*"
