@@ -120,6 +120,42 @@ a {
   padding: 0 1rem;
 }
 
+.airport-result {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  margin-top: 0.7rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card-muted);
+}
+
+.airport-result__tag {
+  flex: 0 0 auto;
+  color: var(--sand);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.airport-result__body strong,
+.airport-result__body small {
+  display: block;
+}
+
+.airport-result__body strong {
+  font-size: 0.96rem;
+  line-height: 1.25;
+}
+
+.airport-result__body small {
+  margin-top: 0.18rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .airport-quick {
   margin-top: 0.95rem;
 }
@@ -227,14 +263,6 @@ a {
   color: var(--muted);
   line-height: 1.5;
   max-width: 24rem;
-}
-
-.airport-guide__match--inline {
-  margin-top: 0.8rem;
-  padding: 0.85rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
 }
 
 .airport-guide__stats {

@@ -104,6 +104,32 @@ export function AirportGuidePanel({
         />
       </label>
 
+      {guide && query.trim() ? (
+        <div className="airport-result" aria-live="polite">
+          <span className="airport-result__tag">{getKindLabel(guide, lang)}</span>
+          <div className="airport-result__body">
+            {guide.bestMatch ? (
+              <>
+                <strong>{pick(guide.bestMatch.areaLabel, lang)}</strong>
+                <small>
+                  {getRouteLabel(guide.bestMatch.routeId, lang)} · {pick(guide.bestMatch.stopName, lang)}
+                  {guide.bestMatch.travelMinutes !== null
+                    ? lang === "th"
+                      ? ` · ประมาณ ${guide.bestMatch.travelMinutes} นาที`
+                      : ` · about ${guide.bestMatch.travelMinutes} min`
+                    : ""}
+                </small>
+              </>
+            ) : (
+              <>
+                <strong>{pick(guide.headline, lang)}</strong>
+                <small>{pick(guide.summary, lang)}</small>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {loading && !guide ? (
         <div className="airport-guide card airport-guide--loading">
           <div className="skeleton skeleton--headline" />
@@ -129,25 +155,6 @@ export function AirportGuidePanel({
                 {formatUpdateTime(guide.checkedAt, lang)}
               </span>
             </div>
-            <h3>{pick(guide.headline, lang)}</h3>
-            <p>{pick(guide.summary, lang)}</p>
-
-            {guide.bestMatch ? (
-              <div className="airport-guide__match airport-guide__match--inline">
-                <div>
-                  <span>{destinationLabel}</span>
-                  <strong>{pick(guide.bestMatch.areaLabel, lang)}</strong>
-                  <small>
-                    {getRouteLabel(guide.bestMatch.routeId, lang)}
-                    {guide.bestMatch.travelMinutes !== null
-                      ? lang === "th"
-                        ? ` · ประมาณ ${guide.bestMatch.travelMinutes} นาที`
-                        : ` · about ${guide.bestMatch.travelMinutes} min`
-                      : ""}
-                  </small>
-                </div>
-              </div>
-            ) : null}
 
             <div className="airport-guide__stats" aria-label={title}>
               <article className="airport-stat airport-stat--primary">
@@ -174,6 +181,9 @@ export function AirportGuidePanel({
                 <small>{getRouteLabel(guide.nextDeparture.routeId, lang)}</small>
               </article>
             </div>
+
+            <h3>{pick(guide.headline, lang)}</h3>
+            <p>{pick(guide.summary, lang)}</p>
 
             {guide.bestMatch ? (
               <div className="airport-guide__match">
