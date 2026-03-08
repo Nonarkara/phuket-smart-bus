@@ -5,6 +5,7 @@ import type {
   DecisionSummary,
   HealthPayload,
   Lang,
+  LatLngTuple,
   Route,
   RouteId,
   Stop,
@@ -31,14 +32,26 @@ import { StopSpotlight } from "./components/StopSpotlight";
 import { BrandLogo } from "./components/BrandLogo";
 import { AirportGuidePanel } from "./components/AirportGuidePanel";
 import { AppNav, type AppView } from "./components/AppNav";
+import { LocationBanner } from "./components/LocationBanner";
+import { haversineDistanceMeters } from "./lib/geo";
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = ["rawai-airport", "patong-old-bus-station"];
+const AIRPORT_MATCH_RADIUS_METERS = 650;
+const NEARBY_STOP_RADIUS_METERS = 700;
 
 const VIEW_PATHS: Record<AppView, string> = {
   airport: "/",
   map: "/live-map",
   ride: "/ride"
+};
+
+type LocationState = "requesting" | "granted" | "denied" | "unsupported" | "error";
+
+type NearestStopMatch = {
+  routeId: RouteId;
+  stop: Stop;
+  distanceMeters: number;
 };
 
 function getInitialView(): AppView {
@@ -57,6 +70,51 @@ function getInitialView(): AppView {
   return "airport";
 }
 
+function isPrimaryRoute(routeId: RouteId) {
+  return PRIMARY_ROUTE_IDS.includes(routeId);
+}
+
+function getRouteLabel(routeId: RouteId, lang: Lang) {
+  if (routeId === "rawai-airport") {
+    return lang === "th" ? "สายสนามบิน" : "Airport Line";
+  }
+
+  return lang === "th" ? "สายป่าตอง" : "Patong Line";
+}
+
+function formatDistanceLabel(distanceMeters: number, lang: Lang) {
+  if (distanceMeters < 1000) {
+    return `${Math.round(distanceMeters / 10) * 10} m`;
+  }
+
+  return lang === "th"
+    ? `${(distanceMeters / 1000).toFixed(1)} กม.`
+    : `${(distanceMeters / 1000).toFixed(1)} km`;
+}
+
+function findNearestStopMatch(
+  routeStopsById: Partial<Record<RouteId, Stop[]>>,
+  userLocation: LatLngTuple | null
+) {
+  if (!userLocation) {
+    return null;
+  }
+
+  const candidates = PRIMARY_ROUTE_IDS.flatMap((routeId) =>
+    (routeStopsById[routeId] ?? []).map((stop) => ({
+      routeId,
+      stop,
+      distanceMeters: haversineDistanceMeters(userLocation, stop.coordinates)
+    }))
+  );
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return candidates.sort((left, right) => left.distanceMeters - right.distanceMeters)[0] ?? null;
+}
+
 export default function App() {
   const [lang, setLang] = useState<Lang>("en");
   const [view, setView] = useState<AppView>(getInitialView);
@@ -69,6 +127,10 @@ export default function App() {
   const [airportGuide, setAirportGuide] = useState<AirportGuidePayload | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [routeStopsById, setRouteStopsById] = useState<Partial<Record<RouteId, Stop[]>>>({});
+  const [userLocation, setUserLocation] = useState<LatLngTuple | null>(null);
+  const [locationState, setLocationState] = useState<LocationState>("requesting");
+  const [hasAppliedLocation, setHasAppliedLocation] = useState(false);
   const [mapMode, setMapMode] = useState<"route" | "stop">("route");
   const [stopSearch, setStopSearch] = useState("");
   const [airportQuery, setAirportQuery] = useState("");
@@ -81,6 +143,10 @@ export default function App() {
   const [guideError, setGuideError] = useState<string | null>(null);
   const deferredStopSearch = useDeferredValue(stopSearch);
   const deferredAirportQuery = useDeferredValue(airportQuery);
+  const nearestStopMatch = findNearestStopMatch(routeStopsById, userLocation);
+  const isAirportLocation =
+    nearestStopMatch?.stop.name.en === "Phuket Airport" &&
+    nearestStopMatch.distanceMeters <= AIRPORT_MATCH_RADIUS_METERS;
 
   useEffect(() => {
     let alive = true;
@@ -120,6 +186,43 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setLocationState("unsupported");
+      return;
+    }
+
+    let alive = true;
+    setLocationState("requesting");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!alive) {
+          return;
+        }
+
+        setLocationState("granted");
+        setUserLocation([position.coords.latitude, position.coords.longitude]);
+      },
+      (error) => {
+        if (!alive) {
+          return;
+        }
+
+        setLocationState(error.code === error.PERMISSION_DENIED ? "denied" : "error");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10_000,
+        maximumAge: 60_000
+      }
+    );
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!selectedRouteId) {
       return;
     }
@@ -141,6 +244,10 @@ export default function App() {
         const activeRoute = routes.find((route) => route.id === routeId);
         setRouteError(null);
         setStops(stopData);
+        setRouteStopsById((current) => ({
+          ...current,
+          [routeId]: stopData
+        }));
         setVehicles(vehicleData.vehicles);
         setAdvisories(advisoryData.advisories);
         setSelectedStopId((current) =>
@@ -159,6 +266,42 @@ export default function App() {
       alive = false;
     };
   }, [routes, selectedRouteId]);
+
+  useEffect(() => {
+    const primaryRouteIds = routes.filter((route) => isPrimaryRoute(route.id)).map((route) => route.id);
+    const missingRouteIds = primaryRouteIds.filter((routeId) => !(routeId in routeStopsById));
+
+    if (missingRouteIds.length === 0) {
+      return;
+    }
+
+    let alive = true;
+
+    async function primeRouteStops() {
+      try {
+        const entries = await Promise.all(
+          missingRouteIds.map(async (routeId) => [routeId, await getStops(routeId)] as const)
+        );
+
+        if (!alive) {
+          return;
+        }
+
+        setRouteStopsById((current) => ({
+          ...current,
+          ...Object.fromEntries(entries)
+        }));
+      } catch {
+        // Keep the app usable even if one stop list takes longer to load.
+      }
+    }
+
+    void primeRouteStops();
+
+    return () => {
+      alive = false;
+    };
+  }, [routeStopsById, routes]);
 
   useEffect(() => {
     let alive = true;
@@ -236,6 +379,28 @@ export default function App() {
       alive = false;
     };
   }, [selectedRouteId, selectedStopId]);
+
+  useEffect(() => {
+    if (locationState !== "granted" || !nearestStopMatch || hasAppliedLocation) {
+      return;
+    }
+
+    if (isAirportLocation) {
+      startTransition(() => {
+        setSelectedRouteId(nearestStopMatch.routeId);
+        setSelectedStopId(nearestStopMatch.stop.id);
+        setDecisionError(null);
+        setRouteError(null);
+      });
+      setHasAppliedLocation(true);
+      return;
+    }
+
+    if (nearestStopMatch.distanceMeters <= NEARBY_STOP_RADIUS_METERS) {
+      focusRouteStop(nearestStopMatch.routeId, nearestStopMatch.stop.id);
+      setHasAppliedLocation(true);
+    }
+  }, [hasAppliedLocation, isAirportLocation, locationState, nearestStopMatch]);
 
   const refreshRouteSnapshot = useEffectEvent(async (routeId: RouteId) => {
     try {
@@ -382,6 +547,63 @@ export default function App() {
     }
   }
 
+  function openNearestMatch() {
+    if (!nearestStopMatch) {
+      return;
+    }
+
+    if (isAirportLocation) {
+      navigate("airport");
+      return;
+    }
+
+    if (nearestStopMatch.distanceMeters <= NEARBY_STOP_RADIUS_METERS) {
+      focusRouteStop(nearestStopMatch.routeId, nearestStopMatch.stop.id);
+      return;
+    }
+
+    navigate("map");
+  }
+
+  let locationHeadline: string | null = null;
+  let locationBody: string | null = null;
+  let locationActionLabel: string | null = null;
+
+  if (locationState === "requesting") {
+    locationHeadline = pick(ui.locationRequestTitle, lang);
+    locationBody = pick(ui.locationRequestBody, lang);
+  } else if (locationState === "granted" && nearestStopMatch) {
+    const distanceLabel = formatDistanceLabel(nearestStopMatch.distanceMeters, lang);
+
+    if (isAirportLocation) {
+      locationHeadline = pick(ui.locationAirportTitle, lang);
+      locationBody = pick(ui.locationAirportBody, lang);
+    } else if (nearestStopMatch.distanceMeters <= NEARBY_STOP_RADIUS_METERS) {
+      locationHeadline = pick(ui.locationNearStopTitle, lang);
+      locationBody =
+        lang === "th"
+          ? `${pick(nearestStopMatch.stop.name, lang)} อยู่ห่างประมาณ ${distanceLabel} บน${getRouteLabel(nearestStopMatch.routeId, lang)}`
+          : `${pick(nearestStopMatch.stop.name, lang)} is about ${distanceLabel} away on the ${getRouteLabel(
+              nearestStopMatch.routeId,
+              lang
+            )}`;
+      locationActionLabel = pick(ui.locationOpenStop, lang);
+    } else {
+      locationHeadline = pick(ui.locationFarTitle, lang);
+      locationBody =
+        lang === "th"
+          ? `${pick(nearestStopMatch.stop.name, lang)} อยู่ห่างประมาณ ${distanceLabel} ให้เปิดแผนที่สดเพื่อตรวจดูสองเส้นทางหลักก่อนออกเดินทาง`
+          : `${pick(nearestStopMatch.stop.name, lang)} is about ${distanceLabel} away. Open the live map to inspect the two main lines before heading there.`;
+      locationActionLabel = pick(ui.locationOpenMap, lang);
+    }
+  } else if (locationState === "denied") {
+    locationHeadline = pick(ui.locationDeniedTitle, lang);
+    locationBody = pick(ui.locationDeniedBody, lang);
+  } else if (locationState === "unsupported" || locationState === "error") {
+    locationHeadline = pick(ui.locationUnsupportedTitle, lang);
+    locationBody = pick(ui.locationUnsupportedBody, lang);
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -408,6 +630,16 @@ export default function App() {
         rideLabel={pick(ui.navRide, lang)}
         onChange={navigate}
       />
+
+      {locationHeadline && locationBody ? (
+        <LocationBanner
+          eyebrow={pick(ui.locationEyebrow, lang)}
+          headline={locationHeadline}
+          body={locationBody}
+          actionLabel={locationActionLabel}
+          onAction={locationActionLabel ? openNearestMatch : null}
+        />
+      ) : null}
 
       {view === "airport" ? (
         <main className="page-shell">
@@ -472,6 +704,7 @@ export default function App() {
                 route={activeRoute}
                 stops={mapStops}
                 vehicles={vehicles}
+                userLocation={userLocation}
                 selectedStop={selectedStop}
                 mode={mapMode}
                 onModeChange={setMapMode}

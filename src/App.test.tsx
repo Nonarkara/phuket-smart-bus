@@ -263,6 +263,27 @@ const airportGuide = {
 describe("App", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
+    Object.defineProperty(window.navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: vi.fn((success: PositionCallback) =>
+          success({
+            coords: {
+              latitude: 8.1,
+              longitude: 98.3,
+              accuracy: 12,
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null,
+              toJSON: () => ({})
+            },
+            timestamp: Date.now(),
+            toJSON: () => ({})
+          } as GeolocationPosition)
+        )
+      }
+    });
 
     const mockFetch = vi.fn((input: string | URL) => {
         const url = String(input);
@@ -319,6 +340,7 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
     expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
+    expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
     expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
     expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
@@ -341,5 +363,6 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
     expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
+    expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
   });
 });

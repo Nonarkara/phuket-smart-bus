@@ -8,6 +8,7 @@ type Props = {
   route: Route | null;
   stops: Stop[];
   vehicles: VehiclePosition[];
+  userLocation: LatLngTuple | null;
   selectedStop: Stop | null;
   mode: "route" | "stop";
   onModeChange: (mode: "route" | "stop") => void;
@@ -45,6 +46,7 @@ export function LiveMap({
   route,
   stops,
   vehicles,
+  userLocation,
   selectedStop,
   mode,
   onModeChange
@@ -130,6 +132,20 @@ export function LiveMap({
             <Tooltip>{vehicle.licensePlate}</Tooltip>
           </CircleMarker>
         ))}
+        {userLocation ? (
+          <CircleMarker
+            center={userLocation}
+            radius={9}
+            pathOptions={{
+              color: "#101418",
+              fillColor: "#ffffff",
+              fillOpacity: 1,
+              weight: 3
+            }}
+          >
+            <Tooltip>{pick(ui.locationYouAreHere, lang)}</Tooltip>
+          </CircleMarker>
+        ) : null}
       </MapContainer>
     </div>
   );

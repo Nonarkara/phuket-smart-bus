@@ -81,6 +81,62 @@ export const ui = {
     en: "Use the map only if you are already waiting on the route.",
     th: "ใช้แผนที่เมื่อคุณรออยู่บนเส้นทางแล้วเท่านั้น"
   },
+  locationEyebrow: {
+    en: "Location",
+    th: "ตำแหน่ง"
+  },
+  locationRequestTitle: {
+    en: "Finding your nearest Smart Bus stop",
+    th: "กำลังหาป้ายสมาร์ทบัสที่ใกล้คุณที่สุด"
+  },
+  locationRequestBody: {
+    en: "Allow location so the app can tell whether you are at Phuket Airport or already near one of the two main lines.",
+    th: "อนุญาตตำแหน่งเพื่อให้แอปรู้ว่าคุณอยู่ที่สนามบินภูเก็ตหรืออยู่ใกล้หนึ่งในสองสายหลักแล้ว"
+  },
+  locationAirportTitle: {
+    en: "You appear to be at Phuket Airport",
+    th: "ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต"
+  },
+  locationAirportBody: {
+    en: "The app will keep the airport departure card first and use your location to confirm boarding context.",
+    th: "แอปจะคงการ์ดรถออกจากสนามบินไว้ก่อนและใช้ตำแหน่งของคุณเพื่อยืนยันบริบทการขึ้นรถ"
+  },
+  locationNearStopTitle: {
+    en: "Nearest stop found",
+    th: "พบป้ายที่ใกล้ที่สุดแล้ว"
+  },
+  locationFarTitle: {
+    en: "Nearest Smart Bus stop",
+    th: "ป้ายสมาร์ทบัสที่ใกล้ที่สุด"
+  },
+  locationDeniedTitle: {
+    en: "Location blocked",
+    th: "ไม่ได้รับอนุญาตตำแหน่ง"
+  },
+  locationDeniedBody: {
+    en: "You can still search manually or browse the two lines, but the app cannot match you to the nearest stop yet.",
+    th: "คุณยังค้นหาเองหรือดูสองสายหลักได้ แต่แอปยังจับคู่คุณกับป้ายที่ใกล้ที่สุดไม่ได้"
+  },
+  locationUnsupportedTitle: {
+    en: "Location unavailable",
+    th: "ไม่สามารถใช้ตำแหน่งได้"
+  },
+  locationUnsupportedBody: {
+    en: "This browser cannot share your location right now. Use the airport search or live map instead.",
+    th: "เบราว์เซอร์นี้ยังไม่สามารถแชร์ตำแหน่งได้ในขณะนี้ ให้ใช้การค้นหาจากสนามบินหรือแผนที่สดแทน"
+  },
+  locationOpenStop: {
+    en: "Open my stop",
+    th: "เปิดป้ายของฉัน"
+  },
+  locationOpenMap: {
+    en: "Open live map",
+    th: "เปิดแผนที่สด"
+  },
+  locationYouAreHere: {
+    en: "You are here",
+    th: "คุณอยู่ที่นี่"
+  },
   navAirport: {
     en: "Airport",
     th: "สนามบิน"
