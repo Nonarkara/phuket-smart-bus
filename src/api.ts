@@ -1,5 +1,6 @@
 import type {
   Advisory,
+  AirportGuidePayload,
   DecisionSummary,
   HealthPayload,
   Route,
@@ -42,4 +43,9 @@ export function getDecisionSummary(routeId: RouteId, stopId: string) {
   return fetchJson<DecisionSummary>(
     `/api/decision-summary?routeId=${routeId}&stopId=${stopId}`
   );
+}
+
+export function getAirportGuide(destination = "") {
+  const query = new URLSearchParams({ destination });
+  return fetchJson<AirportGuidePayload>(`/api/airport-guide?${query.toString()}`);
 }

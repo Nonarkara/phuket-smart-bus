@@ -7,6 +7,7 @@ import { getBusSnapshot, getVehiclesForRoute } from "./services/providers/busPro
 import { getTrafficAdvisories } from "./services/providers/trafficProvider.js";
 import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/weatherProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
+import { getAirportGuide } from "./services/airportGuide.js";
 import type { HealthPayload, RouteId } from "../shared/types.js";
 
 const validRoutes = new Set<RouteId>([
@@ -94,6 +95,13 @@ export function createApp() {
       advisories: [...traffic.advisories, ...weather.advisories],
       sourceStatuses: [traffic.status, weather.status]
     });
+  });
+
+  app.get("/api/airport-guide", async (request, response) => {
+    const destination =
+      typeof request.query.destination === "string" ? request.query.destination : "";
+
+    response.json(await getAirportGuide(destination));
   });
 
   app.get("/api/decision-summary", async (request, response) => {

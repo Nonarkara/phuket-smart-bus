@@ -55,6 +55,269 @@ a {
   padding: max(1rem, env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom));
 }
 
+.airport-shell {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.airport-shell__intro h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2rem, 8vw, 3.4rem);
+  line-height: 0.93;
+  letter-spacing: -0.08em;
+}
+
+.airport-shell__intro p {
+  margin: 0.55rem 0 0;
+  max-width: 42rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.airport-search {
+  display: block;
+  margin-top: 1rem;
+}
+
+.airport-search input {
+  width: 100%;
+  min-height: 3.65rem;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--card-muted);
+  color: var(--text);
+  padding: 0 1rem;
+}
+
+.airport-quick {
+  margin-top: 0.95rem;
+}
+
+.airport-quick > strong {
+  display: block;
+  margin-bottom: 0.65rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.airport-quick__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.airport-quick-card {
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card-muted);
+  text-align: left;
+}
+
+.airport-quick-card span,
+.airport-quick-card small {
+  display: block;
+  color: var(--muted);
+}
+
+.airport-quick-card span {
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.airport-quick-card strong {
+  display: block;
+  margin-top: 0.32rem;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.airport-quick-card small {
+  margin-top: 0.38rem;
+  line-height: 1.35;
+}
+
+.airport-guide {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
+}
+
+.airport-guide--direct {
+  border-color: rgba(31, 122, 87, 0.18);
+}
+
+.airport-guide--transfer {
+  border-color: rgba(138, 93, 18, 0.18);
+}
+
+.airport-guide--not_supported,
+.airport-guide--fallback {
+  border-color: rgba(158, 61, 50, 0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #fcf6f4 100%);
+}
+
+.airport-guide__header,
+.airport-guide__times,
+.airport-guide__match {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.airport-guide__header {
+  align-items: center;
+}
+
+.airport-guide__tag,
+.airport-guide__update {
+  font-size: 0.76rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.airport-guide__tag {
+  color: var(--sand);
+  font-weight: 800;
+}
+
+.airport-guide__update {
+  color: var(--muted);
+}
+
+.airport-guide__primary h3 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.6rem, 7vw, 2.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+
+.airport-guide__primary p {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.airport-guide__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.airport-stat {
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.airport-stat span,
+.airport-stat small {
+  display: block;
+  color: var(--muted);
+}
+
+.airport-stat span {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.airport-stat strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: clamp(1.25rem, 5vw, 2rem);
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.airport-stat small {
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
+.airport-guide__match {
+  align-items: flex-end;
+  padding-top: 0.95rem;
+  margin-top: 0.95rem;
+  border-top: 1px solid var(--line);
+}
+
+.airport-guide__match span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.airport-guide__match strong {
+  display: block;
+  margin-top: 0.3rem;
+}
+
+.airport-guide__match small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.airport-guide__action {
+  border: 0;
+  min-height: 3rem;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  background: #101418;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.airport-guide__times span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.airport-guide__times strong {
+  text-align: right;
+}
+
+.airport-guide__notes {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.airport-guide__notes li {
+  position: relative;
+  padding-left: 0.95rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.airport-guide__notes li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.53rem;
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: var(--sand);
+}
+
 .journey-strip {
   display: grid;
   gap: 0.75rem;
@@ -191,6 +454,7 @@ a {
 .layout {
   display: grid;
   gap: 1rem;
+  margin-top: 1rem;
 }
 
 .card {
@@ -204,6 +468,10 @@ a {
   padding: 0.95rem;
   display: grid;
   gap: 0.9rem;
+}
+
+.map-stage__heading {
+  align-items: flex-start;
 }
 
 .map-stage__header {
@@ -228,7 +496,7 @@ a {
 }
 
 .map-stage__summary {
-  min-width: 7rem;
+  width: fit-content;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--line);
@@ -251,7 +519,7 @@ a {
 .route-rail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 76%;
+  grid-auto-columns: 82%;
   gap: 0.75rem;
   overflow-x: auto;
   padding-bottom: 0.1rem;
@@ -934,6 +1202,9 @@ a {
 }
 
 @media (max-width: 699px) {
+  .airport-guide__header,
+  .airport-guide__times,
+  .airport-guide__match,
   .topbar,
   .map-stage__header,
   .section-heading,
@@ -947,6 +1218,8 @@ a {
     grid-auto-columns: 84%;
   }
 
+  .airport-quick__grid,
+  .airport-guide__stats,
   .journey-strip {
     grid-template-columns: 1fr;
   }
@@ -988,6 +1261,11 @@ a {
 }
 
 @media (min-width: 960px) {
+  .airport-guide {
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.85fr);
+    align-items: start;
+  }
+
   .journey-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

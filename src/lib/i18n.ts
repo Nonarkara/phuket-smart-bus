@@ -6,12 +6,80 @@ export const ui = {
     th: "ภูเก็ต สมาร์ท บัส"
   },
   appSubtitle: {
-    en: "Rider prototype",
-    th: "ต้นแบบสำหรับผู้โดยสาร"
+    en: "Airport QR web app",
+    th: "เว็บแอปสำหรับสแกนที่สนามบิน"
   },
   appBody: {
-    en: "Pick a route, choose a stop, then decide when to move.",
-    th: "เลือกเส้นทาง เลือกป้าย แล้วค่อยตัดสินใจออกเดินทาง"
+    en: "Show riders the bus is real before taxis take the decision away.",
+    th: "ทำให้ผู้โดยสารเห็นว่ารถบัสใช้งานได้จริงก่อนที่แท็กซี่จะตัดสินใจแทน"
+  },
+  airportEyebrow: {
+    en: "From Phuket Airport",
+    th: "จากสนามบินภูเก็ต"
+  },
+  airportTitle: {
+    en: "Can the bus take me there?",
+    th: "รถบัสไปถึงที่นั่นไหม?"
+  },
+  airportBody: {
+    en: "Search a beach, hotel belt, or landmark. We will tell you if Smart Bus is available, when it leaves, and whether seats are still open.",
+    th: "ค้นหาหาด ย่านโรงแรม หรือจุดสังเกต แล้วเราจะบอกว่าควรใช้ Smart Bus หรือไม่ รถจะออกเมื่อไร และยังพอมีที่นั่งหรือไม่"
+  },
+  airportSearchPlaceholder: {
+    en: "Search beach, hotel, or landmark",
+    th: "ค้นหาหาด โรงแรม หรือจุดสังเกต"
+  },
+  airportQuickTitle: {
+    en: "Popular airport trips",
+    th: "จุดหมายยอดนิยมจากสนามบิน"
+  },
+  airportDepartureLabel: {
+    en: "Next airport departure",
+    th: "รถถัดไปจากสนามบิน"
+  },
+  airportSeatsLabel: {
+    en: "Est. seats left",
+    th: "ที่นั่งเหลือโดยประมาณ"
+  },
+  airportSeatsPending: {
+    en: "Seat camera feed ready to connect",
+    th: "พร้อมเชื่อมต่อกล้องนับที่นั่ง"
+  },
+  airportBoardingLabel: {
+    en: "Boarding point",
+    th: "จุดขึ้นรถ"
+  },
+  airportTimesLabel: {
+    en: "Next departures",
+    th: "รอบรถถัดไป"
+  },
+  airportConnectionLabel: {
+    en: "Best line",
+    th: "สายที่เหมาะ"
+  },
+  airportDestinationLabel: {
+    en: "Best stop",
+    th: "ป้ายที่เหมาะ"
+  },
+  airportFocusAction: {
+    en: "Show on map",
+    th: "แสดงบนแผนที่"
+  },
+  airportGuideFallbackTitle: {
+    en: "Airport guidance unavailable",
+    th: "ยังไม่มีคำแนะนำจากสนามบิน"
+  },
+  airportGuideFallbackBody: {
+    en: "Use the airport timetable and the live network map below while the guide reloads.",
+    th: "ใช้ตารางเวลาสนามบินและแผนที่สดด้านล่างไปก่อนระหว่างรอคำแนะนำโหลดใหม่"
+  },
+  airportSecondaryTitle: {
+    en: "Already waiting somewhere else?",
+    th: "ถ้าคุณกำลังรอที่อื่นอยู่แล้ว"
+  },
+  airportSecondaryBody: {
+    en: "Use the live map only when you are already on the corridor and need to see where buses are now.",
+    th: "ใช้แผนที่สดเมื่อคุณอยู่บนเส้นทางแล้วและต้องการดูว่ารถอยู่ตรงไหนในตอนนี้"
   },
   journeyTitle: {
     en: "Rider journey",
@@ -42,28 +110,28 @@ export const ui = {
     th: "ควรออกตอนนี้ไหม?"
   },
   heroBody: {
-    en: "Use the map, stop context, and alerts to decide if this is the right moment to move.",
-    th: "ใช้แผนที่ ข้อมูลป้าย และคำเตือน เพื่อดูว่าควรออกเดินทางตอนนี้หรือไม่"
+    en: "This is for riders who are already at a stop and need the last timing check.",
+    th: "ส่วนนี้สำหรับคนที่อยู่ที่ป้ายแล้วและต้องการเช็กเวลารอบสุดท้าย"
   },
   mapHeroTitle: {
-    en: "Choose your route",
-    th: "เลือกเส้นทางของคุณ"
+    en: "Live network map",
+    th: "แผนที่เครือข่ายแบบสด"
   },
   mapHeroBody: {
-    en: "Start with the live map, then narrow the trip down to one stop.",
-    th: "เริ่มจากแผนที่สด แล้วค่อยเจาะลงไปที่ป้ายเดียว"
+    en: "Keep this below the airport decision flow. It is mainly for riders already waiting on the line.",
+    th: "ส่วนนี้อยู่ถัดจากการตัดสินใจที่สนามบิน และเหมาะกับผู้โดยสารที่รออยู่บนเส้นทางแล้ว"
   },
   trackingTitle: {
-    en: "Stop focus",
-    th: "โฟกัสป้าย"
+    en: "Stop details",
+    th: "รายละเอียดป้าย"
   },
   trackingBody: {
-    en: "Everything that matters for this stop stays together here.",
-    th: "รวมทุกอย่างที่สำคัญสำหรับป้ายนี้ไว้ในจุดเดียว"
+    en: "Once a rider chooses a stop, keep the essentials in one quiet card.",
+    th: "เมื่อผู้โดยสารเลือกป้ายแล้ว ให้รวมข้อมูลสำคัญไว้ในการ์ดเดียวที่ดูนิ่งและอ่านง่าย"
   },
   routeRail: {
-    en: "Pick your route",
-    th: "เลือกเส้นทาง"
+    en: "Core lines",
+    th: "สายหลัก"
   },
   mapTitle: {
     en: "Live route map",
@@ -86,8 +154,8 @@ export const ui = {
     th: "คันที่เห็นตอนนี้"
   },
   stopTitle: {
-    en: "Choose your stop",
-    th: "เลือกป้ายของคุณ"
+    en: "Choose a stop",
+    th: "เลือกป้าย"
   },
   advisoryTitle: {
     en: "Service alerts",

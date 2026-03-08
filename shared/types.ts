@@ -20,6 +20,12 @@ export type SourceName = "bus" | "traffic" | "weather";
 
 export type NextBusBasis = "live" | "schedule" | "fallback";
 
+export type AirportGuideKind = "ready" | "direct" | "transfer" | "not_supported";
+
+export type SeatAvailabilityBasis = "camera_ready_estimate" | "unavailable";
+
+export type AirportDepartureState = "boarding" | "scheduled";
+
 export type LatLngTuple = [number, number];
 
 export interface LocalizedText {
@@ -58,6 +64,45 @@ export interface TimetableSummary {
   sourceUrl: string;
   sourceUpdatedAt: string | null;
   notes: LocalizedText;
+}
+
+export interface SeatAvailability {
+  seatsLeft: number | null;
+  capacity: number | null;
+  basis: SeatAvailabilityBasis;
+  confidenceLabel: LocalizedText;
+  updatedAt: string;
+}
+
+export interface AirportDestinationMatch {
+  routeId: RouteId;
+  stopId: string;
+  stopName: LocalizedText;
+  nearbyPlaceName: string;
+  areaLabel: LocalizedText;
+  kind: Exclude<AirportGuideKind, "ready" | "not_supported">;
+  travelMinutes: number | null;
+}
+
+export interface AirportQuickDestination {
+  id: string;
+  label: LocalizedText;
+  routeId: RouteId;
+  stopId: string;
+  kind: Exclude<AirportGuideKind, "ready" | "not_supported">;
+  travelMinutes: number | null;
+}
+
+export interface AirportDeparture {
+  routeId: RouteId;
+  routeName: LocalizedText;
+  label: string;
+  minutesUntil: number | null;
+  basis: NextBusBasis;
+  state: AirportDepartureState;
+  liveBusId: string | null;
+  liveLicensePlate: string | null;
+  seats: SeatAvailability | null;
 }
 
 export interface Stop {
@@ -132,6 +177,22 @@ export interface DecisionSummary {
   routeStatus: LocalizedText;
   updatedAt: string;
   sourceStatuses: DataSourceStatus[];
+}
+
+export interface AirportGuidePayload {
+  destinationQuery: string;
+  recommendation: AirportGuideKind;
+  headline: LocalizedText;
+  summary: LocalizedText;
+  bestMatch: AirportDestinationMatch | null;
+  matches: AirportDestinationMatch[];
+  nextDeparture: AirportDeparture;
+  followingDepartures: string[];
+  airportBoardingLabel: LocalizedText;
+  boardingNotes: LocalizedText[];
+  quickDestinations: AirportQuickDestination[];
+  sourceStatuses: DataSourceStatus[];
+  checkedAt: string;
 }
 
 export interface HealthPayload {

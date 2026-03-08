@@ -150,6 +150,55 @@ const decision = {
   ]
 };
 
+const airportGuide = {
+  destinationQuery: "",
+  recommendation: "ready",
+  headline: {
+    en: "A bus is running from the airport",
+    th: "มีรถบัสวิ่งออกจากสนามบิน"
+  },
+  summary: {
+    en: "Search a beach, hotel belt, or landmark and we will tell you if Smart Bus is the right choice before you leave the terminal.",
+    th: "พิมพ์ชื่อหาด ย่านโรงแรม หรือจุดสังเกต แล้วเราจะบอกว่าควรเลือก Smart Bus ก่อนออกจากอาคารหรือไม่"
+  },
+  bestMatch: null,
+  matches: [],
+  nextDeparture: {
+    routeId: "rawai-airport",
+    routeName: { en: "Airport Line", th: "สายสนามบิน" },
+    label: "3:05 PM",
+    minutesUntil: 9,
+    basis: "schedule",
+    state: "scheduled",
+    liveBusId: null,
+    liveLicensePlate: null,
+    seats: null
+  },
+  followingDepartures: ["3:05 PM", "4:05 PM", "5:05 PM"],
+  airportBoardingLabel: {
+    en: "Board opposite Cafe Amazon",
+    th: "ขึ้นรถฝั่งตรงข้าม Cafe Amazon"
+  },
+  boardingNotes: [
+    {
+      en: "Go to exit 3 and wait opposite Cafe Amazon for the Smart Bus stop.",
+      th: "ไปที่ทางออก 3 แล้วรอที่ป้าย Smart Bus ฝั่งตรงข้าม Cafe Amazon"
+    }
+  ],
+  quickDestinations: [
+    {
+      id: "patong",
+      label: { en: "Patong", th: "ป่าตอง" },
+      routeId: "rawai-airport",
+      stopId: "rawai-airport-42",
+      kind: "direct",
+      travelMinutes: 46
+    }
+  ],
+  sourceStatuses: decision.sourceStatuses,
+  checkedAt: "2026-03-08T14:00:00Z"
+};
+
 describe("App", () => {
   beforeEach(() => {
     const mockFetch = vi.fn((input: string | URL) => {
@@ -183,6 +232,10 @@ describe("App", () => {
           return Promise.resolve(new Response(JSON.stringify(advisories)));
         }
 
+        if (url.includes("/api/airport-guide")) {
+          return Promise.resolve(new Response(JSON.stringify(airportGuide)));
+        }
+
         if (url.includes("/api/decision-summary")) {
           return Promise.resolve(new Response(JSON.stringify(decision)));
         }
@@ -201,14 +254,15 @@ describe("App", () => {
   it("renders the rider prototype and switches language", async () => {
     render(<App />);
 
-    expect((await screen.findAllByText("Should I leave now?")).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
+    expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
 
     expect(await screen.findByText("Airport approach is slower")).toBeInTheDocument();
     expect(screen.getByTestId("live-map")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
 
-    expect(screen.getAllByText("ควรออกตอนนี้ไหม?").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
     expect(screen.getByText("ทางเข้าสนามบินช้าลง")).toBeInTheDocument();
   });
 });

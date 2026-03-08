@@ -1,6 +1,24 @@
 import { startTransition, useDeferredValue, useEffect, useEffectEvent, useState } from "react";
-import type { Advisory, DecisionSummary, HealthPayload, Lang, Route, RouteId, Stop, VehiclePosition } from "@shared/types";
-import { getAdvisories, getDecisionSummary, getHealth, getRoutes, getStops, getVehicles } from "./api";
+import type {
+  Advisory,
+  AirportGuidePayload,
+  DecisionSummary,
+  HealthPayload,
+  Lang,
+  Route,
+  RouteId,
+  Stop,
+  VehiclePosition
+} from "@shared/types";
+import {
+  getAdvisories,
+  getAirportGuide,
+  getDecisionSummary,
+  getHealth,
+  getRoutes,
+  getStops,
+  getVehicles
+} from "./api";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { RouteRail } from "./components/RouteRail";
@@ -11,8 +29,10 @@ import { StopList } from "./components/StopList";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { StopSpotlight } from "./components/StopSpotlight";
 import { BrandLogo } from "./components/BrandLogo";
+import { AirportGuidePanel } from "./components/AirportGuidePanel";
 
 const LIVE_POLL_MS = 12_000;
+const PRIMARY_ROUTE_IDS: RouteId[] = ["rawai-airport", "patong-old-bus-station"];
 
 export default function App() {
   const [lang, setLang] = useState<Lang>("en");
@@ -22,22 +42,28 @@ export default function App() {
   const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [decisionSummary, setDecisionSummary] = useState<DecisionSummary | null>(null);
+  const [airportGuide, setAirportGuide] = useState<AirportGuidePayload | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"route" | "stop">("route");
   const [stopSearch, setStopSearch] = useState("");
+  const [airportQuery, setAirportQuery] = useState("");
   const [isBooting, setIsBooting] = useState(true);
   const [isDecisionLoading, setIsDecisionLoading] = useState(false);
+  const [isGuideLoading, setIsGuideLoading] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [guideError, setGuideError] = useState<string | null>(null);
   const deferredStopSearch = useDeferredValue(stopSearch);
+  const deferredAirportQuery = useDeferredValue(airportQuery);
 
   useEffect(() => {
     let alive = true;
 
     async function bootstrap() {
       setIsBooting(true);
+
       try {
         const [routeData, healthData] = await Promise.all([getRoutes(), getHealth()]);
 
@@ -45,10 +71,12 @@ export default function App() {
           return;
         }
 
+        const primaryRoute = routeData.find((route) => PRIMARY_ROUTE_IDS.includes(route.id)) ?? routeData[0] ?? null;
+
         setBootError(null);
         setRoutes(routeData);
         setHealth(healthData);
-        setSelectedRouteId(routeData[0]?.id ?? null);
+        setSelectedRouteId(primaryRoute?.id ?? null);
       } catch {
         if (alive) {
           setBootError("bootstrap");
@@ -109,6 +137,36 @@ export default function App() {
   }, [routes, selectedRouteId]);
 
   useEffect(() => {
+    let alive = true;
+    setIsGuideLoading(true);
+
+    async function loadAirportGuide() {
+      try {
+        const guide = await getAirportGuide(deferredAirportQuery.trim());
+
+        if (alive) {
+          setGuideError(null);
+          setAirportGuide(guide);
+        }
+      } catch {
+        if (alive) {
+          setGuideError("guide");
+        }
+      } finally {
+        if (alive) {
+          setIsGuideLoading(false);
+        }
+      }
+    }
+
+    void loadAirportGuide();
+
+    return () => {
+      alive = false;
+    };
+  }, [deferredAirportQuery]);
+
+  useEffect(() => {
     if (!selectedRouteId || !selectedStopId) {
       return;
     }
@@ -163,7 +221,19 @@ export default function App() {
         setAdvisories(advisoryData.advisories);
       });
     } catch {
-      // Keep the most recent successful snapshot visible if background refresh fails.
+      // Preserve the last visible route state if background refresh fails.
+    }
+  });
+
+  const refreshAirportGuide = useEffectEvent(async (query: string) => {
+    try {
+      const guide = await getAirportGuide(query);
+
+      startTransition(() => {
+        setAirportGuide(guide);
+      });
+    } catch {
+      // Keep the current airport recommendation card visible while retries continue.
     }
   });
 
@@ -198,6 +268,16 @@ export default function App() {
   }, [selectedRouteId]);
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void refreshAirportGuide(deferredAirportQuery.trim());
+    }, LIVE_POLL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [deferredAirportQuery]);
+
+  useEffect(() => {
     if (!selectedRouteId || !selectedStopId) {
       return;
     }
@@ -225,21 +305,29 @@ export default function App() {
     );
   });
 
+  const visibleRoutes = routes.filter((route) => PRIMARY_ROUTE_IDS.includes(route.id));
   const activeRoute = routes.find((route) => route.id === selectedRouteId) ?? null;
   const selectedStop = stops.find((stop) => stop.id === selectedStopId) ?? null;
   const activeAdvisoryCount = advisories.filter((advisory) => advisory.active).length;
-  const totalLiveVehicles = routes.reduce((sum, route) => sum + route.activeVehicles, 0);
+  const totalLiveVehicles = visibleRoutes.reduce((sum, route) => sum + route.activeVehicles, 0);
   const mapStops =
     selectedStop && !filteredStops.some((stop) => stop.id === selectedStop.id)
       ? [...filteredStops, selectedStop]
       : filteredStops;
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
-  const routeLabel = activeRoute ? pick(activeRoute.shortName, lang) : pick(ui.mapLoading, lang);
-  const stopLabel = selectedStop ? pick(selectedStop.name, lang) : pick(ui.journeyChooseStop, lang);
-  const decisionLabel = decisionSummary
-    ? pick(decisionSummary.headline, lang)
-    : pick(ui.journeyPending, lang);
   const statusMessage = bootError ?? routeError;
+
+  function focusRouteStop(routeId: RouteId, stopId: string) {
+    startTransition(() => {
+      setSelectedRouteId(routeId);
+      setSelectedStopId(stopId);
+      setDecisionSummary(null);
+      setDecisionError(null);
+      setRouteError(null);
+      setMapMode("stop");
+      setStopSearch("");
+    });
+  }
 
   return (
     <div className="app-shell">
@@ -253,50 +341,53 @@ export default function App() {
         <LanguageToggle lang={lang} onChange={setLang} />
       </header>
 
-      <section className="journey-strip card" aria-label={pick(ui.journeyTitle, lang)}>
-        <article className="journey-step">
-          <span>{pick(ui.journeyRoute, lang)}</span>
-          <strong>{routeLabel}</strong>
-          <small>
-            {totalLiveVehicles} {pick(ui.mapLiveCountLabel, lang)}
-          </small>
-        </article>
-        <article className="journey-step">
-          <span>{pick(ui.journeyStop, lang)}</span>
-          <strong>{stopLabel}</strong>
-          <small>{selectedStop ? pick(selectedStop.direction, lang) : pick(ui.journeyChooseStop, lang)}</small>
-        </article>
-        <article className="journey-step">
-          <span>{pick(ui.journeyDecision, lang)}</span>
-          <strong>{decisionLabel}</strong>
-          <small>
-            {decisionSummary?.nextBus.label ?? selectedStop?.nextBus.label ?? pick(ui.journeyPending, lang)}
-          </small>
-        </article>
-      </section>
-
       {statusMessage ? (
         <div className="status-banner card" role="status">
           {pick(ui.loadingError, lang)}
         </div>
       ) : null}
 
+      <AirportGuidePanel
+        lang={lang}
+        guide={airportGuide}
+        loading={isGuideLoading || isBooting}
+        errorMessage={guideError ? pick(ui.airportGuideFallbackBody, lang) : null}
+        title={pick(ui.airportTitle, lang)}
+        eyebrow={pick(ui.airportEyebrow, lang)}
+        body={pick(ui.airportBody, lang)}
+        searchPlaceholder={pick(ui.airportSearchPlaceholder, lang)}
+        quickTitle={pick(ui.airportQuickTitle, lang)}
+        departureLabel={pick(ui.airportDepartureLabel, lang)}
+        seatsLabel={pick(ui.airportSeatsLabel, lang)}
+        seatsPendingLabel={pick(ui.airportSeatsPending, lang)}
+        boardingLabel={pick(ui.airportBoardingLabel, lang)}
+        timesLabel={pick(ui.airportTimesLabel, lang)}
+        connectionLabel={pick(ui.airportConnectionLabel, lang)}
+        destinationLabel={pick(ui.airportDestinationLabel, lang)}
+        focusActionLabel={pick(ui.airportFocusAction, lang)}
+        fallbackTitle={pick(ui.airportGuideFallbackTitle, lang)}
+        fallbackBody={pick(ui.airportGuideFallbackBody, lang)}
+        query={airportQuery}
+        onQueryChange={setAirportQuery}
+        onFocusMatch={focusRouteStop}
+      />
+
       <main className="layout">
         <section className="map-stage card">
-          <div className="map-stage__header">
+          <div className="section-heading map-stage__heading">
             <div>
-              <p className="hero__eyebrow">{pick(ui.mapHeroTitle, lang)}</p>
-              <h2>{pick(ui.mapHeroTitle, lang)}</h2>
-              <p>{pick(ui.mapHeroBody, lang)}</p>
+              <p className="hero__eyebrow">{pick(ui.airportSecondaryTitle, lang)}</p>
+              <h3>{pick(ui.mapHeroTitle, lang)}</h3>
             </div>
-            <div className="map-stage__summary" aria-label={pick(ui.mapHeroTitle, lang)}>
-              <strong>{totalLiveVehicles}</strong>
-              <span>{pick(ui.mapLiveCountLabel, lang)}</span>
-            </div>
+            <p>{pick(ui.airportSecondaryBody, lang)}</p>
+          </div>
+          <div className="map-stage__summary" aria-label={pick(ui.mapHeroTitle, lang)}>
+            <strong>{totalLiveVehicles}</strong>
+            <span>{pick(ui.mapLiveCountLabel, lang)}</span>
           </div>
           <RouteRail
             lang={lang}
-            routes={routes}
+            routes={visibleRoutes}
             activeRouteId={selectedRouteId}
             onSelect={(routeId) => {
               startTransition(() => {
