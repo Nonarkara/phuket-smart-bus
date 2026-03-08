@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: phuket-smart-bus
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: OPEN_METEO_BASE_URL
+        value: https://api.open-meteo.com/v1/forecast
+      - key: SMARTBUS_BEARER_TOKEN
+        sync: false

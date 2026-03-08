@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "dist/server",
+    "rootDir": ".",
+    "lib": ["ES2022"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["server", "shared"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
+}

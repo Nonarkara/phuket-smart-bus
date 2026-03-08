@@ -1,0 +1,19 @@
+{
+  "current": {
+    "time": "2026-03-08T14:30:00+07:00",
+    "temperature_2m": 29.4,
+    "weather_code": 61,
+    "precipitation": 1.8,
+    "wind_speed_10m": 18.5
+  },
+  "hourly": {
+    "time": [
+      "2026-03-08T15:00:00+07:00",
+      "2026-03-08T16:00:00+07:00",
+      "2026-03-08T17:00:00+07:00"
+    ],
+    "precipitation_probability": [70, 82, 48],
+    "precipitation": [1.4, 2.8, 0.6],
+    "weather_code": [61, 63, 3]
+  }
+}
