@@ -11,6 +11,7 @@ type Props = {
   searchPlaceholder: string;
   openMapsLabel: string;
   nearbyLabel: string;
+  emptyState: string;
 };
 
 export function StopList({
@@ -22,7 +23,8 @@ export function StopList({
   onSearchChange,
   searchPlaceholder,
   openMapsLabel,
-  nearbyLabel
+  nearbyLabel,
+  emptyState
 }: Props) {
   return (
     <section className="stop-list card">
@@ -35,6 +37,7 @@ export function StopList({
         placeholder={searchPlaceholder}
       />
       <div className="stop-list__items">
+        {stops.length === 0 ? <div className="empty-card stop-list__empty">{emptyState}</div> : null}
         {stops.map((stop) => (
           <article
             className={stop.id === selectedStopId ? "stop-card is-active" : "stop-card"}
@@ -43,7 +46,9 @@ export function StopList({
             <button className="stop-card__body" onClick={() => onSelect(stop.id)} type="button">
               <div className="stop-card__heading">
                 <strong>{pick(stop.name, lang)}</strong>
-                <span>{stop.nextBus.label}</span>
+                <span>
+                  {stop.nextBus.minutesUntil === null ? stop.nextBus.label : `${stop.nextBus.minutesUntil} min`}
+                </span>
               </div>
               <p className="stop-card__direction">{pick(stop.direction, lang)}</p>
               <p className="stop-card__meta">

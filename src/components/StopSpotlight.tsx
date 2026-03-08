@@ -23,11 +23,12 @@ type Props = {
   timetableUpdatedLabel: string;
   timetableSourceLabel: string;
   timetableOpenSourceLabel: string;
+  summaryUnavailableLabel: string;
   loading: boolean;
 };
 
-function getBasisLabel(summary: DecisionSummary, lang: Lang) {
-  switch (summary.nextBus.basis) {
+function getBasisLabel(basis: DecisionSummary["nextBus"]["basis"], lang: Lang) {
+  switch (basis) {
     case "live":
       return lang === "th" ? "อิง ETA สด" : "Using live ETA";
     case "schedule":
@@ -67,9 +68,10 @@ export function StopSpotlight({
   timetableUpdatedLabel,
   timetableSourceLabel,
   timetableOpenSourceLabel,
+  summaryUnavailableLabel,
   loading
 }: Props) {
-  if (loading || !stop || !summary) {
+  if (loading || !stop) {
     return (
       <section className="spotlight card">
         <div className="spotlight__copy">
@@ -81,33 +83,38 @@ export function StopSpotlight({
     );
   }
 
+  const nextBus = summary?.nextBus ?? stop.nextBus;
+  const timetable = summary?.timetable ?? stop.timetable;
+  const routeStatus = summary ? pick(summary.routeStatus, lang) : summaryUnavailableLabel;
+  const alertState = summary ? getAlertStateLabel(advisoryCount, summary, lang) : summaryUnavailableLabel;
+
   return (
     <section className="spotlight card">
       <div className="spotlight__copy">
         <span className="hero__eyebrow">{title}</span>
         <h3>{pick(stop.name, lang)}</h3>
-        <p>{body}</p>
+        <p>{summary ? body : summaryUnavailableLabel}</p>
       </div>
 
       <div className="spotlight__stats" aria-label={title}>
         <article className="spotlight-stat">
           <span>{nextBusLabel}</span>
           <strong>
-            {summary.nextBus.minutesUntil === null
-              ? summary.nextBus.label
-              : `${summary.nextBus.minutesUntil} min`}
+            {nextBus.minutesUntil === null
+              ? nextBus.label
+              : `${nextBus.minutesUntil} min`}
           </strong>
-          <small>{getBasisLabel(summary, lang)}</small>
+          <small>{getBasisLabel(nextBus.basis, lang)}</small>
         </article>
         <article className="spotlight-stat">
           <span>{liveBusesLabel}</span>
-          <strong>{summary.liveVehicles}</strong>
-          <small>{pick(summary.routeStatus, lang)}</small>
+          <strong>{summary ? summary.liveVehicles : "--"}</strong>
+          <small>{routeStatus}</small>
         </article>
         <article className="spotlight-stat">
           <span>{activeAlertsLabel}</span>
           <strong>{advisoryCount}</strong>
-          <small>{getAlertStateLabel(advisoryCount, summary, lang)}</small>
+          <small>{alertState}</small>
         </article>
       </div>
 
@@ -132,34 +139,34 @@ export function StopSpotlight({
       <div className="spotlight__timetable">
         <div className="spotlight__timetable-head">
           <strong>{timetableTitle}</strong>
-          <a href={summary.timetable.sourceUrl} target="_blank" rel="noreferrer">
+          <a href={timetable.sourceUrl} target="_blank" rel="noreferrer">
             {timetableOpenSourceLabel}
           </a>
         </div>
         <div className="spotlight__timetable-grid">
           <article className="spotlight-timetable-card">
             <span>{timetableFirstLabel}</span>
-            <strong>{summary.timetable.firstDepartureLabel ?? "--"}</strong>
+            <strong>{timetable.firstDepartureLabel ?? "--"}</strong>
           </article>
           <article className="spotlight-timetable-card">
             <span>{timetableLastLabel}</span>
-            <strong>{summary.timetable.lastDepartureLabel ?? "--"}</strong>
+            <strong>{timetable.lastDepartureLabel ?? "--"}</strong>
           </article>
           <article className="spotlight-timetable-card">
             <span>{timetableWindowLabel}</span>
-            <strong>{summary.timetable.serviceWindowLabel ?? "--"}</strong>
+            <strong>{timetable.serviceWindowLabel ?? "--"}</strong>
           </article>
         </div>
         <p className="spotlight__timetable-list">
-          {timetableNextLabel}: {summary.timetable.nextDepartures.join(" · ") || "--"}
+          {timetableNextLabel}: {timetable.nextDepartures.join(" · ") || "--"}
         </p>
         <p className="spotlight__timetable-meta">
-          {timetableSourceLabel}: {pick(summary.timetable.sourceLabel, lang)}
+          {timetableSourceLabel}: {pick(timetable.sourceLabel, lang)}
         </p>
         <p className="spotlight__timetable-meta">
-          {timetableUpdatedLabel}: {formatSourceDate(summary.timetable.sourceUpdatedAt, lang)}
+          {timetableUpdatedLabel}: {formatSourceDate(timetable.sourceUpdatedAt, lang)}
         </p>
-        <p className="spotlight__timetable-meta">{pick(summary.timetable.notes, lang)}</p>
+        <p className="spotlight__timetable-meta">{pick(timetable.notes, lang)}</p>
       </div>
     </section>
   );

@@ -28,6 +28,9 @@ export default function App() {
   const [stopSearch, setStopSearch] = useState("");
   const [isBooting, setIsBooting] = useState(true);
   const [isDecisionLoading, setIsDecisionLoading] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
   const deferredStopSearch = useDeferredValue(stopSearch);
 
   useEffect(() => {
@@ -42,9 +45,14 @@ export default function App() {
           return;
         }
 
+        setBootError(null);
         setRoutes(routeData);
         setHealth(healthData);
         setSelectedRouteId(routeData[0]?.id ?? null);
+      } catch {
+        if (alive) {
+          setBootError("bootstrap");
+        }
       } finally {
         if (alive) {
           setIsBooting(false);
@@ -67,23 +75,30 @@ export default function App() {
     let alive = true;
 
     async function loadRoute(routeId: RouteId) {
-      const [stopData, vehicleData, advisoryData] = await Promise.all([
-        getStops(routeId),
-        getVehicles(routeId),
-        getAdvisories(routeId)
-      ]);
+      try {
+        const [stopData, vehicleData, advisoryData] = await Promise.all([
+          getStops(routeId),
+          getVehicles(routeId),
+          getAdvisories(routeId)
+        ]);
 
-      if (!alive) {
-        return;
+        if (!alive) {
+          return;
+        }
+
+        const activeRoute = routes.find((route) => route.id === routeId);
+        setRouteError(null);
+        setStops(stopData);
+        setVehicles(vehicleData.vehicles);
+        setAdvisories(advisoryData.advisories);
+        setSelectedStopId((current) =>
+          stopData.some((stop) => stop.id === current) ? current : activeRoute?.defaultStopId ?? stopData[0]?.id ?? null
+        );
+      } catch {
+        if (alive) {
+          setRouteError("route");
+        }
       }
-
-      const activeRoute = routes.find((route) => route.id === routeId);
-      setStops(stopData);
-      setVehicles(vehicleData.vehicles);
-      setAdvisories(advisoryData.advisories);
-      setSelectedStopId((current) =>
-        stopData.some((stop) => stop.id === current) ? current : activeRoute?.defaultStopId ?? stopData[0]?.id ?? null
-      );
     }
 
     void loadRoute(selectedRouteId);
@@ -106,7 +121,13 @@ export default function App() {
         const summary = await getDecisionSummary(selectedRouteId, selectedStopId);
 
         if (alive) {
+          setDecisionError(null);
           setDecisionSummary(summary);
+        }
+      } catch {
+        if (alive) {
+          setDecisionError("decision");
+          setDecisionSummary(null);
         }
       } finally {
         if (alive) {
@@ -213,6 +234,12 @@ export default function App() {
       ? [...filteredStops, selectedStop]
       : filteredStops;
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
+  const routeLabel = activeRoute ? pick(activeRoute.shortName, lang) : pick(ui.mapLoading, lang);
+  const stopLabel = selectedStop ? pick(selectedStop.name, lang) : pick(ui.journeyChooseStop, lang);
+  const decisionLabel = decisionSummary
+    ? pick(decisionSummary.headline, lang)
+    : pick(ui.journeyPending, lang);
+  const statusMessage = bootError ?? routeError;
 
   return (
     <div className="app-shell">
@@ -225,6 +252,34 @@ export default function App() {
         </div>
         <LanguageToggle lang={lang} onChange={setLang} />
       </header>
+
+      <section className="journey-strip card" aria-label={pick(ui.journeyTitle, lang)}>
+        <article className="journey-step">
+          <span>{pick(ui.journeyRoute, lang)}</span>
+          <strong>{routeLabel}</strong>
+          <small>
+            {totalLiveVehicles} {pick(ui.mapLiveCountLabel, lang)}
+          </small>
+        </article>
+        <article className="journey-step">
+          <span>{pick(ui.journeyStop, lang)}</span>
+          <strong>{stopLabel}</strong>
+          <small>{selectedStop ? pick(selectedStop.direction, lang) : pick(ui.journeyChooseStop, lang)}</small>
+        </article>
+        <article className="journey-step">
+          <span>{pick(ui.journeyDecision, lang)}</span>
+          <strong>{decisionLabel}</strong>
+          <small>
+            {decisionSummary?.nextBus.label ?? selectedStop?.nextBus.label ?? pick(ui.journeyPending, lang)}
+          </small>
+        </article>
+      </section>
+
+      {statusMessage ? (
+        <div className="status-banner card" role="status">
+          {pick(ui.loadingError, lang)}
+        </div>
+      ) : null}
 
       <main className="layout">
         <section className="map-stage card">
@@ -247,7 +302,10 @@ export default function App() {
               startTransition(() => {
                 setSelectedRouteId(routeId);
                 setDecisionSummary(null);
+                setDecisionError(null);
+                setRouteError(null);
                 setMapMode("route");
+                setStopSearch("");
               });
             }}
           />
@@ -267,19 +325,44 @@ export default function App() {
           </div>
         </section>
 
+        <section className="stops-section">
+          <div className="section-heading">
+            <h3>{pick(ui.stopTitle, lang)}</h3>
+          </div>
+          <StopList
+            lang={lang}
+            stops={filteredStops}
+            selectedStopId={selectedStopId}
+            onSelect={(stopId) =>
+              startTransition(() => {
+                setSelectedStopId(stopId);
+                setDecisionError(null);
+                setMapMode("stop");
+              })
+            }
+            searchValue={stopSearch}
+            onSearchChange={setStopSearch}
+            searchPlaceholder={pick(ui.searchPlaceholder, lang)}
+            openMapsLabel={pick(ui.openMaps, lang)}
+            nearbyLabel={pick(ui.nearby, lang)}
+            emptyState={pick(ui.stopEmpty, lang)}
+          />
+        </section>
+
         <section className="decision-section">
           <div className="section-heading">
             <div>
               <p className="hero__eyebrow">{pick(ui.heroTitle, lang)}</p>
               <h3>{pick(ui.heroTitle, lang)}</h3>
             </div>
-            <p>{selectedStop ? pick(selectedStop.name, lang) : pick(ui.mapLoading, lang)}</p>
+            <p>{selectedStop ? pick(selectedStop.name, lang) : pick(ui.journeyChooseStop, lang)}</p>
           </div>
           <DecisionPanel
             lang={lang}
             summary={decisionSummary}
             alertCount={activeAdvisoryCount}
             loading={isDecisionLoading || isBooting}
+            errorMessage={decisionError ? pick(ui.decisionUnavailableBody, lang) : null}
           />
         </section>
 
@@ -305,30 +388,9 @@ export default function App() {
           timetableUpdatedLabel={pick(ui.timetableUpdated, lang)}
           timetableSourceLabel={pick(ui.timetableSource, lang)}
           timetableOpenSourceLabel={pick(ui.timetableOpenSource, lang)}
+          summaryUnavailableLabel={pick(ui.decisionUnavailableBody, lang)}
           loading={isDecisionLoading || isBooting}
         />
-
-        <section className="stops-section">
-          <div className="section-heading">
-            <h3>{pick(ui.stopTitle, lang)}</h3>
-          </div>
-          <StopList
-            lang={lang}
-            stops={filteredStops}
-            selectedStopId={selectedStopId}
-            onSelect={(stopId) =>
-              startTransition(() => {
-                setSelectedStopId(stopId);
-                setMapMode("stop");
-              })
-            }
-            searchValue={stopSearch}
-            onSearchChange={setStopSearch}
-            searchPlaceholder={pick(ui.searchPlaceholder, lang)}
-            openMapsLabel={pick(ui.openMaps, lang)}
-            nearbyLabel={pick(ui.nearby, lang)}
-          />
-        </section>
 
         <section className="advisory-section">
           <div className="section-heading">

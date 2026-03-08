@@ -6,6 +6,7 @@ type Props = {
   summary: DecisionSummary | null;
   alertCount: number;
   loading: boolean;
+  errorMessage: string | null;
 };
 
 function getBasisLabel(summary: DecisionSummary, lang: Lang) {
@@ -27,13 +28,27 @@ function getAlertChipLabel(count: number, lang: Lang) {
   return lang === "th" ? `${count} คำเตือน` : `${count} alerts`;
 }
 
-export function DecisionPanel({ lang, summary, alertCount, loading }: Props) {
-  if (loading || !summary) {
+export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage }: Props) {
+  if (loading && !summary) {
     return (
       <section className="decision-panel card">
         <div className="skeleton skeleton--headline" />
         <div className="skeleton skeleton--body" />
         <div className="skeleton skeleton--body short" />
+      </section>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <section className="decision-panel card is-live_unavailable">
+        <div className="decision-panel__header">
+          <span className="decision-panel__label">{pick(ui.decisionUnavailableTitle, lang)}</span>
+        </div>
+        <h2 className="decision-panel__headline">{pick(ui.decisionUnavailableTitle, lang)}</h2>
+        <p className="decision-panel__summary">
+          {errorMessage ?? pick(ui.decisionUnavailableBody, lang)}
+        </p>
       </section>
     );
   }

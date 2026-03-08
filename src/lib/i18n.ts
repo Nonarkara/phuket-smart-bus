@@ -10,8 +10,32 @@ export const ui = {
     th: "ต้นแบบสำหรับผู้โดยสาร"
   },
   appBody: {
-    en: "Live buses first. Decision support second.",
-    th: "เห็นรถสดก่อน แล้วค่อยตัดสินใจ"
+    en: "Pick a route, choose a stop, then decide when to move.",
+    th: "เลือกเส้นทาง เลือกป้าย แล้วค่อยตัดสินใจออกเดินทาง"
+  },
+  journeyTitle: {
+    en: "Rider journey",
+    th: "ลำดับการเดินทาง"
+  },
+  journeyRoute: {
+    en: "Route",
+    th: "เส้นทาง"
+  },
+  journeyStop: {
+    en: "Stop",
+    th: "ป้าย"
+  },
+  journeyDecision: {
+    en: "Decision",
+    th: "คำแนะนำ"
+  },
+  journeyChooseStop: {
+    en: "Choose a stop",
+    th: "เลือกป้าย"
+  },
+  journeyPending: {
+    en: "Waiting for live guidance",
+    th: "กำลังรอคำแนะนำสด"
   },
   heroTitle: {
     en: "Should I leave now?",
@@ -22,20 +46,20 @@ export const ui = {
     th: "ใช้แผนที่ ข้อมูลป้าย และคำเตือน เพื่อดูว่าควรออกเดินทางตอนนี้หรือไม่"
   },
   mapHeroTitle: {
-    en: "Buses available now",
-    th: "รถที่มีอยู่ตอนนี้"
+    en: "Choose your route",
+    th: "เลือกเส้นทางของคุณ"
   },
   mapHeroBody: {
-    en: "Start with the route map so availability is obvious before you read anything else.",
-    th: "เริ่มจากแผนที่เส้นทาง เพื่อให้เห็นก่อนว่ามีรถวิ่งอยู่จริงหรือไม่"
+    en: "Start with the live map, then narrow the trip down to one stop.",
+    th: "เริ่มจากแผนที่สด แล้วค่อยเจาะลงไปที่ป้ายเดียว"
   },
   trackingTitle: {
-    en: "Tracking right now",
-    th: "กำลังติดตามอยู่ตอนนี้"
+    en: "Stop focus",
+    th: "โฟกัสป้าย"
   },
   trackingBody: {
-    en: "Keep one stop in focus while you decide whether to move.",
-    th: "โฟกัสที่ป้ายเดียวเพื่อช่วยตัดสินใจว่าจะออกเดินทางตอนนี้หรือไม่"
+    en: "Everything that matters for this stop stays together here.",
+    th: "รวมทุกอย่างที่สำคัญสำหรับป้ายนี้ไว้ในจุดเดียว"
   },
   routeRail: {
     en: "Pick your route",
@@ -62,12 +86,12 @@ export const ui = {
     th: "คันที่เห็นตอนนี้"
   },
   stopTitle: {
-    en: "Stops and next-bus context",
-    th: "ป้ายและบริบทรถคันถัดไป"
+    en: "Choose your stop",
+    th: "เลือกป้ายของคุณ"
   },
   advisoryTitle: {
-    en: "Advisories that change rider decisions",
-    th: "คำเตือนที่มีผลต่อการตัดสินใจของผู้โดยสาร"
+    en: "Service alerts",
+    th: "คำเตือนบริการ"
   },
   searchPlaceholder: {
     en: "Search stop or landmark",
@@ -176,6 +200,22 @@ export const ui = {
   mapLoading: {
     en: "Loading route intelligence...",
     th: "กำลังโหลดข้อมูลเส้นทาง..."
+  },
+  loadingError: {
+    en: "Live data is taking longer than expected. Keep using the map and the published timetable below.",
+    th: "ข้อมูลสดใช้เวลานานกว่าปกติ ให้ใช้แผนที่และตารางเวลาที่เผยแพร่ด้านล่างไปก่อน"
+  },
+  decisionUnavailableTitle: {
+    en: "Live decision unavailable",
+    th: "ยังไม่มีคำแนะนำสด"
+  },
+  decisionUnavailableBody: {
+    en: "The recommendation service is temporarily unavailable. Use the next scheduled bus and timetable below.",
+    th: "ระบบคำแนะนำชั่วคราวใช้งานไม่ได้ ให้ใช้เวลารถคันถัดไปและตารางเวลาที่เผยแพร่ด้านล่าง"
+  },
+  stopEmpty: {
+    en: "No stops match this search.",
+    th: "ไม่พบป้ายที่ตรงกับคำค้นหา"
   }
 } satisfies Record<string, LocalizedText>;
 

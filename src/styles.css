@@ -55,12 +55,60 @@ a {
   padding: max(1rem, env(safe-area-inset-top)) 1rem calc(2rem + env(safe-area-inset-bottom));
 }
 
+.journey-strip {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.journey-step {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--card-muted);
+}
+
+.journey-step span,
+.journey-step small {
+  display: block;
+  color: var(--muted);
+}
+
+.journey-step span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.journey-step strong {
+  display: block;
+  margin-top: 0.42rem;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+
+.journey-step small {
+  margin-top: 0.32rem;
+  line-height: 1.35;
+}
+
+.status-banner {
+  margin-bottom: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-color: rgba(158, 61, 50, 0.2);
+  background: #fcf4f2;
+  color: var(--danger);
+  line-height: 1.45;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1rem;
 }
 
 .brand-lockup {
@@ -99,7 +147,7 @@ a {
 
 .topbar__intro {
   margin: 0.55rem 0 0;
-  max-width: 24rem;
+  max-width: 28rem;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -153,9 +201,9 @@ a {
 }
 
 .map-stage {
-  padding: 1rem;
+  padding: 0.95rem;
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .map-stage__header {
@@ -174,7 +222,7 @@ a {
 
 .map-stage__header p:last-child {
   margin: 0.45rem 0 0;
-  max-width: 30rem;
+  max-width: 24rem;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -212,8 +260,8 @@ a {
 
 .route-card {
   scroll-snap-align: start;
-  min-height: 8.8rem;
-  padding: 0.95rem;
+  min-height: 7.9rem;
+  padding: 0.9rem;
   border: 1px solid var(--line);
   border-radius: 24px;
   background: var(--card-muted);
@@ -251,11 +299,11 @@ a {
 
 .route-card__copy {
   display: -webkit-box;
-  margin-top: 0.55rem;
+  margin-top: 0.4rem;
   color: var(--muted);
-  line-height: 1.45;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
@@ -263,7 +311,7 @@ a {
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
-  margin-top: 0.8rem;
+  margin-top: 0.7rem;
   color: var(--muted);
   font-size: 0.82rem;
 }
@@ -383,7 +431,7 @@ a {
   justify-content: space-between;
   align-items: flex-end;
   gap: 1rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .section-heading h3 {
@@ -409,7 +457,7 @@ a {
   position: relative;
   overflow: hidden;
   margin: 0;
-  padding: 1rem 1rem 1rem 1.2rem;
+  padding: 0.95rem 1rem 1rem 1.15rem;
   border-radius: var(--radius-xl);
 }
 
@@ -479,20 +527,20 @@ a {
 
 .decision-panel__headline {
   margin: 0.7rem 0 0;
-  font-size: clamp(2.1rem, 10vw, 4rem);
-  line-height: 0.9;
+  font-size: clamp(1.9rem, 9vw, 3.2rem);
+  line-height: 0.94;
   letter-spacing: -0.09em;
 }
 
 .decision-panel__summary {
-  margin: 0.7rem 0 0;
-  max-width: 42rem;
+  margin: 0.6rem 0 0;
+  max-width: 36rem;
   color: var(--muted);
   line-height: 1.45;
 }
 
 .decision-panel__next-bus {
-  margin-top: 1rem;
+  margin-top: 0.9rem;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.8rem;
@@ -565,9 +613,9 @@ a {
 }
 
 .spotlight {
-  padding: 1rem;
+  padding: 0.95rem;
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .spotlight__copy h3 {
@@ -578,7 +626,7 @@ a {
 }
 
 .spotlight__copy p {
-  margin: 0.45rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--muted);
   line-height: 1.45;
 }
@@ -703,7 +751,7 @@ a {
 }
 
 .stop-list {
-  padding: 1rem;
+  padding: 0.95rem;
 }
 
 .stop-list__search {
@@ -721,14 +769,18 @@ a {
 }
 
 .stop-list__items {
-  margin-top: 0.9rem;
+  margin-top: 0.75rem;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.6rem;
+}
+
+.stop-list__empty {
+  margin: 0;
 }
 
 .stop-card {
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 20px;
   background: #ffffff;
   color: var(--text);
   text-align: left;
@@ -744,7 +796,7 @@ a {
   border: 0;
   background: transparent;
   color: inherit;
-  padding: 0.95rem 0.95rem 0;
+  padding: 0.9rem 0.95rem 0;
   text-align: left;
 }
 
@@ -760,6 +812,10 @@ a {
 .stop-card__meta,
 .stop-card__footer span {
   color: var(--muted);
+}
+
+.stop-card__heading span {
+  font-weight: 700;
 }
 
 .stop-card__direction,
@@ -790,7 +846,7 @@ a {
 
 .advisory-card,
 .empty-card {
-  padding: 1rem;
+  padding: 0.95rem 1rem;
   border-radius: 24px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -891,6 +947,10 @@ a {
     grid-auto-columns: 84%;
   }
 
+  .journey-strip {
+    grid-template-columns: 1fr;
+  }
+
   .brand-logo {
     width: 7.4rem;
   }
@@ -928,6 +988,10 @@ a {
 }
 
 @media (min-width: 960px) {
+  .journey-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .layout {
     grid-template-columns: minmax(0, 1.04fr) minmax(20rem, 0.96fr);
     align-items: start;
@@ -937,14 +1001,17 @@ a {
     grid-column: 1 / -1;
   }
 
-  .decision-section,
   .stops-section {
     grid-column: 1;
   }
 
-  .spotlight,
-  .advisory-section {
+  .decision-section,
+  .spotlight {
     grid-column: 2;
+  }
+
+  .advisory-section {
+    grid-column: 1 / -1;
   }
 
   .route-rail {
