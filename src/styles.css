@@ -502,6 +502,13 @@ a {
   justify-items: start;
 }
 
+.topbar__meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.55rem;
+  margin-left: auto;
+}
+
 .brand-logo {
   width: 8.5rem;
   margin-bottom: 0.35rem;
@@ -537,6 +544,43 @@ a {
   color: var(--muted);
   line-height: 1.4;
   font-size: 0.95rem;
+}
+
+.clock-chip {
+  min-width: 9.1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow);
+  text-align: right;
+}
+
+.clock-chip__label {
+  display: block;
+  color: var(--sand);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.clock-chip strong {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--text);
+  font-size: 1.15rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-chip small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  line-height: 1.35;
+  font-size: 0.73rem;
 }
 
 .sr-only {
@@ -1339,7 +1383,6 @@ a {
   .airport-guide__times,
   .airport-guide__match,
   .location-banner,
-  .topbar,
   .map-stage__header,
   .section-heading,
   .map-frame__toolbar,
@@ -1360,6 +1403,18 @@ a {
 
   .brand-logo {
     width: 7.4rem;
+  }
+
+  .topbar {
+    align-items: stretch;
+  }
+
+  .topbar__meta {
+    width: min(10rem, 42vw);
+  }
+
+  .clock-chip {
+    min-width: 0;
   }
 
   .map-stage__summary {

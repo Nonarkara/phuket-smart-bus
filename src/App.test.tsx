@@ -455,11 +455,13 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
     expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
     expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
+    expect(await screen.findByText("Phuket time")).toBeInTheDocument();
+    expect(screen.getByText("UTC+7 boarding clock", { exact: false })).toBeInTheDocument();
     expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
     expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
     expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
-    expect(screen.getByText("Mock-up for Phuket Smart Bus")).toBeInTheDocument();
+    expect(screen.getByText("A mock-up for rider testing and future GPS and camera integration.")).toBeInTheDocument();
     expect(screen.getByText("Copyright 2026 Dr. Non Arkaraprasertkul")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "My stop" }));
@@ -494,6 +496,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
     expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
     expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
-    expect(screen.getByText("ต้นแบบสำหรับ Phuket Smart Bus")).toBeInTheDocument();
+    expect(screen.getByText("เวลาภูเก็ต")).toBeInTheDocument();
   });
 });

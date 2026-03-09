@@ -13,6 +13,14 @@ export const ui = {
     en: "See the next airport bus before you leave the terminal.",
     th: "ดูรถคันถัดไปจากสนามบินก่อนออกจากอาคาร"
   },
+  clockLabel: {
+    en: "Phuket time",
+    th: "เวลาภูเก็ต"
+  },
+  clockMeta: {
+    en: "UTC+7 boarding clock",
+    th: "นาฬิกาขึ้นรถ UTC+7"
+  },
   airportEyebrow: {
     en: "From Phuket Airport",
     th: "จากสนามบินภูเก็ต"
@@ -321,13 +329,17 @@ export const ui = {
     en: "Source health",
     th: "สถานะข้อมูล"
   },
+  footerEyebrow: {
+    en: "Prototype",
+    th: "ต้นแบบ"
+  },
   footerTitle: {
-    en: "Mock-up for Phuket Smart Bus",
-    th: "ต้นแบบสำหรับ Phuket Smart Bus"
+    en: "Phuket Smart Bus",
+    th: "Phuket Smart Bus"
   },
   footerBody: {
-    en: "Prototype interface for rider testing and future GPS or camera integration.",
-    th: "ต้นแบบหน้าจอสำหรับทดสอบผู้โดยสารและการเชื่อมต่อ GPS หรือกล้องในอนาคต"
+    en: "A mock-up for rider testing and future GPS and camera integration.",
+    th: "ต้นแบบสำหรับทดสอบผู้โดยสารและการเชื่อมต่อ GPS กับกล้องในอนาคต"
   },
   footerCopyright: {
     en: "Copyright 2026 Dr. Non Arkaraprasertkul",

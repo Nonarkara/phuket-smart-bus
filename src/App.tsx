@@ -145,6 +145,29 @@ function mergeRouteBounds(routes: Route[]) {
   ] as [LatLngTuple, LatLngTuple];
 }
 
+function formatPhuketTime(value: number, lang: Lang) {
+  const locale = lang === "th" ? "th-TH" : "en-GB";
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(value);
+}
+
+function formatPhuketDate(value: number, lang: Lang) {
+  const locale = lang === "th" ? "th-TH" : "en-GB";
+
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "Asia/Bangkok",
+    weekday: "short",
+    day: "numeric",
+    month: "short"
+  }).format(value);
+}
+
 export default function App() {
   const [lang, setLang] = useState<Lang>("en");
   const [view, setView] = useState<AppView>(getInitialView);
@@ -164,6 +187,7 @@ export default function App() {
   const [mapMode, setMapMode] = useState<"route" | "stop">("route");
   const [stopSearch, setStopSearch] = useState("");
   const [airportQuery, setAirportQuery] = useState("");
+  const [clockNow, setClockNow] = useState(() => Date.now());
   const [isBooting, setIsBooting] = useState(true);
   const [isDecisionLoading, setIsDecisionLoading] = useState(false);
   const [isGuideLoading, setIsGuideLoading] = useState(false);
@@ -249,6 +273,16 @@ export default function App() {
 
     return () => {
       alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setClockNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -607,6 +641,8 @@ export default function App() {
       : mapVisibleRoutes.reduce((sum, route) => sum + route.activeVehicles, 0);
   const sourceStatuses = decisionSummary?.sourceStatuses ?? health?.sources ?? [];
   const statusMessage = bootError ?? routeError;
+  const phuketTimeLabel = formatPhuketTime(clockNow, lang);
+  const phuketDateLabel = formatPhuketDate(clockNow, lang);
   let mapToolbarEyebrow = pick(ui.mapNetworkLabel, lang);
   let mapToolbarTitle = pick(ui.mapAllLinesTitle, lang);
   let mapToolbarMeta =
@@ -732,7 +768,16 @@ export default function App() {
           <h1 className="sr-only">{pick(ui.appTitle, lang)}</h1>
           <p className="topbar__intro">{pick(ui.appBody, lang)}</p>
         </div>
-        <LanguageToggle lang={lang} onChange={setLang} />
+        <div className="topbar__meta">
+          <div className="clock-chip" aria-live="polite" aria-label={pick(ui.clockLabel, lang)}>
+            <span className="clock-chip__label">{pick(ui.clockLabel, lang)}</span>
+            <strong>{phuketTimeLabel}</strong>
+            <small>
+              {phuketDateLabel} · {pick(ui.clockMeta, lang)}
+            </small>
+          </div>
+          <LanguageToggle lang={lang} onChange={setLang} />
+        </div>
       </header>
 
       {statusMessage ? (
@@ -926,6 +971,7 @@ export default function App() {
       ) : null}
 
       <footer className="page-footer" aria-label={pick(ui.footerTitle, lang)}>
+        <span className="page-footer__eyebrow">{pick(ui.footerEyebrow, lang)}</span>
         <strong>{pick(ui.footerTitle, lang)}</strong>
         <p>{pick(ui.footerBody, lang)}</p>
         <small>{pick(ui.footerCopyright, lang)}</small>
