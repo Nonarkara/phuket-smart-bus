@@ -87,6 +87,31 @@ a {
   gap: 1rem;
 }
 
+.page-footer {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  padding: 1.15rem 0 0.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.page-footer strong {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.page-footer p,
+.page-footer small {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.page-footer small {
+  font-size: 0.78rem;
+}
+
 .location-banner {
   display: flex;
   justify-content: space-between;
@@ -1407,5 +1432,10 @@ a {
 
   .map-canvas {
     height: 27rem;
+  }
+
+  .page-footer {
+    margin-top: 1.6rem;
+    padding-top: 1.3rem;
   }
 }

@@ -459,6 +459,8 @@ describe("App", () => {
     expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
     expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
+    expect(screen.getByText("Mock-up for Phuket Smart Bus")).toBeInTheDocument();
+    expect(screen.getByText("Copyright 2026 Dr. Non Arkaraprasertkul")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "My stop" }));
 
@@ -492,5 +494,6 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
     expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
     expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
+    expect(screen.getByText("ต้นแบบสำหรับ Phuket Smart Bus")).toBeInTheDocument();
   });
 });

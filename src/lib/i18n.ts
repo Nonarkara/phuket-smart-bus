@@ -321,6 +321,18 @@ export const ui = {
     en: "Source health",
     th: "สถานะข้อมูล"
   },
+  footerTitle: {
+    en: "Mock-up for Phuket Smart Bus",
+    th: "ต้นแบบสำหรับ Phuket Smart Bus"
+  },
+  footerBody: {
+    en: "Prototype interface for rider testing and future GPS or camera integration.",
+    th: "ต้นแบบหน้าจอสำหรับทดสอบผู้โดยสารและการเชื่อมต่อ GPS หรือกล้องในอนาคต"
+  },
+  footerCopyright: {
+    en: "Copyright 2026 Dr. Non Arkaraprasertkul",
+    th: "ลิขสิทธิ์ 2026 Dr. Non Arkaraprasertkul"
+  },
   nextBusLabel: {
     en: "Next bus",
     th: "รถคันถัดไป"

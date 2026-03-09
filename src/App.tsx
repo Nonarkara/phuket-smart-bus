@@ -924,6 +924,12 @@ export default function App() {
           </section>
         </main>
       ) : null}
+
+      <footer className="page-footer" aria-label={pick(ui.footerTitle, lang)}>
+        <strong>{pick(ui.footerTitle, lang)}</strong>
+        <p>{pick(ui.footerBody, lang)}</p>
+        <small>{pick(ui.footerCopyright, lang)}</small>
+      </footer>
     </div>
   );
 }
