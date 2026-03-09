@@ -666,6 +666,16 @@ a {
   color: #ffffff;
 }
 
+.pass-switch__button.is-active.is-day {
+  background: #16b8b0;
+  border-color: #16b8b0;
+}
+
+.pass-switch__button.is-active.is-week {
+  background: #1e63b8;
+  border-color: #1e63b8;
+}
+
 .pass-ticket {
   display: grid;
   gap: 0.8rem;
@@ -675,6 +685,18 @@ a {
     linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 244, 238, 0.98) 100%),
     linear-gradient(135deg, rgba(22, 184, 176, 0.1) 0%, rgba(255, 204, 51, 0.1) 100%);
   border: 1px solid var(--line);
+}
+
+.pass-ticket.is-day {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 251, 249, 0.98) 100%),
+    linear-gradient(135deg, rgba(22, 184, 176, 0.16) 0%, rgba(22, 184, 176, 0.04) 100%);
+}
+
+.pass-ticket.is-week {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 247, 252, 0.98) 100%),
+    linear-gradient(135deg, rgba(30, 99, 184, 0.14) 0%, rgba(255, 204, 51, 0.05) 100%);
 }
 
 .pass-ticket__status-row {
@@ -699,6 +721,10 @@ a {
 
 .pass-ticket__status {
   color: var(--success);
+}
+
+.pass-ticket.is-week .pass-ticket__status {
+  color: #1e63b8;
 }
 
 .pass-ticket__name {
@@ -768,6 +794,16 @@ a {
   background: var(--card-muted);
 }
 
+.pass-qr-card.is-day {
+  background: linear-gradient(180deg, #fbfffe 0%, #f5fbfa 100%);
+  border-color: rgba(22, 184, 176, 0.18);
+}
+
+.pass-qr-card.is-week {
+  background: linear-gradient(180deg, #fafdff 0%, #f4f8fc 100%);
+  border-color: rgba(30, 99, 184, 0.18);
+}
+
 .pass-qr {
   width: min(100%, 14rem);
   aspect-ratio: 1;
@@ -775,6 +811,18 @@ a {
   background: #ffffff;
   padding: 0.8rem;
   box-shadow: inset 0 0 0 1px rgba(17, 24, 32, 0.08);
+}
+
+.pass-qr-card.is-day .pass-qr {
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 184, 176, 0.12),
+    0 8px 22px rgba(22, 184, 176, 0.08);
+}
+
+.pass-qr-card.is-week .pass-qr {
+  box-shadow:
+    inset 0 0 0 1px rgba(30, 99, 184, 0.12),
+    0 8px 22px rgba(30, 99, 184, 0.08);
 }
 
 .pass-qr-card__copy {

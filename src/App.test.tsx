@@ -499,6 +499,11 @@ describe("App", () => {
     expect(screen.getByText("Time left")).toBeInTheDocument();
     expect(screen.getByText("QR boarding code")).toBeInTheDocument();
 
+    await userEvent.click(screen.getByRole("button", { name: "7-day pass" }));
+
+    expect(screen.getAllByText("7-day pass")).toHaveLength(2);
+    expect(screen.getByText("PKSB-WEEK-7-1124")).toBeInTheDocument();
+
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
 

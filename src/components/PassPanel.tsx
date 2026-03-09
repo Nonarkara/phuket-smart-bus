@@ -126,9 +126,10 @@ export function PassPanel({ lang, now }: Props) {
   const countdownLabel = formatCountdown(remainingMs);
   const passLabel = selectedPass === "day" ? pick(ui.passDayLabel, lang) : pick(ui.passWeekLabel, lang);
   const statusLabel = remainingMs > 0 ? pick(ui.passActiveLabel, lang) : pick(ui.passExpiredLabel, lang);
+  const passThemeClass = selectedPass === "day" ? "is-day" : "is-week";
 
   return (
-    <section className="pass-panel card" aria-label={pick(ui.passTitle, lang)}>
+    <section className={`pass-panel card ${passThemeClass}`} aria-label={pick(ui.passTitle, lang)}>
       <div className="section-heading pass-panel__header">
         <div>
           <p className="hero__eyebrow">{pick(ui.passEyebrow, lang)}</p>
@@ -139,7 +140,7 @@ export function PassPanel({ lang, now }: Props) {
 
       <div className="pass-switch" role="tablist" aria-label={pick(ui.passTitle, lang)}>
         <button
-          className={selectedPass === "day" ? "pass-switch__button is-active" : "pass-switch__button"}
+          className={selectedPass === "day" ? "pass-switch__button is-active is-day" : "pass-switch__button"}
           type="button"
           onClick={() => setSelectedPass("day")}
           aria-selected={selectedPass === "day"}
@@ -147,7 +148,7 @@ export function PassPanel({ lang, now }: Props) {
           {pick(ui.passDayLabel, lang)}
         </button>
         <button
-          className={selectedPass === "week" ? "pass-switch__button is-active" : "pass-switch__button"}
+          className={selectedPass === "week" ? "pass-switch__button is-active is-week" : "pass-switch__button"}
           type="button"
           onClick={() => setSelectedPass("week")}
           aria-selected={selectedPass === "week"}
@@ -156,7 +157,7 @@ export function PassPanel({ lang, now }: Props) {
         </button>
       </div>
 
-      <div className="pass-ticket">
+      <div className={`pass-ticket ${passThemeClass}`}>
         <div className="pass-ticket__status-row">
           <span className="pass-ticket__status">{statusLabel}</span>
           <span className="pass-ticket__clock">{pick(ui.clockLabel, lang)}</span>
@@ -181,7 +182,7 @@ export function PassPanel({ lang, now }: Props) {
         </div>
       </div>
 
-      <div className="pass-qr-card">
+      <div className={`pass-qr-card ${passThemeClass}`}>
         <MockQrCode value={`${preset.code}-${activatedAt}`} />
         <div className="pass-qr-card__copy">
           <strong>{pick(ui.passQrTitle, lang)}</strong>
