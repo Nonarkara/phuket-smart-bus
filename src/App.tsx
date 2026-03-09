@@ -33,6 +33,7 @@ import { BrandLogo } from "./components/BrandLogo";
 import { AirportGuidePanel } from "./components/AirportGuidePanel";
 import { AppNav, type AppView } from "./components/AppNav";
 import { LocationBanner } from "./components/LocationBanner";
+import { PassPanel } from "./components/PassPanel";
 import { haversineDistanceMeters } from "./lib/geo";
 
 const LIVE_POLL_MS = 12_000;
@@ -43,7 +44,8 @@ const NEARBY_STOP_RADIUS_METERS = 700;
 const VIEW_PATHS: Record<AppView, string> = {
   airport: "/",
   map: "/live-map",
-  ride: "/ride"
+  ride: "/ride",
+  qr: "/my-qr"
 };
 
 type LocationState = "requesting" | "granted" | "denied" | "unsupported" | "error";
@@ -66,6 +68,10 @@ function getInitialView(): AppView {
 
   if (window.location.pathname.startsWith("/ride")) {
     return "ride";
+  }
+
+  if (window.location.pathname.startsWith("/my-qr")) {
+    return "qr";
   }
 
   return "airport";
@@ -792,6 +798,7 @@ export default function App() {
         airportLabel={pick(ui.navAirport, lang)}
         mapLabel={pick(ui.navMap, lang)}
         rideLabel={pick(ui.navRide, lang)}
+        qrLabel={pick(ui.navQr, lang)}
         onChange={navigate}
       />
 
@@ -967,6 +974,12 @@ export default function App() {
               emptyState={pick(ui.advisoryNone, lang)}
             />
           </section>
+        </main>
+      ) : null}
+
+      {view === "qr" ? (
+        <main className="page-shell">
+          <PassPanel lang={lang} now={clockNow} />
         </main>
       ) : null}
 

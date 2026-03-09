@@ -1,6 +1,6 @@
 import type { Lang } from "@shared/types";
 
-export type AppView = "airport" | "map" | "ride";
+export type AppView = "airport" | "map" | "ride" | "qr";
 
 type Props = {
   lang: Lang;
@@ -8,10 +8,11 @@ type Props = {
   airportLabel: string;
   mapLabel: string;
   rideLabel: string;
+  qrLabel: string;
   onChange: (view: AppView) => void;
 };
 
-const items: AppView[] = ["airport", "map", "ride"];
+const items: AppView[] = ["airport", "map", "ride", "qr"];
 
 export function AppNav({
   lang,
@@ -19,12 +20,14 @@ export function AppNav({
   airportLabel,
   mapLabel,
   rideLabel,
+  qrLabel,
   onChange
 }: Props) {
   const labels = {
     airport: airportLabel,
     map: mapLabel,
-    ride: rideLabel
+    ride: rideLabel,
+    qr: qrLabel
   } as const;
 
   return (

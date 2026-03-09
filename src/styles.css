@@ -60,7 +60,7 @@ a {
   top: calc(env(safe-area-inset-top) + 0.4rem);
   z-index: 4;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.35rem;
   padding: 0.35rem;
   margin-bottom: 1rem;
@@ -71,10 +71,13 @@ a {
 .app-nav__button {
   border: 0;
   min-height: 2.85rem;
+  padding: 0.5rem 0.35rem;
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
   font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.15;
 }
 
 .app-nav__button.is-active {
@@ -630,6 +633,171 @@ a {
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
+}
+
+.pass-panel {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.9rem;
+}
+
+.pass-panel__header {
+  align-items: flex-start;
+}
+
+.pass-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.pass-switch__button {
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card-muted);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.pass-switch__button.is-active {
+  background: #101418;
+  border-color: #101418;
+  color: #ffffff;
+}
+
+.pass-ticket {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 244, 238, 0.98) 100%),
+    linear-gradient(135deg, rgba(22, 184, 176, 0.1) 0%, rgba(255, 204, 51, 0.1) 100%);
+  border: 1px solid var(--line);
+}
+
+.pass-ticket__status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.pass-ticket__status,
+.pass-ticket__clock {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.pass-ticket__status {
+  color: var(--success);
+}
+
+.pass-ticket__name {
+  font-size: clamp(1.45rem, 7vw, 2.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+
+.pass-ticket__countdown {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.pass-ticket__countdown span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pass-ticket__countdown strong {
+  font-size: clamp(2rem, 10vw, 3.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pass-ticket__countdown small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.pass-ticket__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.pass-ticket__meta-card {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.pass-ticket__meta-card span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.pass-ticket__meta-card strong {
+  font-size: 0.94rem;
+  line-height: 1.35;
+}
+
+.pass-qr-card {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: center;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--card-muted);
+}
+
+.pass-qr {
+  width: min(100%, 14rem);
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 0.8rem;
+  box-shadow: inset 0 0 0 1px rgba(17, 24, 32, 0.08);
+}
+
+.pass-qr-card__copy {
+  display: grid;
+  gap: 0.22rem;
+  text-align: center;
+}
+
+.pass-qr-card__copy strong {
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.pass-qr-card__copy p,
+.pass-qr-card__copy small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.pass-qr-card__copy small {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
 }
 
 .map-stage {
@@ -1397,7 +1565,8 @@ a {
 
   .airport-quick__grid,
   .airport-guide__stats,
-  .journey-strip {
+  .journey-strip,
+  .pass-ticket__meta-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1492,5 +1661,15 @@ a {
   .page-footer {
     margin-top: 1.6rem;
     padding-top: 1.3rem;
+  }
+
+  .pass-panel {
+    grid-template-columns: minmax(0, 1.08fr) minmax(18rem, 0.92fr);
+    align-items: start;
+  }
+
+  .pass-panel__header,
+  .pass-switch {
+    grid-column: 1 / -1;
   }
 }

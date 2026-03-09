@@ -157,6 +157,62 @@ export const ui = {
     en: "My stop",
     th: "ป้ายของฉัน"
   },
+  navQr: {
+    en: "My QR",
+    th: "คิวอาร์ของฉัน"
+  },
+  passEyebrow: {
+    en: "Boarding pass",
+    th: "บัตรโดยสาร"
+  },
+  passTitle: {
+    en: "My QR code",
+    th: "คิวอาร์โค้ดของฉัน"
+  },
+  passBody: {
+    en: "Mock day-pass and 7-day-pass screens with a live expiry countdown from activation.",
+    th: "หน้าจอจำลองสำหรับตั๋ว 1 วันและ 7 วัน พร้อมเวลานับถอยหลังจากเวลาเริ่มใช้งานจริง"
+  },
+  passDayLabel: {
+    en: "24h pass",
+    th: "ตั๋ว 24 ชั่วโมง"
+  },
+  passWeekLabel: {
+    en: "7-day pass",
+    th: "ตั๋ว 7 วัน"
+  },
+  passActiveLabel: {
+    en: "Active now",
+    th: "กำลังใช้งาน"
+  },
+  passExpiredLabel: {
+    en: "Expired",
+    th: "หมดอายุ"
+  },
+  passCountdownLabel: {
+    en: "Time left",
+    th: "เวลาคงเหลือ"
+  },
+  passCountdownBody: {
+    en: "The clock starts at activation and keeps running until the pass expires.",
+    th: "เวลาเริ่มนับทันทีเมื่อเปิดใช้งาน และเดินต่อเนื่องจนบัตรหมดอายุ"
+  },
+  passActivatedLabel: {
+    en: "Activated",
+    th: "เริ่มใช้งาน"
+  },
+  passValidUntilLabel: {
+    en: "Valid until",
+    th: "ใช้ได้ถึง"
+  },
+  passQrTitle: {
+    en: "QR boarding code",
+    th: "คิวอาร์สำหรับขึ้นรถ"
+  },
+  passQrBody: {
+    en: "Show this code when boarding. This is a mock-up for online day-pass and 7-day-pass sales.",
+    th: "แสดงโค้ดนี้ตอนขึ้นรถ นี่คือต้นแบบสำหรับการขายตั๋วออนไลน์แบบ 1 วันและ 7 วัน"
+  },
   airportStoryTitle: {
     en: "Scan, decide, board",
     th: "สแกน ตัดสินใจ แล้วขึ้นรถ"

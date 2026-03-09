@@ -457,6 +457,7 @@ describe("App", () => {
     expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
     expect(await screen.findByText("Phuket time")).toBeInTheDocument();
     expect(screen.getByText("UTC+7 boarding clock", { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "My QR" })).toBeInTheDocument();
     expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
     expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
@@ -490,6 +491,14 @@ describe("App", () => {
 
     expect(await screen.findByText("routes:patong-old-bus-station")).toBeInTheDocument();
 
+    await userEvent.click(screen.getByRole("button", { name: "My QR" }));
+
+    expect(await screen.findByRole("heading", { name: "My QR code" })).toBeInTheDocument();
+    expect(screen.getAllByText("24h pass")).toHaveLength(2);
+    expect(screen.getByText("7-day pass")).toBeInTheDocument();
+    expect(screen.getByText("Time left")).toBeInTheDocument();
+    expect(screen.getByText("QR boarding code")).toBeInTheDocument();
+
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
 
@@ -497,5 +506,6 @@ describe("App", () => {
     expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
     expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
     expect(screen.getByText("เวลาภูเก็ต")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "คิวอาร์ของฉัน" })).toBeInTheDocument();
   });
 });
