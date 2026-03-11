@@ -45,6 +45,22 @@ export const ui = {
     en: "Next airport departure",
     th: "รถถัดไปจากสนามบิน"
   },
+  airportSavingsTitle: {
+    en: "Why tourists switch",
+    th: "ทำไมนักท่องเที่ยวถึงเปลี่ยนใจ"
+  },
+  airportSavingsHeadline: {
+    en: "100 THB beats a 1000 THB taxi",
+    th: "100 บาทคุ้มกว่ารถแท็กซี่ 1000 บาท"
+  },
+  airportBusFareLabel: {
+    en: "Smart Bus",
+    th: "Smart Bus"
+  },
+  airportTaxiFareLabel: {
+    en: "Taxi",
+    th: "แท็กซี่"
+  },
   airportSeatsLabel: {
     en: "Est. seats left",
     th: "ที่นั่งเหลือโดยประมาณ"
@@ -73,6 +89,10 @@ export const ui = {
     en: "Open stop",
     th: "เปิดดูป้าย"
   },
+  airportBoardingAction: {
+    en: "Open boarding stop",
+    th: "เปิดจุดขึ้นรถ"
+  },
   airportGuideFallbackTitle: {
     en: "Airport guidance unavailable",
     th: "ยังไม่มีคำแนะนำจากสนามบิน"
@@ -88,6 +108,34 @@ export const ui = {
   airportSecondaryBody: {
     en: "Use the map only if you are already waiting on the route.",
     th: "ใช้แผนที่เมื่อคุณรออยู่บนเส้นทางแล้วเท่านั้น"
+  },
+  airportWeatherTitle: {
+    en: "Airport weather",
+    th: "อากาศบริเวณสนามบิน"
+  },
+  airportWeatherRainChanceLabel: {
+    en: "Rain chance",
+    th: "โอกาสฝน"
+  },
+  airportWeatherRainfallLabel: {
+    en: "Rain now",
+    th: "ปริมาณฝนตอนนี้"
+  },
+  airportWalkTitle: {
+    en: "Walk to the stop",
+    th: "เดินไปที่ป้าย"
+  },
+  airportMapEyebrow: {
+    en: "Airport live preview",
+    th: "ตัวอย่างแผนที่สดจากสนามบิน"
+  },
+  airportMapTitle: {
+    en: "Watch the airport bus moving",
+    th: "ดูรถสนามบินกำลังวิ่ง"
+  },
+  airportMapBody: {
+    en: "This preview follows the airport stop and highlights the next visible bus.",
+    th: "ตัวอย่างนี้โฟกัสที่ป้ายสนามบินและไฮไลต์รถคันถัดไปที่มองเห็นได้"
   },
   locationEyebrow: {
     en: "Location",

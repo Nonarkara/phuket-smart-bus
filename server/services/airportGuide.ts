@@ -1,5 +1,6 @@
 import type {
   AirportDestinationMatch,
+  AirportFareComparison,
   AirportGuideKind,
   AirportGuidePayload,
   AirportQuickDestination,
@@ -13,13 +14,19 @@ import { text } from "../lib/i18n.js";
 import { getTrafficAdvisories } from "./providers/trafficProvider.js";
 import { getVehiclesForRoute } from "./providers/busProvider.js";
 import { estimateSeatAvailability } from "./providers/seatProvider.js";
-import { getWeatherAdvisories } from "./providers/weatherProvider.js";
+import {
+  buildAirportWeatherSummary,
+  getWeatherAdvisories,
+  getWeatherSnapshot
+} from "./providers/weatherProvider.js";
 import { getStopsForRoute } from "./routes.js";
 
 const AIRPORT_ROUTE_ID: RouteId = "rawai-airport";
 const TRANSFER_ROUTE_ID: RouteId = "patong-old-bus-station";
 const AIRPORT_STOP_NAME = "Phuket Airport";
 const AIRPORT_BOARDING_RADIUS_METERS = 260;
+const AIRPORT_BUS_FARE_THB = 100;
+const AIRPORT_TAXI_ESTIMATE_THB = 1000;
 
 const aliasGroups = [
   {
@@ -379,12 +386,27 @@ function getRecommendationCopy(kind: AirportGuideKind, bestMatch: AirportDestina
   }
 }
 
+function buildFareComparison(): AirportFareComparison {
+  const savingsThb = AIRPORT_TAXI_ESTIMATE_THB - AIRPORT_BUS_FARE_THB;
+
+  return {
+    busFareThb: AIRPORT_BUS_FARE_THB,
+    taxiFareEstimateThb: AIRPORT_TAXI_ESTIMATE_THB,
+    savingsThb,
+    savingsCopy: text(
+      `Save about ${savingsThb} THB versus a typical airport taxi ride.`,
+      `ประหยัดได้ประมาณ ${savingsThb} บาทเมื่อเทียบกับแท็กซี่จากสนามบินทั่วไป`
+    )
+  };
+}
+
 export async function getAirportGuide(destinationQuery = ""): Promise<AirportGuidePayload> {
   const airportStop = findAirportStop();
-  const [vehiclePayload, traffic, weather] = await Promise.all([
+  const [vehiclePayload, traffic, weather, weatherSnapshot] = await Promise.all([
     getVehiclesForRoute(AIRPORT_ROUTE_ID),
     getTrafficAdvisories(AIRPORT_ROUTE_ID),
-    getWeatherAdvisories(AIRPORT_ROUTE_ID)
+    getWeatherAdvisories(AIRPORT_ROUTE_ID),
+    getWeatherSnapshot()
   ]);
   const matches = matchAirportDestination(destinationQuery);
   const bestMatch = matches[0] ?? null;
@@ -392,26 +414,48 @@ export async function getAirportGuide(destinationQuery = ""): Promise<AirportGui
     ? bestMatch?.kind ?? "not_supported"
     : "ready";
   const copy = getRecommendationCopy(recommendation, bestMatch, destinationQuery.trim());
-  const boardingVehicle =
-    vehiclePayload.status.state === "live"
-      ? findBoardingVehicle(vehiclePayload.vehicles, airportStop)
-      : null;
+  const boardingVehicle = findBoardingVehicle(vehiclePayload.vehicles, airportStop);
   const seats = estimateSeatAvailability(boardingVehicle);
+  const mockBoardingCountdown =
+    vehiclePayload.status.state === "fallback" ? airportStop.nextBus.minutesUntil : 0;
+  const nextDepartureMinutes = boardingVehicle ? mockBoardingCountdown : airportStop.nextBus.minutesUntil;
+  const nextDepartureLabel =
+    boardingVehicle && vehiclePayload.status.state === "live" ? "Boarding now" : airportStop.nextBus.label;
+  const nextDepartureBasis = boardingVehicle
+    ? vehiclePayload.status.state === "live"
+      ? "live"
+      : "fallback"
+    : airportStop.nextBus.basis;
+  const nextDepartureState =
+    boardingVehicle && vehiclePayload.status.state === "live" ? "boarding" : "scheduled";
 
   return {
     destinationQuery,
     recommendation,
     headline: copy.headline,
     summary: copy.summary,
+    fareComparison: buildFareComparison(),
+    boardingWalk: {
+      primaryInstruction: text(
+        "Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.",
+        "เมื่อออกมาด้านนอกแล้วให้เลี้ยวซ้ายและเดินไปที่ป้าย Smart Bus ข้าง Cafe Amazon"
+      ),
+      secondaryInstruction: text(
+        "Use exit 3, cross to the Cafe Amazon side, and stay under cover if rain starts.",
+        "ใช้ทางออก 3 ข้ามไปฝั่ง Cafe Amazon และหลบฝนใต้ที่กำบังหากฝนเริ่มตก"
+      ),
+      focusStopId: airportStop.id
+    },
+    weatherSummary: buildAirportWeatherSummary(weatherSnapshot.snapshot),
     bestMatch,
     matches,
     nextDeparture: {
       routeId: AIRPORT_ROUTE_ID,
       routeName: ROUTE_DEFINITIONS[AIRPORT_ROUTE_ID].shortName,
-      label: boardingVehicle ? "Boarding now" : airportStop.nextBus.label,
-      minutesUntil: boardingVehicle ? 0 : airportStop.nextBus.minutesUntil,
-      basis: boardingVehicle ? "live" : airportStop.nextBus.basis,
-      state: boardingVehicle ? "boarding" : "scheduled",
+      label: nextDepartureLabel,
+      minutesUntil: nextDepartureMinutes,
+      basis: nextDepartureBasis,
+      state: nextDepartureState,
       liveBusId: boardingVehicle?.vehicleId ?? null,
       liveLicensePlate: boardingVehicle?.licensePlate ?? null,
       seats

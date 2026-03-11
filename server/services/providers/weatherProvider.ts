@@ -1,4 +1,10 @@
-import type { Advisory, DataSourceStatus, RouteId } from "../../../shared/types.js";
+import type {
+  Advisory,
+  AdvisorySeverity,
+  AirportWeatherSummary,
+  DataSourceStatus,
+  RouteId
+} from "../../../shared/types.js";
 import { OPEN_METEO_URL, WEATHER_CACHE_MS } from "../../config.js";
 import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { text } from "../../lib/i18n.js";
@@ -20,7 +26,7 @@ type WeatherPayload = {
   error?: boolean;
 };
 
-type WeatherSnapshot = {
+export type WeatherSnapshot = {
   updatedAt: string;
   precipitationProbability: number;
   precipitation: number;
@@ -60,6 +66,66 @@ function toSnapshot(payload: WeatherPayload): WeatherSnapshot {
     precipitation,
     windSpeed,
     weatherCode
+  };
+}
+
+function toWeatherSeverity(snapshot: WeatherSnapshot): AdvisorySeverity {
+  if (snapshot.precipitation >= 3 || snapshot.precipitationProbability >= 85) {
+    return "warning";
+  }
+
+  if (snapshot.precipitation >= 1.5 || snapshot.precipitationProbability >= 70 || snapshot.windSpeed >= 28) {
+    return "caution";
+  }
+
+  return "info";
+}
+
+function getConditionLabel(snapshot: WeatherSnapshot) {
+  if ([95, 96, 99].includes(snapshot.weatherCode)) {
+    return text("Storm risk near the airport", "มีความเสี่ยงพายุใกล้สนามบิน");
+  }
+
+  if ([61, 63, 65, 80, 81, 82].includes(snapshot.weatherCode)) {
+    return text("Rain moving across the airport corridor", "มีกลุ่มฝนเคลื่อนผ่านแนวสนามบิน");
+  }
+
+  if ([51, 53, 55, 56, 57].includes(snapshot.weatherCode)) {
+    return text("Light rain around exposed stops", "มีฝนเบาบริเวณป้ายเปิดโล่ง");
+  }
+
+  if ([1, 2, 3, 45, 48].includes(snapshot.weatherCode)) {
+    return text("Clouds building over Phuket", "เมฆกำลังก่อตัวเหนือภูเก็ต");
+  }
+
+  return text("Weather looks steady for now", "ตอนนี้สภาพอากาศยังค่อนข้างคงที่");
+}
+
+export function buildAirportWeatherSummary(snapshot: WeatherSnapshot): AirportWeatherSummary {
+  const severity = toWeatherSeverity(snapshot);
+  let recommendation = text(
+    "Weather looks manageable, but Phuket showers can build quickly near the stop.",
+    "อากาศยังพอจัดการได้ แต่ฝนภูเก็ตสามารถมาเร็วได้ใกล้ป้ายรถ"
+  );
+
+  if (severity === "warning") {
+    recommendation = text(
+      "Rain is likely. Walk to the stop a little earlier and wait under cover until boarding starts.",
+      "มีแนวโน้มฝนตก ควรเดินไปที่ป้ายเร็วขึ้นเล็กน้อยและรอใต้ที่กำบังก่อนขึ้นรถ"
+    );
+  } else if (severity === "caution") {
+    recommendation = text(
+      "Keep a small buffer in case rain or wind slows boarding at the airport stop.",
+      "ควรเผื่อเวลาเล็กน้อยในกรณีที่ฝนหรือลมทำให้การขึ้นรถที่ป้ายสนามบินช้าลง"
+    );
+  }
+
+  return {
+    conditionLabel: getConditionLabel(snapshot),
+    currentPrecipitation: snapshot.precipitation,
+    maxRainProbability: snapshot.precipitationProbability,
+    recommendation,
+    severity
   };
 }
 
@@ -115,6 +181,10 @@ export async function getWeatherSnapshot() {
   }
 
   return cache;
+}
+
+export function clearWeatherSnapshotCache() {
+  cache = undefined;
 }
 
 export async function getWeatherAdvisories(routeId: RouteId) {

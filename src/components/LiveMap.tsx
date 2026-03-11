@@ -1,7 +1,9 @@
-import { MapContainer, Polyline, CircleMarker, TileLayer, Tooltip, useMap } from "react-leaflet";
-import { useEffect } from "react";
+import { divIcon } from "leaflet";
+import { useEffect, useRef, useState } from "react";
+import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
+import { buildAnimatedVehicleFrame, shouldAnimateVehicleFrame } from "@/lib/vehicleAnimation";
 
 type Props = {
   lang: Lang;
@@ -15,6 +17,11 @@ type Props = {
   toolbarEyebrow: string;
   toolbarTitle: string;
   toolbarMeta: string;
+  highlightStopIds?: string[];
+  highlightVehicleId?: string | null;
+  animationDurationMs?: number;
+  showModeToggle?: boolean;
+  testId?: string;
   onModeChange: (mode: "route" | "stop") => void;
 };
 
@@ -45,6 +52,21 @@ function SyncMapView({
   return null;
 }
 
+function buildVehicleIcon(vehicle: VehiclePosition, color: string, highlighted: boolean) {
+  return divIcon({
+    className: "bus-marker-icon",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    html: `
+      <div class="bus-marker${highlighted ? " is-highlighted" : ""}" style="--bus-color: ${color}; --bus-heading: ${vehicle.heading}deg;">
+        <span class="bus-marker__heading"></span>
+        <span class="bus-marker__body"></span>
+        <span class="bus-marker__windshield"></span>
+      </div>
+    `
+  });
+}
+
 export function LiveMap({
   lang,
   routes,
@@ -57,37 +79,76 @@ export function LiveMap({
   toolbarEyebrow,
   toolbarTitle,
   toolbarMeta,
+  highlightStopIds = [],
+  highlightVehicleId = null,
+  animationDurationMs = 12_000,
+  showModeToggle = true,
+  testId = "live-map",
   onModeChange
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? routes[0]?.bounds?.[0] ?? [7.88, 98.39];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
+  const [animatedVehicles, setAnimatedVehicles] = useState(vehicles);
+  const renderedVehiclesRef = useRef(vehicles);
+
+  useEffect(() => {
+    renderedVehiclesRef.current = animatedVehicles;
+  }, [animatedVehicles]);
+
+  useEffect(() => {
+    if (renderedVehiclesRef.current.length === 0 || !shouldAnimateVehicleFrame(renderedVehiclesRef.current, vehicles)) {
+      setAnimatedVehicles(vehicles);
+      return;
+    }
+
+    let frameId = 0;
+    const fromVehicles = renderedVehiclesRef.current;
+    const startedAt = performance.now();
+
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / animationDurationMs);
+      setAnimatedVehicles(buildAnimatedVehicleFrame(fromVehicles, vehicles, progress));
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(animate);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(animate);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [animationDurationMs, vehicles]);
 
   return (
-    <div className="map-frame">
+    <div className="map-frame" data-testid={testId}>
       <div className="map-frame__toolbar">
         <div className="map-frame__copy">
           <span className="map-frame__eyebrow">{toolbarEyebrow}</span>
           <strong>{toolbarTitle}</strong>
           <small>{toolbarMeta}</small>
         </div>
-        <div className="map-frame__toggle" aria-label={pick(ui.mapTitle, lang)}>
-          <button
-            className={mode === "route" ? "map-toggle is-active" : "map-toggle"}
-            onClick={() => onModeChange("route")}
-            type="button"
-            aria-pressed={mode === "route"}
-          >
-            {pick(ui.mapModeRoute, lang)}
-          </button>
-          <button
-            className={mode === "stop" ? "map-toggle is-active" : "map-toggle"}
-            onClick={() => onModeChange("stop")}
-            type="button"
-            aria-pressed={mode === "stop"}
-          >
-            {pick(ui.mapModeStop, lang)}
-          </button>
-        </div>
+        {showModeToggle ? (
+          <div className="map-frame__toggle" aria-label={pick(ui.mapTitle, lang)}>
+            <button
+              className={mode === "route" ? "map-toggle is-active" : "map-toggle"}
+              onClick={() => onModeChange("route")}
+              type="button"
+              aria-pressed={mode === "route"}
+            >
+              {pick(ui.mapModeRoute, lang)}
+            </button>
+            <button
+              className={mode === "stop" ? "map-toggle is-active" : "map-toggle"}
+              onClick={() => onModeChange("stop")}
+              type="button"
+              aria-pressed={mode === "stop"}
+            >
+              {pick(ui.mapModeStop, lang)}
+            </button>
+          </div>
+        ) : null}
       </div>
       <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="map-canvas">
         <TileLayer
@@ -104,42 +165,57 @@ export function LiveMap({
             />
           ))
         )}
-        {stops.map((stop) => (
-          <CircleMarker
-            key={stop.id}
-            center={stop.coordinates}
-            radius={stop.id === selectedStop?.id ? 9 : 6}
-            pathOptions={{
-              color: stop.id === selectedStop?.id ? "#ffffff" : "#d9f7ff",
-              fillColor:
-                stop.id === selectedStop?.id ? "#ff8a3d" : routeColorById[stop.routeId] ?? "#0d1b2a",
-              fillOpacity: 1,
-              weight: 2
-            }}
-          >
-            <Tooltip>{pick(stop.name, lang)}</Tooltip>
-          </CircleMarker>
-        ))}
-        {vehicles.map((vehicle) => (
-          <CircleMarker
-            key={vehicle.id}
-            center={vehicle.coordinates}
-            radius={10}
-            pathOptions={{
-              color: vehicle.routeId === "dragon-line" ? "#ffd6d1" : "#ffffff",
-              fillColor:
-                vehicle.routeId === "rawai-airport"
-                  ? "#16b8b0"
-                  : vehicle.routeId === "patong-old-bus-station"
-                    ? "#ffcc33"
-                    : "#db0000",
-              fillOpacity: 1,
-              weight: 3
-            }}
-          >
-            <Tooltip>{vehicle.licensePlate}</Tooltip>
-          </CircleMarker>
-        ))}
+        {stops.map((stop) => {
+          const isHighlighted = stop.id === selectedStop?.id || highlightStopIds.includes(stop.id);
+
+          return (
+            <CircleMarker
+              key={stop.id}
+              center={stop.coordinates}
+              radius={isHighlighted ? 10 : 6}
+              pathOptions={{
+                color: isHighlighted ? "#ffffff" : "#d9f7ff",
+                fillColor: isHighlighted ? "#ff8a3d" : routeColorById[stop.routeId] ?? "#0d1b2a",
+                fillOpacity: 1,
+                weight: isHighlighted ? 3 : 2
+              }}
+            >
+              <Tooltip>{pick(stop.name, lang)}</Tooltip>
+            </CircleMarker>
+          );
+        })}
+        {highlightVehicleId
+          ? animatedVehicles
+              .filter((vehicle) => vehicle.vehicleId === highlightVehicleId)
+              .map((vehicle) => (
+                <CircleMarker
+                  key={`${vehicle.id}-focus`}
+                  center={vehicle.coordinates}
+                  radius={16}
+                  pathOptions={{
+                    color: "rgba(22, 184, 176, 0.42)",
+                    fillColor: "rgba(22, 184, 176, 0.14)",
+                    fillOpacity: 0.3,
+                    weight: 2
+                  }}
+                />
+              ))
+          : null}
+        {animatedVehicles.map((vehicle) => {
+          const vehicleColor =
+            routeColorById[vehicle.routeId] ??
+            (vehicle.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
+
+          return (
+            <Marker
+              key={vehicle.id}
+              position={vehicle.coordinates}
+              icon={buildVehicleIcon(vehicle, vehicleColor, highlightVehicleId === vehicle.vehicleId)}
+            >
+              <Tooltip>{vehicle.licensePlate}</Tooltip>
+            </Marker>
+          );
+        })}
         {userLocation ? (
           <CircleMarker
             center={userLocation}

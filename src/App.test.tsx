@@ -8,19 +8,27 @@ vi.mock("./components/LiveMap", () => ({
     mode,
     userLocation,
     selectedStop,
+    highlightStopIds,
+    highlightVehicleId,
+    testId = "live-map",
     onModeChange
   }: {
     routes: Array<{ id: string }>;
     mode: "route" | "stop";
     userLocation: [number, number] | null;
     selectedStop: { id: string } | null;
+    highlightStopIds?: string[];
+    highlightVehicleId?: string | null;
+    testId?: string;
     onModeChange: (mode: "route" | "stop") => void;
   }) => (
-    <div data-testid="live-map">
+    <div data-testid={testId}>
       <div>{`routes:${routes.map((route) => route.id).join(",")}`}</div>
       <div>{`mode:${mode}`}</div>
       <div>{userLocation ? "user-location:on" : "user-location:off"}</div>
       <div>{selectedStop ? `selected-stop:${selectedStop.id}` : "selected-stop:none"}</div>
+      <div>{`highlight-stop:${(highlightStopIds ?? []).join(",") || "none"}`}</div>
+      <div>{`highlight-vehicle:${highlightVehicleId ?? "none"}`}</div>
       <button type="button" onClick={() => onModeChange("route")}>
         mock-route-view
       </button>
@@ -297,6 +305,39 @@ const airportGuide = {
     en: "Search a beach, hotel belt, or landmark and we will tell you if Smart Bus is the right choice before you leave the terminal.",
     th: "พิมพ์ชื่อหาด ย่านโรงแรม หรือจุดสังเกต แล้วเราจะบอกว่าควรเลือก Smart Bus ก่อนออกจากอาคารหรือไม่"
   },
+  fareComparison: {
+    busFareThb: 100,
+    taxiFareEstimateThb: 1000,
+    savingsThb: 900,
+    savingsCopy: {
+      en: "Save about 900 THB versus a typical airport taxi ride.",
+      th: "ประหยัดได้ประมาณ 900 บาทเมื่อเทียบกับแท็กซี่จากสนามบินทั่วไป"
+    }
+  },
+  boardingWalk: {
+    primaryInstruction: {
+      en: "Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.",
+      th: "เมื่อออกมาด้านนอกแล้วให้เลี้ยวซ้ายและเดินไปที่ป้าย Smart Bus ข้าง Cafe Amazon"
+    },
+    secondaryInstruction: {
+      en: "Use exit 3, cross to the Cafe Amazon side, and stay under cover if rain starts.",
+      th: "ใช้ทางออก 3 ข้ามไปฝั่ง Cafe Amazon และหลบฝนใต้ที่กำบังหากฝนเริ่มตก"
+    },
+    focusStopId: "rawai-airport-42"
+  },
+  weatherSummary: {
+    conditionLabel: {
+      en: "Rain moving across the airport corridor",
+      th: "มีกลุ่มฝนเคลื่อนผ่านแนวสนามบิน"
+    },
+    currentPrecipitation: 1.8,
+    maxRainProbability: 82,
+    recommendation: {
+      en: "Keep a small buffer in case rain or wind slows boarding at the airport stop.",
+      th: "ควรเผื่อเวลาเล็กน้อยในกรณีที่ฝนหรือลมทำให้การขึ้นรถที่ป้ายสนามบินช้าลง"
+    },
+    severity: "caution"
+  },
   bestMatch: null,
   matches: [],
   nextDeparture: {
@@ -453,15 +494,19 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
-    expect(await screen.findByText("A bus is running from the airport")).toBeInTheDocument();
     expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
+    expect(await screen.findByText("100 THB beats a 1000 THB taxi")).toBeInTheDocument();
+    expect(await screen.findByText("Save about 900 THB versus a typical airport taxi ride.")).toBeInTheDocument();
+    expect(await screen.findByText("Rain moving across the airport corridor")).toBeInTheDocument();
+    expect(await screen.findByText("Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.")).toBeInTheDocument();
     expect(await screen.findByText("Phuket time")).toBeInTheDocument();
     expect(screen.getByText("UTC+7 boarding clock", { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My QR" })).toBeInTheDocument();
     expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
     expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
+    expect(screen.getByTestId("airport-map-preview")).toBeInTheDocument();
+    expect(screen.getByText("highlight-stop:rawai-airport-42")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
     expect(screen.getByText("A mock-up for rider testing and future GPS and camera integration.")).toBeInTheDocument();
     expect(screen.getByText("Copyright 2026 Dr. Non Arkaraprasertkul")).toBeInTheDocument();
 
@@ -508,7 +553,7 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
 
     expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
-    expect(screen.getByText("มีรถบัสวิ่งออกจากสนามบิน")).toBeInTheDocument();
+    expect(screen.getByText("100 บาทคุ้มกว่ารถแท็กซี่ 1000 บาท")).toBeInTheDocument();
     expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
     expect(screen.getByText("เวลาภูเก็ต")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "คิวอาร์ของฉัน" })).toBeInTheDocument();

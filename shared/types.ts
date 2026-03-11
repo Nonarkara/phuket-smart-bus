@@ -126,6 +126,27 @@ export interface AirportQuickDestination {
   travelMinutes: number | null;
 }
 
+export interface AirportFareComparison {
+  busFareThb: number;
+  taxiFareEstimateThb: number;
+  savingsThb: number;
+  savingsCopy: LocalizedText;
+}
+
+export interface AirportBoardingWalk {
+  primaryInstruction: LocalizedText;
+  secondaryInstruction: LocalizedText;
+  focusStopId: string;
+}
+
+export interface AirportWeatherSummary {
+  conditionLabel: LocalizedText;
+  currentPrecipitation: number;
+  maxRainProbability: number;
+  recommendation: LocalizedText;
+  severity: AdvisorySeverity;
+}
+
 export interface AirportDeparture {
   routeId: RouteId;
   routeName: LocalizedText;
@@ -223,6 +244,9 @@ export interface AirportGuidePayload {
   recommendation: AirportGuideKind;
   headline: LocalizedText;
   summary: LocalizedText;
+  fareComparison: AirportFareComparison;
+  boardingWalk: AirportBoardingWalk;
+  weatherSummary: AirportWeatherSummary;
   bestMatch: AirportDestinationMatch | null;
   matches: AirportDestinationMatch[];
   nextDeparture: AirportDeparture;

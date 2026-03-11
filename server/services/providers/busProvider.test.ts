@@ -35,11 +35,14 @@ const rawRecord = {
 
 describe("busProvider", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-09T15:10:00+07:00"));
     clearOperationsStore();
     clearBusSnapshotCache();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     clearBusSnapshotCache();
   });

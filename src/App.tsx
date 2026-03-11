@@ -623,8 +623,15 @@ export default function App() {
     );
   });
   const visibleRoutes = routes.filter((route) => PRIMARY_ROUTE_IDS.includes(route.id));
+  const airportRoute = routes.find((route) => route.id === "rawai-airport") ?? null;
+  const airportStops = routeStopsById["rawai-airport"] ?? [];
+  const airportVehicles = routeVehiclesById["rawai-airport"] ?? [];
   const activeRoute = routes.find((route) => route.id === selectedRouteId) ?? null;
   const selectedStop = stops.find((stop) => stop.id === selectedStopId) ?? null;
+  const airportPreviewStop =
+    airportStops.find((stop) => stop.id === airportGuide?.boardingWalk.focusStopId) ??
+    airportStops.find((stop) => stop.name.en === "Phuket Airport") ??
+    null;
   const activeAdvisoryCount = advisories.filter((advisory) => advisory.active).length;
   const mapVisibleRoutes =
     mapMode === "stop"
@@ -671,6 +678,29 @@ export default function App() {
         ? `${totalLiveVehicles} คันที่เห็นบนเส้นทางนี้`
         : `${totalLiveVehicles} vehicles visible on this line`;
   }
+
+  const airportMapPreview =
+    airportRoute && airportPreviewStop ? (
+      <LiveMap
+        lang={lang}
+        routes={[airportRoute]}
+        stops={[airportPreviewStop]}
+        vehicles={airportVehicles}
+        userLocation={userLocation}
+        selectedStop={airportPreviewStop}
+        mode="stop"
+        bounds={airportRoute.bounds}
+        toolbarEyebrow={pick(ui.airportMapEyebrow, lang)}
+        toolbarTitle={pick(ui.airportMapTitle, lang)}
+        toolbarMeta={pick(ui.airportMapBody, lang)}
+        highlightStopIds={[airportPreviewStop.id]}
+        highlightVehicleId={airportGuide?.nextDeparture.liveBusId ?? null}
+        animationDurationMs={LIVE_POLL_MS}
+        showModeToggle={false}
+        testId="airport-map-preview"
+        onModeChange={() => {}}
+      />
+    ) : null;
 
   function navigate(nextView: AppView) {
     if (nextView === "map") {
@@ -786,12 +816,6 @@ export default function App() {
         </div>
       </header>
 
-      {statusMessage ? (
-        <div className="status-banner card" role="status">
-          {pick(ui.loadingError, lang)}
-        </div>
-      ) : null}
-
       <AppNav
         lang={lang}
         view={view}
@@ -801,6 +825,13 @@ export default function App() {
         qrLabel={pick(ui.navQr, lang)}
         onChange={navigate}
       />
+
+      <div className="app-content">
+      {statusMessage ? (
+        <div className="status-banner card" role="status">
+          {pick(ui.loadingError, lang)}
+        </div>
+      ) : null}
 
       {locationHeadline && locationBody ? (
         <LocationBanner
@@ -834,8 +865,10 @@ export default function App() {
             fallbackTitle={pick(ui.airportGuideFallbackTitle, lang)}
             fallbackBody={pick(ui.airportGuideFallbackBody, lang)}
             query={airportQuery}
+            previewMap={airportMapPreview}
             onQueryChange={setAirportQuery}
             onFocusMatch={focusRouteStop}
+            onFocusBoarding={focusRouteStop}
           />
         </main>
       ) : null}
@@ -885,6 +918,7 @@ export default function App() {
                 toolbarEyebrow={mapToolbarEyebrow}
                 toolbarTitle={mapToolbarTitle}
                 toolbarMeta={mapToolbarMeta}
+                animationDurationMs={LIVE_POLL_MS}
                 onModeChange={setMapMode}
               />
             </div>
@@ -989,6 +1023,7 @@ export default function App() {
         <p>{pick(ui.footerBody, lang)}</p>
         <small>{pick(ui.footerCopyright, lang)}</small>
       </footer>
+      </div>
     </div>
   );
 }
