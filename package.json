@@ -10,7 +10,9 @@
     "build:server": "tsc -p tsconfig.server.json",
     "start": "node dist/server/server/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "verify": "npm test && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -21,6 +23,7 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
