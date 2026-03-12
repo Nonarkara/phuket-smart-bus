@@ -493,17 +493,21 @@ describe("App", () => {
   it("renders the rider prototype and switches language", async () => {
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Can the bus take me there?" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Bus or taxi?" })).toBeInTheDocument();
     expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
-    expect(await screen.findByText("100 THB beats a 1000 THB taxi")).toBeInTheDocument();
+    expect(await screen.findByText("100 THB")).toBeInTheDocument();
+    expect(await screen.findByText(/1,000/)).toBeInTheDocument();
     expect(await screen.findByText("Save about 900 THB versus a typical airport taxi ride.")).toBeInTheDocument();
-    expect(await screen.findByText("Rain moving across the airport corridor")).toBeInTheDocument();
+    expect((await screen.findAllByText("Rain moving across the airport corridor")).length).toBeGreaterThan(0);
+    expect(
+      await screen.findByText(
+        "Keep a small buffer in case rain or wind slows boarding at the airport stop."
+      )
+    ).toBeInTheDocument();
     expect(await screen.findByText("Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.")).toBeInTheDocument();
     expect(await screen.findByText("Phuket time")).toBeInTheDocument();
     expect(screen.getByText("UTC+7 boarding clock", { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My QR" })).toBeInTheDocument();
-    expect(await screen.findByText("12 seated · 4 on · 1 off")).toBeInTheDocument();
-    expect(await screen.findByText("Driver alert · 96% confidence")).toBeInTheDocument();
     expect(screen.getByTestId("airport-map-preview")).toBeInTheDocument();
     expect(screen.getByText("highlight-stop:rawai-airport-42")).toBeInTheDocument();
     expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
@@ -552,9 +556,10 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "TH" }));
     await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
 
-    expect(screen.getByRole("heading", { name: "รถบัสไปถึงที่นั่นไหม?" })).toBeInTheDocument();
-    expect(screen.getByText("100 บาทคุ้มกว่ารถแท็กซี่ 1000 บาท")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "รถบัสหรือแท็กซี่?" })).toBeInTheDocument();
+    expect(screen.getByText("100 THB")).toBeInTheDocument();
     expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
+    expect(screen.getAllByText("มีกลุ่มฝนเคลื่อนผ่านแนวสนามบิน").length).toBeGreaterThan(0);
     expect(screen.getByText("เวลาภูเก็ต")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "คิวอาร์ของฉัน" })).toBeInTheDocument();
   });

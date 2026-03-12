@@ -26,20 +26,20 @@ export const ui = {
     th: "จากสนามบินภูเก็ต"
   },
   airportTitle: {
-    en: "Can the bus take me there?",
-    th: "รถบัสไปถึงที่นั่นไหม?"
+    en: "Bus or taxi?",
+    th: "รถบัสหรือแท็กซี่?"
   },
   airportBody: {
-    en: "Search a beach, hotel, or landmark. We will tell you if the bus works for that trip.",
-    th: "ค้นหาหาด โรงแรม หรือจุดสังเกต แล้วเราจะบอกว่ารถบัสใช้ไปถึงได้หรือไม่"
+    en: "See the next bus, the fare difference, rain risk, and where to walk before you leave the airport.",
+    th: "ดูรถคันถัดไป ส่วนต่างราคา ความเสี่ยงฝน และทางเดินไปป้ายก่อนออกจากสนามบิน"
   },
   airportSearchPlaceholder: {
     en: "Search beach, hotel, or landmark",
     th: "ค้นหาหาด โรงแรม หรือจุดสังเกต"
   },
   airportQuickTitle: {
-    en: "Popular airport trips",
-    th: "จุดหมายยอดนิยมจากสนามบิน"
+    en: "Common airport trips",
+    th: "จุดหมายที่คนนิยมไปจากสนามบิน"
   },
   airportDepartureLabel: {
     en: "Next airport departure",
@@ -110,8 +110,8 @@ export const ui = {
     th: "ใช้แผนที่เมื่อคุณรออยู่บนเส้นทางแล้วเท่านั้น"
   },
   airportWeatherTitle: {
-    en: "Airport weather",
-    th: "อากาศบริเวณสนามบิน"
+    en: "Rain risk",
+    th: "ความเสี่ยงฝน"
   },
   airportWeatherRainChanceLabel: {
     en: "Rain chance",
