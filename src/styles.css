@@ -262,198 +262,158 @@ a {
 
 .airport-arrival {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.75rem;
   margin-top: 1rem;
 }
 
-.airport-arrival__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.airport-arrival-card,
-.airport-weather,
-.airport-walk-card {
+.airport-hero,
+.airport-walk-strip {
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 1rem;
-  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
-}
-
-.airport-arrival-card--fare {
   background:
-    radial-gradient(circle at top right, rgba(22, 184, 176, 0.12), transparent 38%),
-    linear-gradient(180deg, #ffffff 0%, #f3fcfb 100%);
-}
-
-.airport-arrival-card--departure {
-  background:
-    radial-gradient(circle at top left, rgba(255, 204, 51, 0.18), transparent 36%),
-    linear-gradient(180deg, #101418 0%, #172028 100%);
-  border-color: rgba(16, 20, 24, 0.8);
+    radial-gradient(circle at top right, rgba(22, 184, 176, 0.1), transparent 30%),
+    linear-gradient(180deg, #101418 0%, #182028 100%);
   color: #ffffff;
+  box-shadow: var(--shadow);
 }
 
-.airport-arrival-card__header,
-.airport-weather {
-  display: flex;
-  justify-content: space-between;
+.airport-hero__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
+  align-items: end;
 }
 
-.airport-arrival-card__eyebrow,
-.airport-weather__eyebrow,
-.airport-walk-card__eyebrow {
+.airport-hero__eyebrow,
+.airport-walk-strip__label {
   display: block;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
-.airport-arrival-card--departure .airport-arrival-card__eyebrow,
-.airport-arrival-card--departure .airport-arrival-card__meta,
-.airport-arrival-card--departure p,
-.airport-arrival-card--departure small,
-.airport-arrival-card--departure .airport-arrival-card__stat span {
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.airport-arrival-card__meta {
-  color: var(--muted);
-  font-size: 0.82rem;
-  text-align: right;
-}
-
-.airport-arrival-card strong,
-.airport-weather strong,
-.airport-walk-card strong {
+.airport-hero strong,
+.airport-walk-strip strong {
   display: block;
   margin-top: 0.35rem;
   line-height: 1.05;
   letter-spacing: -0.05em;
 }
 
-.airport-arrival-card--fare strong {
-  font-size: clamp(1.4rem, 5vw, 2.2rem);
+.airport-hero__fare strong {
+  font-size: clamp(2.7rem, 12vw, 4.6rem);
+  letter-spacing: -0.12em;
 }
 
-.airport-arrival-card__countdown {
-  font-size: clamp(2.3rem, 10vw, 4rem);
-  letter-spacing: -0.1em;
+.airport-hero__departure {
+  text-align: right;
 }
 
-.airport-arrival-card p,
-.airport-weather p,
-.airport-walk-card p {
+.airport-hero__departure strong {
+  font-size: clamp(1.8rem, 8vw, 3rem);
+  letter-spacing: -0.09em;
+}
+
+.airport-hero p,
+.airport-walk-strip p {
   margin: 0.45rem 0 0;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.72);
   line-height: 1.45;
 }
 
-.airport-fare-grid,
-.airport-arrival-card__stats,
-.airport-weather__stats {
-  display: grid;
-  gap: 0.7rem;
+.airport-hero__summary {
+  max-width: 32rem;
 }
 
-.airport-fare-grid,
-.airport-arrival-card__stats {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.airport-hero__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
   margin-top: 0.9rem;
 }
 
-.airport-fare-tile,
-.airport-arrival-card__stat {
+.airport-hero__metric {
   padding: 0.85rem;
   border-radius: 20px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.airport-fare-tile.is-bus {
-  border-color: rgba(22, 184, 176, 0.24);
-}
-
-.airport-fare-tile.is-taxi {
-  border-color: rgba(155, 123, 38, 0.24);
-}
-
-.airport-fare-tile span,
-.airport-arrival-card__stat span,
-.airport-weather__stats span {
+.airport-hero__metric span {
   display: block;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.65);
 }
 
-.airport-fare-tile strong,
-.airport-arrival-card__stat strong,
-.airport-weather__stats strong {
+.airport-hero__metric strong {
   margin-top: 0.3rem;
-  font-size: 1.2rem;
+  font-size: 1.12rem;
+  letter-spacing: -0.04em;
 }
 
-.airport-arrival-card__detail {
+.airport-hero__metric small {
   display: block;
   margin-top: 0.35rem;
+  color: rgba(255, 255, 255, 0.68);
   line-height: 1.4;
 }
 
-.airport-arrival-card__action {
-  margin-top: 0.9rem;
-  border: 0;
-  min-height: 3rem;
-  padding: 0.8rem 1rem;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #101418;
-  font-weight: 700;
+.airport-hero__meta {
+  display: grid;
+  gap: 0.18rem;
+  margin-top: 0.75rem;
 }
 
-.airport-weather {
-  align-items: flex-start;
+.airport-hero__meta small {
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.35;
 }
 
-.airport-weather strong {
-  font-size: clamp(1.2rem, 4vw, 1.8rem);
+.airport-hero__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-top: 0.95rem;
 }
 
-.airport-weather__stats {
-  min-width: 9rem;
-  grid-template-columns: 1fr;
+.airport-hero__footer-copy strong {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #ffffff;
 }
 
-.airport-weather--warning {
-  border-color: rgba(158, 61, 50, 0.24);
-  background: linear-gradient(180deg, #fffdfc 0%, #fdf1ee 100%);
+.airport-hero__footer-copy small {
+  display: block;
+  margin-top: 0.25rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.45;
 }
 
-.airport-weather--caution {
-  border-color: rgba(138, 93, 18, 0.2);
-  background: linear-gradient(180deg, #fffef7 0%, #faf2de 100%);
-}
-
-.airport-weather--info {
-  border-color: rgba(76, 102, 120, 0.18);
-  background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
-}
-
-.airport-walk-card {
+.airport-walk-strip {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  padding-block: 0.9rem;
+  background: #f7f3eb;
 }
 
-.airport-walk-card__copy {
-  display: grid;
-  gap: 0.2rem;
+.airport-walk-strip__label {
+  color: var(--muted);
+}
+
+.airport-walk-strip strong {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
 }
 
 .airport-map-preview .map-canvas {
@@ -1537,18 +1497,22 @@ a {
 }
 
 @media (max-width: 640px) {
-  .airport-arrival__grid,
-  .airport-arrival-card__stats {
-    grid-template-columns: 1fr;
-  }
-
-  .airport-weather,
-  .airport-walk-card,
+  .airport-hero__header,
+  .airport-hero__footer,
+  .airport-walk-strip,
   .airport-guide__header,
   .airport-guide__times,
   .airport-guide__match {
     display: grid;
     gap: 0.4rem;
+  }
+
+  .airport-hero__departure {
+    text-align: left;
+  }
+
+  .airport-hero__metrics {
+    grid-template-columns: 1fr;
   }
 
   .airport-guide__match {
@@ -1895,7 +1859,6 @@ a {
   }
 
   .airport-quick__grid,
-  .airport-fare-grid,
   .airport-guide__stats,
   .journey-strip,
   .pass-ticket__meta-grid {

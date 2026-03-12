@@ -175,92 +175,79 @@ export function AirportGuidePanel({
 
       {guide ? (
         <div className="airport-arrival">
-          <div className="airport-arrival__grid">
-            <article className="airport-arrival-card airport-arrival-card--fare">
-              <span className="airport-arrival-card__eyebrow">{pick(ui.airportSavingsTitle, lang)}</span>
-              <strong>{pick(ui.airportSavingsHeadline, lang)}</strong>
-              <p>{guide.fareComparison.savingsCopy ? pick(guide.fareComparison.savingsCopy, lang) : ""}</p>
-              <div className="airport-fare-grid">
-                <div className="airport-fare-tile is-bus">
-                  <span>{pick(ui.airportBusFareLabel, lang)}</span>
-                  <strong>{formatThaiBaht(guide.fareComparison.busFareThb, lang)} THB</strong>
-                </div>
-                <div className="airport-fare-tile is-taxi">
-                  <span>{pick(ui.airportTaxiFareLabel, lang)}</span>
-                  <strong>~{formatThaiBaht(guide.fareComparison.taxiFareEstimateThb, lang)} THB</strong>
-                </div>
+          <article className="airport-hero">
+            <div className="airport-hero__header">
+              <div className="airport-hero__fare">
+                <span className="airport-hero__eyebrow">{pick(ui.airportSavingsTitle, lang)}</span>
+                <strong>{formatThaiBaht(guide.fareComparison.busFareThb, lang)} THB</strong>
+                <p>
+                  {pick(ui.airportBusFareLabel, lang)} · ~
+                  {formatThaiBaht(guide.fareComparison.taxiFareEstimateThb, lang)} THB{" "}
+                  {pick(ui.airportTaxiFareLabel, lang).toLowerCase()}
+                </p>
               </div>
-            </article>
 
-            <article className="airport-arrival-card airport-arrival-card--departure">
-              <div className="airport-arrival-card__header">
-                <span className="airport-arrival-card__eyebrow">{departureLabel}</span>
-                <span className="airport-arrival-card__meta">{getDepartureBasisLabel(guide, lang)}</span>
+              <div className="airport-hero__departure">
+                <span className="airport-hero__eyebrow">{departureLabel}</span>
+                <strong>{getDepartureLabel(guide, lang)}</strong>
+                <p>
+                  {guide.nextDeparture.label} · {getRouteLabel(guide.nextDeparture.routeId, lang)}
+                  {guide.nextDeparture.liveLicensePlate ? ` · ${guide.nextDeparture.liveLicensePlate}` : ""}
+                </p>
               </div>
-              <strong className="airport-arrival-card__countdown">{getDepartureLabel(guide, lang)}</strong>
-              <p>
-                {guide.nextDeparture.label} · {getRouteLabel(guide.nextDeparture.routeId, lang)}
-                {guide.nextDeparture.liveLicensePlate ? ` · ${guide.nextDeparture.liveLicensePlate}` : ""}
-              </p>
-              <div className="airport-arrival-card__stats">
-                <div className="airport-arrival-card__stat">
-                  <span>{seatsLabel}</span>
-                  <strong>{guide.nextDeparture.seats?.seatsLeft ?? "--"}</strong>
-                  <small>
-                    {guide.nextDeparture.seats
-                      ? pick(guide.nextDeparture.seats.confidenceLabel, lang)
-                      : seatsPendingLabel}
-                  </small>
-                </div>
-                <div className="airport-arrival-card__stat">
-                  <span>{boardingLabel}</span>
-                  <strong>{pick(guide.airportBoardingLabel, lang)}</strong>
-                  <small>{getRouteLabel(guide.nextDeparture.routeId, lang)}</small>
-                </div>
+            </div>
+
+            <p className="airport-hero__summary">{pick(guide.fareComparison.savingsCopy, lang)}</p>
+
+            <div className="airport-hero__metrics">
+              <div className="airport-hero__metric">
+                <span>{seatsLabel}</span>
+                <strong>{guide.nextDeparture.seats?.seatsLeft ?? "--"}</strong>
+                <small>
+                  {guide.nextDeparture.seats
+                    ? pick(guide.nextDeparture.seats.confidenceLabel, lang)
+                    : seatsPendingLabel}
+                </small>
               </div>
-              {cabinMeta ? <small className="airport-arrival-card__detail">{cabinMeta}</small> : null}
-              {driverMeta ? <small className="airport-arrival-card__detail">{driverMeta}</small> : null}
+              <div className="airport-hero__metric">
+                <span>{pick(ui.airportWeatherTitle, lang)}</span>
+                <strong>{guide.weatherSummary.maxRainProbability}%</strong>
+                <small>{pick(guide.weatherSummary.conditionLabel, lang)}</small>
+              </div>
+              <div className="airport-hero__metric">
+                <span>{boardingLabel}</span>
+                <strong>{pick(guide.airportBoardingLabel, lang)}</strong>
+                <small>{pick(guide.boardingWalk.secondaryInstruction, lang)}</small>
+              </div>
+            </div>
+
+            {cabinMeta || driverMeta ? (
+              <div className="airport-hero__meta">
+                {cabinMeta ? <small>{cabinMeta}</small> : null}
+                {driverMeta ? <small>{driverMeta}</small> : null}
+              </div>
+            ) : null}
+
+            <div className="airport-hero__footer">
+              <div className="airport-hero__footer-copy">
+                <strong>{pick(ui.airportSavingsHeadline, lang)}</strong>
+                <small>
+                  {getDepartureBasisLabel(guide, lang)} · {pick(guide.weatherSummary.recommendation, lang)}
+                </small>
+              </div>
               <button
-                className="airport-arrival-card__action"
+                className="airport-guide__action"
                 type="button"
                 onClick={() => onFocusBoarding(guide.nextDeparture.routeId, guide.boardingWalk.focusStopId)}
               >
                 {pick(ui.airportBoardingAction, lang)}
               </button>
-            </article>
-          </div>
-
-          <article className={`airport-weather airport-weather--${guide.weatherSummary.severity}`}>
-            <div>
-              <span className="airport-weather__eyebrow">{pick(ui.airportWeatherTitle, lang)}</span>
-              <strong>{pick(guide.weatherSummary.conditionLabel, lang)}</strong>
-              <p>{pick(guide.weatherSummary.recommendation, lang)}</p>
-            </div>
-            <div className="airport-weather__stats">
-              <div>
-                <span>{pick(ui.airportWeatherRainChanceLabel, lang)}</span>
-                <strong>{guide.weatherSummary.maxRainProbability}%</strong>
-              </div>
-              <div>
-                <span>{pick(ui.airportWeatherRainfallLabel, lang)}</span>
-                <strong>{guide.weatherSummary.currentPrecipitation.toFixed(1)} mm</strong>
-              </div>
             </div>
           </article>
 
-          <article className="airport-walk-card">
-            <div className="airport-walk-card__copy">
-              <span className="airport-walk-card__eyebrow">{pick(ui.airportWalkTitle, lang)}</span>
-              <strong>{pick(guide.boardingWalk.primaryInstruction, lang)}</strong>
-              <p>{pick(guide.boardingWalk.secondaryInstruction, lang)}</p>
-            </div>
-            <button
-              className="airport-guide__action"
-              type="button"
-              onClick={() => onFocusBoarding(guide.nextDeparture.routeId, guide.boardingWalk.focusStopId)}
-            >
-              {pick(ui.airportBoardingAction, lang)}
-            </button>
+          <article className="airport-walk-strip">
+            <span className="airport-walk-strip__label">{pick(ui.airportWalkTitle, lang)}</span>
+            <strong>{pick(guide.boardingWalk.primaryInstruction, lang)}</strong>
           </article>
 
           {previewMap ? <div className="airport-map-preview">{previewMap}</div> : null}
@@ -277,32 +264,6 @@ export function AirportGuidePanel({
           aria-label={searchPlaceholder}
         />
       </label>
-
-      {guide && query.trim() ? (
-        <div className="airport-result" aria-live="polite">
-          <span className="airport-result__tag">{getKindLabel(guide, lang)}</span>
-          <div className="airport-result__body">
-            {guide.bestMatch ? (
-              <>
-                <strong>{pick(guide.bestMatch.areaLabel, lang)}</strong>
-                <small>
-                  {getRouteLabel(guide.bestMatch.routeId, lang)} · {pick(guide.bestMatch.stopName, lang)}
-                  {guide.bestMatch.travelMinutes !== null
-                    ? lang === "th"
-                      ? ` · ประมาณ ${guide.bestMatch.travelMinutes} นาที`
-                      : ` · about ${guide.bestMatch.travelMinutes} min`
-                    : ""}
-                </small>
-              </>
-            ) : (
-              <>
-                <strong>{pick(guide.headline, lang)}</strong>
-                <small>{pick(guide.summary, lang)}</small>
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
 
       {guide && query.trim() ? (
         <div className={`airport-guide airport-guide--${guide.recommendation}`}>
