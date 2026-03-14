@@ -51,6 +51,22 @@ describe("getAirportGuide", () => {
     expect(guide.bestMatch?.routeId).toBe("rawai-airport");
   });
 
+  it("keeps quick-destination travel times in a realistic range for the airport demo", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
+
+    const guide = await getAirportGuide();
+    const laguna = guide.quickDestinations.find((item) => item.id === "laguna");
+    const kata = guide.quickDestinations.find((item) => item.id === "kata");
+    const rawai = guide.quickDestinations.find((item) => item.id === "rawai");
+
+    expect(laguna?.travelMinutes).toBeGreaterThanOrEqual(30);
+    expect(laguna?.travelMinutes).toBeLessThanOrEqual(45);
+    expect(kata?.travelMinutes).toBeGreaterThanOrEqual(80);
+    expect(kata?.travelMinutes).toBeLessThanOrEqual(100);
+    expect(rawai?.travelMinutes).toBeGreaterThanOrEqual(90);
+    expect(rawai?.travelMinutes).toBeLessThanOrEqual(110);
+  });
+
   it("uses an airport-adjacent live vehicle and its seat feed for the next departure", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
 

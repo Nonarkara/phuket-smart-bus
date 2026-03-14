@@ -27,6 +27,7 @@ const AIRPORT_STOP_NAME = "Phuket Airport";
 const AIRPORT_BOARDING_RADIUS_METERS = 260;
 const AIRPORT_BUS_FARE_THB = 100;
 const AIRPORT_TAXI_ESTIMATE_THB = 1000;
+const AIRPORT_ROUTE_AVERAGE_SPEED_KPH = 26;
 
 const aliasGroups = [
   {
@@ -187,39 +188,30 @@ function getAirportDirectionStops() {
   return getStopsForRoute(AIRPORT_ROUTE_ID).filter((stop) => stop.direction.en === "Bus to Rawai");
 }
 
-function parseClockMinutes(value: string) {
-  const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, rawHour, rawMinute, meridiem] = match;
-  const minute = Number(rawMinute);
-
-  if (!meridiem) {
-    return Number(rawHour) * 60 + minute;
-  }
-
-  let hour = Number(rawHour) % 12;
-
-  if (meridiem.toUpperCase() === "PM") {
-    hour += 12;
-  }
-
-  return hour * 60 + minute;
-}
-
 function getTravelEstimateMinutes(fromStop: Stop, toStop: Stop) {
-  const fromMinutes = parseClockMinutes(fromStop.timetable.firstDepartureLabel ?? "");
-  const toMinutes = parseClockMinutes(toStop.timetable.firstDepartureLabel ?? "");
-
-  if (fromMinutes === null || toMinutes === null) {
+  if (fromStop.routeId !== AIRPORT_ROUTE_ID || toStop.routeId !== AIRPORT_ROUTE_ID) {
     return null;
   }
 
-  const delta = toMinutes - fromMinutes;
-  return delta >= 0 ? delta : delta + 24 * 60;
+  const routeStops = getAirportDirectionStops();
+  const fromIndex = routeStops.findIndex((stop) => stop.id === fromStop.id);
+  const toIndex = routeStops.findIndex((stop) => stop.id === toStop.id);
+
+  if (fromIndex === -1 || toIndex === -1 || toIndex <= fromIndex) {
+    return null;
+  }
+
+  let distanceMeters = 0;
+
+  for (let index = fromIndex + 1; index <= toIndex; index += 1) {
+    distanceMeters += haversineDistanceMeters(
+      routeStops[index - 1].coordinates,
+      routeStops[index].coordinates
+    );
+  }
+
+  const minutes = distanceMeters / ((AIRPORT_ROUTE_AVERAGE_SPEED_KPH * 1000) / 60);
+  return Math.max(5, Math.round(minutes));
 }
 
 function buildQuickDestinations() {
