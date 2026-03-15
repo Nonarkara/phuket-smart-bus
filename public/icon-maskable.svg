@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#f4f1ea"/>
+  <g transform="translate(130,70) scale(2)">
+    <path d="M36 13h28l8 9v28l-6 9H30l-6-9V22l12-9Z" stroke="#19B8B1" stroke-width="5.5" stroke-linejoin="round" fill="none"/>
+    <path d="M42 22h16v16H42z" fill="#19B8B1"/>
+    <path d="M32 45h40" stroke="#19B8B1" stroke-width="5" stroke-linecap="round"/>
+    <path d="M40 59v12M64 59v12" stroke="#19B8B1" stroke-width="5" stroke-linecap="round"/>
+    <path d="M21 83c14-6 28-9 42-9s28 3 42 9" stroke="#19B8B1" stroke-width="3.2" stroke-linecap="round"/>
+    <text x="62" y="103" text-anchor="middle" fill="#1E63B8" font-family="Georgia,serif" font-size="31" letter-spacing="1.6">PKSB</text>
+    <text x="62" y="121" text-anchor="middle" fill="#979797" font-family="sans-serif" font-size="9" letter-spacing="1.45">PHUKET SMART BUS</text>
+  </g>
+</svg>
