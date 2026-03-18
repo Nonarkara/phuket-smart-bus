@@ -1,4 +1,4 @@
-export type Lang = "en" | "th";
+export type Lang = "en" | "th" | "zh" | "de" | "fr" | "es";
 
 export type RouteId =
   | "rawai-airport"
@@ -45,6 +45,10 @@ export type DriverAttentionState =
 export interface LocalizedText {
   en: string;
   th: string;
+  zh: string;
+  de: string;
+  fr: string;
+  es: string;
 }
 
 export interface DataSourceStatus {

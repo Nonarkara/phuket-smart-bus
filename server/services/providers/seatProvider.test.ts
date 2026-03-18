@@ -17,7 +17,7 @@ const vehicle: VehiclePosition = {
   coordinates: [8.099, 98.2995],
   heading: 50,
   speedKph: 0,
-  destination: { en: "To Rawai Beach", th: "ไปราไวย์บีช" },
+  destination: { en: "To Rawai Beach", th: "ไปราไวย์บีช", zh: "To Rawai Beach", de: "To Rawai Beach", fr: "To Rawai Beach", es: "To Rawai Beach" },
   updatedAt: "2026-03-08T14:00:00Z",
   telemetrySource: "public_tracker",
   freshness: "fresh",

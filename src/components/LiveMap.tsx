@@ -14,13 +14,9 @@ type Props = {
   selectedStop: Stop | null;
   mode: "route" | "stop";
   bounds: [LatLngTuple, LatLngTuple] | null;
-  toolbarEyebrow: string;
-  toolbarTitle: string;
-  toolbarMeta: string;
   highlightStopIds?: string[];
   highlightVehicleId?: string | null;
   animationDurationMs?: number;
-  showModeToggle?: boolean;
   testId?: string;
   onModeChange: (mode: "route" | "stop") => void;
 };
@@ -37,6 +33,12 @@ function SyncMapView({
   const map = useMap();
 
   useEffect(() => {
+    // Leaflet needs a size invalidation when the container starts at 0 height
+    const timer = setTimeout(() => map.invalidateSize(), 100);
+    return () => clearTimeout(timer);
+  }, [map]);
+
+  useEffect(() => {
     if (mode === "stop" && selectedStop) {
       map.flyTo(selectedStop.coordinates, 15, { animate: true, duration: 0.55 });
       return;
@@ -46,7 +48,7 @@ function SyncMapView({
       return;
     }
 
-    map.fitBounds(bounds, { padding: [24, 24] });
+    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 12 });
   }, [bounds, map, mode, selectedStop]);
 
   return null;
@@ -76,17 +78,13 @@ export function LiveMap({
   selectedStop,
   mode,
   bounds,
-  toolbarEyebrow,
-  toolbarTitle,
-  toolbarMeta,
   highlightStopIds = [],
   highlightVehicleId = null,
   animationDurationMs = 12_000,
-  showModeToggle = true,
   testId = "live-map",
   onModeChange
 }: Props) {
-  const center: LatLngTuple = selectedStop?.coordinates ?? routes[0]?.bounds?.[0] ?? [7.88, 98.39];
+  const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
   const [animatedVehicles, setAnimatedVehicles] = useState(vehicles);
   const renderedVehiclesRef = useRef(vehicles);
@@ -123,34 +121,7 @@ export function LiveMap({
 
   return (
     <div className="map-frame" data-testid={testId}>
-      <div className="map-frame__toolbar">
-        <div className="map-frame__copy">
-          <span className="map-frame__eyebrow">{toolbarEyebrow}</span>
-          <strong>{toolbarTitle}</strong>
-          <small>{toolbarMeta}</small>
-        </div>
-        {showModeToggle ? (
-          <div className="map-frame__toggle" aria-label={pick(ui.mapTitle, lang)}>
-            <button
-              className={mode === "route" ? "map-toggle is-active" : "map-toggle"}
-              onClick={() => onModeChange("route")}
-              type="button"
-              aria-pressed={mode === "route"}
-            >
-              {pick(ui.mapModeRoute, lang)}
-            </button>
-            <button
-              className={mode === "stop" ? "map-toggle is-active" : "map-toggle"}
-              onClick={() => onModeChange("stop")}
-              type="button"
-              aria-pressed={mode === "stop"}
-            >
-              {pick(ui.mapModeStop, lang)}
-            </button>
-          </div>
-        ) : null}
-      </div>
-      <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="map-canvas">
+      <MapContainer center={center} zoom={11} scrollWheelZoom={false} className="map-canvas" minZoom={10} maxZoom={16}>
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -1,9 +1,15 @@
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "node:path";
+import { readFileSync } from "node:fs";
+
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    APP_VERSION: JSON.stringify(pkg.version)
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

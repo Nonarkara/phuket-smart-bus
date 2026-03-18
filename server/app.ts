@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import fs from "node:fs";
 import path from "node:path";
@@ -50,6 +51,7 @@ export function createApp() {
   const clientDir = fs.existsSync(sourceClientDir) ? sourceClientDir : builtClientDir;
 
   app.disable("x-powered-by");
+  app.use(cors());
   app.use(express.json());
 
   app.get("/api/health", async (_request, response) => {
@@ -82,6 +84,14 @@ export function createApp() {
     }
 
     response.json(getStopsForRoute(request.params.routeId));
+  });
+
+  app.get("/api/vehicles/all", async (_request, response) => {
+    const snapshot = await getBusSnapshot();
+    response.json({
+      vehicles: snapshot.vehicles,
+      updatedAt: new Date().toISOString()
+    });
   });
 
   app.get("/api/routes/:routeId/vehicles", async (request, response) => {
