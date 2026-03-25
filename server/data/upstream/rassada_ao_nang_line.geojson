@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+    "type": "Feature",
+    "properties": { "route": "rassada_ao_nang" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [98.4013, 7.8557],
+        [98.42, 7.870],
+        [98.48, 7.900],
+        [98.55, 7.930],
+        [98.63, 7.960],
+        [98.70, 7.990],
+        [98.76, 8.020],
+        [98.818, 8.0437]
+      ]
+    }
+  }]
+}

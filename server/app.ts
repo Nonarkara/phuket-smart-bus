@@ -1,3 +1,4 @@
+import compression from "compression";
 import cors from "cors";
 import express from "express";
 import fs from "node:fs";
@@ -7,8 +8,10 @@ import { getRoutes, getStopById, getStopsForRoute } from "./services/routes.js";
 import { clearBusSnapshotCache, getBusSnapshot, getVehiclesForRoute } from "./services/providers/busProvider.js";
 import { getTrafficAdvisories } from "./services/providers/trafficProvider.js";
 import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/weatherProvider.js";
+import { getAqiSnapshot } from "./services/providers/aqiProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
+import { readRecentHistory, readAllVehicles } from "./lib/db.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
   recordDriverMonitorSamples,
@@ -16,9 +19,11 @@ import {
   recordSeatCameraSamples,
   recordVehicleTelemetry
 } from "./services/operationsStore.js";
+import { PRICE_COMPARISONS } from "./config.js";
 import type {
   DriverMonitorSample,
   HealthPayload,
+  PriceComparison,
   PassengerFlowSample,
   RouteId,
   SeatCameraSample,
@@ -28,7 +33,11 @@ import type {
 const validRoutes = new Set<RouteId>([
   "rawai-airport",
   "patong-old-bus-station",
-  "dragon-line"
+  "dragon-line",
+  "rassada-phi-phi",
+  "rassada-ao-nang",
+  "bang-rong-koh-yao",
+  "chalong-racha"
 ]);
 
 function isRouteId(value: string): value is RouteId {
@@ -51,18 +60,28 @@ export function createApp() {
   const clientDir = fs.existsSync(sourceClientDir) ? sourceClientDir : builtClientDir;
 
   app.disable("x-powered-by");
+  app.set("trust proxy", 1);
+  app.use(compression());
   app.use(cors());
   app.use(express.json());
 
   app.get("/api/health", async (_request, response) => {
-    const sources = await collectSourceStatuses();
-    const payload: HealthPayload = {
-      status: sources.every((source) => source.state === "live") ? "ok" : "degraded",
-      checkedAt: new Date().toISOString(),
-      sources
-    };
+    try {
+      const sources = await collectSourceStatuses();
+      const payload: HealthPayload = {
+        status: sources.every((source) => source.state === "live") ? "ok" : "degraded",
+        checkedAt: new Date().toISOString(),
+        sources
+      };
 
-    response.json(payload);
+      response.json(payload);
+    } catch {
+      response.json({
+        status: "degraded",
+        checkedAt: new Date().toISOString(),
+        sources: []
+      } satisfies HealthPayload);
+    }
   });
 
   app.get("/api/routes", async (_request, response) => {
@@ -74,6 +93,7 @@ export function createApp() {
       ])
     ) as Record<RouteId, number>;
 
+    response.set("Cache-Control", "public, max-age=10");
     response.json(getRoutes(snapshot.status, activeVehicles));
   });
 
@@ -83,6 +103,7 @@ export function createApp() {
       return;
     }
 
+    response.set("Cache-Control", "public, max-age=60");
     response.json(getStopsForRoute(request.params.routeId));
   });
 
@@ -197,19 +218,69 @@ export function createApp() {
       return;
     }
 
-    const [vehiclePayload, traffic, weather] = await Promise.all([
-      getVehiclesForRoute(routeId),
-      getTrafficAdvisories(routeId),
-      getWeatherAdvisories(routeId)
-    ]);
+    try {
+      const [vehiclePayload, traffic, weather] = await Promise.all([
+        getVehiclesForRoute(routeId),
+        getTrafficAdvisories(routeId),
+        getWeatherAdvisories(routeId)
+      ]);
 
-    response.json(
-      buildDecisionSummary(routeId, stop, vehiclePayload.vehicles, [...traffic.advisories, ...weather.advisories], [
-        vehiclePayload.status,
-        traffic.status,
-        weather.status
-      ])
-    );
+      const [weatherResult, aqiResult] = await Promise.allSettled([
+        getWeatherSnapshot(),
+        getAqiSnapshot()
+      ]);
+
+      const weatherSnapshot = weatherResult.status === "fulfilled" ? weatherResult.value.snapshot : null;
+      const aqiSnapshot = aqiResult.status === "fulfilled" ? aqiResult.value.snapshot : null;
+
+      response.json(
+        buildDecisionSummary(
+          routeId,
+          stop,
+          vehiclePayload.vehicles,
+          [...traffic.advisories, ...weather.advisories],
+          [vehiclePayload.status, traffic.status, weather.status],
+          weatherSnapshot,
+          aqiSnapshot
+        )
+      );
+    } catch {
+      response.status(500).json({ error: "Decision summary unavailable" });
+    }
+  });
+
+  app.get("/api/compare", (_request, response) => {
+    // Date-seeded simulated rider count for social proof
+    const daySeed = Math.floor(Date.now() / 86_400_000);
+    const comparisons: PriceComparison[] = PRICE_COMPARISONS.map((c, i) => {
+      const riders = 20 + ((daySeed * 7 + i * 13) % 60);
+      return {
+        ...c,
+        savingsMin: c.taxi.minThb - c.bus.fareThb,
+        savingsMax: c.taxi.maxThb - c.bus.fareThb,
+        ridersToday: riders,
+      };
+    });
+    response.set("Cache-Control", "public, max-age=300");
+    response.json(comparisons);
+  });
+
+  app.get("/api/vehicle-history", (_request, response) => {
+    try {
+      const history = readRecentHistory();
+      response.json({ history, count: history.length });
+    } catch {
+      response.json({ history: [], count: 0 });
+    }
+  });
+
+  app.get("/api/db-snapshot", (_request, response) => {
+    try {
+      const vehicles = readAllVehicles();
+      response.json({ vehicles, count: vehicles.length, source: "sqlite" });
+    } catch {
+      response.json({ vehicles: [], count: 0, source: "sqlite" });
+    }
   });
 
   app.use(express.static(clientDir));

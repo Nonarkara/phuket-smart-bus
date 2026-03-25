@@ -46,7 +46,10 @@ type TripOccurrence = {
   ageMinutes: number;
 };
 
-const routeIds: RouteId[] = ["rawai-airport", "patong-old-bus-station", "dragon-line"];
+const routeIds: RouteId[] = [
+  "rawai-airport", "patong-old-bus-station", "dragon-line",
+  "rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"
+];
 
 const fallbackSample = readJsonFile<RawBusRecord[]>(
   fromRoot("server", "data", "fixtures", "bus_live_sample.json")
@@ -336,7 +339,23 @@ function estimateRequiredFleet(routeId: RouteId) {
   }, 0);
 }
 
-const fleetRoster = buildFleetRoster();
+const ferryVessels: FleetVehicle[] = [
+  { vehicleId: "ferry-aw-01", licensePlate: "AW Master I", routeId: "rassada-phi-phi" },
+  { vehicleId: "ferry-aw-02", licensePlate: "AW Master II", routeId: "rassada-phi-phi" },
+  { vehicleId: "ferry-pc-01", licensePlate: "PP Cruiser", routeId: "rassada-phi-phi" },
+  { vehicleId: "ferry-ck-01", licensePlate: "Chaokoh 1", routeId: "rassada-phi-phi" },
+  { vehicleId: "ferry-ck-02", licensePlate: "Chaokoh 2", routeId: "rassada-phi-phi" },
+  { vehicleId: "ferry-an-01", licensePlate: "AO Princess", routeId: "rassada-ao-nang" },
+  { vehicleId: "ferry-sw-01", licensePlate: "Suwimol SB", routeId: "bang-rong-koh-yao" },
+  { vehicleId: "ferry-sl-01", licensePlate: "Solomon SB", routeId: "bang-rong-koh-yao" },
+  { vehicleId: "ferry-ss-01", licensePlate: "Sun Smile", routeId: "bang-rong-koh-yao" },
+  { vehicleId: "ferry-ss-02", licensePlate: "Sun Smile II", routeId: "bang-rong-koh-yao" },
+  { vehicleId: "ferry-rc-01", licensePlate: "Racha Diver", routeId: "chalong-racha" },
+  { vehicleId: "ferry-rc-02", licensePlate: "Racha Star", routeId: "chalong-racha" },
+  { vehicleId: "ferry-rc-03", licensePlate: "Racha Bay", routeId: "chalong-racha" }
+];
+
+const fleetRoster = [...buildFleetRoster(), ...ferryVessels];
 const fleetByRoute = Object.fromEntries(
   routeIds.map((routeId) => [
     routeId,

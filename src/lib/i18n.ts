@@ -106,6 +106,14 @@ export const ui = {
     fr: "Aéroport",
     es: "Aeropuerto"
   },
+  whyBusTitle: {
+    en: "Why take the bus",
+    th: "ทำไมต้องนั่งบัส",
+    zh: "为什么乘巴士",
+    de: "Warum Bus fahren",
+    fr: "Pourquoi prendre le bus",
+    es: "Por qué tomar el bus"
+  },
   routeAll: {
     en: "All lines",
     th: "ทุกสาย",
@@ -131,11 +139,11 @@ export const ui = {
     es: "Enfoque parada"
   },
   mapLiveCountLabel: {
-    en: "buses live",
+    en: "vehicles live",
     th: "คันออนไลน์",
-    zh: "辆巴士在线",
-    de: "Busse live",
-    fr: "bus en direct",
+    zh: "辆交通在线",
+    de: "Fahrzeuge live",
+    fr: "véhicules en direct",
     es: "buses en vivo"
   },
   stopTitle: {
@@ -641,6 +649,36 @@ export const ui = {
     de: "Standort blockiert",
     fr: "Localisation bloquée",
     es: "Ubicación bloqueada"
+  },
+  navCompare: {
+    en: "Compare", th: "เปรียบเทียบ", zh: "比较", de: "Vergleich", fr: "Comparer", es: "Comparar"
+  },
+  compareTitle: {
+    en: "Getting around Phuket", th: "เดินทางรอบภูเก็ต", zh: "畅游普吉", de: "Unterwegs auf Phuket", fr: "Se déplacer à Phuket", es: "Moverse por Phuket"
+  },
+  compareTaxi: {
+    en: "Taxi", th: "แท็กซี่", zh: "出租车", de: "Taxi", fr: "Taxi", es: "Taxi"
+  },
+  compareTukTuk: {
+    en: "Tuk-tuk", th: "ตุ๊กตุ๊ก", zh: "突突车", de: "Tuk-tuk", fr: "Tuk-tuk", es: "Tuk-tuk"
+  },
+  compareSmartBus: {
+    en: "Smart Bus", th: "สมาร์ท บัส", zh: "智能巴士", de: "Smart Bus", fr: "Smart Bus", es: "Smart Bus"
+  },
+  compareSave: {
+    en: "You save", th: "คุณประหยัด", zh: "您节省", de: "Sie sparen", fr: "Vous économisez", es: "Usted ahorra"
+  },
+  comparePerPerson: {
+    en: "per person", th: "ต่อคน", zh: "每人", de: "pro Person", fr: "par personne", es: "por persona"
+  },
+  compareRiders: {
+    en: "riders chose the bus today", th: "คนเลือกนั่งบัสวันนี้", zh: "人今天选择了巴士", de: "Fahrgäste wählten heute den Bus", fr: "voyageurs ont choisi le bus aujourd'hui", es: "pasajeros eligieron el bus hoy"
+  },
+  compareMinLabel: {
+    en: "min", th: "นาที", zh: "分钟", de: "Min.", fr: "min", es: "min"
+  },
+  compareMostPopular: {
+    en: "Most popular", th: "ยอดนิยม", zh: "最受欢迎", de: "Beliebteste", fr: "Le plus populaire", es: "Más popular"
   },
   locationDeniedBody: {
     en: "You can still search manually or browse the lines.",

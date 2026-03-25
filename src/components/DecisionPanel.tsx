@@ -83,12 +83,12 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
         <span className="decision-chip">{getLiveChipLabel(summary.liveVehicles, lang)}</span>
         <span className="decision-chip">{getAlertChipLabel(alertCount, lang)}</span>
         <span className="decision-chip">{getBasisLabel(summary, lang)}</span>
-        {summary.seatAvailability?.seatsLeft !== null ? (
+        {summary.seatAvailability && summary.seatAvailability.seatsLeft != null ? (
           <span className="decision-chip">
             {getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)}
           </span>
         ) : null}
-        {summary.seatAvailability?.occupiedSeats !== null ? (
+        {summary.seatAvailability && summary.seatAvailability.occupiedSeats != null ? (
           <span className="decision-chip">
             {getOccupancyChipLabel(summary.seatAvailability.occupiedSeats, lang)}
           </span>
@@ -124,6 +124,16 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           </p>
         </div>
       </div>
+      {summary.environment && summary.environment.busAdvantages.length > 0 ? (
+        <div className="decision-panel__advantages">
+          <span className="decision-panel__advantages-title">{pick(ui.whyBusTitle, lang)}</span>
+          <ul className="decision-panel__advantages-list">
+            {summary.environment.busAdvantages.map((adv, i) => (
+              <li key={i}>{pick(adv, lang)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="decision-panel__timetable">
         <div className="decision-panel__timetable-row">
           <span>{pick(ui.timetableWindow, lang)}</span>

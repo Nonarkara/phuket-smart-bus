@@ -16,9 +16,18 @@ export const OPEN_METEO_URL =
   process.env.OPEN_METEO_BASE_URL ?? "https://api.open-meteo.com/v1/forecast";
 
 export const BUS_CACHE_MS = 15_000;
+export const FERRY_CACHE_MS = 30_000;
 export const WEATHER_CACHE_MS = 15 * 60_000;
 export const TRAFFIC_CACHE_MS = 5 * 60_000;
+export const AQI_CACHE_MS = 15 * 60_000;
 export const LIVE_STALE_AFTER_MS = 3 * 60_000;
+
+export const FERRY_ROUTE_IDS: RouteId[] = [
+  "rassada-phi-phi",
+  "rassada-ao-nang",
+  "bang-rong-koh-yao",
+  "chalong-racha"
+];
 
 export const ROUTE_DEFINITIONS: Record<
   RouteId,
@@ -98,5 +107,127 @@ export const ROUTE_DEFINITIONS: Record<
       updatedAt: null,
       notes: text("Service window is derived from the published stop times in the route data.", "ช่วงเวลาให้บริการคำนวณจากเวลาแต่ละป้ายที่เผยแพร่ในข้อมูลเส้นทาง")
     }
+  },
+  "rassada-phi-phi": {
+    sourceRoute: "rassada_phi_phi",
+    lineFile: "rassada_phi_phi_line.geojson",
+    color: "#2196F3",
+    accentColor: "#e3f2fd",
+    name: text("Rassada Pier - Phi Phi Island", "ท่าเรือรัษฎา - เกาะพีพี", "拉萨达码头 - 皮皮岛", "Rassada Pier - Phi Phi Insel", "Quai Rassada - Île Phi Phi", "Muelle Rassada - Isla Phi Phi"),
+    shortName: text("Phi Phi Ferry", "เรือพีพี", "皮皮渡轮", "Phi Phi Fähre", "Ferry Phi Phi", "Ferry Phi Phi"),
+    overview: text("Main ferry route to Phi Phi Islands. Multiple daily departures by several operators.", "เส้นทางเรือหลักไปเกาะพีพี มีหลายเที่ยวต่อวันจากหลายบริษัท", "前往皮皮岛的主要渡轮航线。多家运营商每日多班次。", "Hauptfährroute zu den Phi Phi Inseln. Mehrere tägliche Abfahrten.", "Principale ligne de ferry vers Phi Phi. Plusieurs départs quotidiens.", "Ruta principal de ferry a Phi Phi. Múltiples salidas diarias."),
+    axis: "marine",
+    axisLabel: text("Andaman Sea crossing", "ข้ามทะเลอันดามัน", "安达曼海航线", "Andamanensee-Überfahrt", "Traversée mer d'Andaman", "Cruce mar de Andamán"),
+    tier: "ferry",
+    defaultStopName: "Rassada Pier",
+    timetableSource: {
+      label: text("Rassada Pier ferry schedule", "ตารางเรือท่าเรือรัษฎา", "拉萨达码头渡轮时刻表", "Rassada Pier Fährfahrplan", "Horaire ferry Quai Rassada", "Horario ferry Muelle Rassada"),
+      url: "https://rassadapier.net/z_phuket_ferry_schedule.php",
+      updatedAt: "2025-03-01",
+      notes: text("Schedule from Andaman Wave Master, Phi Phi Cruiser & Chaokoh Ferry operators.", "ตารางจาก Andaman Wave Master, Phi Phi Cruiser และ Chaokoh Ferry")
+    }
+  },
+  "rassada-ao-nang": {
+    sourceRoute: "rassada_ao_nang",
+    lineFile: "rassada_ao_nang_line.geojson",
+    color: "#9C27B0",
+    accentColor: "#f3e5f5",
+    name: text("Rassada Pier - Ao Nang (Krabi)", "ท่าเรือรัษฎา - อ่าวนาง (กระบี่)", "拉萨达码头 - 奥南 (甲米)", "Rassada Pier - Ao Nang (Krabi)", "Quai Rassada - Ao Nang (Krabi)", "Muelle Rassada - Ao Nang (Krabi)"),
+    shortName: text("Ao Nang Ferry", "เรืออ่าวนาง", "奥南渡轮", "Ao Nang Fähre", "Ferry Ao Nang", "Ferry Ao Nang"),
+    overview: text("Direct ferry to Ao Nang and Railay Beach in Krabi province.", "เรือตรงไปอ่าวนางและหาดไร่เลย์ จังหวัดกระบี่", "直达甲米府奥南和莱利海滩的渡轮。", "Direktfähre nach Ao Nang und Railay Beach in Krabi.", "Ferry direct vers Ao Nang et Railay Beach à Krabi.", "Ferry directo a Ao Nang y Railay Beach en Krabi."),
+    axis: "marine",
+    axisLabel: text("Phang Nga Bay crossing", "ข้ามอ่าวพังงา", "攀牙湾航线", "Phang Nga Bucht-Überfahrt", "Traversée baie de Phang Nga", "Cruce bahía de Phang Nga"),
+    tier: "ferry",
+    defaultStopName: "Rassada Pier",
+    timetableSource: {
+      label: text("Rassada Pier ferry schedule", "ตารางเรือท่าเรือรัษฎา"),
+      url: "https://rassadapier.net/z_phuket_ferry_schedule.php",
+      updatedAt: "2025-03-01",
+      notes: text("Daily ferry service, one departure morning, return afternoon.", "บริการเรือรายวัน ออกเช้า กลับบ่าย")
+    }
+  },
+  "bang-rong-koh-yao": {
+    sourceRoute: "bang_rong_koh_yao",
+    lineFile: "bang_rong_koh_yao_line.geojson",
+    color: "#FF9800",
+    accentColor: "#fff3e0",
+    name: text("Bang Rong Pier - Koh Yao Noi", "ท่าเรือบางโรง - เกาะยาวน้อย", "邦荣码头 - 瑶诺岛", "Bang Rong Pier - Koh Yao Noi", "Quai Bang Rong - Koh Yao Noi", "Muelle Bang Rong - Koh Yao Noi"),
+    shortName: text("Koh Yao Ferry", "เรือเกาะยาว", "瑶岛渡轮", "Koh Yao Fähre", "Ferry Koh Yao", "Ferry Koh Yao"),
+    overview: text("Speedboat service to Koh Yao Noi island in Phang Nga Bay.", "บริการสปีดโบทไปเกาะยาวน้อยในอ่าวพังงา", "前往攀牙湾瑶诺岛的快艇服务。", "Schnellbootservice nach Koh Yao Noi in der Phang Nga Bucht.", "Service de speedboat vers Koh Yao Noi dans la baie de Phang Nga.", "Servicio de lancha rápida a Koh Yao Noi en la bahía de Phang Nga."),
+    axis: "marine",
+    axisLabel: text("Phang Nga Bay crossing", "ข้ามอ่าวพังงา", "攀牙湾航线", "Phang Nga Bucht-Überfahrt", "Traversée baie de Phang Nga", "Cruce bahía de Phang Nga"),
+    tier: "ferry",
+    defaultStopName: "Bang Rong Pier",
+    timetableSource: {
+      label: text("Bang Rong Pier schedule", "ตารางเรือท่าเรือบางโรง"),
+      url: "https://www.bangrongpier.com/schedule.php",
+      updatedAt: "2025-03-01",
+      notes: text("Speedboat departures 4 times daily.", "สปีดโบทออก 4 เที่ยวต่อวัน")
+    }
+  },
+  "chalong-racha": {
+    sourceRoute: "chalong_racha",
+    lineFile: "chalong_racha_line.geojson",
+    color: "#E91E63",
+    accentColor: "#fce4ec",
+    name: text("Chalong Pier - Racha Island", "ท่าเรือฉลอง - เกาะราชา", "查龙码头 - 拉查岛", "Chalong Pier - Racha Insel", "Quai Chalong - Île Racha", "Muelle Chalong - Isla Racha"),
+    shortName: text("Racha Ferry", "เรือราชา", "拉查渡轮", "Racha Fähre", "Ferry Racha", "Ferry Racha"),
+    overview: text("Speedboat to Racha Yai island, popular for diving and beaches.", "สปีดโบทไปเกาะราชาใหญ่ ยอดนิยมสำหรับดำน้ำและชายหาด", "前往拉查大岛的快艇，以潜水和海滩闻名。", "Schnellboot zur Racha Yai Insel, beliebt zum Tauchen.", "Speedboat vers Racha Yai, populaire pour la plongée.", "Lancha rápida a Racha Yai, popular para buceo y playas."),
+    axis: "marine",
+    axisLabel: text("Andaman Sea crossing", "ข้ามทะเลอันดามัน", "安达曼海航线", "Andamanensee-Überfahrt", "Traversée mer d'Andaman", "Cruce mar de Andamán"),
+    tier: "ferry",
+    defaultStopName: "Chalong Pier",
+    timetableSource: {
+      label: text("Chalong Pier schedule", "ตารางเรือท่าเรือฉลอง"),
+      url: "https://www.phuketferry.com/chalong-pier.html",
+      updatedAt: "2025-03-01",
+      notes: text("Resort boat and tour speedboat departures.", "เรือรีสอร์ทและสปีดโบททัวร์")
+    }
   }
 };
+
+// --- Price comparison data for behavioral economics nudge ---
+export const PRICE_COMPARISONS = [
+  {
+    destinationId: "airport",
+    destinationName: text("Airport", "สนามบิน", "机场", "Flughafen", "Aéroport", "Aeropuerto"),
+    taxi: { minThb: 800, maxThb: 1200, minutes: 45 },
+    tukTuk: { minThb: 500, maxThb: 700, minutes: 55 },
+    bus: { fareThb: 50, minutes: 75, routeId: "rawai-airport" as RouteId },
+  },
+  {
+    destinationId: "patong",
+    destinationName: text("Patong Beach", "หาดป่าตอง", "芭东海滩", "Patong Strand", "Plage de Patong", "Playa Patong"),
+    taxi: { minThb: 600, maxThb: 1000, minutes: 30 },
+    tukTuk: { minThb: 300, maxThb: 500, minutes: 40 },
+    bus: { fareThb: 30, minutes: 50, routeId: "patong-old-bus-station" as RouteId },
+  },
+  {
+    destinationId: "kata",
+    destinationName: text("Kata Beach", "หาดกะตะ", "卡塔海滩", "Kata Strand", "Plage de Kata", "Playa Kata"),
+    taxi: { minThb: 500, maxThb: 800, minutes: 25 },
+    tukTuk: { minThb: 250, maxThb: 400, minutes: 35 },
+    bus: { fareThb: 30, minutes: 40, routeId: "rawai-airport" as RouteId },
+  },
+  {
+    destinationId: "oldtown",
+    destinationName: text("Old Town", "เมืองเก่า", "老城", "Altstadt", "Vieille ville", "Casco antiguo"),
+    taxi: { minThb: 300, maxThb: 500, minutes: 15 },
+    tukTuk: { minThb: 150, maxThb: 300, minutes: 20 },
+    bus: { fareThb: 20, minutes: 25, routeId: "patong-old-bus-station" as RouteId },
+  },
+  {
+    destinationId: "rassada",
+    destinationName: text("Rassada Pier", "ท่าเรือรัษฎา", "拉萨达码头", "Rassada Pier", "Quai Rassada", "Muelle Rassada"),
+    taxi: { minThb: 400, maxThb: 700, minutes: 20 },
+    tukTuk: { minThb: 200, maxThb: 400, minutes: 25 },
+    bus: { fareThb: 30, minutes: 35, routeId: "rawai-airport" as RouteId },
+  },
+  {
+    destinationId: "central",
+    destinationName: text("Central Festival", "เซ็นทรัล เฟสติวัล", "中央节日广场", "Central Festival", "Central Festival", "Central Festival"),
+    taxi: { minThb: 300, maxThb: 500, minutes: 15 },
+    tukTuk: { minThb: 150, maxThb: 300, minutes: 20 },
+    bus: { fareThb: 20, minutes: 30, routeId: "rawai-airport" as RouteId },
+  },
+];

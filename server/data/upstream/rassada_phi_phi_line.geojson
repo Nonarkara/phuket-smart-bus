@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+    "type": "Feature",
+    "properties": { "route": "rassada_phi_phi" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [98.4013, 7.8557],
+        [98.42, 7.845],
+        [98.47, 7.825],
+        [98.53, 7.800],
+        [98.60, 7.780],
+        [98.67, 7.760],
+        [98.72, 7.750],
+        [98.7684, 7.7407]
+      ]
+    }
+  }]
+}

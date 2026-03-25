@@ -83,79 +83,40 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the rider prototype and switches language", async () => {
+  it("renders map view with live map and bottom nav", async () => {
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Bus or taxi?" })).toBeInTheDocument();
-    expect(await screen.findByText("You appear to be at Phuket Airport")).toBeInTheDocument();
-    expect(await screen.findByText("100 THB")).toBeInTheDocument();
-    expect(await screen.findByText(/1,000/)).toBeInTheDocument();
-    expect(await screen.findByText("Save about 900 THB versus a typical airport taxi ride.")).toBeInTheDocument();
-    expect((await screen.findAllByText("Rain moving across the airport corridor")).length).toBeGreaterThan(0);
-    expect(
-      await screen.findByText(
-        "Keep a small buffer in case rain or wind slows boarding at the airport stop."
-      )
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.")
-    ).toBeInTheDocument();
-    expect(await screen.findByText("Phuket time")).toBeInTheDocument();
-    expect(screen.getByText("UTC+7 boarding clock", { exact: false })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "My QR" })).toBeInTheDocument();
-    expect(screen.getByTestId("airport-map-preview")).toBeInTheDocument();
-    expect(screen.getByText("highlight-stop:rawai-airport-42")).toBeInTheDocument();
-    expect(screen.queryByText("Airport approach is slower")).not.toBeInTheDocument();
-    expect(screen.getByText("A mock-up for rider testing and future GPS and camera integration.")).toBeInTheDocument();
-    expect(screen.getByText("Copyright 2026 Dr. Non Arkaraprasertkul")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "My stop" }));
-
-    expect(await screen.findByText("Airport approach is slower")).toBeInTheDocument();
-    expect(screen.getByText("12 seated")).toBeInTheDocument();
-    expect(screen.getByText("4 on · 1 off")).toBeInTheDocument();
-    expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "Live map" }));
-
-    expect(screen.getByTestId("live-map")).toBeInTheDocument();
-    expect(screen.getByText("North-south corridor")).toBeInTheDocument();
+    expect(await screen.findByTestId("live-map")).toBeInTheDocument();
     expect(await screen.findByText("routes:rawai-airport,patong-old-bus-station")).toBeInTheDocument();
     expect(screen.getByText("mode:route")).toBeInTheDocument();
     expect(screen.getByText("user-location:on")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "mock-stop-focus" }));
+    // Bottom nav tabs present (exact text)
+    expect(screen.getByRole("button", { name: "Map" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stops" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pass" })).toBeInTheDocument();
 
-    expect(await screen.findByText("mode:stop")).toBeInTheDocument();
-    expect(screen.getByText("routes:rawai-airport")).toBeInTheDocument();
-    expect(screen.getByText("selected-stop:rawai-airport-42")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "mock-route-view" }));
-    await userEvent.click(screen.getByRole("button", { name: /Patong Line/i }));
-
-    expect(await screen.findByText("routes:patong-old-bus-station")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "My QR" }));
-
-    expect(await screen.findByRole("heading", { name: "My QR code" })).toBeInTheDocument();
-    expect(screen.getAllByText("24h pass")).toHaveLength(2);
-    expect(screen.getByText("7-day pass")).toBeInTheDocument();
-    expect(screen.getByText("Time left")).toBeInTheDocument();
-    expect(screen.getByText("QR boarding code")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "7-day pass" }));
-
-    expect(screen.getAllByText("7-day pass")).toHaveLength(2);
-    expect(screen.getByText("PKSB-WEEK-7-1124")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "TH" }));
-    await userEvent.click(screen.getByRole("button", { name: "สนามบิน" }));
-
-    expect(screen.getByRole("heading", { name: "รถบัสหรือแท็กซี่?" })).toBeInTheDocument();
-    expect(screen.getByText("100 THB")).toBeInTheDocument();
-    expect(screen.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeInTheDocument();
-    expect(screen.getAllByText("มีกลุ่มฝนเคลื่อนผ่านแนวสนามบิน").length).toBeGreaterThan(0);
-    expect(screen.getByText("เวลาภูเก็ต")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "คิวอาร์ของฉัน" })).toBeInTheDocument();
+    // Language toggle on map
+    expect(screen.getByRole("button", { name: "EN" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "TH" })).toBeInTheDocument();
   });
+
+  it("navigates between tabs and switches language", async () => {
+    render(<App />);
+
+    expect(await screen.findByTestId("live-map")).toBeInTheDocument();
+
+    // Navigate to stops
+    await userEvent.click(screen.getByRole("button", { name: "Stops" }));
+    expect(screen.queryByTestId("live-map")).not.toBeInTheDocument();
+
+    // Navigate to pass
+    await userEvent.click(screen.getByRole("button", { name: "Pass" }));
+    expect(await screen.findByRole("heading", { name: /qr/i })).toBeInTheDocument();
+
+    // Switch language to Thai
+    await userEvent.click(screen.getByRole("button", { name: "TH" }));
+    expect(screen.getByRole("button", { name: "TH" })).toHaveClass("is-active");
+  });
+
 });

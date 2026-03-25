@@ -54,7 +54,12 @@ function SyncMapView({
   return null;
 }
 
+const FERRY_ROUTE_IDS = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
+
 function buildVehicleIcon(vehicle: VehiclePosition, color: string, highlighted: boolean) {
+  if (FERRY_ROUTE_IDS.has(vehicle.routeId)) {
+    return buildFerryIcon(vehicle, color, highlighted);
+  }
   return divIcon({
     className: "bus-marker-icon",
     iconSize: [34, 34],
@@ -64,6 +69,21 @@ function buildVehicleIcon(vehicle: VehiclePosition, color: string, highlighted: 
         <span class="bus-marker__heading"></span>
         <span class="bus-marker__body"></span>
         <span class="bus-marker__windshield"></span>
+      </div>
+    `
+  });
+}
+
+function buildFerryIcon(vehicle: VehiclePosition, color: string, highlighted: boolean) {
+  return divIcon({
+    className: "ferry-marker-icon",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    html: `
+      <div class="ferry-marker${highlighted ? " is-highlighted" : ""}" style="--ferry-color: ${color}; --ferry-heading: ${vehicle.heading}deg;">
+        <svg viewBox="0 0 24 24" width="22" height="22" style="transform: rotate(${vehicle.heading}deg);">
+          <path d="M12 2L6 12h2l-2 6h12l-2-6h2L12 2z" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+        </svg>
       </div>
     `
   });
@@ -132,7 +152,12 @@ export function LiveMap({
             <Polyline
               key={`${route.id}-${index}`}
               positions={segment}
-              pathOptions={{ color: route.color, weight: 5, opacity: 0.92 }}
+              pathOptions={{
+                color: route.color,
+                weight: FERRY_ROUTE_IDS.has(route.id) ? 3 : 5,
+                opacity: 0.92,
+                dashArray: FERRY_ROUTE_IDS.has(route.id) ? "8 6" : undefined
+              }}
             />
           ))
         )}

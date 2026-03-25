@@ -3,11 +3,15 @@ export type Lang = "en" | "th" | "zh" | "de" | "fr" | "es";
 export type RouteId =
   | "rawai-airport"
   | "patong-old-bus-station"
-  | "dragon-line";
+  | "dragon-line"
+  | "rassada-phi-phi"
+  | "rassada-ao-nang"
+  | "bang-rong-koh-yao"
+  | "chalong-racha";
 
-export type RouteAxis = "north_south" | "east_west" | "loop";
+export type RouteAxis = "north_south" | "east_west" | "loop" | "marine";
 
-export type RouteTier = "core" | "auxiliary";
+export type RouteTier = "core" | "auxiliary" | "ferry";
 
 export type DecisionLevel =
   | "go_now"
@@ -32,7 +36,7 @@ export type AirportDepartureState = "boarding" | "scheduled";
 
 export type LatLngTuple = [number, number];
 
-export type TelemetrySource = "public_tracker" | "direct_gps" | "schedule_mock";
+export type TelemetrySource = "public_tracker" | "direct_gps" | "schedule_mock" | "ferry_mock";
 
 export type PassengerFlowEventType = "boarding" | "alighting";
 
@@ -227,6 +231,16 @@ export interface Advisory {
   tags: string[];
 }
 
+export interface EnvironmentContext {
+  temperatureC: number;
+  precipitationMm: number;
+  precipitationProbability: number;
+  windSpeedKmh: number;
+  usAqi: number;
+  pm25: number;
+  busAdvantages: LocalizedText[];
+}
+
 export interface DecisionSummary {
   routeId: RouteId;
   stopId: string;
@@ -239,6 +253,7 @@ export interface DecisionSummary {
   timetable: TimetableSummary;
   liveVehicles: number;
   routeStatus: LocalizedText;
+  environment: EnvironmentContext | null;
   updatedAt: string;
   sourceStatuses: DataSourceStatus[];
 }
@@ -260,6 +275,17 @@ export interface AirportGuidePayload {
   quickDestinations: AirportQuickDestination[];
   sourceStatuses: DataSourceStatus[];
   checkedAt: string;
+}
+
+export interface PriceComparison {
+  destinationId: string;
+  destinationName: LocalizedText;
+  taxi: { minThb: number; maxThb: number; minutes: number };
+  tukTuk: { minThb: number; maxThb: number; minutes: number };
+  bus: { fareThb: number; minutes: number; routeId: RouteId };
+  savingsMin: number;
+  savingsMax: number;
+  ridersToday: number;
 }
 
 export interface HealthPayload {

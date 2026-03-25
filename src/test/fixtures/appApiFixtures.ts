@@ -356,6 +356,7 @@ export const mockAirportDecision: DecisionSummary = {
     en: "Live service with rider caution",
     th: "มีรถสดแต่ควรเผื่อเวลา"
   },
+  environment: null,
   updatedAt: "2026-03-08T14:00:00Z",
   sourceStatuses: [
     {
@@ -395,6 +396,7 @@ export const mockPatongDecision: DecisionSummary = {
     en: "Patong line is running normally",
     th: "สายป่าตองยังวิ่งตามปกติ"
   },
+  environment: null,
   updatedAt: "2026-03-08T14:00:00Z",
   sourceStatuses: mockAirportDecision.sourceStatuses
 };

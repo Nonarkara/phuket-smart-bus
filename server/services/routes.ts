@@ -20,9 +20,16 @@ import type { DataSourceStatus, Route, RouteId, Stop } from "../../shared/types.
 type StopCollection = FeatureCollection<Point, GeoJsonProperties>;
 type LineCollection = FeatureCollection<LineString | MultiLineString, GeoJsonProperties>;
 
-const stopsCollection = readJsonFile<StopCollection>(
+const busStops = readJsonFile<StopCollection>(
   fromRoot("server", "data", "upstream", "bus_stop_all.geojson")
 );
+const ferryStops = readJsonFile<StopCollection>(
+  fromRoot("server", "data", "upstream", "ferry_stops.geojson")
+);
+const stopsCollection: StopCollection = {
+  type: "FeatureCollection",
+  features: [...busStops.features, ...ferryStops.features]
+};
 
 const lineCollections = Object.fromEntries(
   Object.entries(ROUTE_DEFINITIONS).map(([routeId, config]) => [
@@ -146,24 +153,23 @@ export function getStopById(routeId: RouteId, stopId: string) {
 export function getRoutes(sourceStatus: DataSourceStatus, activeVehicles: Record<RouteId, number>) {
   return (Object.keys(routeBase) as RouteId[])
     .sort((left, right) => {
-      const leftTier = routeBase[left].tier;
-      const rightTier = routeBase[right].tier;
-
-      if (leftTier === rightTier) {
-        return 0;
-      }
-
-      return leftTier === "core" ? -1 : 1;
+      const tierOrder = { core: 0, auxiliary: 1, ferry: 2 } as const;
+      return (tierOrder[routeBase[left].tier] ?? 9) - (tierOrder[routeBase[right].tier] ?? 9);
     })
     .map<Route>((routeId) => ({
       ...routeBase[routeId],
       activeVehicles: activeVehicles[routeId] ?? 0,
       status:
         activeVehicles[routeId] > 0
-          ? text(
-              `${activeVehicles[routeId]} buses reporting live`,
-              `มีรถออนไลน์ ${activeVehicles[routeId]} คัน`
-            )
+          ? routeBase[routeId].tier === "ferry"
+            ? text(
+                `${activeVehicles[routeId]} ferries active`,
+                `มีเรือออนไลน์ ${activeVehicles[routeId]} ลำ`
+              )
+            : text(
+                `${activeVehicles[routeId]} buses reporting live`,
+                `มีรถออนไลน์ ${activeVehicles[routeId]} คัน`
+              )
           : text("Falling back to schedule confidence", "กำลังใช้ความเชื่อมั่นจากตารางเวลาแทน"),
       sourceStatus
     }));
