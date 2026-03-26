@@ -204,7 +204,7 @@ export function LiveMap({
 
           return (
             <Marker
-              key={vehicle.id}
+              key={`${vehicle.routeId}-${vehicle.id}`}
               position={vehicle.coordinates}
               icon={buildVehicleIcon(vehicle, vehicleColor, highlightVehicleId === vehicle.vehicleId)}
             >
