@@ -2,6 +2,7 @@ import { startTransition, useDeferredValue, useEffect, useEffectEvent, useRef, u
 import type {
   Advisory,
   DecisionSummary,
+  EnvironmentSnapshot,
   HealthPayload,
   Lang,
   LatLngTuple,
@@ -15,6 +16,7 @@ import {
   getAdvisories,
   getCompare,
   getDecisionSummary,
+  getEnvironment,
   getHealth,
   getRoutes,
   getStops,
@@ -29,6 +31,7 @@ import { StopSpotlight } from "./components/StopSpotlight";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
 import { CompareView } from "./components/CompareView";
+import { OpsConsole } from "./components/OpsConsole";
 import { haversineDistanceMeters } from "./lib/geo";
 
 const LIVE_POLL_MS = 12_000;
@@ -38,17 +41,18 @@ const PRIMARY_ROUTE_IDS: RouteId[] = [
 ];
 const NEARBY_STOP_RADIUS_METERS = 700;
 
-type AppView = "map" | "stops" | "compare" | "pass";
+type AppView = "map" | "compare" | "more";
+type MorePanel = "stops" | "pass" | null;
 type MapRouteFilter = RouteId | "all-core";
 
-const VIEW_PATHS: Record<AppView, string> = { map: "/", stops: "/stops", compare: "/compare", pass: "/pass" };
+const VIEW_PATHS: Record<AppView, string> = { map: "/", compare: "/compare", more: "/more" };
 
-function getInitialView(): AppView {
+function getInitialView(): AppView | "ops" {
   if (typeof window === "undefined") return "map";
   const p = window.location.pathname;
-  if (p.startsWith("/stops") || p.startsWith("/ride")) return "stops";
+  if (p.startsWith("/ops")) return "ops";
   if (p.startsWith("/compare")) return "compare";
-  if (p.startsWith("/my-qr") || p.startsWith("/pass")) return "pass";
+  if (p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride")) return "more";
   return "map";
 }
 
@@ -100,37 +104,44 @@ function mergeRouteBounds(routes: Route[]) {
   return [[minLat, minLng], [maxLat, maxLng]] as [LatLngTuple, LatLngTuple];
 }
 
-// --- iOS 7 style thin-line SVG icons ---
+// --- iOS 7 thin-line SVG icons ---
 function MapIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>;
-}
-function StopsIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>;
 }
 function CompareIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M2 12h20"/><path d="M17 7l-5 5-5-5"/><path d="M7 17l5-5 5 5"/></svg>;
 }
-function PassIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7z"/><rect x="14" y="14" width="3" height="3" rx="0.5" fill="currentColor" opacity="0.3"/></svg>;
+function MoreIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>;
 }
 
 const TAB_ICONS: Record<AppView, () => React.ReactNode> = {
   map: MapIcon,
-  stops: StopsIcon,
   compare: CompareIcon,
-  pass: PassIcon,
+  more: MoreIcon,
 };
 
 const TAB_LABELS: Record<AppView, keyof typeof ui> = {
   map: "navMap",
-  stops: "navStops",
   compare: "navCompare",
-  pass: "navPass",
+  more: "navMore",
 };
 
 export default function App() {
+  // If /ops, render operator console exclusively
+  const [isOps] = useState(() => getInitialView() === "ops");
+  if (isOps) return <OpsConsole />;
+
+  return <TouristApp />;
+}
+
+function TouristApp() {
   const [lang, setLang] = useState<Lang>(getStoredLang);
-  const [view, setView] = useState<AppView>(getInitialView);
+  const [view, setView] = useState<AppView>(() => {
+    const init = getInitialView();
+    return init === "ops" ? "map" : init;
+  });
+  const [morePanel, setMorePanel] = useState<MorePanel>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<RouteId | null>(null);
   const [mapRouteFilter, setMapRouteFilter] = useState<MapRouteFilter>("all-core");
@@ -152,10 +163,9 @@ export default function App() {
   const [routeError, setRouteError] = useState<string | null>(null);
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [comparisons, setComparisons] = useState<PriceComparison[]>([]);
+  const [environment, setEnvironment] = useState<EnvironmentSnapshot | null>(null);
   const deferredStopSearch = useDeferredValue(stopSearch);
   const nearestStopMatch = findNearestStopMatch(routeStopsById, userLocation);
-
-  // Fixed: useRef instead of plain object so guard persists across renders
   const pollInFlightRef = useRef({ routes: false, decision: false });
 
   function persistLang(next: Lang) {
@@ -183,8 +193,8 @@ export default function App() {
       }
     }
     void bootstrap();
-    // Fetch compare data (lightweight, cached 5min on server)
     getCompare().then((data) => { if (alive) setComparisons(data); }).catch(() => {});
+    getEnvironment().then((data) => { if (alive) setEnvironment(data); }).catch(() => {});
     return () => { alive = false; };
   }, []);
 
@@ -264,7 +274,10 @@ export default function App() {
 
   // --- popstate ---
   useEffect(() => {
-    function handlePopState() { setView(getInitialView()); }
+    function handlePopState() {
+      const init = getInitialView();
+      if (init !== "ops") setView(init);
+    }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
@@ -294,7 +307,7 @@ export default function App() {
     }
   }, [hasAppliedLocation, locationState, nearestStopMatch]);
 
-  // --- Polling (with useRef guard) ---
+  // --- Polling ---
   const refreshPrimaryRoutes = useEffectEvent(async (routeIds: RouteId[]) => {
     if (pollInFlightRef.current.routes) return;
     pollInFlightRef.current.routes = true;
@@ -342,7 +355,6 @@ export default function App() {
 
   // --- Derived state ---
   const stops = selectedRouteId ? routeStopsById[selectedRouteId] ?? [] : [];
-  const vehicles = selectedRouteId ? routeVehiclesById[selectedRouteId] ?? [] : [];
   const advisories = selectedRouteId ? routeAdvisoriesById[selectedRouteId] ?? [] : [];
   const filteredStops = stops.filter((stop) => {
     const v = deferredStopSearch.trim().toLowerCase();
@@ -371,6 +383,9 @@ export default function App() {
     if (nextView === "map") {
       startTransition(() => { setMapMode("route"); setMapRouteFilter("all-core"); });
     }
+    if (nextView === "more") {
+      setMorePanel("stops");
+    }
     setView(nextView);
     if (typeof window !== "undefined") {
       const nextPath = VIEW_PATHS[nextView];
@@ -387,14 +402,14 @@ export default function App() {
       setRouteError(null);
       setMapMode("stop");
       setStopSearch("");
-      setView("stops");
+      setMorePanel("stops");
+      setView("more");
     });
-    if (typeof window !== "undefined") window.history.pushState({ view: "stops" }, "", VIEW_PATHS.stops);
+    if (typeof window !== "undefined") window.history.pushState({ view: "more" }, "", "/more");
   }
 
   return (
     <div className="app-shell">
-      {/* --- Content --- */}
       <div className="app-content">
         {bootError || routeError ? (
           <div className="status-banner" role="status">{pick(ui.loadingError, lang)}</div>
@@ -420,6 +435,13 @@ export default function App() {
               <div className="map-lang">
                 <LanguageToggle lang={lang} onChange={persistLang} />
               </div>
+              {/* Weather pill */}
+              {environment ? (
+                <div className="map-weather">
+                  {environment.tempC}°C · AQI {environment.aqi}
+                  {environment.rainProb > 20 ? ` · Rain ${environment.rainProb}%` : ""}
+                </div>
+              ) : null}
               {/* Live count badge */}
               <div className="map-badge">
                 <span className="map-badge__pulse" />
@@ -462,76 +484,6 @@ export default function App() {
           </main>
         ) : null}
 
-        {/* ===== STOPS ===== */}
-        {view === "stops" ? (
-          <main className="stops-view">
-            <div className="stops-view__header">
-              <LanguageToggle lang={lang} onChange={persistLang} />
-            </div>
-            <div className="stops-layout">
-              <section className="stops-section">
-                <StopList
-                  lang={lang}
-                  stops={filteredStops}
-                  selectedStopId={selectedStopId}
-                  onSelect={(stopId) =>
-                    startTransition(() => {
-                      setSelectedStopId(stopId);
-                      setDecisionError(null);
-                      setMapMode("stop");
-                    })
-                  }
-                  searchValue={stopSearch}
-                  onSearchChange={setStopSearch}
-                  searchPlaceholder={pick(ui.searchPlaceholder, lang)}
-                  openMapsLabel={pick(ui.openMaps, lang)}
-                  nearbyLabel={pick(ui.nearby, lang)}
-                  emptyState={pick(ui.stopEmpty, lang)}
-                />
-              </section>
-              <section className="detail-section">
-                <DecisionPanel
-                  lang={lang}
-                  summary={decisionSummary}
-                  alertCount={activeAdvisoryCount}
-                  loading={isDecisionLoading || isBooting}
-                  errorMessage={decisionError ? pick(ui.decisionUnavailableBody, lang) : null}
-                />
-                <StopSpotlight
-                  lang={lang}
-                  stop={selectedStop}
-                  summary={decisionSummary}
-                  advisoryCount={activeAdvisoryCount}
-                  title={pick(ui.ridePageTitle, lang)}
-                  body=""
-                  nextBusLabel={pick(ui.nextBusLabel, lang)}
-                  liveBusesLabel={pick(ui.liveBusesLabel, lang)}
-                  activeAlertsLabel={pick(ui.activeAlertsLabel, lang)}
-                  nearbyLabel={pick(ui.nearby, lang)}
-                  walkLabel={pick(ui.walkLabel, lang)}
-                  routeDirectionLabel={pick(ui.routeDirectionLabel, lang)}
-                  openMapsLabel={pick(ui.openMaps, lang)}
-                  timetableTitle={pick(ui.timetableTitle, lang)}
-                  timetableFirstLabel={pick(ui.timetableFirst, lang)}
-                  timetableLastLabel={pick(ui.timetableLast, lang)}
-                  timetableWindowLabel={pick(ui.timetableWindow, lang)}
-                  timetableNextLabel={pick(ui.timetableNext, lang)}
-                  timetableUpdatedLabel={pick(ui.timetableUpdated, lang)}
-                  timetableSourceLabel={pick(ui.timetableSource, lang)}
-                  timetableOpenSourceLabel={pick(ui.timetableOpenSource, lang)}
-                  summaryUnavailableLabel={pick(ui.decisionUnavailableBody, lang)}
-                  loading={isDecisionLoading || isBooting}
-                />
-                <AdvisoryStack
-                  lang={lang}
-                  advisories={advisories}
-                  emptyState={pick(ui.advisoryNone, lang)}
-                />
-              </section>
-            </div>
-          </main>
-        ) : null}
-
         {/* ===== COMPARE ===== */}
         {view === "compare" ? (
           <main className="stops-view">
@@ -542,20 +494,99 @@ export default function App() {
           </main>
         ) : null}
 
-        {/* ===== PASS ===== */}
-        {view === "pass" ? (
-          <main className="pass-view">
-            <div className="pass-view__header">
+        {/* ===== MORE (Stops + Pass) ===== */}
+        {view === "more" ? (
+          <main className="stops-view">
+            <div className="stops-view__header">
+              <div className="more-tabs">
+                <button
+                  className={morePanel === "stops" ? "more-tab is-active" : "more-tab"}
+                  type="button"
+                  onClick={() => setMorePanel("stops")}
+                >{pick(ui.navStops, lang)}</button>
+                <button
+                  className={morePanel === "pass" ? "more-tab is-active" : "more-tab"}
+                  type="button"
+                  onClick={() => setMorePanel("pass")}
+                >{pick(ui.navPass, lang)}</button>
+              </div>
               <LanguageToggle lang={lang} onChange={persistLang} />
             </div>
-            <PassPanel lang={lang} now={clockNow} />
+
+            {morePanel === "stops" ? (
+              <div className="stops-layout">
+                <section className="stops-section">
+                  <StopList
+                    lang={lang}
+                    stops={filteredStops}
+                    selectedStopId={selectedStopId}
+                    onSelect={(stopId) =>
+                      startTransition(() => {
+                        setSelectedStopId(stopId);
+                        setDecisionError(null);
+                        setMapMode("stop");
+                      })
+                    }
+                    searchValue={stopSearch}
+                    onSearchChange={setStopSearch}
+                    searchPlaceholder={pick(ui.searchPlaceholder, lang)}
+                    openMapsLabel={pick(ui.openMaps, lang)}
+                    nearbyLabel={pick(ui.nearby, lang)}
+                    emptyState={pick(ui.stopEmpty, lang)}
+                  />
+                </section>
+                <section className="detail-section">
+                  <DecisionPanel
+                    lang={lang}
+                    summary={decisionSummary}
+                    alertCount={activeAdvisoryCount}
+                    loading={isDecisionLoading || isBooting}
+                    errorMessage={decisionError ? pick(ui.decisionUnavailableBody, lang) : null}
+                  />
+                  <StopSpotlight
+                    lang={lang}
+                    stop={selectedStop}
+                    summary={decisionSummary}
+                    advisoryCount={activeAdvisoryCount}
+                    title={pick(ui.ridePageTitle, lang)}
+                    body=""
+                    nextBusLabel={pick(ui.nextBusLabel, lang)}
+                    liveBusesLabel={pick(ui.liveBusesLabel, lang)}
+                    activeAlertsLabel={pick(ui.activeAlertsLabel, lang)}
+                    nearbyLabel={pick(ui.nearby, lang)}
+                    walkLabel={pick(ui.walkLabel, lang)}
+                    routeDirectionLabel={pick(ui.routeDirectionLabel, lang)}
+                    openMapsLabel={pick(ui.openMaps, lang)}
+                    timetableTitle={pick(ui.timetableTitle, lang)}
+                    timetableFirstLabel={pick(ui.timetableFirst, lang)}
+                    timetableLastLabel={pick(ui.timetableLast, lang)}
+                    timetableWindowLabel={pick(ui.timetableWindow, lang)}
+                    timetableNextLabel={pick(ui.timetableNext, lang)}
+                    timetableUpdatedLabel={pick(ui.timetableUpdated, lang)}
+                    timetableSourceLabel={pick(ui.timetableSource, lang)}
+                    timetableOpenSourceLabel={pick(ui.timetableOpenSource, lang)}
+                    summaryUnavailableLabel={pick(ui.decisionUnavailableBody, lang)}
+                    loading={isDecisionLoading || isBooting}
+                  />
+                  <AdvisoryStack
+                    lang={lang}
+                    advisories={advisories}
+                    emptyState={pick(ui.advisoryNone, lang)}
+                  />
+                </section>
+              </div>
+            ) : null}
+
+            {morePanel === "pass" ? (
+              <PassPanel lang={lang} now={clockNow} />
+            ) : null}
           </main>
         ) : null}
       </div>
 
-      {/* --- Bottom Navigation — iOS 7 frosted glass with icons --- */}
+      {/* --- Bottom Navigation — 3 tabs --- */}
       <nav className="bottom-nav" aria-label="Navigation">
-        {(["map", "stops", "compare", "pass"] as AppView[]).map((tab) => {
+        {(["map", "compare", "more"] as AppView[]).map((tab) => {
           const Icon = TAB_ICONS[tab];
           return (
             <button

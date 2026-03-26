@@ -1,8 +1,12 @@
 import type {
   Advisory,
   AirportGuidePayload,
+  DemandForecast,
   DecisionSummary,
+  EnvironmentSnapshot,
+  FlightInfo,
   HealthPayload,
+  OperationsOverviewPayload,
   PriceComparison,
   Route,
   RouteId,
@@ -62,4 +66,24 @@ export function getAirportGuide(destination = "") {
 
 export function getCompare() {
   return fetchJson<PriceComparison[]>("/api/compare");
+}
+
+export function getEnvironment() {
+  return fetchJson<EnvironmentSnapshot>("/api/environment");
+}
+
+export function getOpsOverview() {
+  return fetchJson<OperationsOverviewPayload>("/api/operations/overview");
+}
+
+export function getOpsFlights() {
+  return fetchJson<{ flights: FlightInfo[] }>("/api/ops/flights");
+}
+
+export function getOpsDemand() {
+  return fetchJson<DemandForecast>("/api/ops/demand");
+}
+
+export function getAllVehicles() {
+  return fetchJson<{ vehicles: VehiclePosition[]; updatedAt: string }>("/api/vehicles/all");
 }

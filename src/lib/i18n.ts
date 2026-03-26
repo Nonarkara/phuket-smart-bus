@@ -650,6 +650,12 @@ export const ui = {
     fr: "Localisation bloquée",
     es: "Ubicación bloqueada"
   },
+  navMore: {
+    en: "More", th: "เพิ่มเติม", zh: "更多", de: "Mehr", fr: "Plus", es: "Más"
+  },
+  weatherLabel: {
+    en: "Weather", th: "อากาศ", zh: "天气", de: "Wetter", fr: "Météo", es: "Clima"
+  },
   navCompare: {
     en: "Compare", th: "เปรียบเทียบ", zh: "比较", de: "Vergleich", fr: "Comparer", es: "Comparar"
   },

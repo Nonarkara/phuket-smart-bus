@@ -11,6 +11,7 @@ import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/w
 import { getAqiSnapshot } from "./services/providers/aqiProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
+import { getFlightSchedule, getDemandForecast } from "./services/providers/flightProvider.js";
 import { readRecentHistory, readAllVehicles } from "./lib/db.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
@@ -263,6 +264,53 @@ export function createApp() {
     });
     response.set("Cache-Control", "public, max-age=300");
     response.json(comparisons);
+  });
+
+  // --- Environment (weather + AQI combined) ---
+  app.get("/api/environment", async (_request, response) => {
+    try {
+      const [weatherResult, aqiResult] = await Promise.allSettled([
+        getWeatherSnapshot(),
+        getAqiSnapshot()
+      ]);
+      const weather = weatherResult.status === "fulfilled" ? weatherResult.value.snapshot : null;
+      const aqi = aqiResult.status === "fulfilled" ? aqiResult.value.snapshot : null;
+
+      response.set("Cache-Control", "public, max-age=300");
+      response.json({
+        tempC: weather?.temperature_2m ?? 31,
+        precipMm: weather?.precipitation ?? 0,
+        rainProb: weather?.precipitation_probability ?? 0,
+        windKph: weather?.wind_speed_10m ?? 8,
+        aqi: aqi?.us_aqi ?? 55,
+        pm25: aqi?.pm2_5 ?? 18,
+        conditionLabel: (weather?.precipitation ?? 0) > 0.5 ? "Rain" : "Clear",
+        updatedAt: new Date().toISOString()
+      });
+    } catch {
+      response.json({
+        tempC: 31, precipMm: 0, rainProb: 10, windKph: 8,
+        aqi: 55, pm25: 18, conditionLabel: "Clear",
+        updatedAt: new Date().toISOString()
+      });
+    }
+  });
+
+  // --- Operator: Flight schedule ---
+  app.get("/api/ops/flights", (_request, response) => {
+    response.set("Cache-Control", "public, max-age=60");
+    response.json({ flights: getFlightSchedule() });
+  });
+
+  // --- Operator: Demand forecast ---
+  app.get("/api/ops/demand", async (_request, response) => {
+    try {
+      const snapshot = await getBusSnapshot();
+      const airportVehicles = snapshot.vehicles.filter(v => v.routeId === "rawai-airport").length;
+      response.json(getDemandForecast(airportVehicles));
+    } catch {
+      response.json(getDemandForecast(0));
+    }
   });
 
   app.get("/api/vehicle-history", (_request, response) => {

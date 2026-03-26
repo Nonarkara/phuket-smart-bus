@@ -110,7 +110,7 @@ a { color: var(--tint); }
 .bottom-nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   height: var(--bottomnav-h);
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--translucent);
@@ -173,6 +173,49 @@ a { color: var(--tint); }
 
 .map-frame { width: 100%; height: 100%; }
 .map-canvas { width: 100%; height: 100%; }
+
+/* Weather pill on map */
+.map-weather {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--translucent);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 0.5px solid var(--separator);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* More panel sub-tabs */
+.more-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.more-tab {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.more-tab.is-active {
+  background: var(--tint);
+  color: #fff;
+}
 
 /* Floating language on map */
 .map-lang {
@@ -1202,4 +1245,324 @@ a { color: var(--tint); }
   }
 
   .pass-panel__header, .pass-switch { grid-column: 1 / -1; }
+}
+
+/* ===== Operator Console ===== */
+.ops {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "Inter", monospace;
+  overflow: hidden;
+}
+
+.ops__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  flex: 0 0 auto;
+}
+
+.ops__brand h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.ops__subtitle {
+  font-size: 11px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ops__status-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.ops__clock {
+  font-variant-numeric: tabular-nums;
+  color: #8b949e;
+}
+
+.ops__health {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.ops__health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.ops__weather {
+  color: #8b949e;
+}
+
+.ops__body {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ops__map {
+  position: relative;
+  min-height: 0;
+}
+
+.ops__map .map-frame,
+.ops__map .map-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.ops__map-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+}
+
+.ops__map-stat {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  color: #e6edf3;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #30363d;
+}
+
+.ops__analytics {
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  border-left: 1px solid #30363d;
+  background: #0d1117;
+}
+
+.ops-card {
+  padding: 14px;
+  border-radius: 8px;
+  background: #161b22;
+  border: 1px solid #30363d;
+}
+
+.ops-card__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b949e;
+}
+
+.ops-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.ops-metric {
+  padding: 10px;
+  border-radius: 6px;
+  background: #0d1117;
+  border: 1px solid #21262d;
+}
+
+.ops-metric__value {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #e6edf3;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-metric__label {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ops-metric--highlight {
+  border-color: #1f6feb;
+  background: rgba(31, 111, 235, 0.1);
+}
+
+.ops-metric--highlight .ops-metric__value {
+  color: #58a6ff;
+}
+
+.ops-card__rec {
+  margin: 10px 0 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(56, 139, 253, 0.08);
+  border: 1px solid rgba(56, 139, 253, 0.2);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #58a6ff;
+}
+
+.ops-card__routes {
+  margin-top: 10px;
+  display: grid;
+  gap: 0;
+}
+
+.ops-route-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #21262d;
+  font-size: 13px;
+}
+
+.ops-route-row:last-child { border-bottom: 0; }
+
+.ops-route-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ops-route-row__name { color: #e6edf3; }
+.ops-route-row__count { font-weight: 600; color: #e6edf3; font-variant-numeric: tabular-nums; }
+.ops-route-row__tier { color: #8b949e; font-size: 11px; text-transform: uppercase; }
+
+.ops-flights { margin-top: 10px; }
+
+.ops-flights h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ops-flights__list {
+  display: grid;
+  gap: 0;
+}
+
+.ops-flight-row {
+  display: grid;
+  grid-template-columns: 50px 70px 40px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #21262d;
+  font-size: 12px;
+}
+
+.ops-flight-row:last-child { border-bottom: 0; }
+
+.ops-flight-row__time { color: #e6edf3; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ops-flight-row__flight { color: #58a6ff; }
+.ops-flight-row__origin { color: #e6edf3; font-weight: 600; }
+.ops-flight-row__airline { color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ops-flight-row__pax { color: #8b949e; text-align: right; font-variant-numeric: tabular-nums; }
+
+.ops-events { margin-top: 10px; }
+
+.ops-events h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ops-event-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid #21262d;
+}
+
+.ops-event-row:last-child { border-bottom: 0; }
+
+.ops-event-row__type {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-event-row__type.is-board { color: #3fb950; }
+.ops-event-row__type.is-alight { color: #f85149; }
+.ops-event-row__stop { color: #e6edf3; }
+.ops-event-row__time { color: #8b949e; font-variant-numeric: tabular-nums; }
+
+.ops-health-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.ops-health-item {
+  padding: 8px;
+  border-radius: 6px;
+  background: #0d1117;
+  border: 1px solid #21262d;
+  text-align: center;
+}
+
+.ops-health-item__name {
+  display: block;
+  font-size: 11px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ops-health-item__state {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ops-health-item.is-live .ops-health-item__state { color: #3fb950; }
+.ops-health-item.is-fallback .ops-health-item__state { color: #d29922; }
+.ops-health-item.is-unavailable .ops-health-item__state { color: #f85149; }
+
+@media (max-width: 768px) {
+  .ops__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: 40vh 1fr;
+  }
+
+  .ops__analytics {
+    border-left: 0;
+    border-top: 1px solid #30363d;
+  }
 }

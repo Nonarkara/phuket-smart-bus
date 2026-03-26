@@ -277,6 +277,37 @@ export interface AirportGuidePayload {
   checkedAt: string;
 }
 
+export interface EnvironmentSnapshot {
+  tempC: number;
+  precipMm: number;
+  rainProb: number;
+  windKph: number;
+  aqi: number;
+  pm25: number;
+  conditionLabel: string;
+  updatedAt: string;
+}
+
+export interface FlightInfo {
+  flightNo: string;
+  airline: string;
+  origin: string;
+  scheduledTime: string;
+  estimatedPax: number;
+  type: "arrival" | "departure";
+}
+
+export interface DemandForecast {
+  currentHour: string;
+  arrivalsNext2h: number;
+  estimatedPaxNext2h: number;
+  busDemandEstimate: number;
+  currentFleetOnline: number;
+  recommendedFleet: number;
+  recommendation: string;
+  flights: FlightInfo[];
+}
+
 export interface PriceComparison {
   destinationId: string;
   destinationName: LocalizedText;
