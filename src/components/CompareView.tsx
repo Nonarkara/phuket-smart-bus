@@ -7,6 +7,19 @@ interface CompareViewProps {
   comparisons: PriceComparison[];
 }
 
+const LOCALE_MAP: Record<Lang, string> = {
+  en: "en-GB", th: "th-TH", zh: "zh-CN", de: "de-DE", fr: "fr-FR", es: "es-ES"
+};
+
+function arrivalTime(minutes: number, lang: Lang) {
+  const arrival = new Date(Date.now() + minutes * 60_000);
+  return new Intl.DateTimeFormat(LOCALE_MAP[lang], {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Bangkok"
+  }).format(arrival);
+}
+
 export function CompareView({ lang, comparisons }: CompareViewProps) {
   const [selectedId, setSelectedId] = useState(comparisons[0]?.destinationId ?? "airport");
   const selected = comparisons.find((c) => c.destinationId === selectedId) ?? comparisons[0];
@@ -42,7 +55,10 @@ export function CompareView({ lang, comparisons }: CompareViewProps) {
           <div className="compare-card__info">
             <span className="compare-card__label">{pick(ui.compareTaxi, lang)}</span>
             <span className="compare-card__price">฿{selected.taxi.minThb.toLocaleString()}-{selected.taxi.maxThb.toLocaleString()}</span>
-            <span className="compare-card__time">{selected.taxi.minutes} {pick(ui.compareMinLabel, lang)}</span>
+            <span className="compare-card__time">
+              {selected.taxi.minutes} {pick(ui.compareMinLabel, lang)}
+              <span className="compare-card__arrival"> · {pick(ui.compareArrive, lang)} {arrivalTime(selected.taxi.minutes, lang)}</span>
+            </span>
           </div>
           <span className="compare-card__per">{pick(ui.comparePerPerson, lang)}</span>
         </div>
@@ -55,7 +71,10 @@ export function CompareView({ lang, comparisons }: CompareViewProps) {
           <div className="compare-card__info">
             <span className="compare-card__label">{pick(ui.compareTukTuk, lang)}</span>
             <span className="compare-card__price">฿{selected.tukTuk.minThb.toLocaleString()}-{selected.tukTuk.maxThb.toLocaleString()}</span>
-            <span className="compare-card__time">{selected.tukTuk.minutes} {pick(ui.compareMinLabel, lang)}</span>
+            <span className="compare-card__time">
+              {selected.tukTuk.minutes} {pick(ui.compareMinLabel, lang)}
+              <span className="compare-card__arrival"> · {pick(ui.compareArrive, lang)} {arrivalTime(selected.tukTuk.minutes, lang)}</span>
+            </span>
           </div>
           <span className="compare-card__per">{pick(ui.comparePerPerson, lang)}</span>
         </div>
@@ -68,7 +87,10 @@ export function CompareView({ lang, comparisons }: CompareViewProps) {
           <div className="compare-card__info">
             <span className="compare-card__label">{pick(ui.compareSmartBus, lang)}</span>
             <span className="compare-card__price compare-card__price--bus">฿{selected.bus.fareThb}</span>
-            <span className="compare-card__time">{selected.bus.minutes} {pick(ui.compareMinLabel, lang)}</span>
+            <span className="compare-card__time">
+              {selected.bus.minutes} {pick(ui.compareMinLabel, lang)}
+              <span className="compare-card__arrival"> · {pick(ui.compareArrive, lang)} {arrivalTime(selected.bus.minutes, lang)}</span>
+            </span>
           </div>
           <span className="compare-card__per">{pick(ui.comparePerPerson, lang)}</span>
         </div>

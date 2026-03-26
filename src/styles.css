@@ -582,6 +582,93 @@ a { color: var(--tint); }
 
 .decision-panel__next-bus p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
 
+/* Environment stats row */
+.decision-panel__env {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.decision-panel__env-stat {
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.03);
+  text-align: center;
+}
+
+.decision-panel__env-stat span {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+.decision-panel__env-stat strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.decision-panel__env-stat strong.is-good { color: var(--green); }
+.decision-panel__env-stat strong.is-moderate { color: var(--orange); }
+.decision-panel__env-stat strong.is-bad { color: var(--red); }
+
+.decision-panel__env-stat small {
+  display: block;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* Occupancy bar */
+.decision-panel__occupancy {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.decision-panel__occupancy-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.decision-panel__occupancy-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.decision-panel__occupancy-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.decision-panel__occupancy-fill.is-ok { background: var(--green); }
+.decision-panel__occupancy-fill.is-busy { background: var(--orange); }
+.decision-panel__occupancy-fill.is-full { background: var(--red); }
+
+.decision-panel__occupancy-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Arrival time in compare card */
+.compare-card__arrival {
+  color: var(--tint);
+  font-weight: 500;
+}
+
 .decision-panel__advantages {
   margin-top: 12px;
   padding: 12px;

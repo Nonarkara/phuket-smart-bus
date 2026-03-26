@@ -683,6 +683,30 @@ export const ui = {
   compareMinLabel: {
     en: "min", th: "นาที", zh: "分钟", de: "Min.", fr: "min", es: "min"
   },
+  compareArrive: {
+    en: "Arrive", th: "ถึง", zh: "到达", de: "Ankunft", fr: "Arrivée", es: "Llegada"
+  },
+  envTemp: {
+    en: "Temperature", th: "อุณหภูมิ", zh: "温度", de: "Temperatur", fr: "Température", es: "Temperatura"
+  },
+  envAqi: {
+    en: "Air quality", th: "คุณภาพอากาศ", zh: "空气质量", de: "Luftqualität", fr: "Qualité de l'air", es: "Calidad del aire"
+  },
+  envRain: {
+    en: "Rain chance", th: "โอกาสฝน", zh: "降雨概率", de: "Regenwahrsch.", fr: "Chance de pluie", es: "Prob. lluvia"
+  },
+  envGood: {
+    en: "Good", th: "ดี", zh: "好", de: "Gut", fr: "Bon", es: "Bueno"
+  },
+  envModerate: {
+    en: "Moderate", th: "ปานกลาง", zh: "中等", de: "Mäßig", fr: "Modéré", es: "Moderado"
+  },
+  envUnhealthy: {
+    en: "Unhealthy", th: "ไม่ดีต่อสุขภาพ", zh: "不健康", de: "Ungesund", fr: "Malsain", es: "Insalubre"
+  },
+  busOccupancy: {
+    en: "Bus occupancy", th: "ความจุรถ", zh: "公交载客", de: "Busauslastung", fr: "Occupation du bus", es: "Ocupación del bus"
+  },
   compareMostPopular: {
     en: "Most popular", th: "ยอดนิยม", zh: "最受欢迎", de: "Beliebteste", fr: "Le plus populaire", es: "Más popular"
   },

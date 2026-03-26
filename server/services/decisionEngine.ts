@@ -228,7 +228,7 @@ function buildEnvironmentContext(
   if (!weather && !aqi) return null;
 
   return {
-    temperatureC: weather?.weatherCode !== undefined ? 0 : 0, // placeholder, actual temp below
+    temperatureC: weather?.temperatureC ?? 31,
     precipitationMm: weather?.precipitation ?? 0,
     precipitationProbability: weather?.precipitationProbability ?? 0,
     windSpeedKmh: weather?.windSpeed ?? 0,

@@ -28,6 +28,7 @@ type WeatherPayload = {
 
 export type WeatherSnapshot = {
   updatedAt: string;
+  temperatureC: number;
   precipitationProbability: number;
   precipitation: number;
   windSpeed: number;
@@ -58,10 +59,12 @@ function toSnapshot(payload: WeatherPayload): WeatherSnapshot {
     payload.hourly?.weather_code?.slice(0, 1)[0] ??
     0;
   const windSpeed = payload.current?.wind_speed_10m ?? 0;
+  const temperatureC = payload.current?.temperature_2m ?? 31;
   const updatedAt = payload.current?.time ?? new Date().toISOString();
 
   return {
     updatedAt,
+    temperatureC,
     precipitationProbability,
     precipitation,
     windSpeed,

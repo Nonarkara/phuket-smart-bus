@@ -124,6 +124,43 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           </p>
         </div>
       </div>
+      {/* Environment context — surfacing hidden data */}
+      {summary.environment ? (
+        <div className="decision-panel__env">
+          <div className="decision-panel__env-stat">
+            <span>{pick(ui.envTemp, lang)}</span>
+            <strong>{summary.environment.temperatureC}°C</strong>
+          </div>
+          <div className="decision-panel__env-stat">
+            <span>{pick(ui.envAqi, lang)}</span>
+            <strong className={summary.environment.usAqi <= 50 ? "is-good" : summary.environment.usAqi <= 100 ? "is-moderate" : "is-bad"}>
+              {summary.environment.usAqi}
+            </strong>
+            <small>{summary.environment.usAqi <= 50 ? pick(ui.envGood, lang) : summary.environment.usAqi <= 100 ? pick(ui.envModerate, lang) : pick(ui.envUnhealthy, lang)}</small>
+          </div>
+          <div className="decision-panel__env-stat">
+            <span>{pick(ui.envRain, lang)}</span>
+            <strong>{summary.environment.precipitationProbability}%</strong>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Bus occupancy bar */}
+      {summary.seatAvailability && summary.seatAvailability.loadFactor != null ? (
+        <div className="decision-panel__occupancy">
+          <span className="decision-panel__occupancy-label">{pick(ui.busOccupancy, lang)}</span>
+          <div className="decision-panel__occupancy-bar">
+            <div
+              className={`decision-panel__occupancy-fill ${summary.seatAvailability.loadFactor > 0.8 ? "is-full" : summary.seatAvailability.loadFactor > 0.5 ? "is-busy" : "is-ok"}`}
+              style={{ width: `${Math.min(100, Math.round(summary.seatAvailability.loadFactor * 100))}%` }}
+            />
+          </div>
+          <span className="decision-panel__occupancy-text">
+            {summary.seatAvailability.occupiedSeats ?? 0}/{summary.seatAvailability.capacity ?? 40}
+          </span>
+        </div>
+      ) : null}
+
       {summary.environment && summary.environment.busAdvantages.length > 0 ? (
         <div className="decision-panel__advantages">
           <span className="decision-panel__advantages-title">{pick(ui.whyBusTitle, lang)}</span>

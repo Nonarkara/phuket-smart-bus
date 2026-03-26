@@ -278,7 +278,7 @@ export function createApp() {
 
       response.set("Cache-Control", "public, max-age=300");
       response.json({
-        tempC: 31, // temperature not stored in snapshot; use Phuket average
+        tempC: weather?.temperatureC ?? 31,
         precipMm: weather?.precipitation ?? 0,
         rainProb: weather?.precipitationProbability ?? 0,
         windKph: weather?.windSpeed ?? 8,
