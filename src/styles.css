@@ -1496,6 +1496,77 @@ a { color: var(--tint); }
   font-weight: 500;
 }
 
+/* Simulation Easter egg */
+.ops__sim-btn {
+  padding: 6px 14px;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(88, 166, 255, 0.1);
+  color: #58a6ff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ops__sim-btn:hover {
+  background: rgba(88, 166, 255, 0.2);
+  border-color: #58a6ff;
+}
+
+.ops__sim-overlay {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(13, 17, 23, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+  min-width: 260px;
+}
+
+.ops__sim-clock {
+  font-size: 32px;
+  font-weight: 200;
+  color: #58a6ff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.ops__sim-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.ops__sim-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #58a6ff, #3fb950);
+  border-radius: 2px;
+  transition: width 0.08s linear;
+}
+
+.ops__sim-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #8b949e;
+  justify-content: center;
+}
+
+.ops__sim-stats strong {
+  color: #e6edf3;
+  font-weight: 600;
+}
+
 .ops__health {
   display: flex;
   align-items: center;

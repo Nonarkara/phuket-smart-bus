@@ -13,6 +13,7 @@ import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
 import { getFlightSchedule, getDemandForecast, getHourlyDemandProjection } from "./services/providers/flightProvider.js";
 import { readRecentHistory, readAllVehicles } from "./lib/db.js";
+import { buildScheduleMockFleet } from "./services/providers/mockFleetProvider.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
   recordDriverMonitorSamples,
@@ -114,6 +115,22 @@ export function createApp() {
       vehicles: snapshot.vehicles,
       updatedAt: new Date().toISOString()
     });
+  });
+
+  // Easter egg: simulation endpoint — returns vehicles at a specific simulated time
+  app.get("/api/simulate", (request, response) => {
+    const simMinutes = Number(request.query.t); // minutes since midnight (0-1440)
+    if (isNaN(simMinutes) || simMinutes < 0 || simMinutes > 1440) {
+      response.status(400).json({ error: "t must be 0-1440 (minutes since midnight)" });
+      return;
+    }
+    // Build a Date for today at the given Bangkok time
+    const now = new Date();
+    const bangkokOffset = 7 * 60; // UTC+7
+    const utcMidnight = new Date(now.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" }) + "T00:00:00Z");
+    const simDate = new Date(utcMidnight.getTime() + (simMinutes - bangkokOffset) * 60_000);
+    const vehicles = buildScheduleMockFleet(simDate);
+    response.json({ vehicles, simMinutes, simTime: `${String(Math.floor(simMinutes / 60)).padStart(2, "0")}:${String(simMinutes % 60).padStart(2, "0")}` });
   });
 
   app.get("/api/routes/:routeId/vehicles", async (request, response) => {

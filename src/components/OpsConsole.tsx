@@ -92,6 +92,14 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const pollRef = useRef(false);
 
+  // Easter egg: day simulation
+  const [simRunning, setSimRunning] = useState(false);
+  const [simTime, setSimTime] = useState("");
+  const [simProgress, setSimProgress] = useState(0);
+  const [simTouchpoints, setSimTouchpoints] = useState(0);
+  const [simPassengers, setSimPassengers] = useState(0);
+  const simAbort = useRef(false);
+
   useEffect(() => {
     const id = setInterval(() => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" })), 1000);
     return () => clearInterval(id);
@@ -128,6 +136,66 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     }, OPS_POLL_MS);
     return () => clearInterval(id);
   }, []);
+
+  // Pier proximity zones for touchpoint detection (lat, lng)
+  // Wider threshold (~1km) to catch bus stops near ferry piers
+  const PIER_ZONES = [
+    { name: "Rassada Pier", lat: 7.8574, lng: 98.3866 },
+    { name: "Chalong Pier", lat: 7.8216, lng: 98.3613 },
+    { name: "Bang Rong Pier", lat: 8.0317, lng: 98.4192 },
+  ];
+  const PROXIMITY = 0.012; // ~1.3km in lat/lng degrees
+
+  async function runDaySimulation() {
+    if (simRunning) { simAbort.current = true; return; }
+    simAbort.current = false;
+    setSimRunning(true);
+    setSimTouchpoints(0);
+    setSimPassengers(0);
+
+    const START = 360;  // 06:00
+    const END = 1440;   // 24:00
+    const STEP = 5;     // 5-minute increments
+    let touchpoints = 0;
+    let passengers = 0;
+
+    for (let t = START; t <= END; t += STEP) {
+      if (simAbort.current) break;
+      try {
+        const res = await fetch(`/api/simulate?t=${t}`);
+        const data = await res.json();
+        setVehicles(data.vehicles);
+        setSimTime(data.simTime);
+        setSimProgress((t - START) / (END - START));
+
+        // Detect touchpoints: bus + ferry near same pier
+        const ferrySet = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
+        const buses = data.vehicles.filter((v: VehiclePosition) => !ferrySet.has(v.routeId) && v.status === "dwelling");
+        const ferries = data.vehicles.filter((v: VehiclePosition) => ferrySet.has(v.routeId) && v.status === "dwelling");
+
+        for (const pier of PIER_ZONES) {
+          const nearBus = buses.some((b: VehiclePosition) =>
+            Math.abs(b.coordinates[0] - pier.lat) < PROXIMITY && Math.abs(b.coordinates[1] - pier.lng) < PROXIMITY
+          );
+          const nearFerry = ferries.some((f: VehiclePosition) =>
+            Math.abs(f.coordinates[0] - pier.lat) < PROXIMITY && Math.abs(f.coordinates[1] - pier.lng) < PROXIMITY
+          );
+          if (nearBus && nearFerry) {
+            touchpoints++;
+            passengers += Math.floor(20 + Math.random() * 60);
+          }
+        }
+        setSimTouchpoints(touchpoints);
+        setSimPassengers(passengers);
+
+        await new Promise(r => setTimeout(r, 80)); // 80ms per step = ~14s total animation
+      } catch { break; }
+    }
+
+    setSimRunning(false);
+    setSimProgress(0);
+    setSimTime("");
+  }
 
   const FERRY_ROUTES = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
   const totalVehicles = vehicles.length;
@@ -194,7 +262,22 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             <span className="ops__map-stat ops__map-stat--primary">{totalVehicles} vehicles</span>
             <span className="ops__map-stat">{movingCount} moving</span>
             <span className="ops__map-stat">{dwellingCount} at stops</span>
+            <button className="ops__sim-btn" type="button" onClick={runDaySimulation}>
+              {simRunning ? "Stop" : "Simulation"}
+            </button>
           </div>
+          {simRunning ? (
+            <div className="ops__sim-overlay">
+              <div className="ops__sim-clock">{simTime}</div>
+              <div className="ops__sim-bar">
+                <div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} />
+              </div>
+              <div className="ops__sim-stats">
+                <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
+                <span>Passengers transferred: <strong>{simPassengers.toLocaleString()}</strong></span>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* ===== Right: Analytics ===== */}
