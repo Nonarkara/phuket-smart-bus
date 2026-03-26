@@ -4,7 +4,7 @@
  * Replace with AviationStack API or FlightAware when ready for production.
  */
 
-import type { FlightInfo, DemandForecast } from "../../../shared/types.js";
+import type { FlightInfo, DemandForecast, HourlyDemandPoint } from "../../../shared/types.js";
 import { BANGKOK_TIME_ZONE } from "../../config.js";
 
 // Realistic HKT arrival patterns (hourly flight count, 0-23)
@@ -132,4 +132,30 @@ export function getDemandForecast(currentFleetOnline: number): DemandForecast {
     recommendation,
     flights
   };
+}
+
+export function getHourlyDemandProjection(seatsPerBus: number, busesOnline: number): HourlyDemandPoint[] {
+  const currentHour = getBangkokHour();
+  const daySeed = Math.floor(Date.now() / 86_400_000);
+  const rand = seededRandom(daySeed + 999);
+  const points: HourlyDemandPoint[] = [];
+
+  for (let offset = -4; offset <= 8; offset++) {
+    const hour = (currentHour + offset + 24) % 24;
+    const arrivals = HOURLY_ARRIVALS[hour] ?? 2;
+    const avgPaxPerFlight = 180 + Math.floor(rand() * 60);
+    const estimatedPax = arrivals * avgPaxPerFlight;
+    const busDemand = Math.ceil(estimatedPax * 0.15);
+    const seatsAvailable = busesOnline * seatsPerBus;
+
+    points.push({
+      hour: `${String(hour).padStart(2, "0")}:00`,
+      arrivals,
+      estimatedPax,
+      busDemand,
+      seatsAvailable: offset <= 0 ? seatsAvailable : seatsAvailable // current capacity projected
+    });
+  }
+
+  return points;
 }

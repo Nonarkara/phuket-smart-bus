@@ -1642,6 +1642,162 @@ a { color: var(--tint); }
 .ops-health-item.is-fallback .ops-health-item__state { color: #d29922; }
 .ops-health-item.is-unavailable .ops-health-item__state { color: #f85149; }
 
+/* Weather pill in header */
+.ops__weather-pill {
+  color: #8b949e;
+  font-size: 13px;
+}
+
+/* Monsoon indicator */
+.ops-monsoon {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(56, 139, 253, 0.06);
+  border: 1px solid rgba(56, 139, 253, 0.12);
+}
+
+.ops-monsoon.is-active {
+  background: rgba(210, 153, 34, 0.08);
+  border-color: rgba(210, 153, 34, 0.2);
+}
+
+.ops-monsoon__badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: rgba(56, 139, 253, 0.15);
+  color: #58a6ff;
+}
+
+.ops-monsoon.is-active .ops-monsoon__badge {
+  background: rgba(210, 153, 34, 0.2);
+  color: #d29922;
+}
+
+.ops-monsoon__note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8b949e;
+}
+
+/* Alert indicator for bad AQI */
+.ops-metric--alert {
+  border-color: rgba(248, 81, 73, 0.3);
+  background: rgba(248, 81, 73, 0.08);
+}
+
+.ops-metric--alert .ops-metric__value { color: #f85149; }
+
+/* Weather forecast bar */
+.ops-weather-bar {
+  display: flex;
+  gap: 0;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.ops-weather-bar__hour {
+  flex: 1 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 36px;
+  padding: 4px 2px;
+}
+
+.ops-weather-bar__time {
+  font-size: 10px;
+  color: #484f58;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-weather-bar__rain {
+  width: 16px;
+  border-radius: 2px;
+  min-height: 4px;
+}
+
+.ops-weather-bar__temp {
+  font-size: 11px;
+  font-weight: 500;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-weather-bar__prob {
+  font-size: 9px;
+  color: #58a6ff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Driver alerts */
+.ops-driver-alerts {
+  margin-top: 8px;
+}
+
+.ops-driver-alerts h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: #d29922;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ops-driver-alert {
+  padding: 6px 8px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: rgba(210, 153, 34, 0.08);
+  border-left: 2px solid #d29922;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #e6edf3;
+}
+
+.ops-driver-alerts--clear p {
+  margin: 0;
+  font-size: 12px;
+  color: #3fb950;
+}
+
+/* Demand chart */
+.ops-chart {
+  margin-top: 4px;
+}
+
+.ops-chart__legend {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.ops-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #8b949e;
+}
+
+.ops-chart__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.ops-chart__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 @media (max-width: 768px) {
   .ops__body {
     grid-template-columns: 1fr;

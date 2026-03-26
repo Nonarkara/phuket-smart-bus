@@ -11,7 +11,7 @@ import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/w
 import { getAqiSnapshot } from "./services/providers/aqiProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
-import { getFlightSchedule, getDemandForecast } from "./services/providers/flightProvider.js";
+import { getFlightSchedule, getDemandForecast, getHourlyDemandProjection } from "./services/providers/flightProvider.js";
 import { readRecentHistory, readAllVehicles } from "./lib/db.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
@@ -310,6 +310,86 @@ export function createApp() {
       response.json(getDemandForecast(airportVehicles));
     } catch {
       response.json(getDemandForecast(0));
+    }
+  });
+
+  // --- Operator: Hourly demand projection ---
+  app.get("/api/ops/hourly-demand", async (_request, response) => {
+    try {
+      const snapshot = await getBusSnapshot();
+      const busesOnline = snapshot.vehicles.filter(v => v.routeId === "rawai-airport").length;
+      response.set("Cache-Control", "public, max-age=60");
+      response.json({ points: getHourlyDemandProjection(40, Math.max(busesOnline, 6)) });
+    } catch {
+      response.json({ points: [] });
+    }
+  });
+
+  // --- Operator: Weather intelligence ---
+  app.get("/api/ops/weather", async (_request, response) => {
+    try {
+      const [weatherResult, aqiResult] = await Promise.allSettled([
+        getWeatherSnapshot(),
+        getAqiSnapshot()
+      ]);
+      const weather = weatherResult.status === "fulfilled" ? weatherResult.value.snapshot : null;
+      const aqi = aqiResult.status === "fulfilled" ? aqiResult.value.snapshot : null;
+
+      // Phuket monsoon: May-October (southwest monsoon), Nov-April (dry/northeast)
+      const month = new Date().getMonth() + 1; // 1-12
+      const monsoonSeason = month >= 5 && month <= 10;
+      const driverAlerts: string[] = [];
+
+      if ((weather?.precipitation ?? 0) > 2) driverAlerts.push("Heavy rain active — reduce speed, increase following distance");
+      if ((weather?.windSpeed ?? 0) > 40) driverAlerts.push("Strong winds — caution on exposed coastal roads");
+      if ((weather?.precipitationProbability ?? 0) > 70) driverAlerts.push("High rain probability next hours — prepare for wet roads");
+      if ((aqi?.usAqi ?? 0) > 100) driverAlerts.push("Poor air quality — keep windows closed, run AC recirculation");
+      if (monsoonSeason && (weather?.precipitationProbability ?? 0) > 50) driverAlerts.push("Monsoon season flash flood risk — avoid low-lying routes if water rises");
+
+      // Generate 12-hour forecast (mock based on current + patterns)
+      const currentHour = new Date().getHours();
+      const forecast = Array.from({ length: 12 }, (_, i) => {
+        const hour = (currentHour + i) % 24;
+        const isAfternoon = hour >= 13 && hour <= 17;
+        const baseRain = weather?.precipitationProbability ?? 20;
+        const rainVariation = monsoonSeason ? (isAfternoon ? 30 : 10) : (isAfternoon ? 15 : 0);
+        return {
+          hour: `${String(hour).padStart(2, "0")}:00`,
+          tempC: Math.round((weather?.temperatureC ?? 31) + (isAfternoon ? 2 : -1) + (Math.sin(hour / 3) * 1.5)),
+          rainProb: Math.min(100, Math.max(0, baseRain + rainVariation + Math.round(Math.sin(hour / 4) * 10))),
+          precipMm: Math.max(0, (weather?.precipitation ?? 0) * (isAfternoon ? 1.5 : 0.5)),
+          windKph: Math.round((weather?.windSpeed ?? 8) + Math.sin(hour / 6) * 5),
+          code: weather?.weatherCode ?? 0
+        };
+      });
+
+      const monsoonNote = monsoonSeason
+        ? "Southwest monsoon season (May-Oct). Expect afternoon storms, brief heavy showers, and higher seas. Ferry services may be disrupted."
+        : "Dry season (Nov-Apr). Generally clear skies with occasional brief showers. Ideal operating conditions.";
+
+      response.set("Cache-Control", "public, max-age=300");
+      response.json({
+        current: {
+          tempC: weather?.temperatureC ?? 31,
+          rainProb: weather?.precipitationProbability ?? 20,
+          precipMm: weather?.precipitation ?? 0,
+          windKph: weather?.windSpeed ?? 8,
+          aqi: aqi?.usAqi ?? 55,
+          pm25: aqi?.pm25 ?? 18
+        },
+        forecast,
+        monsoonSeason,
+        monsoonNote,
+        driverAlerts
+      });
+    } catch {
+      response.json({
+        current: { tempC: 31, rainProb: 20, precipMm: 0, windKph: 8, aqi: 55, pm25: 18 },
+        forecast: [],
+        monsoonSeason: false,
+        monsoonNote: "Weather data temporarily unavailable.",
+        driverAlerts: []
+      });
     }
   });
 

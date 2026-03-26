@@ -6,12 +6,14 @@ import type {
   EnvironmentSnapshot,
   FlightInfo,
   HealthPayload,
+  HourlyDemandPoint,
   OperationsOverviewPayload,
   PriceComparison,
   Route,
   RouteId,
   Stop,
-  VehiclePosition
+  VehiclePosition,
+  WeatherIntelligence
 } from "@shared/types";
 
 async function fetchOnce<T>(url: string) {
@@ -86,4 +88,12 @@ export function getOpsDemand() {
 
 export function getAllVehicles() {
   return fetchJson<{ vehicles: VehiclePosition[]; updatedAt: string }>("/api/vehicles/all");
+}
+
+export function getOpsWeather() {
+  return fetchJson<WeatherIntelligence>("/api/ops/weather");
+}
+
+export function getOpsHourlyDemand() {
+  return fetchJson<{ points: HourlyDemandPoint[] }>("/api/ops/hourly-demand");
 }

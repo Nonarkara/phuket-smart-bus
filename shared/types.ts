@@ -308,6 +308,31 @@ export interface DemandForecast {
   flights: FlightInfo[];
 }
 
+export interface HourlyDemandPoint {
+  hour: string;
+  arrivals: number;
+  estimatedPax: number;
+  busDemand: number;
+  seatsAvailable: number;
+}
+
+export interface WeatherForecastHour {
+  hour: string;
+  tempC: number;
+  rainProb: number;
+  precipMm: number;
+  windKph: number;
+  code: number;
+}
+
+export interface WeatherIntelligence {
+  current: { tempC: number; rainProb: number; precipMm: number; windKph: number; aqi: number; pm25: number };
+  forecast: WeatherForecastHour[];
+  monsoonSeason: boolean;
+  monsoonNote: string;
+  driverAlerts: string[];
+}
+
 export interface PriceComparison {
   destinationId: string;
   destinationName: LocalizedText;
