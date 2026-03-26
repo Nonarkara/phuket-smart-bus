@@ -278,12 +278,12 @@ export function createApp() {
 
       response.set("Cache-Control", "public, max-age=300");
       response.json({
-        tempC: weather?.temperature_2m ?? 31,
+        tempC: 31, // temperature not stored in snapshot; use Phuket average
         precipMm: weather?.precipitation ?? 0,
-        rainProb: weather?.precipitation_probability ?? 0,
-        windKph: weather?.wind_speed_10m ?? 8,
-        aqi: aqi?.us_aqi ?? 55,
-        pm25: aqi?.pm2_5 ?? 18,
+        rainProb: weather?.precipitationProbability ?? 0,
+        windKph: weather?.windSpeed ?? 8,
+        aqi: aqi?.usAqi ?? 55,
+        pm25: aqi?.pm25 ?? 18,
         conditionLabel: (weather?.precipitation ?? 0) > 0.5 ? "Rain" : "Clear",
         updatedAt: new Date().toISOString()
       });

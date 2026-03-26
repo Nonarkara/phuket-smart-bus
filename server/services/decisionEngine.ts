@@ -251,7 +251,7 @@ export function buildDecisionSummary(
     source: "bus" as const,
     state: "fallback" as const,
     updatedAt: new Date().toISOString(),
-    detail: { en: "Bus status unavailable", th: "สถานะรถไม่พร้อมใช้งาน" }
+    detail: { en: "Bus status unavailable", th: "สถานะรถไม่พร้อมใช้งาน", zh: "巴士状态不可用", de: "Busstatus nicht verfügbar", fr: "Statut bus indisponible", es: "Estado del bus no disponible" }
   };
   const level = rankLevel(stop, vehicles, advisories, busStatus);
   const nearestVehicle = vehicles.length
