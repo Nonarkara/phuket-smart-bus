@@ -81,7 +81,7 @@ function WeatherBar({ forecast }: { forecast: WeatherIntelligence["forecast"] })
   );
 }
 
-export function OpsConsole() {
+export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [health, setHealth] = useState<HealthPayload | null>(null);
@@ -149,6 +149,11 @@ export function OpsConsole() {
       {/* ===== Header ===== */}
       <header className="ops__header">
         <div className="ops__brand">
+          {onToggle ? (
+            <button className="ops__back" type="button" onClick={onToggle} title="Switch to passenger view">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+          ) : null}
           <h1>Phuket Smart Bus</h1>
           <span className="ops__subtitle">Operations Console</span>
         </div>

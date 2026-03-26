@@ -128,14 +128,22 @@ const TAB_LABELS: Record<AppView, keyof typeof ui> = {
 };
 
 export default function App() {
-  // If /ops, render operator console exclusively
-  const [isOps] = useState(() => getInitialView() === "ops");
-  if (isOps) return <OpsConsole />;
+  const [isOps, setIsOps] = useState(() => getInitialView() === "ops");
 
-  return <TouristApp />;
+  function toggleMode() {
+    setIsOps((prev) => {
+      const next = !prev;
+      const path = next ? "/ops" : "/";
+      window.history.pushState({}, "", path);
+      return next;
+    });
+  }
+
+  if (isOps) return <OpsConsole onToggle={toggleMode} />;
+  return <TouristApp onToggle={toggleMode} />;
 }
 
-function TouristApp() {
+function TouristApp({ onToggle }: { onToggle: () => void }) {
   const [lang, setLang] = useState<Lang>(getStoredLang);
   const [view, setView] = useState<AppView>(() => {
     const init = getInitialView();
@@ -431,9 +439,12 @@ function TouristApp() {
                 animationDurationMs={LIVE_POLL_MS}
                 onModeChange={setMapMode}
               />
-              {/* Floating language toggle */}
+              {/* Floating language toggle + ops switch */}
               <div className="map-lang">
                 <LanguageToggle lang={lang} onChange={persistLang} />
+                <button className="ops-toggle" type="button" onClick={onToggle} title="Operator Console">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                </button>
               </div>
               {/* Weather pill */}
               {environment ? (

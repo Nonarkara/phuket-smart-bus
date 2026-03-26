@@ -217,12 +217,56 @@ a { color: var(--tint); }
   color: #fff;
 }
 
+/* Ops toggle button (tourist → ops) */
+.ops-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.ops-toggle:active { background: rgba(0, 0, 0, 0.12); }
+
+/* Ops back button */
+.ops__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #8b949e;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.15s ease;
+}
+
+.ops__back:hover { background: rgba(255, 255, 255, 0.15); color: #e6edf3; }
+
+.ops__brand {
+  display: flex;
+  align-items: center;
+}
+
 /* Floating language on map */
 .map-lang {
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Floating route pills — translucent glass */
