@@ -129,18 +129,55 @@ const TAB_LABELS: Record<AppView, keyof typeof ui> = {
 
 export default function App() {
   const [isOps, setIsOps] = useState(() => getInitialView() === "ops");
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768
+  );
 
-  function toggleMode() {
-    setIsOps((prev) => {
-      const next = !prev;
-      const path = next ? "/ops" : "/";
-      window.history.pushState({}, "", path);
-      return next;
-    });
+  useEffect(() => {
+    function onResize() { setIsMobile(window.innerWidth < 768); }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  function goOps() {
+    setIsOps(true);
+    window.history.pushState({}, "", "/ops");
+  }
+  function goTourist() {
+    setIsOps(false);
+    window.history.pushState({}, "", "/");
   }
 
-  if (isOps) return <OpsConsole onToggle={toggleMode} />;
-  return <TouristApp onToggle={toggleMode} />;
+  // Full-screen ops dashboard
+  if (isOps) return <OpsConsole onToggle={goTourist} />;
+
+  // Mobile: render tourist app directly, no frame
+  if (isMobile) return <TouristApp onToggle={goOps} />;
+
+  // Desktop: smartphone frame + side panel
+  return (
+    <div className="desktop-shell">
+      <div className="desktop-shell__side desktop-shell__side--left" />
+      <div className="phone-frame">
+        <div className="phone-frame__notch" />
+        <div className="phone-frame__screen">
+          <TouristApp onToggle={goOps} />
+        </div>
+        <div className="phone-frame__home" />
+      </div>
+      <div className="desktop-shell__side desktop-shell__side--right">
+        <div className="desktop-shell__brand">
+          <h2 className="desktop-shell__title">Phuket Smart Bus</h2>
+          <p className="desktop-shell__subtitle">Real-time transit for Phuket Island</p>
+        </div>
+        <button className="desktop-shell__ops-btn" type="button" onClick={goOps}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          Operator Console
+        </button>
+        <p className="desktop-shell__hint">Open in your phone for the best experience</p>
+      </div>
+    </div>
+  );
 }
 
 function TouristApp({ onToggle }: { onToggle: () => void }) {
@@ -439,12 +476,9 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 animationDurationMs={LIVE_POLL_MS}
                 onModeChange={setMapMode}
               />
-              {/* Floating language toggle + ops switch */}
+              {/* Floating language toggle */}
               <div className="map-lang">
                 <LanguageToggle lang={lang} onChange={persistLang} />
-                <button className="ops-toggle" type="button" onClick={onToggle} title="Operator Console">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                </button>
               </div>
               {/* Weather pill */}
               {environment ? (

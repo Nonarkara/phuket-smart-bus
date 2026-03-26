@@ -59,6 +59,142 @@ a { color: var(--tint); }
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
+/* ===== Desktop Shell — smartphone frame on landscape ===== */
+.desktop-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  height: 100dvh;
+  background: #000;
+  gap: 0;
+  overflow: hidden;
+}
+
+.desktop-shell__side {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.desktop-shell__side--left {
+  /* empty black space */
+}
+
+.desktop-shell__side--right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 3rem;
+  gap: 1.5rem;
+  max-width: 320px;
+}
+
+.desktop-shell__brand {
+  color: #fff;
+}
+
+.desktop-shell__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.desktop-shell__subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+}
+
+.desktop-shell__ops-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(88, 166, 255, 0.08);
+  color: #58a6ff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.desktop-shell__ops-btn:hover {
+  background: rgba(88, 166, 255, 0.18);
+  border-color: #58a6ff;
+  transform: translateY(-1px);
+}
+
+.desktop-shell__ops-btn:active {
+  transform: scale(0.97);
+}
+
+.desktop-shell__hint {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+/* Phone frame */
+.phone-frame {
+  flex: 0 0 auto;
+  width: 375px;
+  height: min(812px, calc(100vh - 2rem));
+  border-radius: 44px;
+  background: #1a1a1a;
+  padding: 12px;
+  box-shadow:
+    0 0 0 2px #333,
+    0 0 0 4px #1a1a1a,
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.phone-frame__notch {
+  width: 130px;
+  height: 28px;
+  background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+  flex: 0 0 auto;
+}
+
+.phone-frame__screen {
+  flex: 1 1 0;
+  min-height: 0;
+  border-radius: 0 0 32px 32px;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
+}
+
+/* Make the app-shell fill the phone screen */
+.phone-frame__screen .app-shell {
+  height: 100%;
+}
+
+.phone-frame__home {
+  width: 36%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  margin: 8px auto 4px;
+  flex: 0 0 auto;
+}
+
 /* ===== App Shell ===== */
 .app-shell {
   display: flex;
