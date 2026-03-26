@@ -720,6 +720,72 @@ export const ui = {
     de: "Sie können manuell suchen oder die Linien durchsuchen.",
     fr: "Vous pouvez chercher manuellement.",
     es: "Puede buscar manualmente."
+  },
+  // --- Welcome sheet ---
+  welcomeTitle: {
+    en: "Welcome to Phuket", th: "ยินดีต้อนรับสู่ภูเก็ต", zh: "欢迎来到普吉岛",
+    de: "Willkommen auf Phuket", fr: "Bienvenue à Phuket", es: "Bienvenido a Phuket"
+  },
+  welcomeSubtitle: {
+    en: "Smart buses connect the island", th: "สมาร์ทบัสเชื่อมเกาะ", zh: "智能巴士连接全岛",
+    de: "Smart Busse verbinden die Insel", fr: "Des bus intelligents relient l'île", es: "Buses inteligentes conectan la isla"
+  },
+  welcomeNextBus: {
+    en: "Next bus", th: "บัสถัดไป", zh: "下一班车", de: "Nächster Bus", fr: "Prochain bus", es: "Próximo bus"
+  },
+  welcomeMinAway: {
+    en: "min away", th: "นาที", zh: "分钟后", de: "Min. entfernt", fr: "min", es: "min"
+  },
+  welcomeSeats: {
+    en: "seats available", th: "ที่นั่งว่าง", zh: "个空位", de: "Plätze frei", fr: "places disponibles", es: "asientos disponibles"
+  },
+  welcomeRideNow: {
+    en: "Ride Now", th: "ขึ้นรถเลย", zh: "立即乘车", de: "Jetzt fahren", fr: "Monter maintenant", es: "Viajar ahora"
+  },
+  welcomeSavings: {
+    en: "cheaper than a taxi", th: "ถูกกว่าแท็กซี่", zh: "比出租车便宜", de: "günstiger als Taxi", fr: "moins cher qu'un taxi", es: "más barato que taxi"
+  },
+  welcomeFrom: {
+    en: "From only", th: "เริ่มต้นเพียง", zh: "仅需", de: "Ab nur", fr: "À partir de", es: "Desde solo"
+  },
+  // --- Find stop ---
+  findStopTitle: {
+    en: "Find your stop", th: "ค้นหาป้ายรถ", zh: "查找你的站点", de: "Finde deine Haltestelle", fr: "Trouvez votre arrêt", es: "Encuentra tu parada"
+  },
+  findStopPlaceholder: {
+    en: "Hotel, beach, or place name...", th: "ชื่อโรงแรม ชายหาด หรือสถานที่...", zh: "酒店、海滩或地名...",
+    de: "Hotel, Strand oder Ort...", fr: "Hôtel, plage ou lieu...", es: "Hotel, playa o lugar..."
+  },
+  findStopNearest: {
+    en: "Nearest stop", th: "ป้ายที่ใกล้ที่สุด", zh: "最近的站点", de: "Nächste Haltestelle", fr: "Arrêt le plus proche", es: "Parada más cercana"
+  },
+  findStopWalkMin: {
+    en: "min walk", th: "นาทีเดิน", zh: "分钟步行", de: "Min. zu Fuß", fr: "min à pied", es: "min caminando"
+  },
+  // --- Request bus ---
+  requestBus: {
+    en: "Request Bus", th: "ขอรถบัส", zh: "请求巴士", de: "Bus anfordern", fr: "Demander un bus", es: "Solicitar bus"
+  },
+  requestSent: {
+    en: "Request sent!", th: "ส่งคำขอแล้ว!", zh: "请求已发送！", de: "Anfrage gesendet!", fr: "Demande envoyée !", es: "¡Solicitud enviada!"
+  },
+  requestBody: {
+    en: "We'll dispatch when demand is high enough", th: "เราจะส่งรถเมื่อมีความต้องการมากพอ",
+    zh: "需求足够时我们会派车", de: "Wir schicken einen Bus bei genug Nachfrage",
+    fr: "Nous enverrons un bus quand la demande sera suffisante", es: "Enviaremos un bus cuando la demanda sea suficiente"
+  },
+  // --- Compare simplified ---
+  compareBusFare: {
+    en: "by Smart Bus", th: "โดยสมาร์ทบัส", zh: "乘智能巴士", de: "mit Smart Bus", fr: "en Smart Bus", es: "en Smart Bus"
+  },
+  compareTaxiFare: {
+    en: "by taxi", th: "โดยแท็กซี่", zh: "打车", de: "mit Taxi", fr: "en taxi", es: "en taxi"
+  },
+  compareSaveUpTo: {
+    en: "Save up to", th: "ประหยัดสูงสุด", zh: "最多节省", de: "Spare bis zu", fr: "Économisez jusqu'à", es: "Ahorra hasta"
+  },
+  compareLoading: {
+    en: "Loading prices...", th: "กำลังโหลดราคา...", zh: "正在加载价格...", de: "Preise laden...", fr: "Chargement des prix...", es: "Cargando precios..."
   }
 } satisfies Record<string, LocalizedText>;
 

@@ -32,6 +32,7 @@ import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
 import { CompareView } from "./components/CompareView";
 import { OpsConsole } from "./components/OpsConsole";
+import { WelcomeSheet } from "./components/WelcomeSheet";
 import { haversineDistanceMeters } from "./lib/geo";
 
 const LIVE_POLL_MS = 12_000;
@@ -209,6 +210,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [comparisons, setComparisons] = useState<PriceComparison[]>([]);
   const [environment, setEnvironment] = useState<EnvironmentSnapshot | null>(null);
+  const [requestSent, setRequestSent] = useState(false);
   const deferredStopSearch = useDeferredValue(stopSearch);
   const nearestStopMatch = findNearestStopMatch(routeStopsById, userLocation);
   const pollInFlightRef = useRef({ routes: false, decision: false });
@@ -422,6 +424,18 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   const totalLiveVehicles = mapVisibleVehicles.length > 0
     ? mapVisibleVehicles.length
     : mapVisibleRoutes.reduce((sum, r) => sum + r.activeVehicles, 0);
+  const allVehicles = Object.values(routeVehiclesById).flat() as VehiclePosition[];
+
+  function handleRequestBus() {
+    if (!userLocation) return;
+    fetch("/api/demand-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat: userLocation[0], lng: userLocation[1] })
+    }).catch(() => {});
+    setRequestSent(true);
+    setTimeout(() => setRequestSent(false), 30_000); // reset after 30s
+  }
 
   // --- Navigation ---
   function navigate(nextView: AppView) {
@@ -526,6 +540,24 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 })}
               </div>
             </div>
+            {/* Welcome bottom sheet — outside map-container, inside map-view */}
+            <WelcomeSheet
+              lang={lang}
+              vehicles={allVehicles}
+              comparisons={comparisons}
+              onRideNow={() => navigate("more")}
+            />
+            {/* Request bus button */}
+            {userLocation && !requestSent ? (
+              <button className="request-bus-btn" type="button" onClick={handleRequestBus}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+                {pick(ui.requestBus, lang)}
+              </button>
+            ) : requestSent ? (
+              <button className="request-bus-btn request-bus-btn--sent" type="button" disabled>
+                ✓ {pick(ui.requestSent, lang)}
+              </button>
+            ) : null}
           </main>
         ) : null}
 
