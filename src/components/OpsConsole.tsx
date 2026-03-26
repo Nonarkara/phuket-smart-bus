@@ -414,6 +414,90 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </section>
           ) : null}
 
+          {/* --- Day Simulation --- */}
+          <section className="ops-card ops-card--sim">
+            <h2 className="ops-card__title">Fleet Simulation</h2>
+            {!simRunning ? (
+              <div className="ops-sim-card">
+                <p className="ops-sim-card__desc">Watch 18 hours of fleet movement across all routes — buses, ferries, and pier connections.</p>
+                <button className="ops-sim-card__btn" type="button" onClick={runDaySimulation}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                  Run Day Simulation
+                </button>
+              </div>
+            ) : (
+              <div className="ops-sim-card">
+                <div className="ops__sim-clock">{simTime}</div>
+                <div className="ops__sim-bar"><div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} /></div>
+                <div className="ops__sim-stats">
+                  <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
+                  <span>Passengers: <strong>{simPassengers.toLocaleString()}</strong></span>
+                </div>
+                <button className="ops-sim-card__stop" type="button" onClick={runDaySimulation}>Stop</button>
+              </div>
+            )}
+          </section>
+
+          {/* --- Road Incidents (mock) --- */}
+          <section className="ops-card">
+            <h2 className="ops-card__title">Road Conditions</h2>
+            <div className="ops-incidents">
+              {weather && weather.current.rainProb > 50 ? (
+                <div className="ops-incident ops-incident--warning">
+                  <span className="ops-incident__icon">⚠️</span>
+                  <div>
+                    <strong>Heavy rain expected</strong>
+                    <p>{weather.current.rainProb}% precipitation probability. Advise caution on hillside routes.</p>
+                  </div>
+                </div>
+              ) : null}
+              {weather && weather.current.windKph > 25 ? (
+                <div className="ops-incident ops-incident--warning">
+                  <span className="ops-incident__icon">💨</span>
+                  <div>
+                    <strong>Strong winds ({weather.current.windKph} km/h)</strong>
+                    <p>Ferry services may be affected. Monitor Rassada and Chalong piers.</p>
+                  </div>
+                </div>
+              ) : null}
+              <div className="ops-incident ops-incident--info">
+                <span className="ops-incident__icon">🛣️</span>
+                <div>
+                  <strong>Route 402 — Normal flow</strong>
+                  <p>Main highway clear. No reported incidents.</p>
+                </div>
+              </div>
+              <div className="ops-incident ops-incident--info">
+                <span className="ops-incident__icon">🏗️</span>
+                <div>
+                  <strong>Patong Hill — Construction zone</strong>
+                  <p>Expect 5-10 min delays on Patong Line between 08:00-17:00.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* --- Demand Hotspots --- */}
+          <section className="ops-card">
+            <h2 className="ops-card__title">Demand Hotspots</h2>
+            <div className="ops-hotspots">
+              {/* Mock hotspot data — will be replaced by real /api/ops/demand-requests */}
+              {["Central Patong", "Kata Beach", "Airport", "Old Town", "Karon"].map((zone, i) => {
+                const count = Math.max(0, Math.floor(Math.random() * 15) - 5);
+                return count > 0 ? (
+                  <div key={zone} className={`ops-hotspot ${count >= 8 ? "ops-hotspot--high" : count >= 4 ? "ops-hotspot--medium" : ""}`}>
+                    <span className="ops-hotspot__zone">{zone}</span>
+                    <span className="ops-hotspot__count">{count} requests</span>
+                    <div className="ops-hotspot__bar">
+                      <div className="ops-hotspot__bar-fill" style={{ width: `${Math.min(100, count * 8)}%` }} />
+                    </div>
+                  </div>
+                ) : null;
+              })}
+              <p className="ops-hotspots__note">Passenger bus requests from the app (last hour)</p>
+            </div>
+          </section>
+
           {/* --- System Health --- */}
           {health ? (
             <section className="ops-card">
