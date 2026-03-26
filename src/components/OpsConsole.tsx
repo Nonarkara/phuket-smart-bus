@@ -223,7 +223,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </button>
           ) : null}
           <h1>Phuket Smart Bus</h1>
-          <span className="ops__subtitle">Operations Console</span>
+          <span className="ops__subtitle">Intelligent Operations Center</span>
         </div>
         <div className="ops__status-bar">
           <span className="ops__clock">
@@ -234,14 +234,63 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             <span className="ops__health-dot" style={{ background: healthColor }} />
             {health?.status === "ok" ? "All systems live" : "Degraded"}
           </span>
-          {weather ? (
-            <span className="ops__weather-pill">
-              {weather.current.tempC}°C · AQI {weather.current.aqi} · Rain {weather.current.rainProb}%
-              {weather.monsoonSeason ? " · Monsoon" : ""}
-            </span>
-          ) : null}
         </div>
       </header>
+
+      {/* ===== Key Metrics Strip ===== */}
+      <div className="ops__kpi-strip">
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{totalVehicles}</span>
+          <span className="ops-kpi__label">Fleet Online</span>
+        </div>
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{movingCount}</span>
+          <span className="ops-kpi__label">In Transit</span>
+        </div>
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{demand?.busDemandEstimate ?? "—"}</span>
+          <span className="ops-kpi__label">Demand Now</span>
+        </div>
+        <div className="ops-kpi ops-kpi--highlight">
+          <span className="ops-kpi__value">{demand?.recommendedFleet ?? "—"}</span>
+          <span className="ops-kpi__label">Recommended</span>
+        </div>
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{weather?.current.tempC ?? "—"}°</span>
+          <span className="ops-kpi__label">{weather?.current.rainProb ?? 0}% Rain</span>
+        </div>
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{demand?.arrivalsNext2h ?? "—"}</span>
+          <span className="ops-kpi__label">Flights (2h)</span>
+        </div>
+        <div className="ops-kpi">
+          <span className="ops-kpi__value">{weather?.current.aqi ?? "—"}</span>
+          <span className="ops-kpi__label">AQI</span>
+        </div>
+        {!simRunning ? (
+          <button className="ops-kpi ops-kpi--sim" type="button" onClick={runDaySimulation}>
+            <span className="ops-kpi__value">▶</span>
+            <span className="ops-kpi__label">Simulate</span>
+          </button>
+        ) : (
+          <button className="ops-kpi ops-kpi--sim-active" type="button" onClick={runDaySimulation}>
+            <span className="ops-kpi__value">{simTime}</span>
+            <span className="ops-kpi__label">■ Stop</span>
+          </button>
+        )}
+      </div>
+
+      {/* Simulation progress bar (full width) */}
+      {simRunning ? (
+        <div className="ops__sim-strip">
+          <div className="ops__sim-bar"><div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} /></div>
+          <div className="ops__sim-stats">
+            <span>🕐 {simTime}</span>
+            <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
+            <span>Passengers: <strong>{simPassengers.toLocaleString()}</strong></span>
+          </div>
+        </div>
+      ) : null}
 
       <div className="ops__body">
         {/* ===== Left: Fleet Map ===== */}
@@ -262,22 +311,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             <span className="ops__map-stat ops__map-stat--primary">{totalVehicles} vehicles</span>
             <span className="ops__map-stat">{movingCount} moving</span>
             <span className="ops__map-stat">{dwellingCount} at stops</span>
-            <button className="ops__sim-btn" type="button" onClick={runDaySimulation}>
-              {simRunning ? "Stop" : "Simulation"}
-            </button>
           </div>
-          {simRunning ? (
-            <div className="ops__sim-overlay">
-              <div className="ops__sim-clock">{simTime}</div>
-              <div className="ops__sim-bar">
-                <div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} />
-              </div>
-              <div className="ops__sim-stats">
-                <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
-                <span>Passengers transferred: <strong>{simPassengers.toLocaleString()}</strong></span>
-              </div>
-            </div>
-          ) : null}
         </div>
 
         {/* ===== Right: Analytics ===== */}

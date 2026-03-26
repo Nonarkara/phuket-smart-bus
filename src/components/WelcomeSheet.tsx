@@ -6,9 +6,26 @@ type SheetStep = "ask" | "result" | "booked";
 
 // Well-known destinations tourists search for
 const DESTINATION_HINTS = [
-  "Airport", "Patong Beach", "Central Phuket", "Old Town",
-  "Kata Beach", "Karon Beach", "Rawai", "Chalong",
+  "Airport", "Patong", "Central", "Old Town",
+  "Kata", "Karon", "Rawai", "Chalong",
 ];
+
+// Map tourist terms to stop name fragments
+const SEARCH_ALIASES: Record<string, string[]> = {
+  "patong": ["patong", "jungceylon", "bangla"],
+  "patong beach": ["patong", "jungceylon", "bangla"],
+  "kata": ["kata"],
+  "kata beach": ["kata"],
+  "karon": ["karon"],
+  "karon beach": ["karon"],
+  "airport": ["airport", "สนามบิน"],
+  "old town": ["old town", "rassada", "phuket town", "terminal"],
+  "central": ["central", "floresta", "lotus"],
+  "rawai": ["rawai"],
+  "chalong": ["chalong"],
+  "surin": ["surin"],
+  "beach": ["beach", "kata", "karon", "patong", "surin", "rawai"],
+};
 
 interface WelcomeSheetProps {
   lang: Lang;
@@ -26,22 +43,36 @@ function fuzzyMatch(query: string, text: string): boolean {
 
 function findBestStop(query: string, stops: Stop[]): Stop | null {
   const q = query.toLowerCase().trim();
-  if (!q) return null;
-  // Priority 1: exact name match
-  const nameMatch = stops.find(s =>
-    s.name.en.toLowerCase().includes(q) || s.name.th.includes(q)
-  );
-  if (nameMatch) return nameMatch;
-  // Priority 2: nearby place match
-  const nearbyMatch = stops.find(s =>
-    s.nearbyPlace?.name?.toLowerCase().includes(q)
-  );
-  if (nearbyMatch) return nearbyMatch;
-  // Priority 3: direction/route match
-  const dirMatch = stops.find(s =>
-    s.direction?.en.toLowerCase().includes(q)
-  );
-  return dirMatch ?? null;
+  if (!q || stops.length === 0) return null;
+
+  // Expand query with aliases
+  const aliases = SEARCH_ALIASES[q] ?? [q];
+  const allTerms = [q, ...aliases];
+
+  // Priority 1: stop name contains any search term
+  for (const term of allTerms) {
+    const nameMatch = stops.find(s =>
+      s.name.en.toLowerCase().includes(term) || s.name.th.includes(term)
+    );
+    if (nameMatch) return nameMatch;
+  }
+  // Priority 2: nearby place
+  for (const term of allTerms) {
+    const nearbyMatch = stops.find(s =>
+      s.nearbyPlace?.name?.toLowerCase().includes(term)
+    );
+    if (nearbyMatch) return nearbyMatch;
+  }
+  // Priority 3: direction/route
+  for (const term of allTerms) {
+    const dirMatch = stops.find(s =>
+      s.direction?.en.toLowerCase().includes(term) ||
+      s.routeId.includes(term)
+    );
+    if (dirMatch) return dirMatch;
+  }
+  // Fallback: return first stop (always have something)
+  return stops[0] ?? null;
 }
 
 export function WelcomeSheet({ lang, vehicles, comparisons, allStops, onNavigateToStop }: WelcomeSheetProps) {

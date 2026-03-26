@@ -2307,6 +2307,96 @@ a { color: var(--tint); }
   color: #8b949e;
 }
 
+/* KPI metrics strip */
+.ops__kpi-strip {
+  display: flex;
+  gap: 1px;
+  background: #21262d;
+  border-bottom: 1px solid #30363d;
+  flex: 0 0 auto;
+}
+
+.ops-kpi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  background: #0d1117;
+  gap: 2px;
+  border: 0;
+}
+
+.ops-kpi__value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-kpi__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #484f58;
+  font-weight: 500;
+}
+
+.ops-kpi--highlight {
+  background: rgba(31, 111, 235, 0.08);
+  border-bottom: 2px solid #1f6feb;
+}
+
+.ops-kpi--highlight .ops-kpi__value { color: #58a6ff; }
+.ops-kpi--highlight .ops-kpi__label { color: #58a6ff; }
+
+.ops-kpi--sim {
+  cursor: pointer;
+  background: rgba(88, 166, 255, 0.06);
+  transition: all 0.15s;
+}
+
+.ops-kpi--sim:hover { background: rgba(88, 166, 255, 0.15); }
+.ops-kpi--sim .ops-kpi__value { color: #58a6ff; font-size: 18px; }
+.ops-kpi--sim .ops-kpi__label { color: #58a6ff; }
+
+.ops-kpi--sim-active {
+  cursor: pointer;
+  background: rgba(63, 185, 80, 0.08);
+  animation: sim-pulse 1s ease-in-out infinite alternate;
+}
+
+.ops-kpi--sim-active .ops-kpi__value {
+  color: #3fb950;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-kpi--sim-active .ops-kpi__label { color: #f85149; }
+
+@keyframes sim-pulse {
+  from { background: rgba(63, 185, 80, 0.05); }
+  to { background: rgba(63, 185, 80, 0.12); }
+}
+
+/* Simulation progress strip */
+.ops__sim-strip {
+  background: rgba(13, 17, 23, 0.95);
+  border-bottom: 1px solid #30363d;
+  padding: 6px 20px;
+  flex: 0 0 auto;
+}
+
+.ops__sim-strip .ops__sim-bar {
+  margin: 0 0 4px;
+}
+
+.ops__sim-strip .ops__sim-stats {
+  justify-content: flex-start;
+  gap: 24px;
+}
+
 .ops__body {
   flex: 1 1 0;
   display: grid;

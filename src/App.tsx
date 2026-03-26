@@ -545,7 +545,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
               lang={lang}
               vehicles={allVehicles}
               comparisons={comparisons}
-              allStops={stops}
+              allStops={Object.values(routeStopsById).flat() as Stop[]}
               onNavigateToStop={(stopId) => {
                 startTransition(() => {
                   setSelectedStopId(stopId);
