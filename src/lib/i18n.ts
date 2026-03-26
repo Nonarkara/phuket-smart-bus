@@ -680,6 +680,9 @@ export const ui = {
   compareRiders: {
     en: "riders chose the bus today", th: "คนเลือกนั่งบัสวันนี้", zh: "人今天选择了巴士", de: "Fahrgäste wählten heute den Bus", fr: "voyageurs ont choisi le bus aujourd'hui", es: "pasajeros eligieron el bus hoy"
   },
+  compareBestValue: {
+    en: "Most riders choose", th: "คนส่วนใหญ่เลือก", zh: "多数人选择", de: "Die meisten wählen", fr: "Le choix populaire", es: "La opción popular"
+  },
   compareMinLabel: {
     en: "min", th: "นาที", zh: "分钟", de: "Min.", fr: "min", es: "min"
   },

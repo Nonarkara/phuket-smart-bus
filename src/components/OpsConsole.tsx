@@ -158,7 +158,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           <span className="ops__subtitle">Operations Console</span>
         </div>
         <div className="ops__status-bar">
-          <span className="ops__clock">{clock} ICT</span>
+          <span className="ops__clock">
+            <span className="ops__date">{new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Bangkok", weekday: "short", day: "numeric", month: "short" })}</span>
+            {" "}{clock} ICT
+          </span>
           <span className="ops__health" style={{ color: healthColor }}>
             <span className="ops__health-dot" style={{ background: healthColor }} />
             {health?.status === "ok" ? "All systems live" : "Degraded"}

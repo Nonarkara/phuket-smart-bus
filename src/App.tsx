@@ -526,7 +526,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
 
             {morePanel === "stops" ? (
               <div className="stops-layout">
-                <section className="stops-section">
+                <section className="stops-section grouped-section">
                   <StopList
                     lang={lang}
                     stops={filteredStops}
@@ -546,7 +546,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                     emptyState={pick(ui.stopEmpty, lang)}
                   />
                 </section>
-                <section className="detail-section">
+                <section className="detail-section grouped-section">
                   <DecisionPanel
                     lang={lang}
                     summary={decisionSummary}

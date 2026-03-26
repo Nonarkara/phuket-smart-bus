@@ -79,17 +79,18 @@ export function CompareView({ lang, comparisons }: CompareViewProps) {
           <span className="compare-card__per">{pick(ui.comparePerPerson, lang)}</span>
         </div>
 
-        {/* Smart Bus — highlighted */}
+        {/* Smart Bus — highlighted + "Most riders choose" badge */}
         <div className="compare-card compare-card--bus is-highlighted">
+          <span className="compare-card__best-badge">{pick(ui.compareBestValue, lang)}</span>
           <div className="compare-card__icon compare-card__icon--bus">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="3" width="16" height="16" rx="3"/><path d="M4 11h16M8 19v2M16 19v2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>
           </div>
           <div className="compare-card__info">
             <span className="compare-card__label">{pick(ui.compareSmartBus, lang)}</span>
             <span className="compare-card__price compare-card__price--bus">฿{selected.bus.fareThb}</span>
-            <span className="compare-card__time">
+            <span className="compare-card__time compare-card__time--bus">
               {selected.bus.minutes} {pick(ui.compareMinLabel, lang)}
-              <span className="compare-card__arrival"> · {pick(ui.compareArrive, lang)} {arrivalTime(selected.bus.minutes, lang)}</span>
+              <span className="compare-card__arrival compare-card__arrival--bus"> · {pick(ui.compareArrive, lang)} {arrivalTime(selected.bus.minutes, lang)}</span>
             </span>
           </div>
           <span className="compare-card__per">{pick(ui.comparePerPerson, lang)}</span>

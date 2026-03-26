@@ -5,10 +5,7 @@
       "name": "dev",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite"],
-      "port": 4173,
-      "env": {
-        "API_PORT": "3099"
-      }
+      "port": 4173
     }
   ]
 }
