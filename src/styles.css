@@ -411,6 +411,243 @@ a { color: var(--tint); }
   font-weight: 500;
 }
 
+/* Search input */
+.welcome-sheet__search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.welcome-sheet__input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.welcome-sheet__input:focus {
+  border-color: var(--tint);
+}
+
+.welcome-sheet__search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--tint);
+  color: #fff;
+  cursor: pointer;
+}
+
+.welcome-sheet__search-btn:active { transform: scale(0.94); }
+
+/* Quick destination pills */
+.welcome-sheet__quick-dests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.welcome-sheet__quick-pill {
+  padding: 6px 12px;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.welcome-sheet__quick-pill:active {
+  background: var(--tint);
+  color: #fff;
+  transform: scale(0.95);
+}
+
+/* Result step */
+.welcome-sheet__result { display: flex; flex-direction: column; gap: 12px; }
+
+.welcome-sheet__result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.welcome-sheet__result-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.welcome-sheet__result-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.welcome-sheet__result-route {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Price comparison inline */
+.welcome-sheet__price-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.welcome-sheet__price-bus, .welcome-sheet__price-taxi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.welcome-sheet__price-amount {
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--green);
+}
+
+.welcome-sheet__price-amount--taxi {
+  font-size: 16px;
+  color: var(--text-tertiary);
+}
+
+.welcome-sheet__price-vs {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.welcome-sheet__price-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* Book button */
+.welcome-sheet__book-btn {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--green);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.welcome-sheet__book-btn:active { transform: scale(0.97); background: #2db84e; }
+
+/* Booked / QR step */
+.welcome-sheet__booked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.welcome-sheet__booked-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-sheet__booked-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.welcome-sheet__booked-dest {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.welcome-sheet__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.welcome-sheet__qr-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.welcome-sheet__warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 149, 0, 0.08);
+  border-left: 3px solid var(--orange);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  text-align: left;
+  width: 100%;
+}
+
+.welcome-sheet__warning svg { color: var(--orange); flex-shrink: 0; }
+
+.welcome-sheet__new-search {
+  padding: 10px 20px;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--tint);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.welcome-sheet__new-search:active { transform: scale(0.96); }
+
 /* Request bus button */
 .request-bus-btn {
   position: absolute;

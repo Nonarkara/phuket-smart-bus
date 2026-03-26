@@ -545,7 +545,13 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
               lang={lang}
               vehicles={allVehicles}
               comparisons={comparisons}
-              onRideNow={() => navigate("more")}
+              allStops={stops}
+              onNavigateToStop={(stopId) => {
+                startTransition(() => {
+                  setSelectedStopId(stopId);
+                  setMapMode("stop");
+                });
+              }}
             />
             {/* Request bus button */}
             {userLocation && !requestSent ? (

@@ -786,6 +786,35 @@ export const ui = {
   },
   compareLoading: {
     en: "Loading prices...", th: "กำลังโหลดราคา...", zh: "正在加载价格...", de: "Preise laden...", fr: "Chargement des prix...", es: "Cargando precios..."
+  },
+  // --- Destination search flow ---
+  whereToGo: {
+    en: "Where do you want to go?", th: "คุณต้องการไปที่ไหน?", zh: "你想去哪里？",
+    de: "Wohin möchten Sie?", fr: "Où voulez-vous aller ?", es: "¿Adónde quieres ir?"
+  },
+  whereToGoPlaceholder: {
+    en: "Beach, hotel, airport...", th: "ชายหาด, โรงแรม, สนามบิน...", zh: "海滩、酒店、机场...",
+    de: "Strand, Hotel, Flughafen...", fr: "Plage, hôtel, aéroport...", es: "Playa, hotel, aeropuerto..."
+  },
+  bookSeat: {
+    en: "Book Your Seat", th: "จองที่นั่ง", zh: "预订座位",
+    de: "Platz buchen", fr: "Réserver une place", es: "Reservar asiento"
+  },
+  seatBooked: {
+    en: "Seat Reserved!", th: "จองที่นั่งแล้ว!", zh: "座位已预订！",
+    de: "Platz reserviert!", fr: "Place réservée !", es: "¡Asiento reservado!"
+  },
+  bookingWarning: {
+    en: "Show this QR to the driver. Seat released if you don't board before departure.",
+    th: "แสดง QR นี้ต่อคนขับ ที่นั่งจะถูกปล่อยหากไม่ขึ้นรถก่อนออกเดินทาง",
+    zh: "向司机出示此二维码。若未在发车前上车，座位将被释放。",
+    de: "Zeigen Sie diesen QR dem Fahrer. Platz wird freigegeben, wenn Sie nicht vor Abfahrt einsteigen.",
+    fr: "Montrez ce QR au chauffeur. Place libérée si vous ne montez pas avant le départ.",
+    es: "Muestre este QR al conductor. El asiento se libera si no aborda antes de la salida."
+  },
+  searchAnother: {
+    en: "Search another destination", th: "ค้นหาจุดหมายอื่น", zh: "搜索其他目的地",
+    de: "Anderes Ziel suchen", fr: "Chercher une autre destination", es: "Buscar otro destino"
   }
 } satisfies Record<string, LocalizedText>;
 
