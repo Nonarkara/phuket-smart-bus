@@ -5,6 +5,23 @@ import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/ty
 import { pick, ui } from "@/lib/i18n";
 import { buildAnimatedVehicleFrame, shouldAnimateVehicleFrame } from "@/lib/vehicleAnimation";
 
+export type MapOverlay = {
+  id: string;
+  url: string;
+  attribution?: string;
+  opacity?: number;
+};
+
+export type MapMarkerOverlay = {
+  id: string;
+  lat: number;
+  lng: number;
+  color: string;
+  radius: number;
+  label: string;
+  fillOpacity?: number;
+};
+
 type Props = {
   lang: Lang;
   routes: Route[];
@@ -18,6 +35,8 @@ type Props = {
   highlightVehicleId?: string | null;
   animationDurationMs?: number;
   testId?: string;
+  overlayLayers?: MapOverlay[];
+  overlayMarkers?: MapMarkerOverlay[];
   onModeChange: (mode: "route" | "stop") => void;
 };
 
@@ -102,6 +121,8 @@ export function LiveMap({
   highlightVehicleId = null,
   animationDurationMs = 12_000,
   testId = "live-map",
+  overlayLayers = [],
+  overlayMarkers = [],
   onModeChange
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
@@ -146,6 +167,14 @@ export function LiveMap({
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {overlayLayers?.map(layer => (
+          <TileLayer
+            key={layer.id}
+            url={layer.url}
+            attribution={layer.attribution ?? ""}
+            opacity={layer.opacity ?? 0.6}
+          />
+        ))}
         <SyncMapView bounds={bounds} mode={mode} selectedStop={selectedStop} />
         {routes.flatMap((route) =>
           route.pathSegments.map((segment, index) => (
@@ -226,6 +255,22 @@ export function LiveMap({
             <Tooltip>{pick(ui.locationYouAreHere, lang)}</Tooltip>
           </CircleMarker>
         ) : null}
+        {/* Overlay markers (IOC layers) */}
+        {overlayMarkers.map(m => (
+          <CircleMarker
+            key={m.id}
+            center={[m.lat, m.lng]}
+            radius={m.radius}
+            pathOptions={{
+              color: m.color,
+              fillColor: m.color,
+              fillOpacity: m.fillOpacity ?? 0.3,
+              weight: 2
+            }}
+          >
+            <Tooltip>{m.label}</Tooltip>
+          </CircleMarker>
+        ))}
       </MapContainer>
     </div>
   );

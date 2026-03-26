@@ -21,6 +21,50 @@ import { LiveMap } from "./LiveMap";
 
 const OPS_POLL_MS = 15_000;
 
+// Available map overlay layers
+type LayerId = "precipitation" | "accidents" | "aqi" | "alerts";
+
+const LAYER_DEFS: { id: LayerId; label: string; icon: string; description: string }[] = [
+  { id: "precipitation", label: "Precipitation", icon: "🌧️", description: "Live rain radar" },
+  { id: "accidents", label: "Incidents", icon: "⚠️", description: "Road accidents & closures" },
+  { id: "aqi", label: "Air Quality", icon: "🌫️", description: "PM2.5 & AQI heatmap" },
+  { id: "alerts", label: "City Alerts", icon: "🏙️", description: "Flooding, construction, events" },
+];
+
+function buildOverlayLayers(active: Set<LayerId>): MapOverlay[] {
+  const layers: MapOverlay[] = [];
+  // When any layer is active, switch to dark satellite-style base
+  if (active.size > 0) {
+    layers.push({
+      id: "dark-base",
+      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      attribution: "CartoDB",
+      opacity: 0.5
+    });
+  }
+  return layers;
+}
+
+// Mock data for map marker overlays
+const INCIDENT_MARKERS = [
+  { lat: 7.9037, lng: 98.2948, type: "accident", label: "Minor collision - Patong Hill" },
+  { lat: 7.8804, lng: 98.3923, type: "construction", label: "Road works - Phuket Town" },
+  { lat: 8.0710, lng: 98.3065, type: "flooding", label: "Low-lying area - Thalang" },
+];
+
+const AQI_ZONES = [
+  { lat: 7.88, lng: 98.38, aqi: 55, label: "Phuket Town" },
+  { lat: 7.90, lng: 98.30, aqi: 42, label: "Patong" },
+  { lat: 7.82, lng: 98.30, aqi: 38, label: "Kata-Karon" },
+  { lat: 8.11, lng: 98.32, aqi: 61, label: "Airport" },
+  { lat: 7.77, lng: 98.33, aqi: 35, label: "Rawai" },
+];
+
+const CITY_ALERTS = [
+  { lat: 7.85, lng: 98.36, type: "event", label: "Vegetarian Festival - Phuket Town" },
+  { lat: 7.95, lng: 98.28, type: "flood_risk", label: "Flood watch - Surin Beach area" },
+];
+
 // --- SVG Bar Chart for demand vs capacity ---
 function DemandChart({ points }: { points: HourlyDemandPoint[] }) {
   if (points.length === 0) return null;
@@ -99,6 +143,17 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [simTouchpoints, setSimTouchpoints] = useState(0);
   const [simPassengers, setSimPassengers] = useState(0);
   const simAbort = useRef(false);
+  const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(new Set());
+
+  function toggleLayer(id: LayerId) {
+    setActiveLayers(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  const overlayLayers = buildOverlayLayers(activeLayers);
 
   useEffect(() => {
     const id = setInterval(() => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" })), 1000);
@@ -305,8 +360,38 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             mode="route"
             bounds={null}
             animationDurationMs={OPS_POLL_MS}
+            overlayLayers={overlayLayers}
+            overlayMarkers={[
+              ...(activeLayers.has("accidents") ? INCIDENT_MARKERS.map((m, i) => ({
+                id: `inc-${i}`, lat: m.lat, lng: m.lng, color: m.type === "accident" ? "#f85149" : m.type === "construction" ? "#d29922" : "#58a6ff",
+                radius: 12, label: `${m.type === "accident" ? "⚠️" : m.type === "construction" ? "🏗️" : "🌊"} ${m.label}`, fillOpacity: 0.4
+              })) : []),
+              ...(activeLayers.has("aqi") ? AQI_ZONES.map((z, i) => ({
+                id: `aqi-${i}`, lat: z.lat, lng: z.lng, color: z.aqi > 50 ? "#d29922" : "#3fb950",
+                radius: z.aqi > 50 ? 20 : 15, label: `AQI ${z.aqi} — ${z.label}`, fillOpacity: 0.25
+              })) : []),
+              ...(activeLayers.has("alerts") ? CITY_ALERTS.map((a, i) => ({
+                id: `alert-${i}`, lat: a.lat, lng: a.lng, color: a.type === "flood_risk" ? "#58a6ff" : "#a371f7",
+                radius: 14, label: `${a.type === "flood_risk" ? "🌊" : "📢"} ${a.label}`, fillOpacity: 0.35
+              })) : []),
+            ]}
             onModeChange={() => {}}
           />
+          {/* Layer toggles */}
+          <div className="ops__layers">
+            {LAYER_DEFS.map(l => (
+              <button
+                key={l.id}
+                className={`ops__layer-btn ${activeLayers.has(l.id) ? "is-active" : ""}`}
+                type="button"
+                onClick={() => toggleLayer(l.id)}
+                title={l.description}
+              >
+                <span className="ops__layer-icon">{l.icon}</span>
+                <span className="ops__layer-label">{l.label}</span>
+              </button>
+            ))}
+          </div>
           <div className="ops__map-overlay">
             <span className="ops__map-stat ops__map-stat--primary">{totalVehicles} vehicles</span>
             <span className="ops__map-stat">{movingCount} moving</span>

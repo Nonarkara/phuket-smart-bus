@@ -2307,6 +2307,49 @@ a { color: var(--tint); }
   color: #8b949e;
 }
 
+/* Layer toggle panel */
+.ops__layers {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ops__layer-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  color: #8b949e;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ops__layer-btn:hover {
+  background: rgba(13, 17, 23, 0.95);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e6edf3;
+}
+
+.ops__layer-btn.is-active {
+  background: rgba(88, 166, 255, 0.12);
+  border-color: rgba(88, 166, 255, 0.4);
+  color: #58a6ff;
+}
+
+.ops__layer-icon { font-size: 14px; }
+.ops__layer-label { font-size: 11px; }
+
 /* KPI metrics strip */
 .ops__kpi-strip {
   display: flex;
