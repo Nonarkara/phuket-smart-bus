@@ -3,6 +3,7 @@ import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, PUBLIC_TRACKER_TOKEN }
 import { routeDestinationLabel, text } from "../../lib/i18n.js";
 import { getTelemetryVehicles } from "../operationsStore.js";
 import { buildScheduleMockFleet } from "./mockFleetProvider.js";
+import { FERRY_ROUTE_IDS } from "../../config.js";
 
 type RawBusRecord = {
   id: number;
@@ -144,18 +145,28 @@ async function fetchLiveRecords() {
   return (await response.json()) as RawBusRecord[];
 }
 
+const ferryRouteSet = new Set<string>(FERRY_ROUTE_IDS);
+
+/** Always generate ferry vehicles from schedule, regardless of bus feed status */
+function getMockFerryVehicles(): VehiclePosition[] {
+  return buildScheduleMockFleet().filter((v) => ferryRouteSet.has(v.routeId));
+}
+
 export async function getBusSnapshot() {
   if (cache && cache.expiresAt > Date.now()) {
     return cache;
   }
 
   const telemetryVehicles = getTelemetryVehicles();
+  const ferryVehicles = getMockFerryVehicles();
 
   try {
     const records = await fetchLiveRecords();
-    const vehicles = mergeVehiclesWithTelemetry(
+    const busVehicles = mergeVehiclesWithTelemetry(
       records.map(normalizeRecord).filter((item): item is VehiclePosition => Boolean(item))
     );
+    // Merge live bus data with simulated ferry data
+    const vehicles = [...busVehicles, ...ferryVehicles];
     const latestUpdate =
       vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
@@ -168,12 +179,13 @@ export async function getBusSnapshot() {
     return cache;
   } catch {
     if (telemetryVehicles.length > 0) {
+      const vehicles = [...telemetryVehicles, ...ferryVehicles];
       const latestTelemetryUpdate =
-        telemetryVehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
+        vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
       cache = {
         expiresAt: Date.now() + BUS_CACHE_MS,
-        vehicles: telemetryVehicles,
+        vehicles,
         status: buildStatus("live", latestTelemetryUpdate, "Using direct GPS telemetry")
       };
 

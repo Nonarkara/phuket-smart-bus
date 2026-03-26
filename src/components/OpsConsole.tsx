@@ -129,7 +129,10 @@ export function OpsConsole() {
     return () => clearInterval(id);
   }, []);
 
+  const FERRY_ROUTES = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
   const totalVehicles = vehicles.length;
+  const busCount = vehicles.filter(v => !FERRY_ROUTES.has(v.routeId)).length;
+  const ferryCount = vehicles.filter(v => FERRY_ROUTES.has(v.routeId)).length;
   const movingCount = vehicles.filter(v => v.status === "moving").length;
   const dwellingCount = vehicles.filter(v => v.status === "dwelling").length;
   const healthColor = health?.status === "ok" ? "#3fb950" : "#d29922";
@@ -194,12 +197,20 @@ export function OpsConsole() {
             <h2 className="ops-card__title">Fleet Status</h2>
             <div className="ops-card__grid">
               <div className="ops-metric">
-                <span className="ops-metric__value">{totalVehicles}</span>
-                <span className="ops-metric__label">Online</span>
+                <span className="ops-metric__value">{busCount}</span>
+                <span className="ops-metric__label">Buses</span>
+              </div>
+              <div className="ops-metric">
+                <span className="ops-metric__value">{ferryCount}</span>
+                <span className="ops-metric__label">Ferries</span>
               </div>
               <div className="ops-metric">
                 <span className="ops-metric__value">{movingCount}</span>
                 <span className="ops-metric__label">In transit</span>
+              </div>
+              <div className="ops-metric">
+                <span className="ops-metric__value">{dwellingCount}</span>
+                <span className="ops-metric__label">At stops</span>
               </div>
             </div>
             <div className="ops-card__routes">
