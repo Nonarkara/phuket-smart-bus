@@ -3067,6 +3067,38 @@ a { color: var(--tint); }
   align-self: center;
 }
 
+.ops-sim-card__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.ops-sim-metric {
+  padding: 8px;
+  border-radius: 6px;
+  background: #0d1117;
+  border: 1px solid #21262d;
+}
+
+.ops-sim-metric__value {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e6edf3;
+  font-variant-numeric: tabular-nums;
+}
+
+.ops-sim-metric__label {
+  display: block;
+  font-size: 10px;
+  color: #8b949e;
+  margin-top: 2px;
+}
+
+.ops-sim-metric--green .ops-sim-metric__value { color: #3fb950; }
+.ops-sim-metric--blue .ops-sim-metric__value { color: #58a6ff; }
+
 /* Road incidents */
 .ops-incidents { display: flex; flex-direction: column; gap: 8px; }
 

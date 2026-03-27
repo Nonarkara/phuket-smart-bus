@@ -255,6 +255,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [simProgress, setSimProgress] = useState(0);
   const [simTouchpoints, setSimTouchpoints] = useState(0);
   const [simPassengers, setSimPassengers] = useState(0);
+  const [simPaxToAirport, setSimPaxToAirport] = useState(0);
+  const [simPaxFromAirport, setSimPaxFromAirport] = useState(0);
+  const [simCO2Saved, setSimCO2Saved] = useState(0);
+  const [simFareRevenue, setSimFareRevenue] = useState(0);
   const simAbort = useRef(false);
   const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(new Set());
 
@@ -361,12 +365,20 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     setSimRunning(true);
     setSimTouchpoints(0);
     setSimPassengers(0);
+    setSimPaxToAirport(0);
+    setSimPaxFromAirport(0);
+    setSimCO2Saved(0);
+    setSimFareRevenue(0);
 
     const START = 360;  // 06:00
     const END = 1440;   // 24:00
     const STEP = 3;     // 3-minute increments for smoother animation
     let touchpoints = 0;
     let passengers = 0;
+    let paxToAirport = 0;
+    let paxFromAirport = 0;
+    let co2Saved = 0;
+    let fareRevenue = 0;
 
     for (let t = START; t <= END; t += STEP) {
       if (simAbort.current) break;
@@ -409,6 +421,37 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         }
         setSimTouchpoints(touchpoints);
         setSimPassengers(passengers);
+
+        // Calculate passengers served, CO2 saved, fare revenue
+        // Each moving bus on airport route carries ~25 pax (full capacity assumption based on schedule)
+        const SEATS = 25;
+        const FARE = 100; // ฿100 per person
+        // CO2: avg taxi trip airport→city = 35km, emits ~8.5 kg CO2 (petrol car)
+        // EV bus for 25 pax same trip = ~2.1 kg CO2 total (grid electricity Thailand ~0.5 kgCO2/kWh, bus uses ~15 kWh/35km)
+        // Savings per 25 pax = (25 × 8.5) - 2.1 = 210.4 kg CO2 saved per full bus trip
+        const CO2_SAVED_PER_BUS_TRIP = 210; // kg
+
+        const airportBuses = simVehicles.filter(v => v.routeId === "rawai-airport");
+        const movingToAirport = airportBuses.filter(v => v.status === "moving" && v.destination.en.toLowerCase().includes("airport")).length;
+        const movingFromAirport = airportBuses.filter(v => v.status === "moving" && !v.destination.en.toLowerCase().includes("airport")).length;
+
+        // Each 3-min step: a moving bus serves fraction of a trip (~75 min trip, so 3/75 = 4% per step)
+        const tripFraction = STEP / 75;
+        const paxToAirportStep = Math.round(movingToAirport * SEATS * tripFraction);
+        const paxFromAirportStep = Math.round(movingFromAirport * SEATS * tripFraction);
+        const totalPaxStep = paxToAirportStep + paxFromAirportStep;
+        const co2Step = (movingToAirport + movingFromAirport) * CO2_SAVED_PER_BUS_TRIP * tripFraction;
+        const fareStep = totalPaxStep * FARE;
+
+        paxToAirport += paxToAirportStep;
+        paxFromAirport += paxFromAirportStep;
+        co2Saved += co2Step;
+        fareRevenue += fareStep;
+
+        setSimPaxToAirport(paxToAirport);
+        setSimPaxFromAirport(paxFromAirport);
+        setSimCO2Saved(Math.round(co2Saved));
+        setSimFareRevenue(Math.round(fareRevenue));
 
         await new Promise(r => setTimeout(r, 60)); // 60ms per 3-min step = ~22s total animation
       } catch { break; }
@@ -508,8 +551,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           <div className="ops__sim-bar"><div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} /></div>
           <div className="ops__sim-stats">
             <span>🕐 {simTime}</span>
-            <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
-            <span>Passengers: <strong>{simPassengers.toLocaleString()}</strong></span>
+            <span>✈️→🚌 <strong>{simPaxFromAirport.toLocaleString()}</strong> pax</span>
+            <span>🚌→✈️ <strong>{simPaxToAirport.toLocaleString()}</strong> pax</span>
+            <span>🌱 <strong>{simCO2Saved.toLocaleString()}</strong> kg CO₂</span>
+            <span>💰 ฿<strong>{simFareRevenue.toLocaleString()}</strong></span>
           </div>
         </div>
       ) : null}
@@ -792,11 +837,25 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               <div className="ops-sim-card">
                 <div className="ops__sim-clock">{simTime}</div>
                 <div className="ops__sim-bar"><div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} /></div>
-                <div className="ops__sim-stats">
-                  <span>Touchpoints: <strong>{simTouchpoints}</strong></span>
-                  <span>Passengers: <strong>{simPassengers.toLocaleString()}</strong></span>
+                <div className="ops-sim-card__metrics">
+                  <div className="ops-sim-metric">
+                    <span className="ops-sim-metric__value">{simPaxFromAirport.toLocaleString()}</span>
+                    <span className="ops-sim-metric__label">✈️→🚌 Airport → City</span>
+                  </div>
+                  <div className="ops-sim-metric">
+                    <span className="ops-sim-metric__value">{simPaxToAirport.toLocaleString()}</span>
+                    <span className="ops-sim-metric__label">🚌→✈️ City → Airport</span>
+                  </div>
+                  <div className="ops-sim-metric ops-sim-metric--green">
+                    <span className="ops-sim-metric__value">{simCO2Saved.toLocaleString()} kg</span>
+                    <span className="ops-sim-metric__label">🌱 CO₂ Saved (EV vs Taxi)</span>
+                  </div>
+                  <div className="ops-sim-metric ops-sim-metric--blue">
+                    <span className="ops-sim-metric__value">฿{simFareRevenue.toLocaleString()}</span>
+                    <span className="ops-sim-metric__label">💰 Fare Revenue</span>
+                  </div>
                 </div>
-                <button className="ops-sim-card__stop" type="button" onClick={runDaySimulation}>Stop</button>
+                <button className="ops-sim-card__stop" type="button" onClick={runDaySimulation}>Stop Simulation</button>
               </div>
             )}
           </section>
