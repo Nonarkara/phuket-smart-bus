@@ -163,63 +163,75 @@ function generateClientSimulation(minuteOfDay: number, routes: Route[]): Vehicle
     ]
   };
 
-  // Vehicle counts by time of day
-  const busActivity = hour < 6 ? 0 : hour < 7 ? 0.3 : hour < 9 ? 0.6 : hour < 18 ? 1.0 : hour < 21 ? 0.7 : hour < 23 ? 0.3 : 0;
-  const ferryActivity = hour < 8 ? 0 : hour < 9 ? 0.4 : hour < 17 ? 1.0 : hour < 19 ? 0.5 : 0;
+  // Vehicle counts by time of day (Bangkok time)
+  const busActivity = hour < 6 ? 0 : hour < 7 ? 0.4 : hour < 9 ? 0.7 : hour < 18 ? 1.0 : hour < 21 ? 0.7 : hour < 23 ? 0.3 : 0;
+  const ferryActivity = hour < 7.5 ? 0 : hour < 9 ? 0.5 : hour < 17 ? 1.0 : hour < 19 ? 0.6 : 0;
+
+  // Trip duration in minutes for each route
+  const TRIP_DURATIONS: Record<string, number> = {
+    "rawai-airport": 75, "patong-old-bus-station": 40, "dragon-line": 25,
+    "rassada-phi-phi": 90, "rassada-ao-nang": 120, "bang-rong-koh-yao": 45, "chalong-racha": 60
+  };
+
+  // Departure intervals (minutes between buses)
+  const HEADWAY: Record<string, number> = {
+    "rawai-airport": 15, "patong-old-bus-station": 20, "dragon-line": 30,
+    "rassada-phi-phi": 60, "rassada-ao-nang": 120, "bang-rong-koh-yao": 90, "chalong-racha": 120
+  };
 
   const busRoutes = ["rawai-airport", "patong-old-bus-station", "dragon-line"];
   const ferryRoutes = ["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"];
 
-  let vid = 0;
-  for (const routeId of busRoutes) {
+  function addVehiclesForRoute(routeId: string, activity: number, isFerry: boolean) {
     const path = ROUTE_PATHS[routeId];
-    if (!path) continue;
-    const count = Math.round((routeId === "rawai-airport" ? 6 : routeId === "patong-old-bus-station" ? 4 : 2) * busActivity);
-    for (let i = 0; i < count; i++) {
-      const progress = ((minuteOfDay * 0.7 + i * 137 + vid * 53) % 1000) / 1000;
-      const pathIdx = Math.min(Math.floor(progress * (path.length - 1)), path.length - 2);
-      const segProgress = (progress * (path.length - 1)) - pathIdx;
+    if (!path || activity <= 0) return;
+    const tripMin = TRIP_DURATIONS[routeId] ?? 60;
+    const headway = HEADWAY[routeId] ?? 30;
+    // First departure
+    const firstDep = isFerry ? 480 : 360; // ferries start 08:00, buses 06:00
+
+    // Generate each active trip
+    for (let dep = firstDep; dep < minuteOfDay + tripMin; dep += headway) {
+      const age = minuteOfDay - dep;
+      if (age < -2 || age > tripMin + 5) continue; // not active
+      if (activity < 0.5 && (dep / headway) % 2 === 0) continue; // skip every other during low activity
+
+      const progress = Math.max(0, Math.min(1, age / tripMin));
+      // Alternate direction: odd trips go forward, even go reverse
+      const tripIndex = Math.floor((dep - firstDep) / headway);
+      const reverse = tripIndex % 2 === 1;
+      const effectiveProgress = reverse ? 1 - progress : progress;
+
+      const pathPos = effectiveProgress * (path.length - 1);
+      const pathIdx = Math.min(Math.floor(pathPos), path.length - 2);
+      const segProgress = pathPos - pathIdx;
       const from = path[pathIdx]!;
       const to = path[pathIdx + 1]!;
+
+      const lat = from.lat + (to.lat - from.lat) * segProgress;
+      const lng = from.lng + (to.lng - from.lng) * segProgress;
+      const moving = age > 0 && age < tripMin && segProgress > 0.03 && segProgress < 0.97;
+
+      const vid = vehicles.length;
+      const destLabel = reverse ? path[0]! : path[path.length - 1]!;
       vehicles.push({
-        id: `sim-${vid}`, routeId: routeId as any, licensePlate: `SIM-${String(vid).padStart(3, "0")}`,
+        id: `sim-${vid}`, routeId: routeId as any,
+        licensePlate: isFerry ? `Ferry-${String(vid).padStart(2, "0")}` : `Bus-${String(vid).padStart(3, "0")}`,
         vehicleId: `sim-${vid}`, deviceId: null,
-        coordinates: [from.lat + (to.lat - from.lat) * segProgress, from.lng + (to.lng - from.lng) * segProgress],
-        heading: Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI,
-        speedKph: segProgress > 0.05 && segProgress < 0.95 ? 25 : 0,
+        coordinates: [lat, lng],
+        heading: Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI * (reverse ? -1 : 1),
+        speedKph: moving ? (isFerry ? 18 : 25) : 0,
         destination: { en: routeId, th: routeId, zh: routeId, de: routeId, fr: routeId, es: routeId },
         updatedAt: new Date().toISOString(), telemetrySource: "schedule_mock", freshness: "fresh",
-        status: segProgress > 0.05 && segProgress < 0.95 ? "moving" : "dwelling",
-        distanceToDestinationMeters: Math.round((1 - progress) * 20000), stopsAway: Math.round((1 - progress) * 10)
+        status: moving ? "moving" : "dwelling",
+        distanceToDestinationMeters: Math.round((1 - progress) * (isFerry ? 30000 : 20000)),
+        stopsAway: Math.round((1 - progress) * (isFerry ? 3 : 10))
       });
-      vid++;
     }
   }
 
-  for (const routeId of ferryRoutes) {
-    const path = ROUTE_PATHS[routeId];
-    if (!path) continue;
-    const count = Math.round((routeId === "rassada-phi-phi" ? 3 : 1) * ferryActivity);
-    for (let i = 0; i < count; i++) {
-      const progress = ((minuteOfDay * 0.5 + i * 197 + vid * 71) % 1000) / 1000;
-      const pathIdx = Math.min(Math.floor(progress * (path.length - 1)), path.length - 2);
-      const segProgress = (progress * (path.length - 1)) - pathIdx;
-      const from = path[pathIdx]!;
-      const to = path[pathIdx + 1]!;
-      vehicles.push({
-        id: `sim-${vid}`, routeId: routeId as any, licensePlate: `FERRY-${String(vid).padStart(2, "0")}`,
-        vehicleId: `sim-${vid}`, deviceId: null,
-        coordinates: [from.lat + (to.lat - from.lat) * segProgress, from.lng + (to.lng - from.lng) * segProgress],
-        heading: Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI,
-        speedKph: segProgress > 0.1 && segProgress < 0.9 ? 18 : 0,
-        destination: { en: routeId, th: routeId, zh: routeId, de: routeId, fr: routeId, es: routeId },
-        updatedAt: new Date().toISOString(), telemetrySource: "schedule_mock", freshness: "fresh",
-        status: segProgress > 0.1 && segProgress < 0.9 ? "moving" : "dwelling",
-        distanceToDestinationMeters: Math.round((1 - progress) * 30000), stopsAway: Math.round((1 - progress) * 5)
-      });
-      vid++;
-    }
-  }
+  for (const routeId of busRoutes) addVehiclesForRoute(routeId, busActivity, false);
+  for (const routeId of ferryRoutes) addVehiclesForRoute(routeId, ferryActivity, true);
 
   return vehicles;
 }
