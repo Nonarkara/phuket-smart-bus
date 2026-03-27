@@ -125,6 +125,105 @@ function WeatherBar({ forecast }: { forecast: WeatherIntelligence["forecast"] })
   );
 }
 
+// Client-side fallback simulation when /api/simulate is unavailable
+function generateClientSimulation(minuteOfDay: number, routes: Route[]): VehiclePosition[] {
+  const vehicles: VehiclePosition[] = [];
+  const hour = minuteOfDay / 60;
+
+  // Route waypoints (simplified paths)
+  const ROUTE_PATHS: Record<string, { lat: number; lng: number }[]> = {
+    "rawai-airport": [
+      { lat: 7.7804, lng: 98.3225 }, { lat: 7.8150, lng: 98.3050 }, { lat: 7.8420, lng: 98.3080 },
+      { lat: 7.8780, lng: 98.2950 }, { lat: 7.9050, lng: 98.3050 }, { lat: 7.9500, lng: 98.3100 },
+      { lat: 8.0000, lng: 98.3100 }, { lat: 8.0700, lng: 98.3100 }, { lat: 8.1090, lng: 98.3070 }
+    ],
+    "patong-old-bus-station": [
+      { lat: 7.8830, lng: 98.2930 }, { lat: 7.8900, lng: 98.3200 }, { lat: 7.8850, lng: 98.3500 },
+      { lat: 7.8840, lng: 98.3800 }, { lat: 7.8840, lng: 98.3960 }
+    ],
+    "dragon-line": [
+      { lat: 7.8840, lng: 98.3960 }, { lat: 7.8860, lng: 98.3880 }, { lat: 7.8900, lng: 98.3850 },
+      { lat: 7.8870, lng: 98.3920 }, { lat: 7.8840, lng: 98.3960 }
+    ],
+    "rassada-phi-phi": [
+      { lat: 7.8574, lng: 98.3866 }, { lat: 7.8200, lng: 98.4500 }, { lat: 7.7900, lng: 98.5500 },
+      { lat: 7.7500, lng: 98.7700 }
+    ],
+    "rassada-ao-nang": [
+      { lat: 7.8574, lng: 98.3866 }, { lat: 7.9000, lng: 98.5000 }, { lat: 7.9500, lng: 98.6000 },
+      { lat: 8.0300, lng: 98.8200 }
+    ],
+    "bang-rong-koh-yao": [
+      { lat: 8.0317, lng: 98.4192 }, { lat: 8.0500, lng: 98.4500 }, { lat: 8.0800, lng: 98.5000 },
+      { lat: 8.1100, lng: 98.5800 }
+    ],
+    "chalong-racha": [
+      { lat: 7.8216, lng: 98.3613 }, { lat: 7.7500, lng: 98.3600 }, { lat: 7.6500, lng: 98.3600 },
+      { lat: 7.6000, lng: 98.3650 }
+    ]
+  };
+
+  // Vehicle counts by time of day
+  const busActivity = hour < 6 ? 0 : hour < 7 ? 0.3 : hour < 9 ? 0.6 : hour < 18 ? 1.0 : hour < 21 ? 0.7 : hour < 23 ? 0.3 : 0;
+  const ferryActivity = hour < 8 ? 0 : hour < 9 ? 0.4 : hour < 17 ? 1.0 : hour < 19 ? 0.5 : 0;
+
+  const busRoutes = ["rawai-airport", "patong-old-bus-station", "dragon-line"];
+  const ferryRoutes = ["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"];
+
+  let vid = 0;
+  for (const routeId of busRoutes) {
+    const path = ROUTE_PATHS[routeId];
+    if (!path) continue;
+    const count = Math.round((routeId === "rawai-airport" ? 6 : routeId === "patong-old-bus-station" ? 4 : 2) * busActivity);
+    for (let i = 0; i < count; i++) {
+      const progress = ((minuteOfDay * 0.7 + i * 137 + vid * 53) % 1000) / 1000;
+      const pathIdx = Math.min(Math.floor(progress * (path.length - 1)), path.length - 2);
+      const segProgress = (progress * (path.length - 1)) - pathIdx;
+      const from = path[pathIdx]!;
+      const to = path[pathIdx + 1]!;
+      vehicles.push({
+        id: `sim-${vid}`, routeId: routeId as any, licensePlate: `SIM-${String(vid).padStart(3, "0")}`,
+        vehicleId: `sim-${vid}`, deviceId: null,
+        coordinates: [from.lat + (to.lat - from.lat) * segProgress, from.lng + (to.lng - from.lng) * segProgress],
+        heading: Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI,
+        speedKph: segProgress > 0.05 && segProgress < 0.95 ? 25 : 0,
+        destination: { en: routeId, th: routeId, zh: routeId, de: routeId, fr: routeId, es: routeId },
+        updatedAt: new Date().toISOString(), telemetrySource: "schedule_mock", freshness: "fresh",
+        status: segProgress > 0.05 && segProgress < 0.95 ? "moving" : "dwelling",
+        distanceToDestinationMeters: Math.round((1 - progress) * 20000), stopsAway: Math.round((1 - progress) * 10)
+      });
+      vid++;
+    }
+  }
+
+  for (const routeId of ferryRoutes) {
+    const path = ROUTE_PATHS[routeId];
+    if (!path) continue;
+    const count = Math.round((routeId === "rassada-phi-phi" ? 3 : 1) * ferryActivity);
+    for (let i = 0; i < count; i++) {
+      const progress = ((minuteOfDay * 0.5 + i * 197 + vid * 71) % 1000) / 1000;
+      const pathIdx = Math.min(Math.floor(progress * (path.length - 1)), path.length - 2);
+      const segProgress = (progress * (path.length - 1)) - pathIdx;
+      const from = path[pathIdx]!;
+      const to = path[pathIdx + 1]!;
+      vehicles.push({
+        id: `sim-${vid}`, routeId: routeId as any, licensePlate: `FERRY-${String(vid).padStart(2, "0")}`,
+        vehicleId: `sim-${vid}`, deviceId: null,
+        coordinates: [from.lat + (to.lat - from.lat) * segProgress, from.lng + (to.lng - from.lng) * segProgress],
+        heading: Math.atan2(to.lng - from.lng, to.lat - from.lat) * 180 / Math.PI,
+        speedKph: segProgress > 0.1 && segProgress < 0.9 ? 18 : 0,
+        destination: { en: routeId, th: routeId, zh: routeId, de: routeId, fr: routeId, es: routeId },
+        updatedAt: new Date().toISOString(), telemetrySource: "schedule_mock", freshness: "fresh",
+        status: segProgress > 0.1 && segProgress < 0.9 ? "moving" : "dwelling",
+        distanceToDestinationMeters: Math.round((1 - progress) * 30000), stopsAway: Math.round((1 - progress) * 5)
+      });
+      vid++;
+    }
+  }
+
+  return vehicles;
+}
+
 export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -227,15 +326,28 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
       if (simAbort.current) break;
       try {
         const res = await fetch(`/api/simulate?t=${t}`);
-        const data = await res.json();
-        setVehicles(data.vehicles);
-        setSimTime(data.simTime);
+        const contentType = res.headers.get("content-type") ?? "";
+        let simVehicles: VehiclePosition[];
+        let timeStr: string;
+
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          simVehicles = data.vehicles;
+          timeStr = data.simTime;
+        } else {
+          // Fallback: backend doesn't have /api/simulate — generate client-side
+          simVehicles = generateClientSimulation(t, routes);
+          timeStr = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+        }
+
+        setVehicles(simVehicles);
+        setSimTime(timeStr);
         setSimProgress((t - START) / (END - START));
 
         // Detect touchpoints: bus + ferry near same pier
         const ferrySet = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
-        const buses = data.vehicles.filter((v: VehiclePosition) => !ferrySet.has(v.routeId) && v.status === "dwelling");
-        const ferries = data.vehicles.filter((v: VehiclePosition) => ferrySet.has(v.routeId) && v.status === "dwelling");
+        const buses = simVehicles.filter((v: VehiclePosition) => !ferrySet.has(v.routeId) && v.status === "dwelling");
+        const ferries = simVehicles.filter((v: VehiclePosition) => ferrySet.has(v.routeId) && v.status === "dwelling");
 
         for (const pier of PIER_ZONES) {
           const nearBus = buses.some((b: VehiclePosition) =>
