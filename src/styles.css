@@ -2349,47 +2349,53 @@ a { color: var(--tint); }
   .pass-panel__header, .pass-switch { grid-column: 1 / -1; }
 }
 
-/* ===== Operator Console ===== */
+/* ===== Operator Console — Dieter Rams × Jony Ive × Mies van der Rohe ===== */
+/* "Less, but better" — every pixel functional, no decoration */
 .ops {
   height: 100vh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #0d1117;
-  color: #e6edf3;
-  font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "Inter", monospace;
+  background: #0a0e14;
+  color: #c9d1d9;
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+  font-size: 11px;
+  line-height: 1.4;
   overflow: hidden;
+  letter-spacing: 0.01em;
 }
 
 .ops__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
+  padding: 6px 12px;
+  background: #0d1117;
+  border-bottom: 1px solid #1b2028;
   flex: 0 0 auto;
 }
 
 .ops__brand h1 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #e6edf3;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .ops__subtitle {
-  font-size: 11px;
-  color: #8b949e;
+  font-size: 9px;
+  color: #484f58;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 .ops__status-bar {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .ops__clock {
@@ -2538,8 +2544,8 @@ a { color: var(--tint); }
 .ops__kpi-strip {
   display: flex;
   gap: 1px;
-  background: #21262d;
-  border-bottom: 1px solid #30363d;
+  background: #161b22;
+  border-bottom: 1px solid #1b2028;
   flex: 0 0 auto;
 }
 
@@ -2549,23 +2555,23 @@ a { color: var(--tint); }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 8px;
-  background: #0d1117;
-  gap: 2px;
+  padding: 6px 4px;
+  background: #0a0e14;
+  gap: 1px;
   border: 0;
 }
 
 .ops-kpi__value {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: #e6edf3;
   font-variant-numeric: tabular-nums;
 }
 
 .ops-kpi__label {
-  font-size: 10px;
+  font-size: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: #484f58;
   font-weight: 500;
 }
@@ -2627,7 +2633,9 @@ a { color: var(--tint); }
 .ops__body {
   flex: 1 1 0;
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #161b22;
   min-height: 0;
   overflow: hidden;
 }
@@ -2665,47 +2673,47 @@ a { color: var(--tint); }
 
 .ops__analytics {
   overflow-y: auto;
-  padding: 12px;
+  padding: 6px;
   display: grid;
-  gap: 12px;
+  gap: 1px;
   align-content: start;
-  border-left: 1px solid #30363d;
-  background: #0d1117;
+  background: #0a0e14;
 }
 
 .ops-card {
-  padding: 14px;
-  border-radius: 8px;
-  background: #161b22;
-  border: 1px solid #30363d;
+  padding: 10px;
+  border-radius: 0;
+  background: #0d1117;
+  border: 0;
+  border-bottom: 1px solid #161b22;
 }
 
 .ops-card__title {
-  margin: 0 0 10px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #8b949e;
+  letter-spacing: 0.12em;
+  color: #484f58;
 }
 
 .ops-card__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 4px;
 }
 
 .ops-metric {
-  padding: 10px;
-  border-radius: 6px;
-  background: #0d1117;
-  border: 1px solid #21262d;
+  padding: 6px 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 0;
 }
 
 .ops-metric__value {
   display: block;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: #e6edf3;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -2713,11 +2721,11 @@ a { color: var(--tint); }
 
 .ops-metric__label {
   display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #8b949e;
+  margin-top: 2px;
+  font-size: 8px;
+  color: #484f58;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
 
 .ops-metric--highlight {
