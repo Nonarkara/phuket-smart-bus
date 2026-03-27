@@ -330,7 +330,7 @@ const profilesByRoute = Object.fromEntries(
 
 function estimateRequiredFleet(routeId: RouteId) {
   return profilesByRoute[routeId].reduce((count, profile) => {
-    const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 10, 20);
+    const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 6), 2, 5);
     const layoverMinutes = clamp(Math.round(profile.headwayMinutes / 4), 4, 10);
     const activeSlots =
       Math.ceil((profile.tripDurationMinutes + prestartMinutes + layoverMinutes) / profile.headwayMinutes) + 1;
@@ -392,7 +392,7 @@ function estimateHeading(from: Stop, to: Stop) {
 }
 
 function buildTripOccurrences(profile: DirectionProfile, currentMinutes: number) {
-  const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 10, 20);
+  const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 6), 2, 5);
   const layoverMinutes = clamp(Math.round(profile.headwayMinutes / 4), 4, 10);
 
   return profile.departures
@@ -464,9 +464,11 @@ function buildVehiclePosition(
       profile.tripDurationMinutes > 0
         ? Math.round((profile.routeLengthMeters / 1000 / (profile.tripDurationMinutes / 60)) * 10) / 10
         : 0;
-    status = Math.abs(currentOffset - startOffset) <= 1 || Math.abs(endOffset - currentOffset) <= 1
-      ? "dwelling"
-      : "moving";
+    // Moving if between stops; dwelling only when exactly at a stop
+    const segmentDuration = endOffset - startOffset;
+    const atStart = ratio < 0.05;
+    const atEnd = ratio > 0.95;
+    status = (atStart || atEnd) && segmentDuration > 2 ? "dwelling" : "moving";
     distanceToDestinationMeters = Math.max(0, profile.routeLengthMeters - travelledMeters);
     stopsAway = Math.max(0, lastStopIndex - segmentIndex - (ratio >= 0.85 ? 1 : 0));
   }

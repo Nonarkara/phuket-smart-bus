@@ -219,7 +219,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
     const START = 360;  // 06:00
     const END = 1440;   // 24:00
-    const STEP = 5;     // 5-minute increments
+    const STEP = 3;     // 3-minute increments for smoother animation
     let touchpoints = 0;
     let passengers = 0;
 
@@ -252,7 +252,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         setSimTouchpoints(touchpoints);
         setSimPassengers(passengers);
 
-        await new Promise(r => setTimeout(r, 80)); // 80ms per step = ~14s total animation
+        await new Promise(r => setTimeout(r, 60)); // 60ms per 3-min step = ~22s total animation
       } catch { break; }
     }
 
