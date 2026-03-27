@@ -648,6 +648,190 @@ a { color: var(--tint); }
 
 .welcome-sheet__new-search:active { transform: scale(0.96); }
 
+/* Fare teaser on ask step */
+.welcome-sheet__fare-teaser {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 4px;
+  margin-top: 8px;
+}
+
+.welcome-sheet__fare-amount {
+  font-size: 28px;
+  font-weight: 200;
+  color: var(--green);
+}
+
+.welcome-sheet__fare-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* Week pass link */
+.welcome-sheet__pass-link {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--tint);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Fare comparison row */
+.welcome-sheet__fare-compare {
+  display: flex;
+  gap: 6px;
+}
+
+.welcome-sheet__fare-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--separator-light);
+}
+
+.welcome-sheet__fare-option--bus {
+  background: rgba(52, 199, 89, 0.06);
+  border-color: rgba(52, 199, 89, 0.2);
+}
+
+.welcome-sheet__fare-mode {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.welcome-sheet__fare-price {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+.welcome-sheet__fare-price--other {
+  color: var(--text-tertiary);
+  font-size: 15px;
+  text-decoration: line-through;
+}
+
+/* Barcode */
+.welcome-sheet__barcode {
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-sheet__barcode-svg {
+  display: block;
+}
+
+/* Booking info rows */
+.welcome-sheet__booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.welcome-sheet__booking-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Pass screen */
+.welcome-sheet__pass {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome-sheet__pass-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.welcome-sheet__pass-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.welcome-sheet__pass-input {
+  padding: 14px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  font-size: 18px;
+  font-family: monospace;
+  text-align: center;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.welcome-sheet__pass-input:focus { border-color: var(--tint); }
+
+.welcome-sheet__pass-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-sheet__pass-badge {
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.welcome-sheet__pass-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.welcome-sheet__pass-days {
+  font-size: 48px;
+  font-weight: 200;
+  color: var(--tint);
+}
+
+.welcome-sheet__pass-days-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.welcome-sheet__pass-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
 /* Request bus button */
 .request-bus-btn {
   position: absolute;

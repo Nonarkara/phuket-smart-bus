@@ -815,6 +815,66 @@ export const ui = {
   searchAnother: {
     en: "Search another destination", th: "ค้นหาจุดหมายอื่น", zh: "搜索其他目的地",
     de: "Anderes Ziel suchen", fr: "Chercher une autre destination", es: "Buscar otro destino"
+  },
+  welcomeAllRoutes: {
+    en: "flat fare · all routes", th: "ค่าโดยสารเดียว · ทุกเส้นทาง", zh: "统一票价 · 所有线路",
+    de: "Einheitstarif · alle Routen", fr: "tarif unique · tous les itinéraires", es: "tarifa única · todas las rutas"
+  },
+  payOnBoard: {
+    en: "Pay on board", th: "จ่ายบนรถ", zh: "上车付款",
+    de: "Bezahlung an Bord", fr: "Paiement à bord", es: "Pago a bordo"
+  },
+  paymentMethods: {
+    en: "Cash, Mastercard, Visa accepted", th: "รับเงินสด, Mastercard, Visa", zh: "接受现金、Mastercard、Visa",
+    de: "Bar, Mastercard, Visa akzeptiert", fr: "Espèces, Mastercard, Visa acceptés", es: "Efectivo, Mastercard, Visa aceptados"
+  },
+  seatHoldWarning: {
+    en: "Seat held until 5 min before departure. Show barcode to driver. No-show = released to walk-ins.",
+    th: "ที่นั่งจองถึง 5 นาทีก่อนออกเดินทาง แสดงบาร์โค้ดต่อคนขับ ไม่มา = ปล่อยให้ผู้โดยสาร",
+    zh: "座位保留至发车前5分钟。向司机出示条码。未到=释放给候补乘客。",
+    de: "Platz reserviert bis 5 Min. vor Abfahrt. Barcode dem Fahrer zeigen. Nichterscheinen = freigegeben.",
+    fr: "Place réservée jusqu'à 5 min avant le départ. Montrer le code-barres au chauffeur.",
+    es: "Asiento reservado hasta 5 min antes de salida. Mostrar código de barras al conductor."
+  },
+  haveWeekPass: {
+    en: "Have a Week Pass? Activate here", th: "มีบัตรสัปดาห์? เปิดใช้ที่นี่", zh: "有周票？在此激活",
+    de: "Wochenkarte? Hier aktivieren", fr: "Pass semaine ? Activer ici", es: "¿Pase semanal? Activar aquí"
+  },
+  weekPassTitle: {
+    en: "7-Day Unlimited Pass", th: "บัตรไม่จำกัด 7 วัน", zh: "7天无限次通票",
+    de: "7-Tage-Unbegrenztkarte", fr: "Pass illimité 7 jours", es: "Pase ilimitado 7 días"
+  },
+  weekPassDesc: {
+    en: "Enter your 16-digit code from the bus driver to activate unlimited rides for 7 days.",
+    th: "กรอกรหัส 16 หลักจากคนขับรถเพื่อเปิดใช้การเดินทางไม่จำกัด 7 วัน",
+    zh: "输入从司机处获得的16位代码，激活7天无限次乘车。",
+    de: "Geben Sie Ihren 16-stelligen Code vom Fahrer ein für unbegrenzte Fahrten (7 Tage).",
+    fr: "Entrez votre code à 16 chiffres du chauffeur pour activer les trajets illimités pendant 7 jours.",
+    es: "Ingrese su código de 16 dígitos del conductor para activar viajes ilimitados por 7 días."
+  },
+  activatePass: {
+    en: "Activate Pass", th: "เปิดใช้บัตร", zh: "激活通票",
+    de: "Pass aktivieren", fr: "Activer le pass", es: "Activar pase"
+  },
+  passActive: {
+    en: "Pass Active", th: "บัตรเปิดใช้แล้ว", zh: "通票已激活",
+    de: "Pass aktiv", fr: "Pass actif", es: "Pase activo"
+  },
+  daysRemaining: {
+    en: "days remaining", th: "วันที่เหลือ", zh: "天剩余",
+    de: "Tage verbleibend", fr: "jours restants", es: "días restantes"
+  },
+  passUnlimited: {
+    en: "Unlimited rides on all routes. Just show this screen to the driver.",
+    th: "เดินทางไม่จำกัดทุกเส้นทาง แค่แสดงหน้าจอนี้ต่อคนขับ",
+    zh: "所有线路无限次乘车。向司机出示此屏幕即可。",
+    de: "Unbegrenzte Fahrten auf allen Routen. Zeigen Sie dem Fahrer diesen Bildschirm.",
+    fr: "Trajets illimités sur tous les itinéraires. Montrez cet écran au chauffeur.",
+    es: "Viajes ilimitados en todas las rutas. Muestre esta pantalla al conductor."
+  },
+  backToSearch: {
+    en: "Back to search", th: "กลับไปค้นหา", zh: "返回搜索",
+    de: "Zurück zur Suche", fr: "Retour à la recherche", es: "Volver a buscar"
   }
 } satisfies Record<string, LocalizedText>;
 
