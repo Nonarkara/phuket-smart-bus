@@ -28,6 +28,23 @@ const ORIGINS_INTL = [
   "SYD", "MEL", "NRT", "PEK", "DEL", "MUC", "LHR"
 ];
 
+const ORIGIN_COUNTRY: Record<string, { country: string; flag: string }> = {
+  BKK: { country: "Thailand", flag: "🇹🇭" }, DMK: { country: "Thailand", flag: "🇹🇭" },
+  CNX: { country: "Thailand", flag: "🇹🇭" }, HDY: { country: "Thailand", flag: "🇹🇭" },
+  USM: { country: "Thailand", flag: "🇹🇭" }, SIN: { country: "Singapore", flag: "🇸🇬" },
+  KUL: { country: "Malaysia", flag: "🇲🇾" }, HKG: { country: "Hong Kong", flag: "🇭🇰" },
+  PVG: { country: "China", flag: "🇨🇳" }, ICN: { country: "South Korea", flag: "🇰🇷" },
+  DOH: { country: "Qatar", flag: "🇶🇦" }, DXB: { country: "UAE", flag: "🇦🇪" },
+  SYD: { country: "Australia", flag: "🇦🇺" }, MEL: { country: "Australia", flag: "🇦🇺" },
+  NRT: { country: "Japan", flag: "🇯🇵" }, PEK: { country: "China", flag: "🇨🇳" },
+  DEL: { country: "India", flag: "🇮🇳" }, MUC: { country: "Germany", flag: "🇩🇪" },
+  LHR: { country: "UK", flag: "🇬🇧" },
+};
+
+const DEPARTURES_DESTINATIONS = [
+  "BKK", "DMK", "SIN", "KUL", "HKG", "ICN", "NRT", "PVG", "SYD", "LHR"
+];
+
 function seededRandom(seed: number) {
   let s = seed;
   return () => {
@@ -86,9 +103,45 @@ export function getFlightSchedule(): FlightInfo[] {
     }
   }
 
+  // Add departures (people need buses TO airport)
+  for (let offset = 0; offset < 4; offset++) {
+    const hour = (currentHour + offset) % 24;
+    const depCount = Math.max(1, Math.floor((HOURLY_ARRIVALS[hour] ?? 2) * 0.7));
+    for (let i = 0; i < depCount; i++) {
+      const dest = DEPARTURES_DESTINATIONS[Math.floor(rand() * DEPARTURES_DESTINATIONS.length)]!;
+      const airline = AIRLINES[Math.floor(rand() * AIRLINES.length)]!;
+      const pax = Math.floor(100 + rand() * 150);
+      const minute = Math.floor(rand() * 55);
+      const flightNum = `${airline.slice(0, 2).toUpperCase()}${100 + Math.floor(rand() * 900)}`;
+      flights.push({
+        flightNo: flightNum, airline, origin: dest,
+        scheduledTime: formatBkkTime(offset, minute),
+        estimatedPax: pax, type: "departure"
+      });
+    }
+  }
+
   // Sort by scheduled time
   flights.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
   return flights;
+}
+
+export function getNationalityBreakdown(): { country: string; flag: string; pax: number; percentage: number }[] {
+  const flights = getFlightSchedule().filter(f => f.type === "arrival");
+  const countryPax = new Map<string, { flag: string; pax: number }>();
+  for (const f of flights) {
+    const info = ORIGIN_COUNTRY[f.origin] ?? { country: f.origin, flag: "✈️" };
+    const existing = countryPax.get(info.country) ?? { flag: info.flag, pax: 0 };
+    existing.pax += f.estimatedPax;
+    countryPax.set(info.country, existing);
+  }
+  const total = flights.reduce((s, f) => s + f.estimatedPax, 0) || 1;
+  return Array.from(countryPax.entries())
+    .map(([country, data]) => ({
+      country, flag: data.flag, pax: data.pax,
+      percentage: Math.round((data.pax / total) * 100)
+    }))
+    .sort((a, b) => b.pax - a.pax);
 }
 
 export function getDemandForecast(currentFleetOnline: number): DemandForecast {

@@ -11,7 +11,7 @@ import { getWeatherAdvisories, getWeatherSnapshot } from "./services/providers/w
 import { getAqiSnapshot } from "./services/providers/aqiProvider.js";
 import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
-import { getFlightSchedule, getDemandForecast, getHourlyDemandProjection } from "./services/providers/flightProvider.js";
+import { getFlightSchedule, getDemandForecast, getHourlyDemandProjection, getNationalityBreakdown } from "./services/providers/flightProvider.js";
 import { readRecentHistory, readAllVehicles } from "./lib/db.js";
 import { buildScheduleMockFleet } from "./services/providers/mockFleetProvider.js";
 import { getOperationsOverview } from "./services/operationsService.js";
@@ -369,7 +369,10 @@ export function createApp() {
   // --- Operator: Flight schedule ---
   app.get("/api/ops/flights", (_request, response) => {
     response.set("Cache-Control", "public, max-age=60");
-    response.json({ flights: getFlightSchedule() });
+    const flights = getFlightSchedule();
+    const arrivals = flights.filter(f => f.type === "arrival");
+    const departures = flights.filter(f => f.type === "departure");
+    response.json({ flights, arrivals, departures, nationalities: getNationalityBreakdown() });
   });
 
   // --- Operator: Demand forecast ---

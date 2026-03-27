@@ -133,6 +133,8 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [demand, setDemand] = useState<DemandForecast | null>(null);
   const [weather, setWeather] = useState<WeatherIntelligence | null>(null);
   const [hourlyDemand, setHourlyDemand] = useState<HourlyDemandPoint[]>([]);
+  const [nationalities, setNationalities] = useState<{ country: string; flag: string; pax: number; percentage: number }[]>([]);
+  const [departures, setDepartures] = useState<{ flightNo: string; origin: string; scheduledTime: string; estimatedPax: number }[]>([]);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const pollRef = useRef(false);
 
@@ -171,6 +173,13 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         if (!alive) return;
         setRoutes(r); setHealth(h); setVehicles(v.vehicles);
         setOverview(o); setDemand(d); setWeather(w); setHourlyDemand(hd.points);
+      } catch { /* degrade */ }
+      // Fetch flight nationalities separately
+      try {
+        const flightData = await fetch("/api/ops/flights").then(r => r.json());
+        if (!alive) return;
+        setNationalities(flightData.nationalities ?? []);
+        setDepartures(flightData.departures ?? []);
       } catch { /* degrade */ }
     }
     void boot();
@@ -519,13 +528,90 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               <div className="ops-flights">
                 <h3>Upcoming Arrivals</h3>
                 <div className="ops-flights__list">
-                  {demand.flights.slice(0, 6).map((f, i) => (
-                    <div key={i} className="ops-flight-row">
+                  {demand.flights.filter(f => f.type === "arrival").slice(0, 5).map((f, i) => (
+                    <div key={`a-${i}`} className="ops-flight-row">
                       <span className="ops-flight-row__time">{f.scheduledTime}</span>
                       <span className="ops-flight-row__flight">{f.flightNo}</span>
                       <span className="ops-flight-row__origin">{f.origin}</span>
                       <span className="ops-flight-row__airline">{f.airline}</span>
                       <span className="ops-flight-row__pax">{f.estimatedPax} pax</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Departures — people need buses TO airport */}
+              {departures.length > 0 ? (
+                <div className="ops-flights">
+                  <h3>Departures (bus demand to airport)</h3>
+                  <div className="ops-flights__list">
+                    {departures.slice(0, 4).map((f, i) => (
+                      <div key={`d-${i}`} className="ops-flight-row ops-flight-row--dep">
+                        <span className="ops-flight-row__time">{f.scheduledTime}</span>
+                        <span className="ops-flight-row__flight">{f.flightNo}</span>
+                        <span className="ops-flight-row__origin">→ {f.origin}</span>
+                        <span className="ops-flight-row__pax">{f.estimatedPax} pax</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {/* --- Passenger Nationalities --- */}
+          {nationalities.length > 0 ? (
+            <section className="ops-card">
+              <h2 className="ops-card__title">Arriving Passengers by Country</h2>
+              <div className="ops-nationalities">
+                {nationalities.slice(0, 8).map(n => (
+                  <div key={n.country} className="ops-nationality">
+                    <span className="ops-nationality__flag">{n.flag}</span>
+                    <span className="ops-nationality__country">{n.country}</span>
+                    <span className="ops-nationality__pax">{n.pax.toLocaleString()}</span>
+                    <div className="ops-nationality__bar">
+                      <div className="ops-nationality__bar-fill" style={{ width: `${n.percentage}%` }} />
+                    </div>
+                    <span className="ops-nationality__pct">{n.percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* --- Precipitation Impact --- */}
+          {weather ? (
+            <section className="ops-card">
+              <h2 className="ops-card__title">Precipitation Impact on Operations</h2>
+              <div className="ops-precip">
+                <div className="ops-precip__current">
+                  <div className={`ops-precip__level ${weather.current.rainProb > 60 ? "ops-precip__level--high" : weather.current.rainProb > 30 ? "ops-precip__level--medium" : "ops-precip__level--low"}`}>
+                    <span className="ops-precip__prob">{weather.current.rainProb}%</span>
+                    <span className="ops-precip__label">Rain probability</span>
+                  </div>
+                  <div className="ops-precip__effects">
+                    {weather.current.rainProb > 60 ? (
+                      <>
+                        <div className="ops-precip__effect ops-precip__effect--red">⏱️ +15-20 min delays expected on all routes</div>
+                        <div className="ops-precip__effect ops-precip__effect--red">🌊 Ferry services may be suspended</div>
+                        <div className="ops-precip__effect ops-precip__effect--amber">👁️ Reduced visibility on hillside routes</div>
+                      </>
+                    ) : weather.current.rainProb > 30 ? (
+                      <>
+                        <div className="ops-precip__effect ops-precip__effect--amber">⏱️ +5-10 min possible delays</div>
+                        <div className="ops-precip__effect ops-precip__effect--amber">🌧️ Patong Hill may slow down</div>
+                      </>
+                    ) : (
+                      <div className="ops-precip__effect ops-precip__effect--green">✓ Clear conditions — no weather delays</div>
+                    )}
+                  </div>
+                </div>
+                {/* Next hours forecast mini */}
+                <div className="ops-precip__forecast">
+                  {weather.forecast.slice(0, 6).map((h, i) => (
+                    <div key={i} className={`ops-precip__hour ${h.rainProb > 60 ? "is-high" : h.rainProb > 30 ? "is-medium" : ""}`}>
+                      <span>{String(h.hour).padStart(2, "0")}:00</span>
+                      <span>{h.rainProb}%</span>
                     </div>
                   ))}
                 </div>
