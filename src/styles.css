@@ -2391,11 +2391,36 @@ a { color: var(--tint); }
   letter-spacing: 0.12em;
 }
 
+/* Flight ticker in header */
+.ops__flight-ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: #8b949e;
+  flex: 1;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ops__ticker-label {
+  color: #58a6ff;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ops__ticker-arrivals { color: #3fb950; }
+.ops__ticker-departures { color: #d29922; }
+.ops__ticker-demand { font-weight: 600; }
+.ops__ticker-sep { color: #30363d; font-size: 8px; }
+
 .ops__status-bar {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
-  font-size: 11px;
+  font-size: 10px;
+  flex-shrink: 0;
 }
 
 .ops__clock {

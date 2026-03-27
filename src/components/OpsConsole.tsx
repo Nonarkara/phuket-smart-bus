@@ -479,7 +479,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
   return (
     <div className="ops">
-      {/* ===== Header ===== */}
+      {/* ===== Header — Command Bar ===== */}
       <header className="ops__header">
         <div className="ops__brand">
           {onToggle ? (
@@ -487,18 +487,29 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
           ) : null}
-          <h1>Phuket Smart Bus</h1>
-          <span className="ops__subtitle">Intelligent Operations Center</span>
+          <h1>PKSB IOC</h1>
         </div>
+
+        {/* Live flight ticker */}
+        <div className="ops__flight-ticker">
+          <span className="ops__ticker-label">✈ HKT</span>
+          <span className="ops__ticker-arrivals">
+            ↓ {demand?.arrivalsNext2h ?? 0} flights · {demand?.totalPassengersNext2h?.toLocaleString() ?? "0"} pax
+          </span>
+          <span className="ops__ticker-sep">|</span>
+          <span className="ops__ticker-departures">
+            ↑ {departures.length} departures
+          </span>
+          <span className="ops__ticker-sep">|</span>
+          <span className="ops__ticker-demand" style={{ color: (demand?.busDemandEstimate ?? 0) > 200 ? "#f85149" : "#3fb950" }}>
+            🚌 {demand?.busDemandEstimate ?? 0} demand → {demand?.recommendedFleet ?? 0} buses needed
+          </span>
+        </div>
+
         <div className="ops__status-bar">
-          <span className="ops__clock">
-            <span className="ops__date">{new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Bangkok", weekday: "short", day: "numeric", month: "short" })}</span>
-            {" "}{clock} ICT
-          </span>
-          <span className="ops__health" style={{ color: healthColor }}>
-            <span className="ops__health-dot" style={{ background: healthColor }} />
-            {health?.status === "ok" ? "All systems live" : "Degraded"}
-          </span>
+          <span className="ops__clock">{clock}</span>
+          <span className="ops__health-dot" style={{ background: healthColor }} />
+          <span style={{ color: healthColor, fontSize: "9px" }}>{weather?.current.tempC ?? "—"}° {weather?.current.rainProb ?? 0}%☂ AQI {weather?.current.aqi ?? "—"}</span>
         </div>
       </header>
 
