@@ -5,8 +5,9 @@ import {
   getLiveSeatAvailability,
   getVehiclePassengerFlowSummary
 } from "../operationsStore.js";
+import { BUS_SEAT_CAPACITY } from "../../../shared/productConfig.js";
 
-const DEFAULT_CAPACITY = 23;
+const DEFAULT_CAPACITY = BUS_SEAT_CAPACITY;
 
 function hashSeed(value: string) {
   let total = 0;

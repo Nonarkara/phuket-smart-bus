@@ -116,7 +116,7 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           <strong>{summary.nextBus.label}</strong>
           <p>
             {pick(summary.nextBus.notes, lang)}
-            {summary.seatAvailability?.seatsLeft !== null
+            {summary.seatAvailability?.seatsLeft != null
               ? lang === "th"
                 ? ` · เหลือประมาณ ${summary.seatAvailability.seatsLeft} ที่นั่ง`
                 : ` · about ${summary.seatAvailability.seatsLeft} seats left`
@@ -156,7 +156,7 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
             />
           </div>
           <span className="decision-panel__occupancy-text">
-            {summary.seatAvailability.occupiedSeats ?? 0}/{summary.seatAvailability.capacity ?? 40}
+            {summary.seatAvailability.occupiedSeats ?? 0}/{summary.seatAvailability.capacity ?? 25}
           </span>
         </div>
       ) : null}

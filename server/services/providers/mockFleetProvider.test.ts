@@ -15,10 +15,13 @@ describe("mockFleetProvider", () => {
       return counts;
     }, {});
 
-    expect(roster).toHaveLength(25);
+    expect(roster).toHaveLength(38);
     expect(routeCounts["rawai-airport"]).toBeGreaterThanOrEqual(8);
     expect(routeCounts["patong-old-bus-station"]).toBeGreaterThanOrEqual(3);
     expect(routeCounts["dragon-line"]).toBeGreaterThanOrEqual(2);
+    expect(routeCounts["rassada-phi-phi"]).toBeGreaterThanOrEqual(5);
+    expect(routeCounts["bang-rong-koh-yao"]).toBeGreaterThanOrEqual(4);
+    expect(routeCounts["chalong-racha"]).toBeGreaterThanOrEqual(3);
   });
 
   it("builds an active daytime fleet from the timetable across the three routes", () => {

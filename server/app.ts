@@ -13,7 +13,6 @@ import { buildDecisionSummary } from "./services/decisionEngine.js";
 import { getAirportGuide } from "./services/airportGuide.js";
 import { getFlightSchedule, getDemandForecast, getHourlyDemandProjection, getNationalityBreakdown } from "./services/providers/flightProvider.js";
 import { readRecentHistory, readAllVehicles } from "./lib/db.js";
-import { buildScheduleMockFleet } from "./services/providers/mockFleetProvider.js";
 import { getOperationsOverview } from "./services/operationsService.js";
 import {
   recordDriverMonitorSamples,
@@ -22,6 +21,17 @@ import {
   recordVehicleTelemetry
 } from "./services/operationsStore.js";
 import { PRICE_COMPARISONS } from "./config.js";
+import { BUS_SEAT_CAPACITY } from "../shared/productConfig.js";
+import {
+  findDemandZone,
+  getDemandHotspots,
+  recordDemandRequest
+} from "./services/demandRequestStore.js";
+import {
+  getInvestorSimulationPayload,
+  getOpsDashboardPayload,
+  getSimulationSnapshot
+} from "./services/opsIntelligenceService.js";
 import type {
   DriverMonitorSample,
   HealthPayload,
@@ -117,44 +127,14 @@ export function createApp() {
     });
   });
 
-  // Easter egg: simulation endpoint — returns vehicles at a specific simulated time
-  app.get("/api/simulate", (request, response) => {
+  app.get("/api/simulate", async (request, response) => {
     const simMinutes = Number(request.query.t); // minutes since midnight (0-1440)
     if (isNaN(simMinutes) || simMinutes < 0 || simMinutes > 1440) {
       response.status(400).json({ error: "t must be 0-1440 (minutes since midnight)" });
       return;
     }
-    // Build a Date for today at the given Bangkok time
-    const now = new Date();
-    const bangkokOffset = 7 * 60; // UTC+7
-    const utcMidnight = new Date(now.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" }) + "T00:00:00Z");
-    const simDate = new Date(utcMidnight.getTime() + (simMinutes - bangkokOffset) * 60_000);
-    const vehicles = buildScheduleMockFleet(simDate);
-    response.json({ vehicles, simMinutes, simTime: `${String(Math.floor(simMinutes / 60)).padStart(2, "0")}:${String(simMinutes % 60).padStart(2, "0")}` });
+    response.json(await getSimulationSnapshot(simMinutes));
   });
-
-  // --- Demand request system ---
-  const demandRequests: Array<{ lat: number; lng: number; zone: string; ts: number }> = [];
-  const DEMAND_ZONES = [
-    { name: "Central Patong", lat: 7.8961, lng: 98.2969 },
-    { name: "Kata Beach", lat: 7.8205, lng: 98.2976 },
-    { name: "Karon Beach", lat: 7.8425, lng: 98.2948 },
-    { name: "Phuket Town", lat: 7.8804, lng: 98.3923 },
-    { name: "Rawai", lat: 7.7734, lng: 98.3258 },
-    { name: "Airport", lat: 8.1132, lng: 98.3169 },
-    { name: "Chalong", lat: 7.8379, lng: 98.3398 },
-    { name: "Surin Beach", lat: 7.9765, lng: 98.2798 },
-  ];
-
-  function findZone(lat: number, lng: number): string {
-    let best = DEMAND_ZONES[0]!.name;
-    let bestDist = Infinity;
-    for (const z of DEMAND_ZONES) {
-      const d = Math.sqrt((z.lat - lat) ** 2 + (z.lng - lng) ** 2);
-      if (d < bestDist) { bestDist = d; best = z.name; }
-    }
-    return best;
-  }
 
   app.post("/api/demand-request", (request, response) => {
     const { lat, lng } = request.body ?? {};
@@ -162,28 +142,13 @@ export function createApp() {
       response.status(400).json({ error: "lat and lng required" });
       return;
     }
-    const zone = findZone(lat, lng);
-    demandRequests.push({ lat, lng, zone, ts: Date.now() });
-    // Keep only last hour
-    const cutoff = Date.now() - 3600_000;
-    while (demandRequests.length > 0 && demandRequests[0]!.ts < cutoff) demandRequests.shift();
-    const total = demandRequests.filter(r => r.zone === zone).length;
-    response.json({ success: true, zone, totalRequests: total });
+    const zone = findDemandZone(lat, lng);
+    const result = recordDemandRequest(lat, lng);
+    response.json({ success: true, zone: zone.zone, totalRequests: result?.totalRequests ?? 0 });
   });
 
   app.get("/api/ops/demand-requests", (_request, response) => {
-    const cutoff = Date.now() - 3600_000;
-    while (demandRequests.length > 0 && demandRequests[0]!.ts < cutoff) demandRequests.shift();
-    const counts = new Map<string, number>();
-    for (const r of demandRequests) counts.set(r.zone, (counts.get(r.zone) ?? 0) + 1);
-    const hotspots = DEMAND_ZONES.map(z => ({
-      location: z.name,
-      lat: z.lat,
-      lng: z.lng,
-      requestCount: counts.get(z.name) ?? 0,
-      covered: (counts.get(z.name) ?? 0) < 5
-    })).filter(h => h.requestCount > 0).sort((a, b) => b.requestCount - a.requestCount);
-    response.json({ hotspots, totalRequests: demandRequests.length });
+    response.json(getDemandHotspots());
   });
 
   app.get("/api/routes/:routeId/vehicles", async (request, response) => {
@@ -215,6 +180,16 @@ export function createApp() {
 
   app.get("/api/operations/overview", async (_request, response) => {
     response.json(await getOperationsOverview());
+  });
+
+  app.get("/api/ops/dashboard", async (_request, response) => {
+    response.set("Cache-Control", "public, max-age=10");
+    response.json(await getOpsDashboardPayload());
+  });
+
+  app.get("/api/ops/investor-sim", (_request, response) => {
+    response.set("Cache-Control", "public, max-age=60");
+    response.json(getInvestorSimulationPayload());
   });
 
   app.post("/api/integrations/vehicle-telemetry", (request, response) => {
@@ -392,7 +367,7 @@ export function createApp() {
       const snapshot = await getBusSnapshot();
       const busesOnline = snapshot.vehicles.filter(v => v.routeId === "rawai-airport").length;
       response.set("Cache-Control", "public, max-age=60");
-      response.json({ points: getHourlyDemandProjection(40, Math.max(busesOnline, 6)) });
+      response.json({ points: getHourlyDemandProjection(BUS_SEAT_CAPACITY, Math.max(busesOnline, 6)) });
     } catch {
       response.json({ points: [] });
     }

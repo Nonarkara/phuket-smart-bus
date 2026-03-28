@@ -1,4 +1,5 @@
 import type { Lang, Route, RouteId } from "@shared/types";
+import { localizedText } from "@shared/localizedText";
 import { pick } from "@/lib/i18n";
 
 type Props = {
@@ -10,7 +11,7 @@ type Props = {
 
 export function RouteRail({ lang, routes, activeRouteId, onSelect }: Props) {
   return (
-    <div className="route-rail" role="group" aria-label={pick({ en: "Map focus", th: "โฟกัสแผนที่" }, lang)}>
+    <div className="route-rail" role="group" aria-label={pick(localizedText("Map focus", "โฟกัสแผนที่"), lang)}>
       {routes.map((route) => (
         <button
           key={route.id}

@@ -7,10 +7,13 @@ import type {
   FlightInfo,
   HealthPayload,
   HourlyDemandPoint,
+  InvestorSimulationPayload,
   OperationsOverviewPayload,
+  OpsDashboardPayload,
   PriceComparison,
   Route,
   RouteId,
+  SimulationSnapshot,
   Stop,
   VehiclePosition,
   WeatherIntelligence
@@ -96,4 +99,16 @@ export function getOpsWeather() {
 
 export function getOpsHourlyDemand() {
   return fetchJson<{ points: HourlyDemandPoint[] }>("/api/ops/hourly-demand");
+}
+
+export function getOpsDashboard() {
+  return fetchJson<OpsDashboardPayload>("/api/ops/dashboard");
+}
+
+export function getInvestorSimulation() {
+  return fetchJson<InvestorSimulationPayload>("/api/ops/investor-sim");
+}
+
+export function getSimulationFrame(simMinutes: number) {
+  return fetchJson<SimulationSnapshot>(`/api/simulate?t=${simMinutes}`);
 }

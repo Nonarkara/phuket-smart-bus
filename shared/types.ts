@@ -428,3 +428,233 @@ export interface OperationsOverviewPayload {
   routes: OperationsRouteSummary[];
   recentEvents: PassengerFlowEvent[];
 }
+
+export type MetricProvenance = "live" | "estimated" | "fallback";
+
+export type TransferHubStatus = "ready" | "watch" | "inactive";
+
+export type OverlayLayerId =
+  | "traffic"
+  | "weather"
+  | "aqi"
+  | "hotspots"
+  | "transfer_hubs"
+  | "route_pressure";
+
+export interface OpsMapTileLayer {
+  id: string;
+  layerId: OverlayLayerId;
+  label: string;
+  description: string;
+  url: string;
+  attribution?: string;
+  opacity?: number;
+}
+
+export interface OpsMapOverlayMarker {
+  id: string;
+  layerId: OverlayLayerId;
+  lat: number;
+  lng: number;
+  color: string;
+  radius: number;
+  label: string;
+  fillOpacity?: number;
+}
+
+export interface TransferHubConnection {
+  routeId: RouteId;
+  directionLabel: string;
+  nextDepartureLabel: string | null;
+  minutesUntil: number | null;
+  kind: "feeder_bus" | "ferry";
+}
+
+export interface TransferHub {
+  id: string;
+  name: LocalizedText;
+  coordinates: LatLngTuple;
+  feederRouteIds: RouteId[];
+  ferryRouteIds: RouteId[];
+  walkMinutes: number;
+  transferBufferMinutes: number;
+  provenance: MetricProvenance;
+  status: TransferHubStatus;
+  rationale: LocalizedText;
+  activeWindowLabel: string | null;
+  nextWindowStartLabel: string | null;
+  activeConnections: TransferHubConnection[];
+}
+
+export interface RoutePressure {
+  routeId: RouteId;
+  level: "balanced" | "watch" | "strained";
+  demand: number;
+  seatSupply: number;
+  gap: number;
+  coverageRatio: number;
+  delayRiskMinutes: number;
+  provenance: MetricProvenance;
+}
+
+export interface DemandHotspot {
+  id: string;
+  zone: string;
+  lat: number;
+  lng: number;
+  demand: number;
+  liveRequests: number;
+  modeledDemand: number;
+  coverageRatio: number;
+  gap: number;
+  provenance: MetricProvenance;
+}
+
+export interface OpsFleetSnapshot {
+  vehicles: VehiclePosition[];
+  totalVehicles: number;
+  busCount: number;
+  ferryCount: number;
+  movingCount: number;
+  dwellingCount: number;
+  routePressure: RoutePressure[];
+}
+
+export interface CurrentDemandSupply {
+  rawAirportArrivalPaxNext2h: number;
+  rawAirportDeparturePaxNext2h: number;
+  addressableArrivalDemandNext2h: number;
+  addressableDepartureDemandNext2h: number;
+  arrivalSeatSupplyNext2h: number;
+  departureSeatSupplyNext2h: number;
+  carriedArrivalDemandNext2h: number;
+  carriedDepartureDemandNext2h: number;
+  unmetArrivalDemandNext2h: number;
+  unmetDepartureDemandNext2h: number;
+  arrivalCaptureOfAddressablePct: number;
+  departureCaptureOfAddressablePct: number;
+  additionalBusesNeededPeak: number;
+  provenance: MetricProvenance;
+}
+
+export interface OpsWeatherPanel {
+  severity: AdvisorySeverity;
+  intelligence: WeatherIntelligence;
+  provenance: MetricProvenance;
+}
+
+export interface OpsTrafficPanel {
+  severity: AdvisorySeverity;
+  advisories: Advisory[];
+  provenance: MetricProvenance;
+}
+
+export interface OpsMapOverlaySet {
+  tileLayers: OpsMapTileLayer[];
+  markers: OpsMapOverlayMarker[];
+}
+
+export interface OpsDashboardPayload {
+  checkedAt: string;
+  fleet: OpsFleetSnapshot;
+  routes: Route[];
+  demandSupply: CurrentDemandSupply;
+  weather: OpsWeatherPanel;
+  traffic: OpsTrafficPanel;
+  hotspots: {
+    hotspots: DemandHotspot[];
+    totalRequests: number;
+  };
+  transferHubs: TransferHub[];
+  history: {
+    recentEvents: PassengerFlowEvent[];
+    vehicleHistoryCount: number;
+  };
+  mapOverlays: OpsMapOverlaySet;
+  sources: DataSourceStatus[];
+}
+
+export interface InvestorAssumptions {
+  seatCapacityPerBus: number;
+  flatFareThb: number;
+  addressableDemandShare: number;
+  replayStepMinutes: number;
+  replayStartMinutes: number;
+  replayEndMinutes: number;
+}
+
+export interface HourlyCapacityGap {
+  hour: string;
+  rawArrivalPax: number;
+  rawDeparturePax: number;
+  addressableArrivalDemand: number;
+  addressableDepartureDemand: number;
+  arrivalSeatSupply: number;
+  departureSeatSupply: number;
+  carriedArrivalDemand: number;
+  carriedDepartureDemand: number;
+  unmetArrivalDemand: number;
+  unmetDepartureDemand: number;
+  requiredArrivalDepartures: number;
+  requiredDepartureDepartures: number;
+  additionalArrivalBusesNeeded: number;
+  additionalDepartureBusesNeeded: number;
+  lostRevenueThb: number;
+}
+
+export interface ServiceRevenueBreakdown {
+  routeId: RouteId;
+  routeName: LocalizedText;
+  directionLabel: string;
+  tier: RouteTier;
+  departures: number;
+  seatSupply: number;
+  estimatedDemand: number;
+  carriedRiders: number;
+  unmetRiders: number;
+  revenueThb: number;
+  capturePct: number;
+  provenance: MetricProvenance;
+  strategicValue: LocalizedText | null;
+}
+
+export interface InvestorTotals {
+  rawAirportArrivalPax: number;
+  rawAirportDeparturePax: number;
+  addressableArrivalDemand: number;
+  addressableDepartureDemand: number;
+  carriedArrivalDemand: number;
+  carriedDepartureDemand: number;
+  unmetArrivalDemand: number;
+  unmetDepartureDemand: number;
+  totalAirportCapturePct: number;
+  addressableAirportCapturePct: number;
+  dailyRevenueThb: number;
+  lostRevenueThb: number;
+  peakAdditionalBusesNeeded: number;
+}
+
+export interface InvestorOpportunities {
+  summary: string;
+  peakArrivalGapHour: string | null;
+  peakDepartureGapHour: string | null;
+  strongestRevenueServiceRouteId: RouteId | null;
+}
+
+export interface InvestorSimulationPayload {
+  generatedAt: string;
+  assumptions: InvestorAssumptions;
+  hourly: HourlyCapacityGap[];
+  services: ServiceRevenueBreakdown[];
+  totals: InvestorTotals;
+  opportunities: InvestorOpportunities;
+  touchpoints: TransferHub[];
+}
+
+export interface SimulationSnapshot {
+  simMinutes: number;
+  simTime: string;
+  vehicles: VehiclePosition[];
+  routePressure: RoutePressure[];
+  transferHubs: TransferHub[];
+}

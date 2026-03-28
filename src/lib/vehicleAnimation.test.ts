@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VehiclePosition } from "@shared/types";
+import { localizedText } from "@shared/localizedText";
 import { buildAnimatedVehicleFrame, shouldAnimateVehicleFrame } from "./vehicleAnimation";
 
 const airportVehicle: VehiclePosition = {
@@ -11,7 +12,7 @@ const airportVehicle: VehiclePosition = {
   coordinates: [8.099, 98.299],
   heading: 20,
   speedKph: 16,
-  destination: { en: "To Rawai Beach", th: "ไปราไวย์บีช" },
+  destination: localizedText("To Rawai Beach", "ไปราไวย์บีช"),
   updatedAt: "2026-03-08T14:00:00Z",
   telemetrySource: "schedule_mock",
   freshness: "fresh",
@@ -27,7 +28,7 @@ const patongVehicle: VehiclePosition = {
   licensePlate: "10-1223",
   vehicleId: "veh-patong-1",
   coordinates: [7.906, 98.356],
-  destination: { en: "To Patong", th: "ไปป่าตอง" }
+  destination: localizedText("To Patong", "ไปป่าตอง")
 };
 
 describe("vehicleAnimation", () => {

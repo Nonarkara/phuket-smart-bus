@@ -1,12 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { installMockNetwork } from "./support/mockNetwork";
-import { mockAirportLocation } from "../src/test/fixtures/appApiFixtures";
 
 test.use({
   permissions: ["geolocation"],
   geolocation: {
-    latitude: mockAirportLocation[0],
-    longitude: mockAirportLocation[1]
+    latitude: 7.55,
+    longitude: 98.12
   }
 });
 
@@ -14,64 +13,59 @@ test.beforeEach(async ({ page }) => {
   await installMockNetwork(page);
 });
 
-test("airport landing shows the rider-critical airport guidance and opens the ride view", async ({
+test("current shell uses Map, Compare, and More and the More tab opens the stop flow", async ({
   page
 }) => {
   await page.goto("/");
 
-  await expect(page.getByText("You appear to be at Phuket Airport")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Bus or taxi?" })).toBeVisible();
-  await expect(page.getByText("100 THB")).toBeVisible();
-  await expect(page.getByText(/1,000/)).toBeVisible();
-  await expect(page.getByText("Rain moving across the airport corridor").first()).toBeVisible();
-  await expect(
-    page.getByText("Turn left after you come out and head to the Smart Bus stop by Cafe Amazon.")
-  ).toBeVisible();
-  await expect(page.getByTestId("airport-map-preview")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Compare" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "More" })).toBeVisible();
+  await expect(page.getByText("Where do you want to go?")).toBeVisible();
 
-  await page.getByRole("button", { name: "Open boarding stop" }).click();
+  await page.getByRole("button", { name: "More" }).click();
 
-  await expect(page).toHaveURL(/\/ride$/);
-  await expect(page.getByText("Airport approach is slower")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Phuket Airport" })).toBeVisible();
+  await expect(page).toHaveURL(/\/more$/);
+  await expect(page.getByRole("button", { name: "Stops" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pass" })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search stop or landmark" })).toBeVisible();
 });
 
-test("live map boots from the path and route focus can switch to Patong", async ({ page }) => {
-  await page.goto("/live-map");
+test("compare view loads from the canonical /compare route", async ({ page }) => {
+  await page.goto("/compare");
 
-  await expect(page.getByTestId("live-map")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Airport Line" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Patong Line" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Getting around Phuket" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Airport" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Patong Beach" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Patong Line" }).click();
+  await page.getByRole("button", { name: "Patong Beach" }).click();
 
-  await expect(page.getByRole("button", { name: "Patong Line" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator('[data-testid="live-map"] .map-frame__copy strong')).toHaveText("Patong Line");
+  await expect(page.getByRole("button", { name: "Patong Beach" })).toHaveClass(/is-active/);
+  await expect(page.getByRole("button", { name: "Airport" })).toBeVisible();
 });
 
-test("language switch updates the airport page copy to Thai", async ({ page }) => {
+test("language switch updates the welcome sheet copy to Thai", async ({ page }) => {
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Map" }).click();
   await page.getByRole("button", { name: "TH" }).click();
 
-  await expect(page.getByRole("heading", { name: "รถบัสหรือแท็กซี่?" })).toBeVisible();
-  await expect(page.getByText("ดูเหมือนว่าคุณอยู่ที่สนามบินภูเก็ต")).toBeVisible();
-  await expect(page.getByText("มีกลุ่มฝนเคลื่อนผ่านแนวสนามบิน").first()).toBeVisible();
-  await expect(
-    page.getByText("เมื่อออกมาด้านนอกแล้วให้เลี้ยวซ้ายและเดินไปที่ป้าย Smart Bus ข้าง Cafe Amazon")
-  ).toBeVisible();
+  await expect(page.getByText("ยินดีต้อนรับสู่ภูเก็ต")).toBeVisible();
+  await expect(page.getByPlaceholder("ชายหาด, โรงแรม, สนามบิน...")).toBeVisible();
 });
 
-test("qr pass view boots from the path and the pass switch updates the visible ticket", async ({
-  page
-}) => {
-  await page.goto("/my-qr");
+test("more view hosts stops and pass instead of retired qr routes", async ({ page }) => {
+  await page.goto("/more");
+
+  await expect(page.getByRole("button", { name: "Stops" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pass" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Pass" }).click();
 
   await expect(page.getByRole("heading", { name: "My QR code" })).toBeVisible();
   await expect(page.getByText("QR boarding code")).toBeVisible();
 
-  await page.getByRole("button", { name: "7-day pass" }).click();
+  await page.getByRole("button", { name: "7-day pass" }).first().click();
 
   await expect(page.getByText("PKSB-WEEK-7-1124")).toBeVisible();
-  await expect(page.getByText("7-day pass")).toHaveCount(2);
 });

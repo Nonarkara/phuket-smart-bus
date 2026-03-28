@@ -7,6 +7,7 @@ import {
   parseScheduleEntries
 } from "../../lib/time.js";
 import { getStopsForRoute } from "../routes.js";
+import { FERRY_ROUTE_IDS } from "../../config.js";
 
 type RawBusRecord = {
   licence: string;
@@ -47,9 +48,16 @@ type TripOccurrence = {
 };
 
 const routeIds: RouteId[] = [
-  "rawai-airport", "patong-old-bus-station", "dragon-line",
-  "rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"
+  "rawai-airport",
+  "patong-old-bus-station",
+  "dragon-line",
+  "rassada-phi-phi",
+  "rassada-ao-nang",
+  "bang-rong-koh-yao",
+  "chalong-racha"
 ];
+const ferryRouteSet = new Set<RouteId>(FERRY_ROUTE_IDS);
+const landRouteIds = routeIds.filter((routeId) => !ferryRouteSet.has(routeId));
 
 const fallbackSample = readJsonFile<RawBusRecord[]>(
   fromRoot("server", "data", "fixtures", "bus_live_sample.json")
@@ -103,13 +111,13 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function buildRouteTargets(totalVehicles: number, knownCounts: Record<RouteId, number>) {
-  const weights = routeIds.map((routeId) => ({
+  const weights = landRouteIds.map((routeId) => ({
     routeId,
     weight: getStopsForRoute(routeId).length
   }));
   const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
-  const targets = Object.fromEntries(routeIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
-  const minimums = Object.fromEntries(routeIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
+  const targets = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
+  const minimums = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
   const remainders = weights.map((item) => {
     const rawTarget = (totalVehicles * item.weight) / totalWeight;
     const minimum = Math.max(knownCounts[item.routeId], estimateRequiredFleet(item.routeId));
@@ -137,7 +145,7 @@ function buildRouteTargets(totalVehicles: number, knownCounts: Record<RouteId, n
   }
 
   while (Object.values(targets).reduce((sum, value) => sum + value, 0) > totalVehicles) {
-    const reducible = routeIds
+    const reducible = landRouteIds
       .map((routeId) => ({
         routeId,
         excess: targets[routeId] - minimums[routeId]
@@ -179,20 +187,22 @@ function buildFleetRoster() {
     unknown.push(vehicle);
   }
 
-  const knownCounts = Object.fromEntries(routeIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
+  const knownCounts = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
 
   for (const vehicle of known) {
-    knownCounts[vehicle.routeId] += 1;
+    if (vehicle.routeId in knownCounts) {
+      knownCounts[vehicle.routeId] += 1;
+    }
   }
 
   const targets = buildRouteTargets(sortedRecords.length, knownCounts);
   const remainingCapacity = Object.fromEntries(
-    routeIds.map((routeId) => [routeId, targets[routeId] - knownCounts[routeId]])
+    landRouteIds.map((routeId) => [routeId, targets[routeId] - knownCounts[routeId]])
   ) as Record<RouteId, number>;
 
   const assignedUnknown = unknown.map<FleetVehicle>((vehicle) => {
     const routeId =
-      routeIds
+      landRouteIds
         .map((candidate) => ({
           routeId: candidate,
           capacity: remainingCapacity[candidate]
@@ -330,7 +340,7 @@ const profilesByRoute = Object.fromEntries(
 
 function estimateRequiredFleet(routeId: RouteId) {
   return profilesByRoute[routeId].reduce((count, profile) => {
-    const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 6), 2, 5);
+    const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 5, 12);
     const layoverMinutes = clamp(Math.round(profile.headwayMinutes / 4), 4, 10);
     const activeSlots =
       Math.ceil((profile.tripDurationMinutes + prestartMinutes + layoverMinutes) / profile.headwayMinutes) + 1;
@@ -392,7 +402,7 @@ function estimateHeading(from: Stop, to: Stop) {
 }
 
 function buildTripOccurrences(profile: DirectionProfile, currentMinutes: number) {
-  const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 6), 2, 5);
+  const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 5, 12);
   const layoverMinutes = clamp(Math.round(profile.headwayMinutes / 4), 4, 10);
 
   return profile.departures
@@ -493,25 +503,54 @@ function buildVehiclePosition(
 }
 
 function buildVehiclesForRoute(routeId: RouteId, currentMinutes: number, now: Date) {
-  const occurrences = profilesByRoute[routeId]
+  const pool = fleetByRoute[routeId];
+  const prioritizedOccurrences = profilesByRoute[routeId]
     .flatMap((profile) => buildTripOccurrences(profile, currentMinutes))
     .sort(
       (left, right) =>
         left.scheduledDepartureMinutes - right.scheduledDepartureMinutes ||
         left.profile.directionLabel.localeCompare(right.profile.directionLabel)
     );
-  const pool = fleetByRoute[routeId];
 
-  if (occurrences.length === 0 || pool.length === 0) {
+  if (prioritizedOccurrences.length === 0 || pool.length === 0) {
     return [];
   }
+
+  const occurrences = prioritizedOccurrences
+    .slice()
+    .sort((left, right) => {
+      const leftPriority =
+        left.ageMinutes >= 0 && left.ageMinutes <= left.profile.tripDurationMinutes
+          ? 0
+          : left.ageMinutes < 0
+            ? 1
+            : 2;
+      const rightPriority =
+        right.ageMinutes >= 0 && right.ageMinutes <= right.profile.tripDurationMinutes
+          ? 0
+          : right.ageMinutes < 0
+            ? 1
+            : 2;
+
+      return (
+        leftPriority - rightPriority ||
+        Math.abs(left.ageMinutes) - Math.abs(right.ageMinutes) ||
+        left.scheduledDepartureMinutes - right.scheduledDepartureMinutes
+      );
+    })
+    .slice(0, pool.length)
+    .sort(
+      (left, right) =>
+        left.scheduledDepartureMinutes - right.scheduledDepartureMinutes ||
+        left.profile.directionLabel.localeCompare(right.profile.directionLabel)
+    );
 
   const offset = getRotationOffset(now, pool.length);
   const orderedPool = pool.map((_, index) => pool[(offset + index) % pool.length]!);
   const nowIso = now.toISOString();
 
   return occurrences.map((occurrence, index) =>
-    buildVehiclePosition(orderedPool[index % orderedPool.length]!, occurrence, nowIso)
+    buildVehiclePosition(orderedPool[index]!, occurrence, nowIso)
   );
 }
 

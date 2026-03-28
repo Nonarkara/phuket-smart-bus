@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite\"",
+    "typecheck": "npm run typecheck:server && npm run typecheck:app && npm run typecheck:test",
+    "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
+    "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
+    "typecheck:server": "tsc -p tsconfig.server.json --noEmit",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
@@ -12,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "verify": "npm test && npm run build && npm run test:e2e"
+    "verify": "npm run typecheck && npm test && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",

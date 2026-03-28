@@ -14,7 +14,7 @@ const FALLBACK_COMPARISONS: PriceComparison[] = [
     destinationName: { en: "Airport", th: "สนามบิน", zh: "机场", de: "Flughafen", fr: "Aéroport", es: "Aeropuerto" },
     taxi: { minThb: 800, maxThb: 1200, minutes: 45 },
     tukTuk: { minThb: 500, maxThb: 700, minutes: 55 },
-    bus: { fareThb: 100, minutes: 75 },
+    bus: { fareThb: 100, minutes: 75, routeId: "rawai-airport" },
     savingsMin: 400, savingsMax: 1100, ridersToday: Math.floor(20 + Math.random() * 40)
   },
   {
@@ -22,7 +22,7 @@ const FALLBACK_COMPARISONS: PriceComparison[] = [
     destinationName: { en: "Patong Beach", th: "หาดป่าตอง", zh: "芭东海滩", de: "Patong Strand", fr: "Plage de Patong", es: "Playa Patong" },
     taxi: { minThb: 400, maxThb: 600, minutes: 25 },
     tukTuk: { minThb: 300, maxThb: 400, minutes: 30 },
-    bus: { fareThb: 100, minutes: 40 },
+    bus: { fareThb: 100, minutes: 40, routeId: "patong-old-bus-station" },
     savingsMin: 200, savingsMax: 500, ridersToday: Math.floor(30 + Math.random() * 50)
   },
   {
@@ -30,7 +30,7 @@ const FALLBACK_COMPARISONS: PriceComparison[] = [
     destinationName: { en: "Old Town", th: "เมืองเก่า", zh: "老城", de: "Altstadt", fr: "Vieille ville", es: "Casco antiguo" },
     taxi: { minThb: 300, maxThb: 500, minutes: 20 },
     tukTuk: { minThb: 200, maxThb: 350, minutes: 25 },
-    bus: { fareThb: 100, minutes: 35 },
+    bus: { fareThb: 100, minutes: 35, routeId: "dragon-line" },
     savingsMin: 100, savingsMax: 400, ridersToday: Math.floor(15 + Math.random() * 30)
   },
   {
@@ -38,7 +38,7 @@ const FALLBACK_COMPARISONS: PriceComparison[] = [
     destinationName: { en: "Kata Beach", th: "หาดกะตะ", zh: "卡塔海滩", de: "Kata Strand", fr: "Plage de Kata", es: "Playa Kata" },
     taxi: { minThb: 500, maxThb: 700, minutes: 30 },
     tukTuk: { minThb: 350, maxThb: 500, minutes: 40 },
-    bus: { fareThb: 100, minutes: 50 },
+    bus: { fareThb: 100, minutes: 50, routeId: "rawai-airport" },
     savingsMin: 250, savingsMax: 600, ridersToday: Math.floor(10 + Math.random() * 25)
   },
   {
@@ -46,7 +46,7 @@ const FALLBACK_COMPARISONS: PriceComparison[] = [
     destinationName: { en: "Rawai", th: "ราไวย์", zh: "拉威", de: "Rawai", fr: "Rawai", es: "Rawai" },
     taxi: { minThb: 500, maxThb: 800, minutes: 35 },
     tukTuk: { minThb: 400, maxThb: 600, minutes: 45 },
-    bus: { fareThb: 100, minutes: 60 },
+    bus: { fareThb: 100, minutes: 60, routeId: "rawai-airport" },
     savingsMin: 300, savingsMax: 700, ridersToday: Math.floor(8 + Math.random() * 20)
   },
 ];
