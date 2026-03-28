@@ -446,6 +446,153 @@ function buildFallbackDashboard(): OpsDashboardPayload {
   };
 }
 
+/* ── Client-side investor simulation fallback ── */
+function buildFallbackInvestorPayload(): InvestorSimulationPayload {
+  const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
+  // Realistic HKT flight hourly arrival pattern
+  const HOURLY_ARRIVALS = [0,0,0,0,0,0,180,320,450,380,520,600,680,750,700,580,500,420,380,300,250,150,80,0];
+  const HOURLY_DEPARTURES = [0,0,0,0,0,50,120,250,350,300,400,480,520,580,550,450,380,320,280,200,150,100,50,0];
+  const SHARE = 0.15;
+  const FARE = 100;
+  const SEAT = 25;
+
+  // Bus departures per hour from schedule (airport route = 4/hr peak, 2/hr off-peak)
+  const busDepsPerHour = (h: number) => h < 6 ? 0 : h < 7 ? 2 : h < 9 ? 3 : h < 18 ? 4 : h < 21 ? 3 : h < 23 ? 1 : 0;
+
+  const hourly: HourlyCapacityGap[] = Array.from({ length: 18 }, (_, i) => {
+    const h = i + 6;
+    const hour = `${String(h).padStart(2, "0")}:00`;
+    const rawArr = HOURLY_ARRIVALS[h];
+    const rawDep = HOURLY_DEPARTURES[h];
+    const addrArr = Math.round(rawArr * SHARE);
+    const addrDep = Math.round(rawDep * SHARE);
+    const deps = busDepsPerHour(h);
+    const supply = deps * SEAT;
+    const carriedArr = Math.min(addrArr, supply);
+    const carriedDep = Math.min(addrDep, supply);
+    const unmetArr = Math.max(0, addrArr - supply);
+    const unmetDep = Math.max(0, addrDep - supply);
+    return {
+      hour, rawArrivalPax: rawArr, rawDeparturePax: rawDep,
+      addressableArrivalDemand: addrArr, addressableDepartureDemand: addrDep,
+      arrivalSeatSupply: supply, departureSeatSupply: supply,
+      carriedArrivalDemand: carriedArr, carriedDepartureDemand: carriedDep,
+      unmetArrivalDemand: unmetArr, unmetDepartureDemand: unmetDep,
+      requiredArrivalDepartures: Math.ceil(addrArr / SEAT),
+      requiredDepartureDepartures: Math.ceil(addrDep / SEAT),
+      additionalArrivalBusesNeeded: Math.max(0, Math.ceil(addrArr / SEAT) - deps),
+      additionalDepartureBusesNeeded: Math.max(0, Math.ceil(addrDep / SEAT) - deps),
+      lostRevenueThb: (unmetArr + unmetDep) * FARE,
+    };
+  });
+
+  const totalCarriedArr = hourly.reduce((s, h) => s + h.carriedArrivalDemand, 0);
+  const totalCarriedDep = hourly.reduce((s, h) => s + h.carriedDepartureDemand, 0);
+  const totalAddrArr = hourly.reduce((s, h) => s + h.addressableArrivalDemand, 0);
+  const totalAddrDep = hourly.reduce((s, h) => s + h.addressableDepartureDemand, 0);
+  const totalUnmetArr = hourly.reduce((s, h) => s + h.unmetArrivalDemand, 0);
+  const totalUnmetDep = hourly.reduce((s, h) => s + h.unmetDepartureDemand, 0);
+  const dailyRevenue = (totalCarriedArr + totalCarriedDep) * FARE;
+  const lostRevenue = (totalUnmetArr + totalUnmetDep) * FARE;
+  const peakBuses = Math.max(...hourly.map(h => h.additionalArrivalBusesNeeded + h.additionalDepartureBusesNeeded));
+
+  const services: InvestorSimulationPayload["services"] = [
+    { routeId: "rawai-airport" as any, routeName: lt("Airport Line"), directionLabel: "Airport → City", tier: "core" as any, departures: 52, seatSupply: 1300, estimatedDemand: totalAddrArr, carriedRiders: totalCarriedArr, unmetRiders: totalUnmetArr, revenueThb: totalCarriedArr * FARE, capturePct: totalAddrArr > 0 ? Math.round(totalCarriedArr / totalAddrArr * 100) : 0, provenance: "fallback" as any, strategicValue: lt("Primary airport connector") },
+    { routeId: "rawai-airport" as any, routeName: lt("Airport Line"), directionLabel: "City → Airport", tier: "core" as any, departures: 52, seatSupply: 1300, estimatedDemand: totalAddrDep, carriedRiders: totalCarriedDep, unmetRiders: totalUnmetDep, revenueThb: totalCarriedDep * FARE, capturePct: totalAddrDep > 0 ? Math.round(totalCarriedDep / totalAddrDep * 100) : 0, provenance: "fallback" as any, strategicValue: null },
+    { routeId: "patong-old-bus-station" as any, routeName: lt("Patong Line"), directionLabel: "Both", tier: "core" as any, departures: 36, seatSupply: 900, estimatedDemand: 320, carriedRiders: 280, unmetRiders: 40, revenueThb: 28000, capturePct: 88, provenance: "fallback" as any, strategicValue: lt("Highest beach demand") },
+    { routeId: "dragon-line" as any, routeName: lt("Dragon Line"), directionLabel: "Loop", tier: "auxiliary" as any, departures: 24, seatSupply: 600, estimatedDemand: 180, carriedRiders: 180, unmetRiders: 0, revenueThb: 18000, capturePct: 100, provenance: "fallback" as any, strategicValue: null },
+  ];
+
+  const peakGapHour = hourly.reduce((best, h) => h.unmetArrivalDemand > (best?.unmetArrivalDemand ?? 0) ? h : best, hourly[0]);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    assumptions: { seatCapacityPerBus: SEAT, flatFareThb: FARE, addressableDemandShare: SHARE, replayStepMinutes: 3, replayStartMinutes: 360, replayEndMinutes: 1440 },
+    hourly, services, touchpoints: [],
+    totals: {
+      rawAirportArrivalPax: hourly.reduce((s, h) => s + h.rawArrivalPax, 0),
+      rawAirportDeparturePax: hourly.reduce((s, h) => s + h.rawDeparturePax, 0),
+      addressableArrivalDemand: totalAddrArr, addressableDepartureDemand: totalAddrDep,
+      carriedArrivalDemand: totalCarriedArr, carriedDepartureDemand: totalCarriedDep,
+      unmetArrivalDemand: totalUnmetArr, unmetDepartureDemand: totalUnmetDep,
+      totalAirportCapturePct: (totalAddrArr + totalAddrDep) > 0 ? Math.round((totalCarriedArr + totalCarriedDep) / (totalAddrArr + totalAddrDep) * 100) : 0,
+      addressableAirportCapturePct: (totalAddrArr + totalAddrDep) > 0 ? Math.round((totalCarriedArr + totalCarriedDep) / (totalAddrArr + totalAddrDep) * 100) : 0,
+      dailyRevenueThb: dailyRevenue, lostRevenueThb: lostRevenue, peakAdditionalBusesNeeded: peakBuses,
+    },
+    opportunities: {
+      summary: `Peak gap at ${peakGapHour.hour} — ${peakGapHour.unmetArrivalDemand + peakGapHour.unmetDepartureDemand} unmet pax. Adding ${peakBuses} buses at peak could capture ฿${lostRevenue.toLocaleString()} in lost revenue.`,
+      peakArrivalGapHour: peakGapHour.hour, peakDepartureGapHour: peakGapHour.hour,
+      strongestRevenueServiceRouteId: "rawai-airport" as any,
+    },
+  };
+}
+
+function buildFallbackSimFrame(simMinutes: number, fallbackDashboard: OpsDashboardPayload): SimulationSnapshot {
+  const hour = simMinutes / 60;
+  const busActivity = hour < 6 ? 0 : hour < 7 ? 0.3 : hour < 9 ? 0.7 : hour < 18 ? 1.0 : hour < 21 ? 0.6 : hour < 23 ? 0.2 : 0;
+  const ferryActivity = hour < 8 ? 0 : hour < 9 ? 0.4 : hour < 17 ? 1.0 : hour < 19 ? 0.5 : 0;
+
+  const ROUTE_WP: Record<string, [number,number][]> = {
+    "rawai-airport": [[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]],
+    "patong-old-bus-station": [[7.8830,98.2930],[7.8900,98.3200],[7.8840,98.3800],[7.8840,98.3960]],
+    "dragon-line": [[7.8840,98.3960],[7.8870,98.3920],[7.8900,98.3850],[7.8840,98.3960]],
+    "rassada-phi-phi": [[7.8574,98.3866],[7.8200,98.4500],[7.7500,98.7700]],
+    "rassada-ao-nang": [[7.8574,98.3866],[7.9500,98.6000],[8.0300,98.8200]],
+    "bang-rong-koh-yao": [[8.0317,98.4192],[8.0800,98.5000],[8.1100,98.5800]],
+    "chalong-racha": [[7.8216,98.3613],[7.7500,98.3600],[7.6000,98.3650]],
+  };
+  const TRIP_DUR: Record<string, number> = { "rawai-airport": 75, "patong-old-bus-station": 40, "dragon-line": 25, "rassada-phi-phi": 90, "rassada-ao-nang": 120, "bang-rong-koh-yao": 45, "chalong-racha": 60 };
+  const HEADWAY: Record<string, number> = { "rawai-airport": 15, "patong-old-bus-station": 20, "dragon-line": 30, "rassada-phi-phi": 60, "rassada-ao-nang": 120, "bang-rong-koh-yao": 90, "chalong-racha": 120 };
+
+  const vehicles: VehiclePosition[] = [];
+  const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
+
+  for (const [routeId, wp] of Object.entries(ROUTE_WP)) {
+    const isFerry = FERRY_ROUTE_IDS.has(routeId as any);
+    const activity = isFerry ? ferryActivity : busActivity;
+    if (activity <= 0) continue;
+    const tripMin = TRIP_DUR[routeId] ?? 60;
+    const headway = HEADWAY[routeId] ?? 30;
+    const firstDep = isFerry ? 480 : 360;
+
+    for (let dep = firstDep; dep < simMinutes + tripMin; dep += headway) {
+      const age = simMinutes - dep;
+      if (age < 0 || age > tripMin) continue;
+      if (activity < 0.5 && (dep / headway) % 2 === 0) continue;
+
+      const progress = age / tripMin;
+      const tripIdx = Math.floor((dep - firstDep) / headway);
+      const reverse = tripIdx % 2 === 1;
+      const eff = reverse ? 1 - progress : progress;
+      const pathPos = eff * (wp.length - 1);
+      const idx = Math.min(Math.floor(pathPos), wp.length - 2);
+      const seg = pathPos - idx;
+      const lat = wp[idx][0] + (wp[idx + 1][0] - wp[idx][0]) * seg;
+      const lng = wp[idx][1] + (wp[idx + 1][1] - wp[idx][1]) * seg;
+
+      vehicles.push({
+        id: `sim-${routeId}-${dep}`, routeId: routeId as any,
+        licensePlate: `SIM-${vehicles.length}`, vehicleId: `sv-${routeId}-${dep}`, deviceId: null,
+        coordinates: [lat, lng], heading: reverse ? 180 : 0, speedKph: 30,
+        destination: lt(routeId), updatedAt: new Date().toISOString(),
+        telemetrySource: "schedule_mock", freshness: "fresh",
+        status: progress > 0.95 || progress < 0.05 ? "dwelling" : "moving",
+        distanceToDestinationMeters: null, stopsAway: null,
+      });
+    }
+  }
+
+  const hh = String(Math.floor(simMinutes / 60)).padStart(2, "0");
+  const mm = String(simMinutes % 60).padStart(2, "0");
+
+  return {
+    simMinutes, simTime: `${hh}:${mm}`,
+    vehicles,
+    routePressure: fallbackDashboard.fleet.routePressure,
+    transferHubs: fallbackDashboard.transferHubs,
+  };
+}
+
 export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [dashboard, setDashboard] = useState<OpsDashboardPayload | null>(null);
   const [investor, setInvestor] = useState<InvestorSimulationPayload | null>(null);
@@ -517,7 +664,12 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
       }
 
       try {
-        const frame = await getSimulationFrame(nextMinute);
+        let frame: SimulationSnapshot;
+        try {
+          frame = await getSimulationFrame(nextMinute);
+        } catch {
+          frame = buildFallbackSimFrame(nextMinute, dashboard!);
+        }
         if (cancelled || replayAbortRef.current) {
           return;
         }
@@ -632,9 +784,19 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     replayAbortRef.current = false;
 
     try {
-      const investorPayload = investor ?? (await getInvestorSimulation());
+      let investorPayload: InvestorSimulationPayload;
+      try {
+        investorPayload = investor ?? (await getInvestorSimulation());
+      } catch {
+        investorPayload = investor ?? buildFallbackInvestorPayload();
+      }
       const firstMinute = investorPayload.assumptions.replayStartMinutes;
-      const firstFrame = await getSimulationFrame(firstMinute);
+      let firstFrame: SimulationSnapshot;
+      try {
+        firstFrame = await getSimulationFrame(firstMinute);
+      } catch {
+        firstFrame = buildFallbackSimFrame(firstMinute, dashboard!);
+      }
 
       setInvestor(investorPayload);
       setSimSnapshot(firstFrame);
