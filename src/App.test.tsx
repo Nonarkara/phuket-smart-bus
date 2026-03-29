@@ -71,7 +71,7 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
-  it("boots the map view with the current three-tab navigation", async () => {
+  it("boots the map view with two-tab navigation", async () => {
     render(<App />);
 
     expect(await screen.findByTestId("live-map")).toBeInTheDocument();
@@ -79,20 +79,16 @@ describe("App", () => {
     expect(screen.getByText("mode:route")).toBeInTheDocument();
     expect(screen.getByText("user-location:on")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Map" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
     expect(screen.getByText("Where do you want to go?")).toBeInTheDocument();
   });
 
-  it("switches between Map, Compare, and More without relying on retired routes", async () => {
+  it("switches between Map and Info tabs", async () => {
     render(<App />);
 
     await screen.findByTestId("live-map");
 
-    await userEvent.click(screen.getByRole("button", { name: "Compare" }));
-    expect(screen.getByRole("heading", { name: "Getting around Phuket" })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "More" }));
+    await userEvent.click(screen.getByRole("button", { name: "Info" }));
     expect(screen.getByRole("button", { name: "Stops" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pass" })).toBeInTheDocument();
 

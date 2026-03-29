@@ -653,6 +653,9 @@ export const ui = {
   navMore: {
     en: "More", th: "เพิ่มเติม", zh: "更多", de: "Mehr", fr: "Plus", es: "Más"
   },
+  navInfo: {
+    en: "Info", th: "ข้อมูล", zh: "信息", de: "Info", fr: "Info", es: "Info"
+  },
   weatherLabel: {
     en: "Weather", th: "อากาศ", zh: "天气", de: "Wetter", fr: "Météo", es: "Clima"
   },

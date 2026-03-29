@@ -98,12 +98,11 @@ function BarcodeGraphic({ code }: { code: string }) {
 interface WelcomeSheetProps {
   lang: Lang;
   vehicles: VehiclePosition[];
-  comparisons: PriceComparison[];
   allStops: Stop[];
   onNavigateToStop: (stopId: string) => void;
 }
 
-export function WelcomeSheet({ lang, vehicles, comparisons, allStops, onNavigateToStop }: WelcomeSheetProps) {
+export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: WelcomeSheetProps) {
   const [step, setStep] = useState<SheetStep>("ask");
   const [query, setQuery] = useState("");
   const [matchedStop, setMatchedStop] = useState<Stop | null>(null);

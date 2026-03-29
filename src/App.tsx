@@ -30,7 +30,7 @@ import { DecisionPanel } from "./components/DecisionPanel";
 import { StopSpotlight } from "./components/StopSpotlight";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
-import { CompareView } from "./components/CompareView";
+// CompareView removed — fare comparison is inline in WelcomeSheet
 import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
 import { haversineDistanceMeters } from "./lib/geo";
@@ -42,18 +42,17 @@ const PRIMARY_ROUTE_IDS: RouteId[] = [
 ];
 const NEARBY_STOP_RADIUS_METERS = 700;
 
-type AppView = "map" | "compare" | "more";
+type AppView = "map" | "info";
 type MorePanel = "stops" | "pass" | null;
 type MapRouteFilter = RouteId | "all-core";
 
-const VIEW_PATHS: Record<AppView, string> = { map: "/", compare: "/compare", more: "/more" };
+const VIEW_PATHS: Record<AppView, string> = { map: "/", info: "/info" };
 
 function getInitialView(): AppView | "ops" {
   if (typeof window === "undefined") return "map";
   const p = window.location.pathname;
   if (p.startsWith("/ops")) return "ops";
-  if (p.startsWith("/compare")) return "compare";
-  if (p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride")) return "more";
+  if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "info";
   return "map";
 }
 
@@ -109,23 +108,18 @@ function mergeRouteBounds(routes: Route[]) {
 function MapIcon() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>;
 }
-function CompareIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M2 12h20"/><path d="M17 7l-5 5-5-5"/><path d="M7 17l5-5 5 5"/></svg>;
-}
-function MoreIcon() {
-  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>;
+function InfoIcon() {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>;
 }
 
 const TAB_ICONS: Record<AppView, () => React.ReactNode> = {
   map: MapIcon,
-  compare: CompareIcon,
-  more: MoreIcon,
+  info: InfoIcon,
 };
 
 const TAB_LABELS: Record<AppView, keyof typeof ui> = {
   map: "navMap",
-  compare: "navCompare",
-  more: "navMore",
+  info: "navInfo",
 };
 
 export default function App() {
@@ -544,7 +538,6 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
             <WelcomeSheet
               lang={lang}
               vehicles={allVehicles}
-              comparisons={comparisons}
               allStops={Object.values(routeStopsById).flat() as Stop[]}
               onNavigateToStop={(stopId) => {
                 startTransition(() => {
@@ -567,18 +560,8 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
           </main>
         ) : null}
 
-        {/* ===== COMPARE ===== */}
-        {view === "compare" ? (
-          <main className="stops-view">
-            <div className="stops-view__header">
-              <LanguageToggle lang={lang} onChange={persistLang} />
-            </div>
-            <CompareView lang={lang} comparisons={comparisons} />
-          </main>
-        ) : null}
-
-        {/* ===== MORE (Stops + Pass) ===== */}
-        {view === "more" ? (
+        {/* ===== INFO (Stops + Pass) ===== */}
+        {view === "info" ? (
           <main className="stops-view">
             <div className="stops-view__header">
               <div className="more-tabs">
@@ -669,7 +652,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
 
       {/* --- Bottom Navigation — 3 tabs --- */}
       <nav className="bottom-nav" aria-label="Navigation">
-        {(["map", "compare", "more"] as AppView[]).map((tab) => {
+        {(["map", "info"] as AppView[]).map((tab) => {
           const Icon = TAB_ICONS[tab];
           return (
             <button

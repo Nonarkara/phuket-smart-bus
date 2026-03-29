@@ -873,11 +873,17 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
         <div className="ops__status-bar">
           <span className="ops__clock">{clock}</span>
-          <span className="ops__health-dot" style={{ background: healthColor }} />
-          <span style={{ color: healthColor, fontSize: 9 }}>
-            {dashboard.weather.intelligence.current.tempC}° {dashboard.weather.intelligence.current.rainProb}%☂ AQI{" "}
-            {dashboard.weather.intelligence.current.aqi}
+          <span style={{ color: "#888", fontSize: 10 }}>
+            {dashboard.weather.intelligence.current.tempC}° · {dashboard.weather.intelligence.current.rainProb}% rain
           </span>
+          {dashboard.sources.map((s) => (
+            <span
+              key={s.source}
+              className="ops__health-dot"
+              style={{ background: s.state === "live" ? "#5ec26a" : s.state === "fallback" ? "#d4a04a" : "#e05555" }}
+              title={`${s.source}: ${s.state}`}
+            />
+          ))}
         </div>
       </header>
 
@@ -896,7 +902,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               ? `${investor.totals.addressableAirportCapturePct}%`
               : `${dashboard.demandSupply.arrivalCaptureOfAddressablePct}%`}
           </span>
-          <span className="ops-kpi__label">{simRunning ? "Airport Capture" : "Arrival Capture"}</span>
+          <span className="ops-kpi__label">Riders Served %</span>
         </div>
         <div className="ops-kpi ops-kpi--highlight">
           <span className="ops-kpi__value">
@@ -904,19 +910,15 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               ? investor.totals.peakAdditionalBusesNeeded
               : dashboard.demandSupply.additionalBusesNeededPeak}
           </span>
-          <span className="ops-kpi__label">Extra Buses</span>
+          <span className="ops-kpi__label">Extra Buses Needed</span>
         </div>
         <div className="ops-kpi">
           <span className="ops-kpi__value">{dashboard.weather.intelligence.current.rainProb}%</span>
           <span className="ops-kpi__label">Rain Risk</span>
         </div>
         <div className="ops-kpi">
-          <span className="ops-kpi__value">
-            {simRunning && investor
-              ? `฿${Math.round(investor.totals.lostRevenueThb / 1000)}k`
-              : dashboard.hotspots.totalRequests}
-          </span>
-          <span className="ops-kpi__label">{simRunning ? "Lost Revenue" : "Live Requests"}</span>
+          <span className="ops-kpi__value">{dashboard.weather.intelligence.current.aqi}</span>
+          <span className="ops-kpi__label">AQI</span>
         </div>
         {!simRunning ? (
           <button className="ops-kpi ops-kpi--sim" type="button" onClick={toggleReplay} disabled={simLoading}>
@@ -937,10 +939,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             <div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} />
           </div>
           <div className="ops__sim-stats">
-            <span>🕐 {simSnapshot?.simTime ?? "06:00"}</span>
-            <span>✈→🏙 <strong>{currentGap?.carriedArrivalDemand.toLocaleString() ?? "0"}</strong> carried this hour</span>
-            <span>🏙→✈ <strong>{currentGap?.carriedDepartureDemand.toLocaleString() ?? "0"}</strong> carried this hour</span>
-            <span>💰 <strong>฿{investor.totals.dailyRevenueThb.toLocaleString()}</strong></span>
+            <span>{simSnapshot?.simTime ?? "06:00"}</span>
+            <span>Airport to City <strong>{currentGap?.carriedArrivalDemand.toLocaleString() ?? "0"}</strong> riders</span>
+            <span>City to Airport <strong>{currentGap?.carriedDepartureDemand.toLocaleString() ?? "0"}</strong> riders</span>
+            <span>Revenue <strong>฿{investor.totals.dailyRevenueThb.toLocaleString()}</strong></span>
             <span>Gap <strong>{(currentGap?.unmetArrivalDemand ?? 0) + (currentGap?.unmetDepartureDemand ?? 0)}</strong> pax</span>
           </div>
         </div>
@@ -1116,57 +1118,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </div>
           </section>
 
-          <section className="ops-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-              <h2 className="ops-card__title">Transfer Hubs</h2>
-              <ProvenanceBadge provenance={displayTransferHubs[0]?.provenance ?? "estimated"} />
-            </div>
-            <div className="ops-card__routes">
-              {displayTransferHubs.map((hub) => (
-                <div key={hub.id} className="ops-route-row" style={{ alignItems: "flex-start" }}>
-                  <span className="ops-route-row__dot" style={{ background: colorForHubStatus(hub.status), marginTop: 6 }} />
-                  <span className="ops-route-row__name" style={{ display: "grid", gap: 4 }}>
-                    <strong>{hub.name.en}</strong>
-                    <span style={{ color: "#8b949e", fontSize: 11 }}>
-                      {hub.activeWindowLabel ?? `Next window ${hub.nextWindowStartLabel ?? "not scheduled"}`}
-                    </span>
-                    <span style={{ color: "#6e7681", fontSize: 11 }}>
-                      Walk {hub.walkMinutes} min · Buffer {hub.transferBufferMinutes} min
-                    </span>
-                  </span>
-                  <span className="ops-route-row__tier" style={{ color: colorForHubStatus(hub.status) }}>
-                    {hub.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="ops-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-              <h2 className="ops-card__title">Demand Hotspots</h2>
-              <ProvenanceBadge provenance={dashboard.hotspots.hotspots.some((item) => item.provenance === "live") ? "live" : "estimated"} />
-            </div>
-            <div className="ops-hotspots">
-              {dashboard.hotspots.hotspots.slice(0, 5).map((hotspot) => (
-                <div
-                  key={hotspot.id}
-                  className={`ops-hotspot ${hotspot.gap >= 6 ? "ops-hotspot--high" : hotspot.gap >= 3 ? "ops-hotspot--medium" : ""}`}
-                >
-                  <span className="ops-hotspot__zone">{hotspot.zone}</span>
-                  <span className="ops-hotspot__count">
-                    {hotspot.demand} demand · {hotspot.liveRequests} live
-                  </span>
-                  <div className="ops-hotspot__bar">
-                    <div className="ops-hotspot__bar-fill" style={{ width: `${Math.min(100, hotspot.demand * 8)}%` }} />
-                  </div>
-                </div>
-              ))}
-              <p className="ops-hotspots__note">
-                Last-hour app demand plus modeled street pressure from airport, beaches, and town.
-              </p>
-            </div>
-          </section>
+          {/* Transfer Hubs + Demand Hotspots visible via map layer toggles */}
 
           <section className="ops-card ops-card--sim">
             <h2 className="ops-card__title">Investor Replay</h2>
@@ -1205,7 +1157,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                     <span className="ops-sim-metric__value">
                       {investor.totals.addressableAirportCapturePct}%
                     </span>
-                    <span className="ops-sim-metric__label">Addressable Capture</span>
+                    <span className="ops-sim-metric__label">Riders Served</span>
                   </div>
                   <div className="ops-sim-metric ops-sim-metric--blue">
                     <span className="ops-sim-metric__value">฿{investor.totals.dailyRevenueThb.toLocaleString()}</span>
@@ -1219,34 +1171,8 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             ) : null}
           </section>
 
-          {investor ? (
-            <section className="ops-card">
-              <h2 className="ops-card__title">Service Revenue Stack</h2>
-              <div className="ops-flights__list">
-                {investor.services.map((service) => (
-                  <div key={`${service.routeId}-${service.directionLabel}`} className="ops-flight-row">
-                    <span className="ops-flight-row__time">{service.departures} deps</span>
-                    <span className="ops-flight-row__flight">{service.routeName.en}</span>
-                    <span className="ops-flight-row__origin">{service.directionLabel}</span>
-                    <span className="ops-flight-row__airline">{service.capturePct}% capture</span>
-                    <span className="ops-flight-row__pax">฿{service.revenueThb.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          <section className="ops-card">
-            <h2 className="ops-card__title">System Health</h2>
-            <div className="ops-health-grid">
-              {dashboard.sources.map((source) => (
-                <div key={`${source.source}-${source.updatedAt}`} className={`ops-health-item is-${source.state}`}>
-                  <span className="ops-health-item__name">{source.source}</span>
-                  <span className="ops-health-item__state">{source.state}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/* Service Revenue visible during sim in the sim card */}
+          {/* System Health moved to header dots */}
         </div>
       </div>
     </div>

@@ -915,7 +915,7 @@ a { color: var(--tint); }
 .bottom-nav {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   height: var(--bottomnav-h);
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--translucent);
@@ -2601,10 +2601,10 @@ a { color: var(--tint); }
 }
 
 .ops-kpi__label {
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #555;
+  letter-spacing: 0.08em;
+  color: #666;
   font-weight: 500;
 }
 
@@ -2704,11 +2704,11 @@ a { color: var(--tint); }
 }
 
 .ops__analytics {
-  overflow-y: auto;
-  padding: 16px;
+  overflow: hidden;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   background: #16161e;
   border-left: 1px solid rgba(255,255,255,0.04);
 }
