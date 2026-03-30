@@ -18,8 +18,8 @@ import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
    CONSTANTS
    ══════════════════════════════════════════════════ */
 const OPS_POLL_MS = 15_000;
-const SIM_TICK_MS = 500;
-const SIM_ANIMATION_MS = 480;
+const SIM_TICK_MS = 350;
+const SIM_ANIMATION_MS = 330;
 const BUS_CAPACITY = 25;
 const CO2_PER_BUS_KM = 0.12; // kg CO2 saved vs equivalent taxi trips
 
@@ -95,53 +95,153 @@ function fleetSummary(vehicles: VehiclePosition[]) {
 }
 
 /* ══════════════════════════════════════════════════
-   NEWS FEED — Left sidebar
+   LEFT: CITY INTELLIGENCE — flights, weather, demand, incidents
    ══════════════════════════════════════════════════ */
 type NewsItem = { id: string; time: string; icon: string; title: string; desc: string; severity: "info" | "caution" | "warning"; lat?: number; lng?: number };
+
+const FLIGHT_ORIGINS = [
+  { code: "BKK", city: "Bangkok", pax: 320, time: "06:30", type: "arr" },
+  { code: "SIN", city: "Singapore", pax: 180, time: "07:15", type: "arr" },
+  { code: "ICN", city: "Seoul", pax: 210, time: "08:00", type: "arr" },
+  { code: "PVG", city: "Shanghai", pax: 280, time: "09:30", type: "arr" },
+  { code: "SVO", city: "Moscow", pax: 240, time: "10:00", type: "arr" },
+  { code: "DXB", city: "Dubai", pax: 190, time: "11:30", type: "arr" },
+  { code: "DEL", city: "Delhi", pax: 160, time: "13:00", type: "arr" },
+  { code: "HND", city: "Tokyo", pax: 220, time: "14:00", type: "arr" },
+  { code: "SYD", city: "Sydney", pax: 170, time: "15:30", type: "arr" },
+  { code: "LHR", city: "London", pax: 250, time: "17:00", type: "arr" },
+  { code: "BKK", city: "Bangkok", pax: 290, time: "07:00", type: "dep" },
+  { code: "CNX", city: "Chiang Mai", pax: 150, time: "08:30", type: "dep" },
+  { code: "SIN", city: "Singapore", pax: 200, time: "12:00", type: "dep" },
+  { code: "ICN", city: "Seoul", pax: 190, time: "14:30", type: "dep" },
+  { code: "PVG", city: "Shanghai", pax: 260, time: "16:00", type: "dep" },
+  { code: "DXB", city: "Dubai", pax: 180, time: "19:00", type: "dep" },
+];
+
+const DEMAND_ZONES = [
+  { zone: "Patong Beach", demand: 45, icon: "🏖" },
+  { zone: "Old Town", demand: 32, icon: "🏛" },
+  { zone: "Kata-Karon", demand: 28, icon: "🌊" },
+  { zone: "Airport Area", demand: 60, icon: "✈" },
+  { zone: "Chalong", demand: 18, icon: "⛵" },
+];
 
 function generateNews(simMinutes: number | null): NewsItem[] {
   const hour = simMinutes !== null ? Math.floor(simMinutes / 60) : new Date().getHours();
   const base: NewsItem[] = [
-    { id: "n1", time: "06:15", icon: "✈", title: "HKT Morning Rush", desc: "12 flights arriving 06:00–08:00. Expect high demand at airport bus stop.", severity: "info" },
-    { id: "n2", time: "07:30", icon: "⚠", title: "Patong Hill Slowdown", desc: "Construction on Route 4029 near Patong Hill. Expect 10-min delay.", severity: "caution", lat: 7.9050, lng: 98.2970 },
-    { id: "n3", time: "08:00", icon: "🌧", title: "Rain Alert — South Coast", desc: "70% rain probability Rawai-Chalong area 14:00–17:00.", severity: "caution", lat: 7.7804, lng: 98.3225 },
-    { id: "n4", time: "09:00", icon: "🚢", title: "Phi Phi Ferry On Schedule", desc: "All Rassada–Phi Phi departures confirmed. Seas calm.", severity: "info" },
-    { id: "n5", time: "10:30", icon: "📊", title: "Tourism Up 12% in March", desc: "TAT reports 1.2M visitors to Phuket this month, driven by Chinese and Russian arrivals.", severity: "info" },
-    { id: "n6", time: "11:00", icon: "🚧", title: "Accident — Thepkasattri Rd", desc: "Minor collision near Thalang intersection. One lane blocked northbound.", severity: "warning", lat: 8.0200, lng: 98.3350 },
-    { id: "n7", time: "12:00", icon: "🎪", title: "Old Town Walking Street", desc: "Sunday market closes Thalang Road 16:00–22:00. Dragon Line rerouted.", severity: "caution", lat: 7.8842, lng: 98.3923 },
-    { id: "n8", time: "13:00", icon: "✈", title: "Afternoon Wave", desc: "8 international arrivals 13:00–15:00 including 2 wide-body from Dubai and Singapore.", severity: "info" },
-    { id: "n9", time: "14:30", icon: "⛽", title: "Diesel Price Stable", desc: "B7 diesel at ฿29.94/liter. Fleet fuel cost within budget.", severity: "info" },
-    { id: "n10", time: "16:00", icon: "🌊", title: "High Tide Advisory", desc: "Chalong Pier high tide 16:45. Ferry boarding may shift to alternate dock.", severity: "caution", lat: 7.8216, lng: 98.3613 },
-    { id: "n11", time: "17:30", icon: "🚌", title: "Peak Demand — Airport", desc: "Departure queue at airport bus stop exceeds 30 pax. Consider dispatch.", severity: "warning", lat: 8.1090, lng: 98.3070 },
-    { id: "n12", time: "19:00", icon: "🌅", title: "Promthep Sunset Rush", desc: "Tourist shuttles congesting Route 4233 near Rawai roundabout.", severity: "caution", lat: 7.7700, lng: 98.3100 },
-    { id: "n13", time: "21:00", icon: "🔧", title: "Bus PKT-1003 Maintenance", desc: "Scheduled brake inspection completed. Returning to service 22:00.", severity: "info" },
+    { id: "n1", time: "06:15", icon: "✈", title: "Morning Rush — 12 Flights", desc: "BKK, SIN, ICN arriving. High demand at airport stop.", severity: "info" },
+    { id: "n2", time: "07:30", icon: "⚠", title: "Patong Hill Construction", desc: "Route 4029 one lane. 10-min delay expected.", severity: "caution", lat: 7.9050, lng: 98.2970 },
+    { id: "n3", time: "08:00", icon: "🌧", title: "Rain — South Coast", desc: "70% rain Rawai-Chalong 14:00–17:00.", severity: "caution", lat: 7.7804, lng: 98.3225 },
+    { id: "n4", time: "09:00", icon: "🚢", title: "Ferries On Schedule", desc: "All Rassada–Phi Phi departures confirmed.", severity: "info" },
+    { id: "n5", time: "10:30", icon: "📊", title: "Tourism +12% March", desc: "1.2M visitors. Chinese, Russian, Korean top origins.", severity: "info" },
+    { id: "n6", time: "11:00", icon: "🚧", title: "Accident — Thepkasattri", desc: "Collision near Thalang. One lane blocked N-bound.", severity: "warning", lat: 8.0200, lng: 98.3350 },
+    { id: "n7", time: "12:00", icon: "🎪", title: "Old Town Market", desc: "Thalang Rd closed 16–22h. Dragon Line rerouted.", severity: "caution", lat: 7.8842, lng: 98.3923 },
+    { id: "n8", time: "13:00", icon: "✈", title: "Afternoon Wave", desc: "8 intl arrivals incl. DXB A380, SIN 787.", severity: "info" },
+    { id: "n9", time: "16:00", icon: "🌊", title: "High Tide — Chalong", desc: "Pier shift at 16:45. Ferry boarding adjusted.", severity: "caution", lat: 7.8216, lng: 98.3613 },
+    { id: "n10", time: "17:30", icon: "🚌", title: "Peak Airport Queue", desc: "30+ pax waiting. Consider on-demand dispatch.", severity: "warning", lat: 8.1090, lng: 98.3070 },
   ];
-  // Show items up to current hour
-  return base.filter((n) => {
-    const [h] = n.time.split(":").map(Number);
-    return h <= hour;
-  }).reverse(); // newest first
+  return base.filter((n) => { const [h] = n.time.split(":").map(Number); return h <= hour; }).reverse();
 }
 
-function NewsFeed({ simMinutes }: { simMinutes: number | null }) {
+function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather: OpsDashboardPayload["weather"] }) {
+  const hour = simMinutes !== null ? Math.floor(simMinutes / 60) : new Date().getHours();
   const news = useMemo(() => generateNews(simMinutes), [simMinutes]);
+  const visibleFlights = FLIGHT_ORIGINS.filter((f) => { const [h] = f.time.split(":").map(Number); return h <= hour + 2; });
+  const arrivals = visibleFlights.filter((f) => f.type === "arr");
+  const departures = visibleFlights.filter((f) => f.type === "dep");
+
   return (
     <div className="ops__news">
-      <h3 className="ops__news-title">News & Incidents</h3>
-      {news.map((n) => (
-        <div key={n.id} className={`news-item news-item--${n.severity}`}>
-          <span className="news-item__icon">{n.icon}</span>
-          <div className="news-item__body">
-            <div className="news-item__header">
-              <strong>{n.title}</strong>
-              <span className="news-item__time">{n.time}</span>
-            </div>
-            <p className="news-item__desc">{n.desc}</p>
+      <h3 className="ops__news-title">City of Phuket</h3>
+
+      {/* Flights */}
+      <div className="city-section">
+        <h4 className="city-section__title">Flights — HKT Airport</h4>
+        <div className="city-flights">
+          <div className="city-flights__col">
+            <span className="city-flights__label">Arrivals</span>
+            {arrivals.slice(-4).map((f) => (
+              <div key={f.code + f.time} className="city-flight">
+                <span className="city-flight__time">{f.time}</span>
+                <span className="city-flight__route">{f.code}</span>
+                <span className="city-flight__city">{f.city}</span>
+                <span className="city-flight__pax">{f.pax}</span>
+              </div>
+            ))}
+          </div>
+          <div className="city-flights__col">
+            <span className="city-flights__label">Departures</span>
+            {departures.slice(-4).map((f) => (
+              <div key={f.code + f.time + "d"} className="city-flight">
+                <span className="city-flight__time">{f.time}</span>
+                <span className="city-flight__route">{f.code}</span>
+                <span className="city-flight__city">{f.city}</span>
+                <span className="city-flight__pax">{f.pax}</span>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
+      </div>
+
+      {/* Area Demand */}
+      <div className="city-section">
+        <h4 className="city-section__title">Area Demand</h4>
+        {DEMAND_ZONES.map((z) => {
+          const scale = hour >= 10 && hour <= 14 ? 1.0 : hour >= 7 ? 0.6 : 0.2;
+          const d = Math.round(z.demand * scale);
+          return (
+            <div key={z.zone} className="city-demand-row">
+              <span>{z.icon}</span>
+              <span className="city-demand-row__zone">{z.zone}</span>
+              <span className="city-demand-row__bar"><span style={{ width: `${(d / 60) * 100}%` }} /></span>
+              <span className="city-demand-row__val">{d}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Weather compact */}
+      <div className="city-section">
+        <h4 className="city-section__title">Weather</h4>
+        <div className="city-weather">
+          <span>{weather.intelligence.current.tempC}°C</span>
+          <span>{weather.intelligence.current.rainProb}% rain</span>
+          <span>Wind {weather.intelligence.current.windKph} km/h</span>
+          <span>AQI {weather.intelligence.current.aqi}</span>
+        </div>
+      </div>
+
+      {/* News/Incidents */}
+      <div className="city-section">
+        <h4 className="city-section__title">Incidents & News</h4>
+        {news.map((n) => (
+          <div key={n.id} className={`news-item news-item--${n.severity}`}>
+            <span className="news-item__icon">{n.icon}</span>
+            <div className="news-item__body">
+              <div className="news-item__header">
+                <strong>{n.title}</strong>
+                <span className="news-item__time">{n.time}</span>
+              </div>
+              <p className="news-item__desc">{n.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
+}
+
+/* ── Barcode/booking requests per stop (simulated) ── */
+function stopRequests(simMinutes: number): { stop: string; count: number }[] {
+  const h = Math.floor(simMinutes / 60);
+  const scale = h >= 10 && h <= 14 ? 1.0 : h >= 7 ? 0.6 : 0.2;
+  return [
+    { stop: "Airport", count: Math.round(25 * scale) },
+    { stop: "Central Festival", count: Math.round(12 * scale) },
+    { stop: "Patong", count: Math.round(18 * scale) },
+    { stop: "Old Town", count: Math.round(10 * scale) },
+    { stop: "Rawai", count: Math.round(8 * scale) },
+  ];
 }
 
 /* ══════════════════════════════════════════════════
@@ -457,8 +557,22 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   });
   const routeSummary = routes.map((r) => ({ ...r, vehicles: displayVehicles.filter((v) => v.routeId === r.id).length }));
 
+  const requests = simMinutes !== null ? stopRequests(simMinutes) : [];
+
   return (
     <div className={`ops ${simRunning ? "ops--sim-mode" : ""}`}>
+      {/* ── Logos bar ── */}
+      <div className="ops__logos">
+        <span className="ops__logo-text">PMUAA</span>
+        <span className="ops__logo-sep" />
+        <span className="ops__logo-text">DEPA</span>
+        <span className="ops__logo-sep" />
+        <span className="ops__logo-text">Smart City Thailand</span>
+        <span className="ops__logo-sep" />
+        <span className="ops__logo-text ops__logo-text--accent">Axiom</span>
+        <span className="ops__logo-tag">Pilot Project</span>
+      </div>
+
       {/* ── Header ── */}
       <header className="ops__header">
         <div className="ops__brand">
@@ -471,19 +585,18 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           <span className="ops__ticker-arrivals">↓ {dashboard.demandSupply.rawAirportArrivalPaxNext2h.toLocaleString()} arr</span>
           <span className="ops__ticker-sep">·</span>
           <span className="ops__ticker-departures">↑ {dashboard.demandSupply.rawAirportDeparturePaxNext2h.toLocaleString()} dep</span>
-          <span className="ops__ticker-sep">·</span>
-          <span style={{ color: "#999", fontSize: 11 }}>{dashboard.weather.intelligence.current.tempC}° {dashboard.weather.intelligence.current.rainProb}% rain</span>
         </div>
         <div className="ops__status-bar">
           <span className="ops__clock">{clock}</span>
+          <span style={{ color: "#999", fontSize: 10 }}>{dashboard.weather.intelligence.current.tempC}° {dashboard.weather.intelligence.current.rainProb}%</span>
           {dashboard.sources.map((s) => <span key={s.source} className="ops__health-dot" style={{ background: s.state === "live" ? "#16b8b0" : s.state === "fallback" ? "#b58900" : "#dc322f" }} title={`${s.source}: ${s.state}`} />)}
         </div>
       </header>
 
-      {/* ── 3-panel body: news | map | operations ── */}
+      {/* ── 3-panel body ── */}
       <div className="ops__body">
-        {/* LEFT: News feed */}
-        <NewsFeed simMinutes={simMinutes} />
+        {/* LEFT: City Intelligence */}
+        <CityIntel simMinutes={simMinutes} weather={dashboard.weather} />
 
         {/* CENTER: Map */}
         <div className="ops__map">
@@ -502,11 +615,51 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           </div>
         </div>
 
-        {/* RIGHT: Operations panel */}
+        {/* RIGHT: Bus Operations */}
         <div className="ops__analytics">
-          {/* Fleet status */}
+          {/* Each bus with seats */}
           <section className="ops-card">
-            <h2 className="ops-card__title">Fleet — {displayFS.movingCount} of {displayFS.totalVehicles} active</h2>
+            <h2 className="ops-card__title">Bus Fleet — {displayFS.movingCount}/{displayFS.totalVehicles}</h2>
+            <div className="ops-fleet-rows">
+              {fleetRows.map((v) => {
+                const pax = v.pax ?? 0;
+                const seatsLeft = BUS_CAPACITY - pax;
+                return (
+                  <div key={v.id} className="fleet-row">
+                    <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
+                    <span className="fleet-row__info">
+                      <strong>{v.label}</strong> · {v.driver} ★{v.rating.toFixed(1)}
+                      <span className="fleet-row__sub">
+                        {pax}/{BUS_CAPACITY} pax · <strong style={{ color: seatsLeft <= 5 ? "#dc322f" : "#16b8b0" }}>{seatsLeft} seats left</strong> · {Math.round(v.speedKph)} km/h
+                      </span>
+                    </span>
+                    <span className={`fleet-row__status fleet-row__status--${v.status}`}>
+                      {v.status === "moving" ? "Moving" : "Idle"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Barcode requests per stop */}
+          {simMinutes !== null ? (
+            <section className="ops-card">
+              <h2 className="ops-card__title">Boarding Requests</h2>
+              {requests.map((r) => (
+                <div key={r.stop} className="city-demand-row">
+                  <span>📱</span>
+                  <span className="city-demand-row__zone">{r.stop}</span>
+                  <span className="city-demand-row__bar"><span style={{ width: `${(r.count / 25) * 100}%` }} /></span>
+                  <span className="city-demand-row__val">{r.count} pax</span>
+                </div>
+              ))}
+            </section>
+          ) : null}
+
+          {/* Route summary */}
+          <section className="ops-card">
+            <h2 className="ops-card__title">Routes</h2>
             <div className="ops-card__routes" style={{ marginTop: 0 }}>
               {routeSummary.filter((r) => r.vehicles > 0).map((r) => {
                 const p = displayPressure.find((pr) => pr.routeId === r.id);
@@ -522,51 +675,11 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </div>
           </section>
 
-          {/* Driver roster */}
+          {/* Hubs */}
           <section className="ops-card">
-            <h2 className="ops-card__title">Drivers</h2>
-            <div className="ops-fleet-rows">
-              {fleetRows.map((v) => (
-                <div key={v.id} className="fleet-row">
-                  <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
-                  <span className="fleet-row__info">
-                    <strong>{v.label}</strong> · {v.driver}
-                    <span className="fleet-row__sub">★ {v.rating.toFixed(1)} · {v.pax ?? "—"}/{BUS_CAPACITY} pax · {Math.round(v.speedKph)} km/h</span>
-                  </span>
-                  <span className={`fleet-row__status fleet-row__status--${v.status}`}>
-                    {v.status === "moving" ? "Moving" : "Idle"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Airport demand */}
-          <section className="ops-card">
-            <h2 className="ops-card__title">Airport Demand</h2>
-            <div className="ops-card__grid">
-              <div className="ops-metric">
-                <span className="ops-metric__value">{dashboard.demandSupply.rawAirportArrivalPaxNext2h.toLocaleString()}</span>
-                <span className="ops-metric__label">Arrivals/2h</span>
-              </div>
-              <div className="ops-metric">
-                <span className="ops-metric__value">{dashboard.demandSupply.rawAirportDeparturePaxNext2h.toLocaleString()}</span>
-                <span className="ops-metric__label">Departures/2h</span>
-              </div>
-            </div>
-            <p className="ops-card__rec">
-              {dashboard.demandSupply.arrivalCaptureOfAddressablePct}% capture · {dashboard.demandSupply.additionalBusesNeededPeak > 0 ? `${dashboard.demandSupply.additionalBusesNeededPeak} extra buses needed at peak` : "Supply meets demand"}
-            </p>
-          </section>
-
-          {/* Transfer hubs compact */}
-          <section className="ops-card">
-            <h2 className="ops-card__title">Transfer Hubs</h2>
-            {["Rassada → Phi Phi, Ao Nang", "Chalong → Racha Island", "Bang Rong → Koh Yao"].map((h, i) => (
-              <div key={i} className="ops-hub-line">
-                <span className="ops-hub-line__dot" style={{ background: "#16b8b0" }} />
-                <span>{h}</span>
-              </div>
+            <h2 className="ops-card__title">Bus → Boat</h2>
+            {["Rassada → Phi Phi, Ao Nang", "Chalong → Racha", "Bang Rong → Koh Yao"].map((h, i) => (
+              <div key={i} className="ops-hub-line"><span className="ops-hub-line__dot" style={{ background: "#16b8b0" }} /><span>{h}</span></div>
             ))}
           </section>
         </div>
