@@ -36,12 +36,45 @@ function densifyPath(sparse: [number, number][], targetCount = 20): [number, num
   return result;
 }
 
-/* ── Deterministic passenger count from vehicleId + time ── */
+/* ── Deterministic hash helper ── */
+function stableHash(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = ((h << 5) - h + key.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 function simPassengers(vehicleId: string, simMinutes: number): number {
-  let hash = 0;
-  const key = vehicleId + String(Math.floor(simMinutes / 10));
-  for (let i = 0; i < key.length; i++) hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
-  return Math.abs(hash) % (BUS_CAPACITY + 1);
+  return stableHash(vehicleId + String(Math.floor(simMinutes / 10))) % (BUS_CAPACITY + 1);
+}
+
+/* ── Driver names & bus condition (deterministic per vehicle) ── */
+const DRIVER_NAMES = [
+  "Somchai K.", "Prasert W.", "Anong S.", "Kittisak P.", "Wichai T.",
+  "Narong B.", "Supachai M.", "Darunee L.", "Prateep J.", "Sompong R.",
+  "Chaiwat N.", "Manee D.", "Surasak V.", "Nattapong A.", "Pornthip C.",
+  "Thawatchai H.", "Kamol S.", "Suchart P.", "Wanida K.", "Apichart L."
+];
+const BUS_CONDITIONS: ("Excellent" | "Good" | "Fair")[] = ["Excellent", "Excellent", "Good", "Good", "Good", "Fair"];
+
+function driverName(vehicleId: string): string {
+  return DRIVER_NAMES[stableHash(vehicleId) % DRIVER_NAMES.length];
+}
+
+function busCondition(vehicleId: string): "Excellent" | "Good" | "Fair" {
+  return BUS_CONDITIONS[stableHash(vehicleId + "cond") % BUS_CONDITIONS.length];
+}
+
+function conditionColor(cond: "Excellent" | "Good" | "Fair"): string {
+  return cond === "Excellent" ? "#16b8b0" : cond === "Good" ? "#b58900" : "#dc322f";
+}
+
+/* ── Sim speed variation: 25–40 km/h depending on progress ── */
+function simSpeed(progress: number, routeId: string): number {
+  const isFerry = FERRY_ROUTE_IDS.has(routeId as any);
+  if (isFerry) return 18 + Math.sin(progress * Math.PI) * 8;
+  // Slower near stops (start/end), faster in between
+  const base = 28 + Math.sin(progress * Math.PI) * 12;
+  return Math.round(base * 10) / 10;
 }
 
 const ROUTE_MARKER_COORDINATES = {
@@ -224,30 +257,38 @@ function DemandOverflow({ hourly, currentHour }: { hourly: HourlyCapacityGap[]; 
   );
 }
 
-/* ── Fleet Roster ── */
+/* ── Fleet Roster — investor-grade per-vehicle detail ── */
 function FleetRoster({ vehicles, routes, simMinutes }: { vehicles: VehiclePosition[]; routes: Route[]; simMinutes: number | null }) {
   const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
   const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
 
-  // Group vehicles by route and number them
   const routeCounters: Record<string, number> = {};
   const numbered = vehicles.map((v) => {
     routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
     const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
     const label = isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`;
     const pax = simMinutes !== null ? simPassengers(v.vehicleId, simMinutes) : null;
-    return { ...v, label, pax };
+    const revenue = pax !== null ? pax * 100 : null;
+    const driver = driverName(v.vehicleId);
+    const cond = busCondition(v.vehicleId);
+    return { ...v, label, pax, revenue, driver, cond };
   });
 
   return (
     <div className="ops-roster">
+      <div className="ops-roster__header">
+        <span>Vehicle</span><span>Driver</span><span>Pax</span><span>Rev</span><span>Speed</span><span>Cond</span>
+      </div>
       {numbered.map((v) => (
         <div key={v.id} className="ops-roster__row">
-          <span className="ops-roster__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
           <span className="ops-roster__name">
-            {v.label}
-            <span className="ops-roster__dest">{routeNameById[v.routeId] ?? v.routeId} → {v.destination?.en ?? "—"}</span>
+            <span className="ops-roster__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
+            <span>
+              {v.label}
+              <span className="ops-roster__dest">{routeNameById[v.routeId] ?? v.routeId}</span>
+            </span>
           </span>
+          <span className="ops-roster__driver">{v.driver}</span>
           <span className="ops-roster__pax">
             <span className="ops-roster__pax-bar">
               <span
@@ -255,14 +296,121 @@ function FleetRoster({ vehicles, routes, simMinutes }: { vehicles: VehiclePositi
                 style={{ width: `${((v.pax ?? 0) / BUS_CAPACITY) * 100}%` }}
               />
             </span>
-            <span className="ops-roster__pax-count">{v.pax !== null ? v.pax : "—"}</span>
+            <span className="ops-roster__pax-count">{v.pax ?? "—"}/{BUS_CAPACITY}</span>
           </span>
+          <span className="ops-roster__rev">{v.revenue !== null ? `฿${v.revenue.toLocaleString()}` : "—"}</span>
           <span className="ops-roster__speed">{Math.round(v.speedKph)} km/h</span>
-          <span className={`ops-roster__status ops-roster__status--${v.status}`}>
-            {v.status === "moving" ? "Moving" : "Stop"}
+          <span className="ops-roster__cond">
+            <span className="ops-roster__cond-dot" style={{ background: conditionColor(v.cond) }} />
+            {v.cond}
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ── Demand Flow — investor story of the airport math ── */
+function DemandFlowCard({ gap, simRunning }: { gap: HourlyCapacityGap | null; simRunning: boolean }) {
+  if (!gap && !simRunning) return null;
+  const arrRaw = gap?.rawArrivalPax ?? 0;
+  const depRaw = gap?.rawDeparturePax ?? 0;
+  const arrAddr = gap?.addressableArrivalDemand ?? 0;
+  const depAddr = gap?.addressableDepartureDemand ?? 0;
+  const arrSupply = gap?.arrivalSeatSupply ?? 0;
+  const depSupply = gap?.departureSeatSupply ?? 0;
+  const arrCarried = gap?.carriedArrivalDemand ?? 0;
+  const depCarried = gap?.carriedDepartureDemand ?? 0;
+  const arrUnmet = gap?.unmetArrivalDemand ?? 0;
+  const depUnmet = gap?.unmetDepartureDemand ?? 0;
+  const arrBuses = arrSupply / BUS_CAPACITY;
+  const depBuses = depSupply / BUS_CAPACITY;
+
+  return (
+    <div className="ops-flow">
+      <div className="ops-flow__direction">
+        <div className="ops-flow__label">Arrivals → City</div>
+        <div className="ops-flow__step">{arrRaw.toLocaleString()} pax land at HKT</div>
+        <div className="ops-flow__step">× 15% addressable = <strong>{arrAddr}</strong> potential riders</div>
+        <div className="ops-flow__step">{arrBuses} buses × 25 seats = <strong>{arrSupply}</strong> seats</div>
+        <div className="ops-flow__result">
+          <span className="ops-flow__carried">{arrCarried} carried</span>
+          {arrUnmet > 0 ? <span className="ops-flow__unmet">+{arrUnmet} unmet (฿{(arrUnmet * 100).toLocaleString()} lost)</span> : <span className="ops-flow__ok">All served</span>}
+        </div>
+      </div>
+      <div className="ops-flow__divider" />
+      <div className="ops-flow__direction">
+        <div className="ops-flow__label">City → Departures</div>
+        <div className="ops-flow__step">{depRaw.toLocaleString()} pax departing HKT</div>
+        <div className="ops-flow__step">× 15% addressable = <strong>{depAddr}</strong> potential riders</div>
+        <div className="ops-flow__step">{depBuses} buses × 25 seats = <strong>{depSupply}</strong> seats</div>
+        <div className="ops-flow__result">
+          <span className="ops-flow__carried">{depCarried} carried</span>
+          {depUnmet > 0 ? <span className="ops-flow__unmet">+{depUnmet} unmet (฿{(depUnmet * 100).toLocaleString()} lost)</span> : <span className="ops-flow__ok">All served</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Transfer Hub Card — bus-to-boat connections ── */
+const HUB_DEFS = [
+  { id: "rassada", name: "Rassada Hub", feeders: ["dragon-line", "patong-old-bus-station"], ferries: ["rassada-phi-phi", "rassada-ao-nang"], walk: 12 },
+  { id: "chalong", name: "Chalong Hub", feeders: ["rawai-airport"], ferries: ["chalong-racha"], walk: 15 },
+  { id: "bang-rong", name: "Bang Rong Hub", feeders: ["rawai-airport"], ferries: ["bang-rong-koh-yao"], walk: 18 },
+];
+const FERRY_NAMES: Record<string, string> = {
+  "rassada-phi-phi": "Phi Phi Ferry", "rassada-ao-nang": "Ao Nang Ferry",
+  "bang-rong-koh-yao": "Koh Yao Ferry", "chalong-racha": "Racha Ferry"
+};
+const FERRY_DEPARTURES: Record<string, number[]> = {
+  "rassada-phi-phi": [510, 540, 570, 630, 690, 810, 870, 930, 990],
+  "rassada-ao-nang": [510, 570, 690, 810, 930],
+  "bang-rong-koh-yao": [450, 510, 570, 630, 780, 900, 960],
+  "chalong-racha": [510, 540, 600, 780, 900],
+};
+
+function TransferHubsCard({ simMinutes, vehicles }: { simMinutes: number | null; vehicles: VehiclePosition[] }) {
+  const now = simMinutes ?? 0;
+  return (
+    <div className="ops-hubs">
+      {HUB_DEFS.map((hub) => {
+        const feederBuses = vehicles.filter((v) => hub.feeders.includes(v.routeId) && v.status === "moving");
+        const nextFerries = hub.ferries.map((fId) => {
+          const deps = FERRY_DEPARTURES[fId] ?? [];
+          const next = deps.find((d) => d > now);
+          return { name: FERRY_NAMES[fId] ?? fId, departure: next ?? null, minutesUntil: next ? next - now : null };
+        }).filter((f) => f.departure !== null).sort((a, b) => (a.minutesUntil ?? 999) - (b.minutesUntil ?? 999));
+        const nextFerry = nextFerries[0];
+        const status = nextFerry && (nextFerry.minutesUntil ?? 999) <= hub.walk + 20 ? "ready" : nextFerry ? "watch" : "inactive";
+        const transferPax = feederBuses.length > 0 && nextFerry ? Math.round(feederBuses.length * 8) : 0;
+        const fmtTime = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+        return (
+          <div key={hub.id} className={`ops-hub ops-hub--${status}`}>
+            <div className="ops-hub__header">
+              <span className="ops-hub__status-dot" style={{ background: status === "ready" ? "#16b8b0" : status === "watch" ? "#b58900" : "#999" }} />
+              <strong>{hub.name}</strong>
+              <span className="ops-hub__status-label">{status}</span>
+            </div>
+            {feederBuses.length > 0 ? (
+              <div className="ops-hub__line">Bus → {feederBuses.length} feeder bus{feederBuses.length > 1 ? "es" : ""} approaching</div>
+            ) : (
+              <div className="ops-hub__line ops-hub__line--dim">No feeder buses en route</div>
+            )}
+            {nextFerry ? (
+              <div className="ops-hub__line">
+                {nextFerry.name} departs {fmtTime(nextFerry.departure!)} ({nextFerry.minutesUntil} min)
+              </div>
+            ) : (
+              <div className="ops-hub__line ops-hub__line--dim">No upcoming ferry</div>
+            )}
+            {transferPax > 0 ? (
+              <div className="ops-hub__pax">~{transferPax} pax transferring</div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -601,7 +749,7 @@ function buildFallbackSimFrame(simMinutes: number, fallbackDashboard: OpsDashboa
       vehicles.push({
         id: `sim-${routeId}-${dep}`, routeId: routeId as any,
         licensePlate: `SIM-${vehicles.length}`, vehicleId: `sv-${routeId}-${dep}`, deviceId: null,
-        coordinates: [lat, lng], heading, speedKph: 30,
+        coordinates: [lat, lng], heading, speedKph: simSpeed(progress, routeId),
         destination: lt(routeId), updatedAt: new Date().toISOString(),
         telemetrySource: "schedule_mock", freshness: "fresh",
         status: progress > 0.95 || progress < 0.05 ? "dwelling" : "moving",
@@ -922,20 +1070,35 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         )}
       </div>
 
-      {/* ── Simulation progress strip ── */}
-      {simRunning && investor ? (
-        <div className="ops__sim-strip">
-          <div className="ops__sim-bar">
-            <div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} />
+      {/* ── Simulation revenue strip ── */}
+      {simRunning && investor ? (() => {
+        const simHourIdx = simSnapshot ? Math.floor(simSnapshot.simMinutes / 60) - 6 : 0;
+        const accRevenue = investor.hourly.slice(0, Math.max(0, simHourIdx + 1)).reduce((s, h) => s + (h.carriedArrivalDemand + h.carriedDepartureDemand) * 100, 0);
+        const accLost = investor.hourly.slice(0, Math.max(0, simHourIdx + 1)).reduce((s, h) => s + h.lostRevenueThb, 0);
+        const carried = currentGap ? currentGap.carriedArrivalDemand + currentGap.carriedDepartureDemand : 0;
+        const unmet = currentGap ? currentGap.unmetArrivalDemand + currentGap.unmetDepartureDemand : 0;
+        return (
+          <div className="ops__sim-strip">
+            <div className="ops__sim-bar">
+              <div className="ops__sim-bar-fill" style={{ width: `${simProgress * 100}%` }} />
+            </div>
+            <div className="ops__sim-revenue">
+              <div className="ops__sim-revenue-main">
+                <span className="ops__sim-time">{simSnapshot?.simTime ?? "06:00"}</span>
+                <span className="ops__sim-rev-value">฿{accRevenue.toLocaleString()}</span>
+                <span className="ops__sim-rev-label">earned so far</span>
+              </div>
+              <div className="ops__sim-revenue-details">
+                <span>{carried} carried this hour</span>
+                <span className="ops__sim-rev-sep">·</span>
+                <span>{unmet > 0 ? <strong style={{ color: "#dc322f" }}>{unmet} unmet</strong> : "0 unmet"}</span>
+                <span className="ops__sim-rev-sep">·</span>
+                <span style={{ color: "#dc322f" }}>฿{accLost.toLocaleString()} lost</span>
+              </div>
+            </div>
           </div>
-          <div className="ops__sim-stats">
-            <span>{simSnapshot?.simTime ?? "06:00"}</span>
-            <span>Carried <strong>{((currentGap?.carriedArrivalDemand ?? 0) + (currentGap?.carriedDepartureDemand ?? 0)).toLocaleString()}</strong></span>
-            <span>Unmet <strong>{((currentGap?.unmetArrivalDemand ?? 0) + (currentGap?.unmetDepartureDemand ?? 0)).toLocaleString()}</strong></span>
-            <span>Revenue <strong>฿{investor.totals.dailyRevenueThb.toLocaleString()}</strong></span>
-          </div>
-        </div>
-      ) : null}
+        );
+      })() : null}
 
       {/* ── Body: map + analytics ── */}
       <div className="ops__body">
@@ -1057,6 +1220,23 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                 Arrival capture {dashboard.demandSupply.arrivalCaptureOfAddressablePct}% · Departure capture {dashboard.demandSupply.departureCaptureOfAddressablePct}%. Run simulation for full-day analysis.
               </p>
             )}
+          </section>
+
+          {/* ── Demand Flow — investor math ── */}
+          {simRunning && currentGap ? (
+            <section className="ops-card">
+              <h2 className="ops-card__title">Demand Flow — {currentSimHour}</h2>
+              <DemandFlowCard gap={currentGap} simRunning={simRunning} />
+            </section>
+          ) : null}
+
+          {/* ── Transfer Hubs — bus-to-boat ── */}
+          <section className="ops-card">
+            <h2 className="ops-card__title">Bus → Boat Connections</h2>
+            <TransferHubsCard
+              simMinutes={simRunning && simSnapshot ? simSnapshot.simMinutes : null}
+              vehicles={displayVehicles}
+            />
           </section>
 
           {/* ── Weather ── */}

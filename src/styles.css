@@ -3127,44 +3127,89 @@ a { color: var(--tint); }
   }
 }
 
-/* ── Fleet Roster ── */
+/* ── Fleet Roster (investor-grade) ── */
 .ops-roster {
   margin-top: 12px;
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
+}
+
+.ops-roster__header {
+  display: grid;
+  grid-template-columns: 1fr 90px 70px 60px 50px 70px;
+  gap: 6px;
+  padding: 4px 0 8px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  border-bottom: 1px solid #eee;
 }
 
 .ops-roster__row {
   display: grid;
-  grid-template-columns: 8px 1fr 60px 50px 50px;
-  gap: 8px;
+  grid-template-columns: 1fr 90px 70px 60px 50px 70px;
+  gap: 6px;
   align-items: center;
-  padding: 8px 0;
-  font-size: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 7px 0;
+  font-size: 11px;
+  border-bottom: 1px solid #f5f5f5;
 }
 
 .ops-roster__row:last-child { border-bottom: 0; }
 
 .ops-roster__dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: inline-block;
 }
 
 .ops-roster__name {
   color: #1a1a1a;
   font-weight: 500;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: 6px;
 }
 
+.ops-roster__name > span { display: flex; flex-direction: column; }
+
 .ops-roster__dest {
-  font-size: 10px;
+  font-size: 9px;
   color: #999;
   font-weight: 400;
+}
+
+.ops-roster__driver {
+  font-size: 10px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-roster__rev {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: #16b8b0;
+  font-weight: 600;
+}
+
+.ops-roster__cond {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #666;
+}
+
+.ops-roster__cond-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .ops-roster__pax {
@@ -3250,4 +3295,157 @@ a { color: var(--tint); }
 @keyframes sim-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+
+/* ── Sim Revenue Strip ── */
+.ops__sim-revenue {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ops__sim-revenue-main {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ops__sim-time {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ops__sim-rev-value {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #16b8b0;
+}
+
+.ops__sim-rev-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.ops__sim-revenue-details {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #666;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.ops__sim-rev-sep { color: #ddd; }
+
+/* ── Demand Flow Card ── */
+.ops-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ops-flow__direction {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ops-flow__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.ops-flow__step {
+  font-size: 11px;
+  color: #666;
+  padding-left: 12px;
+  position: relative;
+}
+
+.ops-flow__step::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #ccc;
+}
+
+.ops-flow__step strong {
+  color: #1a1a1a;
+}
+
+.ops-flow__result {
+  display: flex;
+  gap: 12px;
+  padding-left: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ops-flow__carried { color: #16b8b0; }
+.ops-flow__unmet { color: #dc322f; }
+.ops-flow__ok { color: #16b8b0; }
+
+.ops-flow__divider {
+  height: 1px;
+  background: #eee;
+}
+
+/* ── Transfer Hub Card ── */
+.ops-hubs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ops-hub {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-left: 3px solid #999;
+}
+
+.ops-hub--ready { border-left-color: #16b8b0; }
+.ops-hub--watch { border-left-color: #b58900; }
+
+.ops-hub__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.ops-hub__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.ops-hub__status-label {
+  margin-left: auto;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+}
+
+.ops-hub__line {
+  font-size: 11px;
+  color: #444;
+  padding-left: 15px;
+}
+
+.ops-hub__line--dim { color: #bbb; }
+
+.ops-hub__pax {
+  font-size: 11px;
+  color: #16b8b0;
+  font-weight: 500;
+  padding-left: 15px;
+  margin-top: 4px;
 }
