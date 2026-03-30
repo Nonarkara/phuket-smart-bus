@@ -607,6 +607,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   );
   const replayAbortRef = useRef(false);
   const nextReplayMinuteRef = useRef<number | null>(null);
+  const useClientSimRef = useRef(false); // true when backend is down — skip API calls entirely
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -665,10 +666,15 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
       try {
         let frame: SimulationSnapshot;
-        try {
-          frame = await getSimulationFrame(nextMinute);
-        } catch {
+        if (useClientSimRef.current) {
           frame = buildFallbackSimFrame(nextMinute, dashboard!);
+        } else {
+          try {
+            frame = await getSimulationFrame(nextMinute);
+          } catch {
+            useClientSimRef.current = true;
+            frame = buildFallbackSimFrame(nextMinute, dashboard!);
+          }
         }
         if (cancelled || replayAbortRef.current) {
           return;
@@ -678,7 +684,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         nextReplayMinuteRef.current = nextMinute + investor.assumptions.replayStepMinutes;
         window.setTimeout(() => {
           void tick();
-        }, 90);
+        }, useClientSimRef.current ? 60 : 90);
       } catch {
         setSimRunning(false);
         nextReplayMinuteRef.current = null;
@@ -785,17 +791,27 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
     try {
       let investorPayload: InvestorSimulationPayload;
-      try {
-        investorPayload = investor ?? (await getInvestorSimulation());
-      } catch {
+      if (useClientSimRef.current || investor) {
         investorPayload = investor ?? buildFallbackInvestorPayload();
+      } else {
+        try {
+          investorPayload = await getInvestorSimulation();
+        } catch {
+          useClientSimRef.current = true;
+          investorPayload = buildFallbackInvestorPayload();
+        }
       }
       const firstMinute = investorPayload.assumptions.replayStartMinutes;
       let firstFrame: SimulationSnapshot;
-      try {
-        firstFrame = await getSimulationFrame(firstMinute);
-      } catch {
+      if (useClientSimRef.current) {
         firstFrame = buildFallbackSimFrame(firstMinute, dashboard!);
+      } else {
+        try {
+          firstFrame = await getSimulationFrame(firstMinute);
+        } catch {
+          useClientSimRef.current = true;
+          firstFrame = buildFallbackSimFrame(firstMinute, dashboard!);
+        }
       }
 
       setInvestor(investorPayload);
