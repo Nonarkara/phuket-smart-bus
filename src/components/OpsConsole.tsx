@@ -15,8 +15,34 @@ import { getInvestorSimulation, getOpsDashboard, getSimulationFrame } from "../a
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
 
 const OPS_POLL_MS = 15_000;
-const SIM_TICK_MS = 400; // slow enough for visible interpolation on map
-const SIM_ANIMATION_MS = 380; // just under tick so interpolation completes before next frame
+const SIM_TICK_MS = 500; // slow enough for visible interpolation on map
+const SIM_ANIMATION_MS = 480; // just under tick so interpolation completes before next frame
+const BUS_CAPACITY = 25;
+
+/* ── Densify sparse waypoints for smooth simulation ── */
+function densifyPath(sparse: [number, number][], targetCount = 20): [number, number][] {
+  if (sparse.length >= targetCount) return sparse;
+  const result: [number, number][] = [sparse[0]];
+  const totalSegs = sparse.length - 1;
+  const pointsPerSeg = Math.ceil((targetCount - 1) / totalSegs);
+  for (let s = 0; s < totalSegs; s++) {
+    const [aLat, aLng] = sparse[s];
+    const [bLat, bLng] = sparse[s + 1];
+    for (let i = 1; i <= pointsPerSeg; i++) {
+      const t = i / pointsPerSeg;
+      result.push([aLat + (bLat - aLat) * t, aLng + (bLng - aLng) * t]);
+    }
+  }
+  return result;
+}
+
+/* ── Deterministic passenger count from vehicleId + time ── */
+function simPassengers(vehicleId: string, simMinutes: number): number {
+  let hash = 0;
+  const key = vehicleId + String(Math.floor(simMinutes / 10));
+  for (let i = 0; i < key.length; i++) hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
+  return Math.abs(hash) % (BUS_CAPACITY + 1);
+}
 
 const ROUTE_MARKER_COORDINATES = {
   "rawai-airport": [8.1132, 98.3169],
@@ -194,6 +220,49 @@ function DemandOverflow({ hourly, currentHour }: { hourly: HourlyCapacityGap[]; 
           <p style={{ fontSize: 12, color: "#999", margin: 0 }}>No on-demand windows — supply meets demand.</p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Fleet Roster ── */
+function FleetRoster({ vehicles, routes, simMinutes }: { vehicles: VehiclePosition[]; routes: Route[]; simMinutes: number | null }) {
+  const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
+  const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
+
+  // Group vehicles by route and number them
+  const routeCounters: Record<string, number> = {};
+  const numbered = vehicles.map((v) => {
+    routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
+    const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
+    const label = isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`;
+    const pax = simMinutes !== null ? simPassengers(v.vehicleId, simMinutes) : null;
+    return { ...v, label, pax };
+  });
+
+  return (
+    <div className="ops-roster">
+      {numbered.map((v) => (
+        <div key={v.id} className="ops-roster__row">
+          <span className="ops-roster__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
+          <span className="ops-roster__name">
+            {v.label}
+            <span className="ops-roster__dest">{routeNameById[v.routeId] ?? v.routeId} → {v.destination?.en ?? "—"}</span>
+          </span>
+          <span className="ops-roster__pax">
+            <span className="ops-roster__pax-bar">
+              <span
+                className={`ops-roster__pax-fill ${(v.pax ?? 0) > 20 ? "ops-roster__pax-fill--high" : ""}`}
+                style={{ width: `${((v.pax ?? 0) / BUS_CAPACITY) * 100}%` }}
+              />
+            </span>
+            <span className="ops-roster__pax-count">{v.pax !== null ? v.pax : "—"}</span>
+          </span>
+          <span className="ops-roster__speed">{Math.round(v.speedKph)} km/h</span>
+          <span className={`ops-roster__status ops-roster__status--${v.status}`}>
+            {v.status === "moving" ? "Moving" : "Stop"}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -484,13 +553,13 @@ function buildFallbackSimFrame(simMinutes: number, fallbackDashboard: OpsDashboa
   const ferryActivity = hour < 8 ? 0 : hour < 9 ? 0.4 : hour < 17 ? 1.0 : hour < 19 ? 0.5 : 0;
 
   const ROUTE_WP: Record<string, [number,number][]> = {
-    "rawai-airport": [[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]],
-    "patong-old-bus-station": [[7.8830,98.2930],[7.8900,98.3200],[7.8840,98.3800],[7.8840,98.3960]],
-    "dragon-line": [[7.8840,98.3960],[7.8870,98.3920],[7.8900,98.3850],[7.8840,98.3960]],
-    "rassada-phi-phi": [[7.8574,98.3866],[7.8200,98.4500],[7.7500,98.7700]],
-    "rassada-ao-nang": [[7.8574,98.3866],[7.9500,98.6000],[8.0300,98.8200]],
-    "bang-rong-koh-yao": [[8.0317,98.4192],[8.0800,98.5000],[8.1100,98.5800]],
-    "chalong-racha": [[7.8216,98.3613],[7.7500,98.3600],[7.6000,98.3650]],
+    "rawai-airport": densifyPath([[7.7804,98.3225],[7.8120,98.3150],[7.8420,98.3080],[7.8750,98.3050],[7.9050,98.3050],[7.9500,98.3060],[8.0000,98.3080],[8.0700,98.3100],[8.1090,98.3070]], 25),
+    "patong-old-bus-station": densifyPath([[7.8830,98.2930],[7.8860,98.3050],[7.8900,98.3200],[7.8880,98.3400],[7.8860,98.3600],[7.8840,98.3800],[7.8840,98.3960]], 20),
+    "dragon-line": densifyPath([[7.8840,98.3960],[7.8860,98.3940],[7.8870,98.3920],[7.8880,98.3890],[7.8900,98.3850],[7.8880,98.3880],[7.8860,98.3920],[7.8840,98.3960]], 20),
+    "rassada-phi-phi": densifyPath([[7.8574,98.3866],[7.8400,98.4200],[7.8200,98.4500],[7.8000,98.5500],[7.7500,98.7700]], 20),
+    "rassada-ao-nang": densifyPath([[7.8574,98.3866],[7.8800,98.4500],[7.9500,98.6000],[8.0000,98.7200],[8.0300,98.8200]], 20),
+    "bang-rong-koh-yao": densifyPath([[8.0317,98.4192],[8.0500,98.4500],[8.0800,98.5000],[8.1000,98.5400],[8.1100,98.5800]], 20),
+    "chalong-racha": densifyPath([[7.8216,98.3613],[7.7900,98.3610],[7.7500,98.3600],[7.7000,98.3620],[7.6000,98.3650]], 20),
   };
   const TRIP_DUR: Record<string, number> = { "rawai-airport": 75, "patong-old-bus-station": 40, "dragon-line": 25, "rassada-phi-phi": 90, "rassada-ao-nang": 120, "bang-rong-koh-yao": 45, "chalong-racha": 60 };
   const HEADWAY: Record<string, number> = { "rawai-airport": 15, "patong-old-bus-station": 20, "dragon-line": 30, "rassada-phi-phi": 60, "rassada-ao-nang": 120, "bang-rong-koh-yao": 90, "chalong-racha": 120 };
@@ -767,7 +836,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const currentSimHour = simRunning && simSnapshot ? `${String(Math.floor(simSnapshot.simMinutes / 60)).padStart(2, "0")}:00` : null;
 
   return (
-    <div className="ops">
+    <div className={`ops ${simRunning ? "ops--sim-mode" : ""}`}>
       {/* ── Header ── */}
       <header className="ops__header">
         <div className="ops__brand">
@@ -779,6 +848,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </button>
           ) : null}
           <h1>PKSB Operations</h1>
+          {simRunning ? <span className="ops__sim-badge">Simulation</span> : null}
         </div>
 
         <div className="ops__flight-ticker">
@@ -933,6 +1003,16 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                 );
               })}
             </div>
+          </section>
+
+          {/* ── Fleet Roster ── */}
+          <section className="ops-card">
+            <h2 className="ops-card__title">Active Vehicles</h2>
+            <FleetRoster
+              vehicles={displayVehicles}
+              routes={routes}
+              simMinutes={simRunning && simSnapshot ? simSnapshot.simMinutes : null}
+            />
           </section>
 
           {/* ── Airport Demand vs Supply ── */}

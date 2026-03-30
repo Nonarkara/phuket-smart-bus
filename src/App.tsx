@@ -149,9 +149,10 @@ export default function App() {
   // Mobile: render tourist app directly, no frame
   if (isMobile) return <TouristApp onToggle={goOps} />;
 
-  // Desktop: smartphone frame + side panel
+  // Desktop: smartphone frame + side panel + background carousel
   return (
     <div className="desktop-shell">
+      <DesktopBackground />
       <div className="desktop-shell__side desktop-shell__side--left" />
       <div className="phone-frame">
         <div className="phone-frame__notch" />
@@ -171,6 +172,41 @@ export default function App() {
         </button>
         <p className="desktop-shell__hint">Open in your phone for the best experience</p>
       </div>
+    </div>
+  );
+}
+
+/* ── Rotating Phuket background images ── */
+const PHUKET_PHOTOS = [
+  "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&q=80",
+  "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=1920&q=80",
+  "https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1920&q=80",
+  "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1920&q=80",
+  "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=1920&q=80",
+];
+
+function DesktopBackground() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveIndex((i) => (i + 1) % PHUKET_PHOTOS.length);
+    }, 8000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="desktop-bg">
+      {PHUKET_PHOTOS.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className={`desktop-bg__img ${i === activeIndex ? "is-active" : ""}`}
+          loading={i === 0 ? "eager" : "lazy"}
+        />
+      ))}
+      <div className="desktop-bg__scrim" />
     </div>
   );
 }

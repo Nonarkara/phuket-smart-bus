@@ -25,13 +25,19 @@ export function interpolateHeading(from: number, to: number, progress: number) {
 }
 
 export function shouldAnimateVehicleFrame(previous: VehiclePosition[], next: VehiclePosition[]) {
+  // If vehicle count changed, animate the ones that persist
+  if (previous.length !== next.length) {
+    return true;
+  }
+
   const previousById = new Map(previous.map((vehicle) => [vehicle.vehicleId, vehicle]));
 
   return next.some((vehicle) => {
     const current = previousById.get(vehicle.vehicleId);
 
     if (!current || current.routeId !== vehicle.routeId) {
-      return false;
+      // New vehicle appeared — still animate the frame
+      return true;
     }
 
     return (
