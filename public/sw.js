@@ -1,4 +1,4 @@
-const CACHE_NAME = "pksb-v1";
+const CACHE_NAME = "pksb-v3";
 const PRECACHE_URLS = ["/", "/manifest.json", "/icon-192.svg"];
 
 self.addEventListener("install", (event) => {
@@ -26,17 +26,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // App shell & static assets: stale-while-revalidate
+  // App shell & static assets: network-first, cache fallback
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const networkFetch = fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      });
-      return cached || networkFetch;
-    })
+      })
+      .catch(() => caches.match(request))
   );
 });
