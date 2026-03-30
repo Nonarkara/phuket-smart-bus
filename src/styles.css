@@ -2597,17 +2597,17 @@ a { color: var(--tint); }
   font-weight: 600;
 }
 
-/* ── Main body: driver panel + map + analytics ── */
+/* ── Main body: news | map | operations ── */
 .ops__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px 1fr 380px;
+  grid-template-columns: 260px 1fr 340px;
   min-height: 0;
   overflow: hidden;
 }
 
-/* ── Driver Sidebar (left) ── */
-.ops__drivers {
+/* ── News Feed (left sidebar) ── */
+.ops__news {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -2617,14 +2617,58 @@ a { color: var(--tint); }
   padding: 12px;
 }
 
-.ops__drivers-title {
+.ops__news-title {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #999;
-  padding: 4px 8px 12px;
+  padding: 4px 4px 12px;
   margin: 0;
+}
+
+.news-item {
+  display: flex;
+  gap: 8px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f5f5f5;
+  border-left: 3px solid transparent;
+}
+
+.news-item:last-child { border-bottom: 0; }
+.news-item--warning { border-left-color: #dc322f; background: rgba(220,50,47,0.02); }
+.news-item--caution { border-left-color: #b58900; }
+.news-item--info { border-left-color: #e8e8e8; }
+
+.news-item__icon { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+
+.news-item__body { flex: 1; min-width: 0; }
+
+.news-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.news-item__header strong {
+  font-size: 12px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.news-item__time {
+  font-family: "SF Mono", monospace;
+  font-size: 9px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.news-item__desc {
+  font-size: 11px;
+  color: #666;
+  margin: 3px 0 0;
+  line-height: 1.4;
 }
 
 .driver-card {
@@ -3223,7 +3267,7 @@ a { color: var(--tint); }
     grid-template-rows: 40vh 1fr;
   }
 
-  .ops__drivers {
+  .ops__news {
     display: none;
   }
 
@@ -3623,4 +3667,204 @@ a { color: var(--tint); }
   font-weight: 500;
   padding-left: 15px;
   margin-top: 4px;
+}
+
+/* ── Simulation Timeline (bottom bar) ── */
+.sim-timeline {
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  padding: 10px 20px 12px;
+  flex: 0 0 auto;
+}
+
+.sim-timeline__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim-timeline__btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #16b8b0;
+  color: #fff;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.sim-timeline__btn:hover { background: #139e97; }
+.ops--sim-mode .sim-timeline__btn { background: #dc322f; }
+
+.sim-timeline__track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 24px;
+  background: #f7f7f8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sim-timeline__hour {
+  flex: 1;
+  text-align: center;
+  font-family: "SF Mono", monospace;
+  font-size: 8px;
+  color: #ccc;
+  line-height: 24px;
+}
+
+.sim-timeline__hour.is-current {
+  color: #1a1a1a;
+  font-weight: 700;
+  background: rgba(22, 184, 176, 0.1);
+}
+
+.sim-timeline__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #16b8b0;
+  transition: left 0.4s ease;
+  z-index: 1;
+}
+
+.sim-timeline__clock {
+  font-family: "SF Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #16b8b0;
+  flex-shrink: 0;
+  min-width: 48px;
+}
+
+.sim-timeline__metrics {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.sim-metric {
+  flex: 1;
+  min-width: 90px;
+  padding: 8px 10px;
+  background: #f7f7f8;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.sim-metric__value {
+  font-family: "SF Mono", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  display: block;
+}
+
+.sim-metric__value small {
+  font-size: 10px;
+  font-weight: 400;
+  color: #999;
+}
+
+.sim-metric__label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+  margin-top: 2px;
+  display: block;
+}
+
+.sim-metric--lost {
+  background: rgba(220, 50, 47, 0.04);
+}
+
+.sim-metric--lost .sim-metric__value {
+  color: #dc322f;
+}
+
+/* ── Fleet Rows (right sidebar) ── */
+.ops-fleet-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.fleet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  font-size: 11px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.fleet-row:last-child { border-bottom: 0; }
+
+.fleet-row__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fleet-row__info {
+  flex: 1;
+  min-width: 0;
+  color: #1a1a1a;
+}
+
+.fleet-row__info strong {
+  font-weight: 600;
+}
+
+.fleet-row__sub {
+  display: block;
+  font-size: 9px;
+  color: #999;
+  margin-top: 1px;
+}
+
+.fleet-row__status {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.fleet-row__status--moving { color: #16b8b0; }
+.fleet-row__status--dwelling { color: #b58900; }
+
+/* ── Hub lines (compact) ── */
+.ops-hub-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 11px;
+  color: #444;
+}
+
+.ops-hub-line__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Mobile: hide news sidebar ── */
+@media (max-width: 768px) {
+  .ops__news { display: none; }
+  .sim-timeline__track { display: none; }
+  .sim-timeline__metrics { flex-wrap: wrap; }
+  .sim-metric { min-width: 70px; }
 }
