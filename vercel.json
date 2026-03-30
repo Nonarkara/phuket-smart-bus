@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --ignore-scripts --no-optional",
+  "installCommand": "npm install",
   "buildCommand": "npx vite build",
   "outputDirectory": "dist/client",
   "framework": null,
