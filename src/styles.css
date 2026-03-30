@@ -2597,13 +2597,184 @@ a { color: var(--tint); }
   font-weight: 600;
 }
 
-/* ── Main body: map + analytics ── */
+/* ── Main body: driver panel + map + analytics ── */
 .ops__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 280px 1fr 380px;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ── Driver Sidebar (left) ── */
+.ops__drivers {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #e8e8e8;
+  padding: 12px;
+}
+
+.ops__drivers-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+  padding: 4px 8px 12px;
+  margin: 0;
+}
+
+.driver-card {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f7f7f8;
+  margin-bottom: 8px;
+  transition: background 0.15s;
+}
+
+.driver-card:hover {
+  background: #f0f0f2;
+}
+
+.driver-card--moving {
+  border-left: 3px solid #16b8b0;
+}
+
+.driver-card--dwelling {
+  border-left: 3px solid #b58900;
+}
+
+.driver-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #e0e0e0;
+  flex-shrink: 0;
+  object-fit: cover;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #999;
+}
+
+.driver-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.driver-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.driver-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driver-card__vehicle {
+  font-size: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.driver-card__route-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.driver-card__schedule {
+  font-size: 9px;
+  color: #999;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.driver-card__meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.driver-card__rating {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.driver-card__star {
+  color: #f0b429;
+  font-size: 12px;
+}
+
+.driver-card__pax {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: #666;
+}
+
+.driver-card__pax-bar {
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: #eee;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.driver-card__pax-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #16b8b0;
+}
+
+.driver-card__pax-fill--high {
+  background: #dc322f;
+}
+
+.driver-card__speed {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: #16b8b0;
+  font-weight: 500;
+}
+
+.driver-card__cond {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  color: #999;
+}
+
+.driver-card__cond-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
 }
 
 .ops__map {
@@ -3050,6 +3221,10 @@ a { color: var(--tint); }
   .ops__body {
     grid-template-columns: 1fr;
     grid-template-rows: 40vh 1fr;
+  }
+
+  .ops__drivers {
+    display: none;
   }
 
   .ops__analytics {

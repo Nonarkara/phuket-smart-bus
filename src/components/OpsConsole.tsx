@@ -415,6 +415,98 @@ function TransferHubsCard({ simMinutes, vehicles }: { simMinutes: number | null;
   );
 }
 
+/* ── Driver avatar URLs (deterministic per driver) ── */
+const DRIVER_AVATARS = [
+  "https://i.pravatar.cc/88?img=11", "https://i.pravatar.cc/88?img=12",
+  "https://i.pravatar.cc/88?img=14", "https://i.pravatar.cc/88?img=15",
+  "https://i.pravatar.cc/88?img=16", "https://i.pravatar.cc/88?img=18",
+  "https://i.pravatar.cc/88?img=20", "https://i.pravatar.cc/88?img=22",
+  "https://i.pravatar.cc/88?img=25", "https://i.pravatar.cc/88?img=27",
+  "https://i.pravatar.cc/88?img=32", "https://i.pravatar.cc/88?img=33",
+  "https://i.pravatar.cc/88?img=35", "https://i.pravatar.cc/88?img=36",
+  "https://i.pravatar.cc/88?img=38", "https://i.pravatar.cc/88?img=41",
+  "https://i.pravatar.cc/88?img=43", "https://i.pravatar.cc/88?img=45",
+  "https://i.pravatar.cc/88?img=48", "https://i.pravatar.cc/88?img=51",
+];
+
+/* ── Shift schedules: deterministic from vehicleId ── */
+const SHIFTS = [
+  { start: "05:30", end: "13:30" }, { start: "06:00", end: "14:00" },
+  { start: "07:00", end: "15:00" }, { start: "08:00", end: "16:00" },
+  { start: "10:00", end: "18:00" }, { start: "12:00", end: "20:00" },
+  { start: "14:00", end: "22:00" }, { start: "06:00", end: "12:00" },
+];
+
+function driverAvatar(vehicleId: string): string {
+  return DRIVER_AVATARS[stableHash(vehicleId + "av") % DRIVER_AVATARS.length];
+}
+
+function driverShift(vehicleId: string): { start: string; end: string } {
+  return SHIFTS[stableHash(vehicleId + "shift") % SHIFTS.length];
+}
+
+function driverRating(vehicleId: string): number {
+  return Math.round((38 + stableHash(vehicleId + "rate") % 13) * 10) / 100; // 3.8–5.0
+}
+
+/* ── Left sidebar: Driver Panel ── */
+function DriverPanel({ vehicles, routes, simMinutes }: { vehicles: VehiclePosition[]; routes: Route[]; simMinutes: number | null }) {
+  const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
+  const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
+
+  const routeCounters: Record<string, number> = {};
+  const cards = vehicles.map((v) => {
+    routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
+    const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
+    const label = isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`;
+    const pax = simMinutes !== null ? simPassengers(v.vehicleId, simMinutes) : null;
+    const driver = driverName(v.vehicleId);
+    const avatar = driverAvatar(v.vehicleId);
+    const shift = driverShift(v.vehicleId);
+    const rating = driverRating(v.vehicleId);
+    const cond = busCondition(v.vehicleId);
+    return { ...v, label, pax, driver, avatar, shift, rating, cond };
+  });
+
+  return (
+    <div className="ops__drivers">
+      <h3 className="ops__drivers-title">Fleet Drivers ({cards.length})</h3>
+      {cards.map((c) => (
+        <div key={c.id} className={`driver-card driver-card--${c.status}`}>
+          <div className="driver-card__avatar">
+            <img src={c.avatar} alt={c.driver} loading="lazy" />
+          </div>
+          <div className="driver-card__info">
+            <span className="driver-card__name">{c.driver}</span>
+            <span className="driver-card__vehicle">
+              <span className="driver-card__route-dot" style={{ background: routeColorById[c.routeId] ?? "#999" }} />
+              {c.label} · {routeNameById[c.routeId] ?? c.routeId}
+            </span>
+            <span className="driver-card__schedule">Shift {c.shift.start}–{c.shift.end}</span>
+            <div className="driver-card__meta">
+              <span className="driver-card__rating">
+                <span className="driver-card__star">★</span> {c.rating.toFixed(1)}
+              </span>
+              <span className="driver-card__pax">
+                {c.pax ?? "—"}/{BUS_CAPACITY}
+                <span className="driver-card__pax-bar">
+                  <span className={`driver-card__pax-fill ${(c.pax ?? 0) > 20 ? "driver-card__pax-fill--high" : ""}`}
+                    style={{ width: `${((c.pax ?? 0) / BUS_CAPACITY) * 100}%` }} />
+                </span>
+              </span>
+              <span className="driver-card__speed">{Math.round(c.speedKph)} km/h</span>
+              <span className="driver-card__cond">
+                <span className="driver-card__cond-dot" style={{ background: conditionColor(c.cond) }} />
+                {c.cond}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Replay marker builder ── */
 function buildReplayMarkers(
   baseMarkers: OpsMapOverlayMarker[],
@@ -1100,8 +1192,13 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         );
       })() : null}
 
-      {/* ── Body: map + analytics ── */}
+      {/* ── Body: drivers + map + analytics ── */}
       <div className="ops__body">
+        <DriverPanel
+          vehicles={displayVehicles}
+          routes={routes}
+          simMinutes={simRunning && simSnapshot ? simSnapshot.simMinutes : null}
+        />
         <div className="ops__map">
           <LiveMap
             lang="en"
