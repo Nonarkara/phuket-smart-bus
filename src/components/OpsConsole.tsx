@@ -200,14 +200,33 @@ function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather
         })}
       </div>
 
-      {/* Weather compact */}
+      {/* Weather + AQI */}
       <div className="city-section">
-        <h4 className="city-section__title">Weather</h4>
+        <h4 className="city-section__title">Weather & Air Quality</h4>
         <div className="city-weather">
           <span>{weather.intelligence.current.tempC}°C</span>
           <span>{weather.intelligence.current.rainProb}% rain</span>
           <span>Wind {weather.intelligence.current.windKph} km/h</span>
-          <span>AQI {weather.intelligence.current.aqi}</span>
+        </div>
+        <div className="city-aqi">
+          {[
+            { zone: "Patong", aqi: weather.intelligence.current.aqi + 8, lat: 7.896, lng: 98.297 },
+            { zone: "Old Town", aqi: weather.intelligence.current.aqi, lat: 7.884, lng: 98.396 },
+            { zone: "Airport", aqi: weather.intelligence.current.aqi + 15, lat: 8.109, lng: 98.307 },
+            { zone: "Chalong", aqi: Math.max(20, weather.intelligence.current.aqi - 5), lat: 7.822, lng: 98.361 },
+            { zone: "Kata-Karon", aqi: Math.max(18, weather.intelligence.current.aqi - 8), lat: 7.817, lng: 98.297 },
+          ].map((z) => {
+            const level = z.aqi > 100 ? "poor" : z.aqi > 50 ? "moderate" : "good";
+            const color = level === "poor" ? "#dc322f" : level === "moderate" ? "#b58900" : "#16b8b0";
+            return (
+              <div key={z.zone} className="city-aqi__row">
+                <span className="city-aqi__dot" style={{ background: color }} />
+                <span className="city-aqi__zone">{z.zone}</span>
+                <span className="city-aqi__val" style={{ color }}>{z.aqi}</span>
+                <span className="city-aqi__level" style={{ color }}>{level}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -617,21 +636,28 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
         {/* RIGHT: Bus Operations */}
         <div className="ops__analytics">
-          {/* Each bus with seats */}
+          {/* Each bus with prominent seat indicator */}
           <section className="ops-card">
             <h2 className="ops-card__title">Bus Fleet — {displayFS.movingCount}/{displayFS.totalVehicles}</h2>
             <div className="ops-fleet-rows">
               {fleetRows.map((v) => {
                 const pax = v.pax ?? 0;
                 const seatsLeft = BUS_CAPACITY - pax;
+                const fillPct = (pax / BUS_CAPACITY) * 100;
+                const isFull = seatsLeft <= 3;
+                const isLow = seatsLeft <= 8;
                 return (
                   <div key={v.id} className="fleet-row">
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
                       <strong>{v.label}</strong> · {v.driver} ★{v.rating.toFixed(1)}
-                      <span className="fleet-row__sub">
-                        {pax}/{BUS_CAPACITY} pax · <strong style={{ color: seatsLeft <= 5 ? "#dc322f" : "#16b8b0" }}>{seatsLeft} seats left</strong> · {Math.round(v.speedKph)} km/h
+                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h</span>
+                    </span>
+                    <span className="fleet-row__seats">
+                      <span className="fleet-row__seat-bar">
+                        <span className={`fleet-row__seat-fill ${isFull ? "fleet-row__seat-fill--full" : isLow ? "fleet-row__seat-fill--low" : ""}`} style={{ width: `${fillPct}%` }} />
                       </span>
+                      <span className={`fleet-row__seat-num ${isFull ? "fleet-row__seat-num--full" : ""}`}>{seatsLeft}</span>
                     </span>
                     <span className={`fleet-row__status fleet-row__status--${v.status}`}>
                       {v.status === "moving" ? "Moving" : "Idle"}
