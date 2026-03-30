@@ -176,13 +176,15 @@ export default function App() {
   );
 }
 
-/* ── Rotating Phuket background images ── */
+/* ── Rotating Phuket background images (Unsplash, free to use) ── */
 const PHUKET_PHOTOS = [
-  "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&q=80",
-  "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=1920&q=80",
-  "https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1920&q=80",
-  "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1920&q=80",
-  "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=1920&q=80",
+  "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&q=80",  // Phi Phi aerial
+  "https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1920&q=80",  // Long-tail boats turquoise
+  "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1920&q=80",     // Phang Nga Bay karsts
+  "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=1920&q=80",  // Beach sunset
+  "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=1920&q=80",  // Thai temple sunset
+  "https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=1920&q=80",  // Tropical beach palms
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",  // Crystal clear water
 ];
 
 function DesktopBackground() {
@@ -191,7 +193,7 @@ function DesktopBackground() {
   useEffect(() => {
     const id = setInterval(() => {
       setActiveIndex((i) => (i + 1) % PHUKET_PHOTOS.length);
-    }, 8000);
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 

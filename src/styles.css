@@ -88,7 +88,7 @@ a { color: var(--tint); }
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 2s ease-in-out;
+  transition: opacity 1.5s ease-in-out;
 }
 
 .desktop-bg__img.is-active {
