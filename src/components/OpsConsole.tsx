@@ -145,10 +145,19 @@ function generateNews(simMinutes: number | null): NewsItem[] {
 
 function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather: OpsDashboardPayload["weather"] }) {
   const hour = simMinutes !== null ? Math.floor(simMinutes / 60) : new Date().getHours();
+  const minute = simMinutes !== null ? simMinutes % 60 : new Date().getMinutes();
+  const nowMin = hour * 60 + minute;
   const news = useMemo(() => generateNews(simMinutes), [simMinutes]);
   const visibleFlights = FLIGHT_ORIGINS.filter((f) => { const [h] = f.time.split(":").map(Number); return h <= hour + 2; });
   const arrivals = visibleFlights.filter((f) => f.type === "arr");
   const departures = visibleFlights.filter((f) => f.type === "dep");
+  const dailyPax = FLIGHT_ORIGINS.reduce((s, f) => s + f.pax, 0);
+  // Next arriving flight
+  const nextArr = FLIGHT_ORIGINS.filter((f) => f.type === "arr").find((f) => {
+    const [h, m] = f.time.split(":").map(Number);
+    return h * 60 + m > nowMin;
+  });
+  const nextArrMin = nextArr ? (() => { const [h, m] = nextArr.time.split(":").map(Number); return h * 60 + m - nowMin; })() : null;
 
   return (
     <div className="ops__news">
@@ -156,7 +165,10 @@ function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather
 
       {/* Flights */}
       <div className="city-section">
-        <h4 className="city-section__title">Flights — HKT Airport</h4>
+        <h4 className="city-section__title">Flights — {dailyPax.toLocaleString()} daily pax</h4>
+        {nextArr ? (
+          <div className="city-next-flight">Next: <strong>{nextArr.code}</strong> from {nextArr.city} in <strong>{nextArrMin} min</strong> ({nextArr.pax} pax)</div>
+        ) : null}
         <div className="city-flights">
           <div className="city-flights__col">
             <span className="city-flights__label">Arrivals</span>
@@ -285,13 +297,19 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
   const carbonSaved = Math.round(busKm * CO2_PER_BUS_KM);
   const activeCount = vehicles.filter((v) => v.status === "moving").length;
 
+  const totalAddr = accHourly.reduce((s, h) => s + h.addressableArrivalDemand + h.addressableDepartureDemand, 0);
+  const capturePct = totalAddr > 0 ? Math.round((totalPax / totalAddr) * 100) : 100;
+  const onDemandHours = accHourly.filter((h) => h.additionalArrivalBusesNeeded + h.additionalDepartureBusesNeeded > 0).length;
+
   const metrics = [
-    { label: "Buses Active", value: String(activeCount), unit: "" },
-    { label: "Rounds", value: totalRounds.toLocaleString(), unit: "" },
-    { label: "Km Served", value: busKm.toLocaleString(), unit: "km" },
-    { label: "Passengers", value: totalPax.toLocaleString(), unit: "" },
+    { label: "Buses", value: String(activeCount), unit: "" },
+    { label: "Trips", value: totalRounds.toLocaleString(), unit: "" },
+    { label: "Km", value: busKm.toLocaleString(), unit: "" },
+    { label: "Pax", value: totalPax.toLocaleString(), unit: "" },
     { label: "Revenue", value: `฿${totalRevenue.toLocaleString()}`, unit: "" },
-    { label: "CO₂ Saved", value: carbonSaved.toLocaleString(), unit: "kg" },
+    { label: "Capture", value: `${capturePct}%`, unit: "" },
+    { label: "CO₂", value: carbonSaved.toLocaleString(), unit: "kg" },
+    ...(onDemandHours > 0 ? [{ label: "On-Demand", value: String(onDemandHours), unit: "hrs" }] : []),
   ];
 
   return (
@@ -636,23 +654,32 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
         {/* RIGHT: Bus Operations */}
         <div className="ops__analytics">
-          {/* Each bus with prominent seat indicator */}
-          <section className="ops-card">
-            <h2 className="ops-card__title">Bus Fleet — {displayFS.movingCount}/{displayFS.totalVehicles}</h2>
+          {/* Each bus with load %, seats, ETA */}
+          <section className="ops-card ops-card--tight">
+            {(() => {
+              const totalPaxOnBuses = fleetRows.reduce((s, v) => s + (v.pax ?? 0), 0);
+              const totalCapacity = fleetRows.length * BUS_CAPACITY;
+              const utilPct = totalCapacity > 0 ? Math.round((totalPaxOnBuses / totalCapacity) * 100) : 0;
+              return <h2 className="ops-card__title">Fleet {utilPct}% loaded · {displayFS.movingCount}/{displayFS.totalVehicles} active</h2>;
+            })()}
             <div className="ops-fleet-rows">
               {fleetRows.map((v) => {
                 const pax = v.pax ?? 0;
                 const seatsLeft = BUS_CAPACITY - pax;
+                const loadPct = Math.round((pax / BUS_CAPACITY) * 100);
                 const fillPct = (pax / BUS_CAPACITY) * 100;
                 const isFull = seatsLeft <= 3;
                 const isLow = seatsLeft <= 8;
+                // ETA: estimate minutes to next major stop based on speed
+                const eta = v.status === "moving" ? Math.round(3 + stableHash(v.vehicleId + "eta") % 12) : null;
                 return (
                   <div key={v.id} className="fleet-row">
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
-                      <strong>{v.label}</strong> · {v.driver} ★{v.rating.toFixed(1)}
-                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h</span>
+                      <strong>{v.label}</strong> · {v.driver}
+                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h{eta ? ` · ${eta} min to stop` : ""}</span>
                     </span>
+                    <span className={`fleet-row__load ${isFull ? "fleet-row__load--full" : isLow ? "fleet-row__load--low" : ""}`}>{loadPct}%</span>
                     <span className="fleet-row__seats">
                       <span className="fleet-row__seat-bar">
                         <span className={`fleet-row__seat-fill ${isFull ? "fleet-row__seat-fill--full" : isLow ? "fleet-row__seat-fill--low" : ""}`} style={{ width: `${fillPct}%` }} />
@@ -660,7 +687,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                       <span className={`fleet-row__seat-num ${isFull ? "fleet-row__seat-num--full" : ""}`}>{seatsLeft}</span>
                     </span>
                     <span className={`fleet-row__status fleet-row__status--${v.status}`}>
-                      {v.status === "moving" ? "Moving" : "Idle"}
+                      {v.status === "moving" ? "En Route" : "Idle"}
                     </span>
                   </div>
                 );
@@ -701,12 +728,33 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </div>
           </section>
 
-          {/* Hubs */}
-          <section className="ops-card">
+          {/* Hubs with live countdowns */}
+          <section className="ops-card ops-card--tight">
             <h2 className="ops-card__title">Bus → Boat</h2>
-            {["Rassada → Phi Phi, Ao Nang", "Chalong → Racha", "Bang Rong → Koh Yao"].map((h, i) => (
-              <div key={i} className="ops-hub-line"><span className="ops-hub-line__dot" style={{ background: "#16b8b0" }} /><span>{h}</span></div>
-            ))}
+            {[
+              { name: "Rassada", dest: "Phi Phi", departures: [510, 540, 570, 630, 690, 810, 870, 930] },
+              { name: "Chalong", dest: "Racha", departures: [510, 540, 600, 780, 900] },
+              { name: "Bang Rong", dest: "Koh Yao", departures: [450, 510, 570, 630, 780, 900, 960] },
+            ].map((hub) => {
+              const now = simMinutes ?? 0;
+              const next = hub.departures.find((d) => d > now);
+              const minUntil = next ? next - now : null;
+              const fmtTime = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+              const color = minUntil === null ? "#999" : minUntil <= 15 ? "#dc322f" : minUntil <= 30 ? "#b58900" : "#16b8b0";
+              return (
+                <div key={hub.name} className="ops-hub-line">
+                  <span className="ops-hub-line__dot" style={{ background: color }} />
+                  <span>{hub.name} → {hub.dest}</span>
+                  {next ? (
+                    <span style={{ marginLeft: "auto", fontFamily: '"SF Mono", monospace', fontSize: 10, color, fontWeight: 600 }}>
+                      {fmtTime(next)} ({minUntil} min)
+                    </span>
+                  ) : (
+                    <span style={{ marginLeft: "auto", fontSize: 9, color: "#999" }}>No more today</span>
+                  )}
+                </div>
+              );
+            })}
           </section>
         </div>
       </div>

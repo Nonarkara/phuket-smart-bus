@@ -2601,7 +2601,7 @@ a { color: var(--tint); }
 .ops__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px 1fr 340px;
+  grid-template-columns: 240px 1fr 320px;
   min-height: 0;
   overflow: hidden;
 }
@@ -2906,8 +2906,8 @@ a { color: var(--tint); }
 .ops__analytics {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  gap: 10px;
+  padding: 12px;
   overflow-y: auto;
   border-left: 1px solid #e8e8e8;
   background: #fff;
@@ -2916,8 +2916,12 @@ a { color: var(--tint); }
 /* ── Cards ── */
 .ops-card {
   background: #f7f7f8;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.ops-card--tight {
+  padding: 12px;
 }
 
 .ops-card__title {
@@ -4065,4 +4069,31 @@ a { color: var(--tint); }
   letter-spacing: 0.04em;
   min-width: 52px;
   text-align: right;
+}
+
+/* ── Load % indicator per bus ── */
+.fleet-row__load {
+  font-family: "SF Mono", monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #16b8b0;
+  min-width: 32px;
+  text-align: right;
+}
+
+.fleet-row__load--low { color: #b58900; }
+.fleet-row__load--full { color: #dc322f; }
+
+/* ── Next flight countdown ── */
+.city-next-flight {
+  font-size: 11px;
+  color: #444;
+  padding: 4px 8px;
+  background: rgba(22, 184, 176, 0.06);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.city-next-flight strong {
+  color: #16b8b0;
 }
