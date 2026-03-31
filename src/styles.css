@@ -4141,3 +4141,132 @@ a { color: var(--tint); }
   .ops { background: #fff; }
   .ops-card { break-inside: avoid; }
 }
+
+/* ── Info Button (bottom-right corner) ── */
+.ops__info-btn {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.15s;
+}
+.ops__info-btn:hover { background: #f7f7f8; color: #16b8b0; border-color: #16b8b0; }
+
+/* ── Info Overlay ── */
+.ops__info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ops__info-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.ops__info-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ops__info-close:hover { background: #e0e0e0; }
+
+.ops__info-panel h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 16px 0 8px;
+}
+
+.ops__info-panel h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+  margin: 20px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ops__info-panel ul {
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+
+.ops__info-panel li {
+  margin-bottom: 6px;
+}
+
+.ops__info-panel a {
+  color: #16b8b0;
+  text-decoration: none;
+}
+.ops__info-panel a:hover { text-decoration: underline; }
+
+.ops__info-panel p {
+  margin: 8px 0;
+}
+
+.info-logos {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.info-logo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  padding: 4px 10px;
+  background: #f7f7f8;
+  border-radius: 6px;
+}
+
+.info-logo--accent {
+  background: rgba(22,184,176,0.08);
+  color: #16b8b0;
+}
+
+.info-version {
+  font-size: 11px;
+  color: #999;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}

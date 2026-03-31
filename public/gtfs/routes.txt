@@ -1,0 +1,8 @@
+route_id,agency_id,route_short_name,route_long_name,route_type,route_color,route_text_color
+rawai-airport,PKSB,Airport Line,Airport Line - Phuket,3,16b8b0,FFFFFF
+patong-old-bus-station,PKSB,Patong Line,Patong Line - Phuket,3,e5574f,FFFFFF
+dragon-line,PKSB,Dragon Line,Dragon Line - Phuket,3,f0b429,FFFFFF
+rassada-phi-phi,PKSB,Phi Phi Ferry,Phi Phi Ferry - Phuket,4,58a6ff,FFFFFF
+rassada-ao-nang,PKSB,Ao Nang Ferry,Ao Nang Ferry - Phuket,4,a371f7,FFFFFF
+bang-rong-koh-yao,PKSB,Koh Yao Ferry,Koh Yao Ferry - Phuket,4,3fb950,FFFFFF
+chalong-racha,PKSB,Racha Ferry,Racha Ferry - Phuket,4,d29922,FFFFFF

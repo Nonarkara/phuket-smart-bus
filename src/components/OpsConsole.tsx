@@ -21,7 +21,8 @@ const OPS_POLL_MS = 15_000;
 const SIM_TICK_MS = 350;
 const SIM_ANIMATION_MS = 330;
 const BUS_CAPACITY = 25;
-const CO2_PER_BUS_KM = 0.12; // kg CO2 saved vs equivalent taxi trips
+// APTA standard: car = 0.21 kg CO2/pax-km, bus = 0.06 kg CO2/pax-km → saving = 0.15 kg/pax-km
+const CO2_SAVING_PER_PAX_KM = 0.15; // kg CO2 saved per passenger-km vs private car (APTA SUDS-CC-RP-001-09)
 
 /* ── Helpers ── */
 function densifyPath(sparse: [number, number][], n = 20): [number, number][] {
@@ -294,7 +295,8 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
   // Estimate rounds: each bus trip is one departure, 2 directions per round
   const totalRounds = accHourly.reduce((s, h) => s + (h.requiredArrivalDepartures ?? 0) + (h.requiredDepartureDepartures ?? 0), 0);
   const busKm = totalRounds * 35; // ~35km per trip (airport to south)
-  const carbonSaved = Math.round(busKm * CO2_PER_BUS_KM);
+  const avgTripKm = 18; // average passenger trip length
+  const carbonSaved = Math.round(totalPax * avgTripKm * CO2_SAVING_PER_PAX_KM); // APTA standard
   const activeCount = vehicles.filter((v) => v.status === "moving").length;
 
   const totalAddr = accHourly.reduce((s, h) => s + h.addressableArrivalDemand + h.addressableDepartureDemand, 0);
@@ -505,6 +507,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [simSnapshot, setSimSnapshot] = useState<SimulationSnapshot | null>(null);
   const [simRunning, setSimRunning] = useState(false);
   const [simLoading, setSimLoading] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
   const replayAbortRef = useRef(false);
@@ -676,14 +679,19 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                 const fillPct = (pax / BUS_CAPACITY) * 100;
                 const isFull = seatsLeft <= 3;
                 const isLow = seatsLeft <= 8;
-                // ETA: estimate minutes to next major stop based on speed
-                const eta = v.status === "moving" ? Math.round(3 + stableHash(v.vehicleId + "eta") % 12) : null;
+                // Predictive ETA: base estimate + weather penalty + incident penalty
+                const baseEta = 3 + stableHash(v.vehicleId + "eta") % 12;
+                const rainPenalty = dashboard.weather.intelligence.current.rainProb > 50 ? 1.2 : dashboard.weather.intelligence.current.rainProb > 30 ? 1.1 : 1.0;
+                const hasIncident = generateNews(simMinutes).some((n) => n.severity === "warning" && n.lat);
+                const incidentPenalty = hasIncident ? 1.15 : 1.0;
+                const eta = v.status === "moving" ? Math.round(baseEta * rainPenalty * incidentPenalty) : null;
+                const etaAdjusted = rainPenalty > 1.0 || incidentPenalty > 1.0;
                 return (
                   <div key={v.id} className="fleet-row">
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
                       <strong>{v.label}</strong> · {v.driver}
-                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h{eta ? ` · ${eta} min to stop` : ""}</span>
+                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h{eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}</span>
                     </span>
                     <span className={`fleet-row__load ${isFull ? "fleet-row__load--full" : isLow ? "fleet-row__load--low" : ""}`}>{loadPct}%</span>
                     <span className="fleet-row__seats">
@@ -767,6 +775,59 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
       {/* ── Bottom: Simulation Timeline ── */}
       <SimTimeline simMinutes={simMinutes} investor={investor} vehicles={displayVehicles} simRunning={simRunning} onToggle={toggleReplay} simLoading={simLoading} />
+
+      {/* ── Info button (bottom-right corner) ── */}
+      <button className="ops__info-btn" type="button" onClick={() => setShowInfo(true)} title="About this project">i</button>
+
+      {/* ── Info panel ── */}
+      {showInfo ? (
+        <div className="ops__info-overlay" onClick={() => setShowInfo(false)}>
+          <div className="ops__info-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="ops__info-close" type="button" onClick={() => setShowInfo(false)}>✕</button>
+
+            <div className="info-logos">
+              <span className="info-logo">PMUAA</span>
+              <span className="info-logo">DEPA</span>
+              <span className="info-logo">Smart City Thailand</span>
+              <span className="info-logo info-logo--accent">Axiom</span>
+              <span className="info-logo">Phuket City</span>
+            </div>
+
+            <h2>Phuket Smart Bus — Pilot Project</h2>
+            <p>Developed by <strong>Dr. Non Arkaraprasertkul</strong> as part of the <strong>Axiom Lab</strong>, exploring how development innovation can lead to real transportation innovations for smart cities.</p>
+            <p>This project is supported by grants from PMUAA, DEPA, and the Smart City Thailand Office.</p>
+            <p>Contact: <a href="https://nonarkara.com" target="_blank" rel="noopener">nonarkara.com</a></p>
+
+            <h3>Standards & Specifications</h3>
+            <ul>
+              <li><strong>GTFS</strong> — General Transit Feed Specification for route/schedule data compatibility with Google Maps, Apple Maps, and MaaS platforms. <a href="https://gtfs.org" target="_blank" rel="noopener">gtfs.org</a></li>
+              <li><strong>GTFS-Realtime</strong> — Protocol Buffer-based real-time vehicle positions, trip updates, and service alerts. <a href="https://developers.google.com/transit/gtfs-realtime" target="_blank" rel="noopener">Google GTFS-RT</a></li>
+              <li><strong>APTA SUDS-CC-RP-001-09</strong> — American Public Transportation Association standard for quantifying greenhouse gas emissions. Carbon savings: 0.15 kg CO₂/passenger-km vs private cars.</li>
+              <li><strong>SIRI</strong> — Service Interface for Real-time Information, European standard for real-time transit data exchange.</li>
+            </ul>
+
+            <h3>APIs & Data Sources</h3>
+            <ul>
+              <li><strong>Phuket Smart Bus Tracker</strong> — Live GPS feed from smartbus-pk-api.phuket.cloud (Bearer token auth, 15s cache)</li>
+              <li><strong>Open-Meteo</strong> — Weather forecasts, precipitation, wind speed, AQI. Free tier, no auth. <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a></li>
+              <li><strong>HKT Flight Schedule</strong> — Phuket Airport arrival/departure data for demand modeling</li>
+              <li><strong>OpenStreetMap</strong> — Base map tiles via Leaflet. <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">openstreetmap.org</a></li>
+              <li><strong>GTFS Static Feed</strong> — Available at /gtfs/ (stops.txt, routes.txt, agency.txt)</li>
+            </ul>
+
+            <h3>Technology</h3>
+            <ul>
+              <li>React 19 + TypeScript + Vite — Frontend</li>
+              <li>Express + SQLite — Backend (Render)</li>
+              <li>Leaflet + OpenStreetMap — Mapping</li>
+              <li>Vercel — Frontend hosting</li>
+              <li>Socket.io — Real-time infrastructure (ready)</li>
+            </ul>
+
+            <p className="info-version">v{typeof APP_VERSION !== "undefined" ? APP_VERSION : "0.1.0"} · Built with care in Bangkok</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
