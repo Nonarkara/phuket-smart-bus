@@ -4097,3 +4097,47 @@ a { color: var(--tint); }
 .city-next-flight strong {
   color: #16b8b0;
 }
+
+/* ── Tablet layout (768-1200px) ── */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .ops__body {
+    grid-template-columns: 1fr 280px;
+  }
+  .ops__news {
+    display: none;
+  }
+  .ops__analytics {
+    padding: 10px;
+    gap: 8px;
+  }
+  .ops-card {
+    padding: 10px;
+  }
+  .sim-metric {
+    min-width: 70px;
+    padding: 6px 8px;
+  }
+  .sim-metric__value {
+    font-size: 14px;
+  }
+}
+
+/* ── PDF Export button ── */
+.sim-metric--export {
+  cursor: pointer;
+  border: 1px solid #16b8b0;
+  background: rgba(22, 184, 176, 0.06);
+}
+.sim-metric--export:hover { background: rgba(22, 184, 176, 0.12); }
+.sim-metric--export .sim-metric__value { color: #16b8b0; }
+
+/* ── Print styles for PDF export ── */
+@media print {
+  .ops__logos, .ops__header, .sim-timeline__header { break-inside: avoid; }
+  .ops__news { display: none; }
+  .ops__body { grid-template-columns: 1fr 320px; }
+  .ops__layers, .ops__map-overlay { display: none; }
+  .sim-metric--export { display: none; }
+  .ops { background: #fff; }
+  .ops-card { break-inside: avoid; }
+}

@@ -266,7 +266,18 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
         setHealth(healthData);
         setSelectedRouteId(primaryRoute?.id ?? null);
       } catch {
-        if (alive) setBootError("bootstrap");
+        // Fallback: show demo routes when backend is unavailable
+        if (alive) {
+          const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
+          const fallbackRoutes: Route[] = [
+            { id: "rawai-airport" as any, name: lt("Airport Line"), shortName: lt("Airport Line"), overview: lt("Airport to Rawai"), axis: "north_south" as any, axisLabel: lt("N-S"), tier: "core" as any, color: "#16b8b0", accentColor: "#16b8b0", bounds: [[7.7804,98.3225],[8.1090,98.3070]] as any, pathSegments: [[[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]]] as any, stopCount: 5, defaultStopId: "airport-1", activeVehicles: 4, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo — backend offline") } },
+            { id: "patong-old-bus-station" as any, name: lt("Patong Line"), shortName: lt("Patong Line"), overview: lt("Patong to Old Town"), axis: "east_west" as any, axisLabel: lt("E-W"), tier: "core" as any, color: "#e5574f", accentColor: "#e5574f", bounds: [[7.8830,98.2930],[7.8840,98.3960]] as any, pathSegments: [[[7.8830,98.2930],[7.8900,98.3200],[7.8840,98.3800],[7.8840,98.3960]]] as any, stopCount: 4, defaultStopId: "patong-1", activeVehicles: 2, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo") } },
+            { id: "dragon-line" as any, name: lt("Dragon Line"), shortName: lt("Dragon Line"), overview: lt("Old Town Loop"), axis: "loop" as any, axisLabel: lt("Loop"), tier: "auxiliary" as any, color: "#f0b429", accentColor: "#f0b429", bounds: [[7.8840,98.3850],[7.8900,98.3960]] as any, pathSegments: [[[7.8840,98.3960],[7.8870,98.3920],[7.8900,98.3850],[7.8840,98.3960]]] as any, stopCount: 3, defaultStopId: "dragon-1", activeVehicles: 1, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo") } },
+          ];
+          setRoutes(fallbackRoutes);
+          setSelectedRouteId("rawai-airport" as any);
+          setBootError(null);
+        }
       } finally {
         if (alive) setIsBooting(false);
       }

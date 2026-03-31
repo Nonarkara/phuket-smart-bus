@@ -343,6 +343,12 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
             <span className="sim-metric__label">Lost Revenue</span>
           </div>
         ) : null}
+        {simRunning ? (
+          <button className="sim-metric sim-metric--export" type="button" onClick={() => window.print()}>
+            <span className="sim-metric__value">PDF</span>
+            <span className="sim-metric__label">Export</span>
+          </button>
+        ) : null}
       </div>
     </div>
   );
