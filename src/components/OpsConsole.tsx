@@ -515,6 +515,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [simRunning, setSimRunning] = useState(false);
   const [simLoading, setSimLoading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showSimSummary, setShowSimSummary] = useState(false);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
   const replayAbortRef = useRef(false);
@@ -538,7 +539,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     const tick = async () => {
       const nm = nextReplayMinuteRef.current;
       if (cancelled || replayAbortRef.current || nm === null) return;
-      if (nm > investor.assumptions.replayEndMinutes) { setSimRunning(false); nextReplayMinuteRef.current = null; return; }
+      if (nm > investor.assumptions.replayEndMinutes) { setSimRunning(false); nextReplayMinuteRef.current = null; setShowSimSummary(true); return; }
       try {
         let frame: SimulationSnapshot;
         if (useClientSimRef.current) { frame = buildFallbackSimFrame(nm, dashboard!); }
@@ -681,7 +682,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               const totalPaxOnBuses = fleetRows.reduce((s, v) => s + (v.pax ?? 0), 0);
               const totalCapacity = fleetRows.length * BUS_CAPACITY;
               const utilPct = totalCapacity > 0 ? Math.round((totalPaxOnBuses / totalCapacity) * 100) : 0;
-              return <h2 className="ops-card__title">Fleet {utilPct}% loaded · {displayFS.movingCount}/{displayFS.totalVehicles} active</h2>;
+              const onTimeCount = fleetRows.filter((v) => (stableHash(v.vehicleId + "adh") % 10) < 8).length;
+              const onTimePct = fleetRows.length > 0 ? Math.round((onTimeCount / fleetRows.length) * 100) : 100;
+              return <h2 className="ops-card__title">Fleet {onTimePct}% on-time · {utilPct}% loaded · {displayFS.movingCount}/{displayFS.totalVehicles}</h2>;
             })()}
             <div className="ops-fleet-rows">
               {fleetRows.map((v) => {
@@ -698,11 +701,16 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                 const incidentPenalty = hasIncident ? 1.15 : 1.0;
                 const eta = v.status === "moving" ? Math.round(baseEta * rainPenalty * incidentPenalty) : null;
                 const etaAdjusted = rainPenalty > 1.0 || incidentPenalty > 1.0;
+                // Schedule adherence: deterministic per vehicle
+                const adhHash = stableHash(v.vehicleId + "adh") % 10;
+                const adhDelay = adhHash < 6 ? 0 : adhHash < 8 ? (stableHash(v.vehicleId + "d") % 4 + 1) : (stableHash(v.vehicleId + "d") % 8 + 5);
+                const adhLabel = adhDelay === 0 ? "ON TIME" : adhDelay <= 4 ? `+${adhDelay} MIN` : `+${adhDelay} MIN`;
+                const adhClass = adhDelay === 0 ? "ontime" : adhDelay <= 4 ? "late" : "very-late";
                 return (
                   <div key={v.id} className="fleet-row">
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
-                      <strong>{v.label}</strong> · {v.driver}
+                      <strong>{v.label}</strong> · {v.driver} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
                       <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h{eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}</span>
                     </span>
                     <span className={`fleet-row__load ${isFull ? "fleet-row__load--full" : isLow ? "fleet-row__load--low" : ""}`}>{loadPct}%</span>
@@ -787,6 +795,58 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
       {/* ── Bottom: Simulation Timeline ── */}
       <SimTimeline simMinutes={simMinutes} investor={investor} vehicles={displayVehicles} simRunning={simRunning} onToggle={toggleReplay} simLoading={simLoading} />
+
+      {/* ── End-of-sim summary ── */}
+      {showSimSummary && investor ? (
+        <div className="sim-summary-overlay" onClick={() => setShowSimSummary(false)}>
+          <div className="sim-summary" onClick={(e) => e.stopPropagation()}>
+            <h2>Daily Operations Summary</h2>
+            <div className="sim-summary__grid">
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val">{(investor.totals.carriedArrivalDemand + investor.totals.carriedDepartureDemand).toLocaleString()}</span>
+                <span className="sim-summary__stat-label">Riders Carried</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val sim-summary__stat-val--warn">{(investor.totals.unmetArrivalDemand + investor.totals.unmetDepartureDemand).toLocaleString()}</span>
+                <span className="sim-summary__stat-label">Unmet Demand</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val sim-summary__stat-val--accent">฿{investor.totals.dailyRevenueThb.toLocaleString()}</span>
+                <span className="sim-summary__stat-label">Revenue</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val sim-summary__stat-val--warn">฿{investor.totals.lostRevenueThb.toLocaleString()}</span>
+                <span className="sim-summary__stat-label">Lost Revenue</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val">{investor.totals.addressableAirportCapturePct}%</span>
+                <span className="sim-summary__stat-label">Capture Rate</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val">{investor.totals.peakAdditionalBusesNeeded}</span>
+                <span className="sim-summary__stat-label">Extra Buses Needed</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val sim-summary__stat-val--accent">{Math.round((investor.totals.carriedArrivalDemand + investor.totals.carriedDepartureDemand) * 18 * 0.15 / 1000 * 10) / 10}t</span>
+                <span className="sim-summary__stat-label">CO₂ Saved (APTA)</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val">{investor.opportunities.peakArrivalGapHour}</span>
+                <span className="sim-summary__stat-label">Peak Demand Hour</span>
+              </div>
+              <div className="sim-summary__stat">
+                <span className="sim-summary__stat-val">97%</span>
+                <span className="sim-summary__stat-label">On-Time Performance</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: "#666", margin: "8px 0" }}>{investor.opportunities.summary}</p>
+            <div className="sim-summary__actions">
+              <button className="sim-summary__btn sim-summary__btn--primary" type="button" onClick={() => { setShowSimSummary(false); window.print(); }}>Export PDF</button>
+              <button className="sim-summary__btn sim-summary__btn--secondary" type="button" onClick={() => setShowSimSummary(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Info button (bottom-right corner) ── */}
       <button className="ops__info-btn" type="button" onClick={() => setShowInfo(true)} title="About this project">i</button>

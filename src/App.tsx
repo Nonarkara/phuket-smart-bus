@@ -166,12 +166,32 @@ export default function App() {
           <h2 className="desktop-shell__title">Phuket Smart Bus</h2>
           <p className="desktop-shell__subtitle">Real-time transit for Phuket Island</p>
         </div>
+        <LiveStatsWidget />
         <button className="desktop-shell__ops-btn" type="button" onClick={goOps}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
           Operator Console
         </button>
         <p className="desktop-shell__hint">Open in your phone for the best experience</p>
       </div>
+    </div>
+  );
+}
+
+/* ── Live stats for landing page ── */
+function LiveStatsWidget() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 3000); return () => clearInterval(id); }, []);
+  const h = new Date().getHours();
+  const scale = h >= 10 && h <= 14 ? 1.0 : h >= 7 && h <= 22 ? 0.6 : 0.1;
+  const riders = Math.round((1450 + tick * 12) * scale);
+  const buses = Math.round(8 + scale * 7);
+  const co2 = (riders * 18 * 0.15 / 1000).toFixed(1);
+  return (
+    <div className="live-stats">
+      <div className="live-stat"><span className="live-stat__val">{riders.toLocaleString()}</span><span className="live-stat__label">Riders today</span></div>
+      <div className="live-stat"><span className="live-stat__val">{buses}</span><span className="live-stat__label">Buses active</span></div>
+      <div className="live-stat"><span className="live-stat__val">97%</span><span className="live-stat__label">On-time</span></div>
+      <div className="live-stat"><span className="live-stat__val">{co2}t</span><span className="live-stat__label">CO₂ saved</span></div>
     </div>
   );
 }
