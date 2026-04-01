@@ -102,8 +102,31 @@ interface WelcomeSheetProps {
   onNavigateToStop: (stopId: string) => void;
 }
 
+/* ── Estimate next bus time per destination ── */
+const DEST_SCHEDULE: Record<string, number[]> = {
+  "Patong": [375,435,495,555,615,675,735,795,855,915,975,1035,1095,1155,1215,1275],
+  "Old Town": [360,390,420,450,480,510,540,570,600,630,660,690,720,750,780,810,840,870,900,930,960,990,1020,1050,1080,1110,1140,1170,1200,1230,1260,1290,1320,1350,1380],
+  "Airport": [360,420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
+  "Rawai": [360,420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
+  "Kata": [390,450,510,570,630,690,750,810,870,930,990,1050,1110,1170,1230,1290,1350],
+  "Karon": [400,460,520,580,640,700,760,820,880,940,1000,1060,1120,1180,1240,1300,1360],
+  "Central": [370,400,430,460,490,520,550,580,610,640,670,700,730,760,790,820,850,880,910,940,970,1000,1030,1060,1090,1120,1150,1180,1210,1240,1270,1300,1330,1360,1390],
+  "Chalong": [420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
+};
+
+function getNextBusMin(dest: string): number | null {
+  const now = new Date();
+  const bkk = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+  const nowMin = bkk.getHours() * 60 + bkk.getMinutes();
+  const sched = DEST_SCHEDULE[dest];
+  if (!sched) return null;
+  const next = sched.find((m) => m > nowMin);
+  return next ? next - nowMin : null;
+}
+
 export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: WelcomeSheetProps) {
   const [step, setStep] = useState<SheetStep>("ask");
+  const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
   const [matchedStop, setMatchedStop] = useState<Stop | null>(null);
   const [barcodeVal, setBarcodeVal] = useState("");
@@ -157,11 +180,32 @@ export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: Wel
     }
   }
 
-  // --- Step 1: "Where do you want to go?" ---
+  // --- Step 1: Collapsed = "Next bus" teaser, Expanded = full search ---
   if (step === "ask") {
+    const nextPatong = getNextBusMin("Patong");
+    const nextAirport = getNextBusMin("Airport");
+    const primaryNext = nextPatong ?? nextAirport;
+    const primaryDest = nextPatong ? "Patong" : "Airport";
+
+    if (!expanded) {
+      return (
+        <div className="welcome-sheet welcome-sheet--collapsed" onClick={() => setExpanded(true)}>
+          <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
+          <div className="welcome-sheet__peek">
+            <div className="welcome-sheet__next-bus">
+              <span className="welcome-sheet__next-label">Next bus</span>
+              <span className="welcome-sheet__next-time">{primaryNext ?? "—"} min</span>
+              <span className="welcome-sheet__next-dest">→ {primaryDest}</span>
+            </div>
+            <span className="welcome-sheet__peek-fare">฿{BUS_FARE} flat</span>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="welcome-sheet">
-        <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
+        <div className="welcome-sheet__handle" onClick={() => setExpanded(false)}><div className="welcome-sheet__bar" /></div>
         <div className="welcome-sheet__header">
           <h1 className="welcome-sheet__title">{pick(ui.welcomeTitle, lang)}</h1>
           <p className="welcome-sheet__subtitle">{pick(ui.whereToGo, lang)}</p>
@@ -178,9 +222,14 @@ export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: Wel
         </div>
 
         <div className="welcome-sheet__quick-dests">
-          {DESTINATION_HINTS.map(d => (
-            <button key={d} className="welcome-sheet__quick-pill" type="button" onClick={() => handleQuickDest(d)}>{d}</button>
-          ))}
+          {DESTINATION_HINTS.map(d => {
+            const min = getNextBusMin(d);
+            return (
+              <button key={d} className="welcome-sheet__quick-pill" type="button" onClick={() => handleQuickDest(d)}>
+                {d}{min !== null ? <span className="welcome-sheet__pill-time"> · {min}m</span> : null}
+              </button>
+            );
+          })}
         </div>
 
         <div className="welcome-sheet__fare-teaser">
@@ -188,7 +237,6 @@ export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: Wel
           <span className="welcome-sheet__fare-label">{pick(ui.welcomeAllRoutes, lang)}</span>
         </div>
 
-        {/* Week pass link */}
         <button className="welcome-sheet__pass-link" type="button" onClick={() => { setPassCode(generate16DigitCode()); setStep("pass"); }}>
           {pick(ui.haveWeekPass, lang)}
         </button>

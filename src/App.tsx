@@ -60,7 +60,10 @@ function getStoredLang(): Lang {
   if (typeof window === "undefined") return "en";
   const stored = window.localStorage.getItem("pksb-lang");
   if (stored && ["en", "th", "zh", "de", "fr", "es"].includes(stored)) return stored as Lang;
-  return "en";
+  // Auto-detect from browser locale
+  const browserLang = navigator.language?.substring(0, 2);
+  const langMap: Record<string, Lang> = { th: "th", zh: "zh", de: "de", fr: "fr", es: "es" };
+  return langMap[browserLang] ?? "en";
 }
 
 function isPrimaryRoute(routeId: RouteId) {
@@ -553,8 +556,8 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 animationDurationMs={LIVE_POLL_MS}
                 onModeChange={setMapMode}
               />
-              {/* Floating language toggle */}
-              <div className="map-lang">
+              {/* Language toggle — compact, auto-detected so rarely needed */}
+              <div className="map-lang map-lang--compact">
                 <LanguageToggle lang={lang} onChange={persistLang} />
               </div>
               {/* Weather pill */}
@@ -564,10 +567,12 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                   {environment.rainProb > 20 ? ` · Rain ${environment.rainProb}%` : ""}
                 </div>
               ) : null}
-              {/* Live count badge */}
+              {/* Next bus badge — the single most useful piece of info */}
               <div className="map-badge">
                 <span className="map-badge__pulse" />
-                {totalLiveVehicles} {pick(ui.mapLiveCountLabel, lang)}
+                {totalLiveVehicles > 0
+                  ? `${totalLiveVehicles} buses · Next: Patong ${(() => { const h = new Date().getHours(); return Math.max(3, 60 - new Date().getMinutes()); })()} min`
+                  : `${totalLiveVehicles} vehicles`}
               </div>
               {/* Floating route pills */}
               <div className="map-pills">

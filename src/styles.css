@@ -4401,3 +4401,68 @@ a { color: var(--tint); }
 
 .sim-summary__btn--primary { background: #16b8b0; color: #fff; }
 .sim-summary__btn--secondary { background: #f0f0f0; color: #666; }
+
+/* ── Collapsed Welcome Sheet ── */
+.welcome-sheet--collapsed {
+  max-height: 64px;
+  padding: 0 20px 8px;
+  cursor: pointer;
+}
+
+.welcome-sheet__peek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.welcome-sheet__next-bus {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.welcome-sheet__next-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.welcome-sheet__next-time {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #16b8b0;
+}
+
+.welcome-sheet__next-dest {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.welcome-sheet__peek-fare {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 3px 8px;
+  background: var(--card-muted);
+  border-radius: 6px;
+}
+
+/* Pill with time */
+.welcome-sheet__pill-time {
+  font-family: "SF Mono", monospace;
+  font-size: 10px;
+  color: #16b8b0;
+  font-weight: 600;
+}
+
+/* Compact language toggle — smaller, less prominent */
+.map-lang--compact {
+  opacity: 0.7;
+  transform: scale(0.85);
+  transform-origin: top left;
+}
+
+.map-lang--compact:hover {
+  opacity: 1;
+}
