@@ -18,8 +18,8 @@ import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
    CONSTANTS
    ══════════════════════════════════════════════════ */
 const OPS_POLL_MS = 15_000;
-const SIM_TICK_MS = 350;
-const SIM_ANIMATION_MS = 330;
+const SIM_TICK_MS = 280;
+const SIM_ANIMATION_MS = 260;
 const BUS_CAPACITY = 25;
 // APTA standard: car = 0.21 kg CO2/pax-km, bus = 0.06 kg CO2/pax-km → saving = 0.15 kg/pax-km
 const CO2_SAVING_PER_PAX_KM = 0.15; // kg CO2 saved per passenger-km vs private car (APTA SUDS-CC-RP-001-09)
@@ -140,6 +140,13 @@ function generateNews(simMinutes: number | null): NewsItem[] {
     { id: "n8", time: "13:00", icon: "✈", title: "Afternoon Wave", desc: "8 intl arrivals incl. DXB A380, SIN 787.", severity: "info" },
     { id: "n9", time: "16:00", icon: "🌊", title: "High Tide — Chalong", desc: "Pier shift at 16:45. Ferry boarding adjusted.", severity: "caution", lat: 7.8216, lng: 98.3613 },
     { id: "n10", time: "17:30", icon: "🚌", title: "Peak Airport Queue", desc: "30+ pax waiting. Consider on-demand dispatch.", severity: "warning", lat: 8.1090, lng: 98.3070 },
+    // Social sentiment from Phuket community
+    { id: "s1", time: "07:00", icon: "💬", title: "Social: Bus on time today", desc: "Facebook Phuket Expats group — \"Smart Bus arrived exactly on schedule at airport. Impressed!\" +12 likes", severity: "info" },
+    { id: "s2", time: "09:30", icon: "💬", title: "Social: Patong route popular", desc: "Twitter @PhuketTravel — \"Packed bus from Patong to Old Town, need more frequency on Route 2\" 🔄 8 retweets", severity: "caution" },
+    { id: "s3", time: "11:00", icon: "💬", title: "Social: Tourist praise", desc: "TripAdvisor review — \"Clean, air-conditioned, WiFi works. ฿100 is great value vs ฿600 taxi.\" ★★★★★", severity: "info" },
+    { id: "s4", time: "14:00", icon: "💬", title: "Social: Driver complaint", desc: "LINE group Phuket locals — \"Bus driver stopped 10 min at Central Festival. Late to airport.\" 😤", severity: "caution" },
+    { id: "s5", time: "16:00", icon: "💬", title: "Social: Suggestion", desc: "Reddit r/ThailandTourism — \"Wish they had distance-based pricing. ฿100 feels much for 2 stops.\"", severity: "info" },
+    { id: "s6", time: "19:00", icon: "💬", title: "Sentiment: 78% positive today", desc: "Across 42 mentions — praise for AC and WiFi, complaints about frequency and wait times at Patong.", severity: "info" },
   ];
   return base.filter((n) => { const [h] = n.time.split(":").map(Number); return h <= hour; }).reverse();
 }
@@ -512,7 +519,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
   const replayAbortRef = useRef(false);
   const nextReplayMinuteRef = useRef<number | null>(null);
-  const useClientSimRef = useRef(false);
+  const useClientSimRef = useRef(true); // Always use client sim for instant start
 
   useEffect(() => { const id = setInterval(() => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" })), 1000); return () => clearInterval(id); }, []);
 
@@ -599,7 +606,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const fleetRows = displayVehicles.slice(0, 10).map((v) => {
     routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
     const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
-    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax: simMinutes !== null ? simPassengers(v.vehicleId, simMinutes) : null };
+    // Always show passengers — sim uses simPassengers(), live uses time-of-day estimate
+    const nowMin = simMinutes ?? (new Date().getHours() * 60 + new Date().getMinutes());
+    const pax = simPassengers(v.vehicleId, nowMin);
+    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax };
   });
   const routeSummary = routes.map((r) => ({ ...r, vehicles: displayVehicles.filter((v) => v.routeId === r.id).length }));
 

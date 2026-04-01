@@ -2601,7 +2601,7 @@ a { color: var(--tint); }
 .ops__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 240px 1fr 320px;
+  grid-template-columns: 220px 1fr 300px;
   min-height: 0;
   overflow: hidden;
 }
