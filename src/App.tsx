@@ -533,7 +533,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   return (
     <div className="app-shell">
       <div className="app-content">
-        {bootError || routeError ? (
+        {(bootError || routeError) && routes.length === 0 ? (
           <div className="status-banner" role="status">{pick(ui.loadingError, lang)}</div>
         ) : null}
 

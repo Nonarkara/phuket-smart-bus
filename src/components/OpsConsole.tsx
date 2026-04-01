@@ -147,8 +147,18 @@ function generateNews(simMinutes: number | null): NewsItem[] {
     { id: "s4", time: "14:00", icon: "💬", title: "Social: Driver complaint", desc: "LINE group Phuket locals — \"Bus driver stopped 10 min at Central Festival. Late to airport.\" 😤", severity: "caution" },
     { id: "s5", time: "16:00", icon: "💬", title: "Social: Suggestion", desc: "Reddit r/ThailandTourism — \"Wish they had distance-based pricing. ฿100 feels much for 2 stops.\"", severity: "info" },
     { id: "s6", time: "19:00", icon: "💬", title: "Sentiment: 78% positive today", desc: "Across 42 mentions — praise for AC and WiFi, complaints about frequency and wait times at Patong.", severity: "info" },
+    // Road conditions
+    { id: "r1", time: "06:00", icon: "🛣", title: "Road: Rte 402 Clear", desc: "Thepkasattri Road (Airport–Town) clear both directions. Normal travel time ~45 min.", severity: "info" },
+    { id: "r2", time: "07:00", icon: "🛣", title: "Road: Patong Hill Heavy", desc: "Route 4029 Patong Hill heavy traffic 07:00–09:00. Add 15 min to Patong Line ETA.", severity: "caution", lat: 7.9050, lng: 98.2970 },
+    { id: "r3", time: "08:00", icon: "🛣", title: "Road: Chalong Circle OK", desc: "Chao Fa West Road via Chalong Circle flowing normally. No construction.", severity: "info" },
+    { id: "r4", time: "12:00", icon: "🛣", title: "Road: School zone slow", desc: "Phuket Town school zone 07:30–08:30, 15:30–16:30. Dragon Line may run +5 min.", severity: "caution", lat: 7.884, lng: 98.393 },
+    { id: "r5", time: "15:00", icon: "🛣", title: "Road: Kata Hill resurfacing", desc: "One lane alternating on Kata Hill road. Minor delay to south-bound services.", severity: "caution", lat: 7.830, lng: 98.300 },
   ];
-  return base.filter((n) => { const [h] = n.time.split(":").map(Number); return h <= hour; }).reverse();
+  // Always show at least recent 8 items for demo — filter by hour only during sim
+  const filtered = simMinutes !== null
+    ? base.filter((n) => { const [h] = n.time.split(":").map(Number); return h <= hour; })
+    : base.slice(0, 12); // show 12 most relevant when live
+  return filtered.reverse();
 }
 
 function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather: OpsDashboardPayload["weather"] }) {
@@ -395,8 +405,9 @@ function buildIncidentMarkers(simMinutes: number | null): MapMarkerOverlay[] {
 function buildFallbackDashboard(): OpsDashboardPayload {
   const now = new Date();
   const bh = Number(now.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", hour12: false }));
-  const busAct = bh < 6 ? 0 : bh < 7 ? 0.3 : bh < 9 ? 0.7 : bh < 18 ? 1.0 : bh < 21 ? 0.6 : bh < 23 ? 0.2 : 0;
-  const ferryAct = bh < 8 ? 0 : bh < 9 ? 0.4 : bh < 17 ? 1.0 : bh < 19 ? 0.5 : 0;
+  // Minimum 0.3 activity so demo always shows some vehicles
+  const busAct = Math.max(0.3, bh < 6 ? 0.2 : bh < 7 ? 0.3 : bh < 9 ? 0.7 : bh < 18 ? 1.0 : bh < 21 ? 0.6 : bh < 23 ? 0.3 : 0.2);
+  const ferryAct = Math.max(0.2, bh < 8 ? 0.2 : bh < 9 ? 0.4 : bh < 17 ? 1.0 : bh < 19 ? 0.5 : 0.2);
   const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
   const RD = [
     { id: "rawai-airport", sn: "Airport Line", c: "#16b8b0", t: "core", f: false, wp: [[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]] },
