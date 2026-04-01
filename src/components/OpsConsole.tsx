@@ -525,7 +525,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
   useEffect(() => {
     let alive = true;
-    const load = async () => { try { const p = await getOpsDashboard(); if (alive) setDashboard(p); } catch { if (alive) setDashboard((c) => c ?? buildFallbackDashboard()); } };
+    // Show fallback immediately, then try to upgrade to live data
+    setDashboard(buildFallbackDashboard());
+    const load = async () => { try { const p = await getOpsDashboard(); if (alive) setDashboard(p); } catch { /* fallback already loaded */ } };
     void load(); const id = setInterval(() => void load(), OPS_POLL_MS);
     return () => { alive = false; clearInterval(id); };
   }, []);
