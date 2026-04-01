@@ -61,13 +61,16 @@ function driverName(vid: string) { return DRIVER_NAMES[stableHash(vid) % DRIVER_
 function driverRating(vid: string) { return Math.round((38 + stableHash(vid + "r") % 13) * 10) / 100; }
 function simSpeed(progress: number, routeId: string): number {
   const isFerry = FERRY_ROUTE_IDS.has(routeId as any);
-  if (isFerry) return 18 + Math.sin(progress * Math.PI) * 8;
-  return Math.round((28 + Math.sin(progress * Math.PI) * 12) * 10) / 10;
+  if (isFerry) return 15 + Math.sin(progress * Math.PI) * 10; // 15-25 knots
+  // Buses avg 22 km/h with stops (actual Phuket data: 47km in 2h10m)
+  // Speed varies: slower near stops (15 km/h), faster between (35 km/h)
+  return Math.round((22 + Math.sin(progress * Math.PI * 4) * 13) * 10) / 10;
 }
 
 const ROUTE_MARKER_COORDINATES = {
   "rawai-airport": [8.1132, 98.3169], "patong-old-bus-station": [7.8961, 98.2969],
-  "dragon-line": [7.8842, 98.3923], "rassada-phi-phi": [7.8574, 98.3866],
+  "dragon-line": [7.8842, 98.3923], "orange-line": [7.9500, 98.3200],
+  "rassada-phi-phi": [7.8574, 98.3866],
   "rassada-ao-nang": [7.8574, 98.3866], "bang-rong-koh-yao": [8.0317, 98.4192],
   "chalong-racha": [7.8216, 98.3613]
 } as const;
@@ -417,6 +420,7 @@ function buildFallbackDashboard(): OpsDashboardPayload {
     { id: "rassada-ao-nang", sn: "Ao Nang Ferry", c: "#a371f7", t: "ferry", f: true, wp: [[7.8574,98.3866],[7.9500,98.6000],[8.0300,98.8200]] },
     { id: "bang-rong-koh-yao", sn: "Koh Yao Ferry", c: "#3fb950", t: "ferry", f: true, wp: [[8.0317,98.4192],[8.0800,98.5000],[8.1100,98.5800]] },
     { id: "chalong-racha", sn: "Racha Ferry", c: "#d29922", t: "ferry", f: true, wp: [[7.8216,98.3613],[7.7500,98.3600],[7.6000,98.3650]] },
+    { id: "orange-line", sn: "Orange Line", c: "#FF6B00", t: "competitor", f: false, wp: [[8.1090,98.3070],[8.0500,98.3090],[8.0000,98.3100],[7.9500,98.3200],[7.9100,98.3500],[7.8900,98.3700],[7.8840,98.3960]] },
   ] as const;
   const vehicles: VehiclePosition[] = [];
   for (const rd of RD) {
@@ -469,24 +473,45 @@ function buildFallbackInvestorPayload(): InvestorSimulationPayload {
   const dr=(tCA+tCD)*F,lr=(tUA+tUD)*F;
   const pb=Math.max(...hourly.map(h=>h.additionalArrivalBusesNeeded+h.additionalDepartureBusesNeeded));
   const pg=hourly.reduce((b,h)=>h.unmetArrivalDemand>(b?.unmetArrivalDemand??0)?h:b,hourly[0]);
-  return {generatedAt:new Date().toISOString(),assumptions:{seatCapacityPerBus:SE,flatFareThb:F,addressableDemandShare:S,replayStepMinutes:3,replayStartMinutes:360,replayEndMinutes:1440},hourly,services:[{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"Airport → City",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAA,carriedRiders:tCA,unmetRiders:tUA,revenueThb:tCA*F,capturePct:tAA>0?Math.round(tCA/tAA*100):0,provenance:"fallback" as any,strategicValue:lt("Primary airport connector")},{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"City → Airport",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAD,carriedRiders:tCD,unmetRiders:tUD,revenueThb:tCD*F,capturePct:tAD>0?Math.round(tCD/tAD*100):0,provenance:"fallback" as any,strategicValue:null},{routeId:"patong-old-bus-station" as any,routeName:lt("Patong Line"),directionLabel:"Both",tier:"core" as any,departures:36,seatSupply:900,estimatedDemand:320,carriedRiders:280,unmetRiders:40,revenueThb:28000,capturePct:88,provenance:"fallback" as any,strategicValue:lt("Beach demand")},{routeId:"dragon-line" as any,routeName:lt("Dragon Line"),directionLabel:"Loop",tier:"auxiliary" as any,departures:24,seatSupply:600,estimatedDemand:180,carriedRiders:180,unmetRiders:0,revenueThb:18000,capturePct:100,provenance:"fallback" as any,strategicValue:null}],touchpoints:[],totals:{rawAirportArrivalPax:hourly.reduce((s,h)=>s+h.rawArrivalPax,0),rawAirportDeparturePax:hourly.reduce((s,h)=>s+h.rawDeparturePax,0),addressableArrivalDemand:tAA,addressableDepartureDemand:tAD,carriedArrivalDemand:tCA,carriedDepartureDemand:tCD,unmetArrivalDemand:tUA,unmetDepartureDemand:tUD,totalAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,addressableAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,dailyRevenueThb:dr,lostRevenueThb:lr,peakAdditionalBusesNeeded:pb},opportunities:{summary:`Peak gap at ${pg.hour} — ${pg.unmetArrivalDemand+pg.unmetDepartureDemand} unmet pax. Adding ${pb} buses captures ฿${lr.toLocaleString()}.`,peakArrivalGapHour:pg.hour,peakDepartureGapHour:pg.hour,strongestRevenueServiceRouteId:"rawai-airport" as any}};
+  return {generatedAt:new Date().toISOString(),assumptions:{seatCapacityPerBus:SE,flatFareThb:F,addressableDemandShare:S,replayStepMinutes:3,replayStartMinutes:360,replayEndMinutes:1440},hourly,services:[{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"Airport → City",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAA,carriedRiders:tCA,unmetRiders:tUA,revenueThb:tCA*F,capturePct:tAA>0?Math.round(tCA/tAA*100):0,provenance:"fallback" as any,strategicValue:lt("Primary airport connector")},{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"City → Airport",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAD,carriedRiders:tCD,unmetRiders:tUD,revenueThb:tCD*F,capturePct:tAD>0?Math.round(tCD/tAD*100):0,provenance:"fallback" as any,strategicValue:null},{routeId:"patong-old-bus-station" as any,routeName:lt("Patong Line"),directionLabel:"Both",tier:"core" as any,departures:36,seatSupply:900,estimatedDemand:220,carriedRiders:180,unmetRiders:40,revenueThb:18000,capturePct:82,provenance:"fallback" as any,strategicValue:lt("Operating at ฿8,000/day loss (fuel+driver ฿26,000 vs ฿18,000 revenue). Strategically essential: feeds Airport Line passengers from Patong hotel belt. Without it, Airport Line loses ~30% ridership.")},{routeId:"dragon-line" as any,routeName:lt("Dragon Line"),directionLabel:"Loop",tier:"auxiliary" as any,departures:24,seatSupply:600,estimatedDemand:180,carriedRiders:180,unmetRiders:0,revenueThb:18000,capturePct:100,provenance:"fallback" as any,strategicValue:null},{routeId:"orange-line" as any,routeName:lt("Orange Line (Govt)"),directionLabel:"Airport ↔ Town",tier:"competitor" as any,departures:24,seatSupply:960,estimatedDemand:400,carriedRiders:350,unmetRiders:50,revenueThb:35000,capturePct:88,provenance:"fallback" as any,strategicValue:lt("Government-operated competitor. Overlaps Airport Line on Airport–Town segment. ฿100 flat fare, hourly 06:00-18:00.")}],touchpoints:[],totals:{rawAirportArrivalPax:hourly.reduce((s,h)=>s+h.rawArrivalPax,0),rawAirportDeparturePax:hourly.reduce((s,h)=>s+h.rawDeparturePax,0),addressableArrivalDemand:tAA,addressableDepartureDemand:tAD,carriedArrivalDemand:tCA,carriedDepartureDemand:tCD,unmetArrivalDemand:tUA,unmetDepartureDemand:tUD,totalAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,addressableAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,dailyRevenueThb:dr,lostRevenueThb:lr,peakAdditionalBusesNeeded:pb},opportunities:{summary:`Peak gap at ${pg.hour} — ${pg.unmetArrivalDemand+pg.unmetDepartureDemand} unmet pax. Adding ${pb} buses captures ฿${lr.toLocaleString()}.`,peakArrivalGapHour:pg.hour,peakDepartureGapHour:pg.hour,strongestRevenueServiceRouteId:"rawai-airport" as any}};
 }
 
 function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): SimulationSnapshot {
   const hour = simMinutes/60;
   const busAct = hour<6?0:hour<7?0.3:hour<9?0.7:hour<18?1.0:hour<21?0.6:hour<23?0.2:0;
   const ferryAct = hour<8?0:hour<9?0.4:hour<17?1.0:hour<19?0.5:0;
+  // Routes with realistic waypoints (densified for smooth animation)
   const RW: Record<string,[number,number][]> = {
+    // Airport Line: Airport (north) → Rawai (south), 47km, 2h10m with stops
     "rawai-airport": densifyPath([[7.7804,98.3225],[7.8120,98.3150],[7.8420,98.3080],[7.8750,98.3050],[7.9050,98.3050],[7.9500,98.3060],[8.0000,98.3080],[8.0700,98.3100],[8.1090,98.3070]],25),
+    // Patong Line: Patong → Old Town, 18km, 50min
     "patong-old-bus-station": densifyPath([[7.8830,98.2930],[7.8860,98.3050],[7.8900,98.3200],[7.8880,98.3400],[7.8860,98.3600],[7.8840,98.3800],[7.8840,98.3960]],20),
+    // Dragon Line: Old Town loop, 8km, 25min
     "dragon-line": densifyPath([[7.8840,98.3960],[7.8860,98.3940],[7.8870,98.3920],[7.8880,98.3890],[7.8900,98.3850],[7.8880,98.3880],[7.8860,98.3920],[7.8840,98.3960]],20),
+    // Orange Line (competitor): Airport ↔ Old Town, govt-run, 35km, 90min, separate company
+    "orange-line": densifyPath([[8.1090,98.3070],[8.0500,98.3090],[8.0000,98.3100],[7.9500,98.3200],[7.9100,98.3500],[7.8900,98.3700],[7.8840,98.3960]],20),
+    // Ferries
     "rassada-phi-phi": densifyPath([[7.8574,98.3866],[7.8400,98.4200],[7.8200,98.4500],[7.8000,98.5500],[7.7500,98.7700]],20),
     "rassada-ao-nang": densifyPath([[7.8574,98.3866],[7.8800,98.4500],[7.9500,98.6000],[8.0000,98.7200],[8.0300,98.8200]],20),
     "bang-rong-koh-yao": densifyPath([[8.0317,98.4192],[8.0500,98.4500],[8.0800,98.5000],[8.1000,98.5400],[8.1100,98.5800]],20),
     "chalong-racha": densifyPath([[7.8216,98.3613],[7.7900,98.3610],[7.7500,98.3600],[7.7000,98.3620],[7.6000,98.3650]],20),
   };
-  const TD: Record<string,number> = {"rawai-airport":75,"patong-old-bus-station":40,"dragon-line":25,"rassada-phi-phi":90,"rassada-ao-nang":120,"bang-rong-koh-yao":45,"chalong-racha":60};
-  const HW: Record<string,number> = {"rawai-airport":15,"patong-old-bus-station":20,"dragon-line":30,"rassada-phi-phi":60,"rassada-ao-nang":120,"bang-rong-koh-yao":90,"chalong-racha":120};
+  // Realistic trip durations based on actual Phuket Smart Bus data (rome2rio, mamalovesphuket)
+  const TD: Record<string,number> = {
+    "rawai-airport": 130,                // 2h10m — Airport to Rawai with 15 stops (47km, avg 22km/h)
+    "patong-old-bus-station": 50,         // 50min — Patong to Old Town (18km)
+    "dragon-line": 25,                    // 25min — Old Town loop (8km)
+    "orange-line": 90,                    // 1.5h — Airport to Old Town (35km, govt orange bus)
+    "rassada-phi-phi": 90, "rassada-ao-nang": 120, "bang-rong-koh-yao": 45, "chalong-racha": 60
+  };
+  // Headway: how often each route dispatches
+  const HW: Record<string,number> = {
+    "rawai-airport": 60,                  // Hourly (actual schedule)
+    "patong-old-bus-station": 30,         // Every 30min
+    "dragon-line": 30,                    // Every 30min
+    "orange-line": 60,                    // Hourly (govt schedule 06:00-18:00)
+    "rassada-phi-phi": 60, "rassada-ao-nang": 120, "bang-rong-koh-yao": 90, "chalong-racha": 120
+  };
   const vehicles: VehiclePosition[] = [];
   const lt = (s: string) => ({en:s,th:s,zh:s,de:s,fr:s,es:s});
   for (const [rid, wp] of Object.entries(RW)) {

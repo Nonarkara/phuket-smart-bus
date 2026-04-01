@@ -4,6 +4,7 @@ export type RouteId =
   | "rawai-airport"
   | "patong-old-bus-station"
   | "dragon-line"
+  | "orange-line"
   | "rassada-phi-phi"
   | "rassada-ao-nang"
   | "bang-rong-koh-yao"
@@ -11,7 +12,7 @@ export type RouteId =
 
 export type RouteAxis = "north_south" | "east_west" | "loop" | "marine";
 
-export type RouteTier = "core" | "auxiliary" | "ferry";
+export type RouteTier = "core" | "auxiliary" | "ferry" | "competitor";
 
 export type DecisionLevel =
   | "go_now"
