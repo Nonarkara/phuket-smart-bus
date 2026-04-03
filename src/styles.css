@@ -4728,3 +4728,143 @@ a { color: var(--tint); }
 .ops__info-panel {
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
 }
+
+/* ══════════════════════════════════════════════════
+   FINAL PERFECTION PASS
+   ══════════════════════════════════════════════════ */
+
+/* Cursor pointer on all interactive rows */
+.news-item,
+.fleet-row,
+.city-demand-row,
+.city-aqi__row,
+.city-flight {
+  cursor: pointer;
+}
+
+/* Fleet row — more breathing room, cleaner alignment */
+.fleet-row {
+  min-height: 52px;
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Adherence badge — tighter, more precise */
+.fleet-row__adherence {
+  font-family: "SF Mono", "Fira Code", monospace;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Map — subtle inner shadow for depth against sidebars */
+.ops__map {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Logos bar — more refined spacing */
+.ops__logos {
+  padding: 8px 24px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+/* Header — tighter, cleaner */
+.ops__header {
+  padding: 12px 20px;
+}
+
+/* Map overlay stats — glass refinement */
+.ops__map-stat {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Sim timeline — clean separation */
+.sim-timeline {
+  border-top: 1px solid #e8e8e8;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
+}
+
+/* Sim metric boxes — equal width, clean grid */
+.sim-timeline__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 4px;
+}
+
+/* Info button — more refined circle */
+.ops__info-btn {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* News feed — tighter section spacing */
+.city-section {
+  padding: 8px 0;
+}
+
+/* Flight table — cleaner grid */
+.city-flight {
+  border-bottom: none;
+  padding: 2px 0;
+}
+.city-flights__col {
+  border-right: 1px solid #f5f5f5;
+  padding-right: 6px;
+}
+.city-flights__col:last-child {
+  border-right: none;
+  padding-left: 6px;
+}
+
+/* AQI rows — tighter */
+.city-aqi__row {
+  padding: 3px 0;
+}
+
+/* Scrollbar refinement for sidebars */
+.ops__news::-webkit-scrollbar,
+.ops__analytics::-webkit-scrollbar {
+  width: 4px;
+}
+.ops__news::-webkit-scrollbar-thumb,
+.ops__analytics::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+.ops__news::-webkit-scrollbar-track,
+.ops__analytics::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* End-of-sim summary — premium overlay */
+.sim-summary-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Landing page live stats — tabular nums for counter tick */
+.live-stat__val {
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: center;
+}
+
+/* Phone frame — subtle glow on desktop */
+.phone-frame {
+  box-shadow:
+    0 0 0 2px #333,
+    0 0 0 4px #1a1a1a,
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 80px rgba(22, 184, 176, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Welcome sheet collapsed — premium feel */
+.welcome-sheet--collapsed {
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Map badge — glass refinement */
+.map-badge {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
