@@ -47,6 +47,76 @@ function stableHash(key: string): number {
   return Math.abs(h);
 }
 
+/* ── Realistic stop-by-stop passenger model ──
+   Passengers board/alight at specific stops along each route.
+   Returns { pax: on board now, totalBoarded: cumulative boardings for fare calc, trend: boarding/alighting } */
+const HOURLY_ARR = [0,0,0,0,0,0,180,320,450,380,520,600,680,750,700,580,500,420,380,300,250,150,80,0];
+
+type PaxState = { pax: number; totalBoarded: number; trend: "boarding" | "alighting" | "steady"; demandPct: number };
+
+function simPaxAtProgress(routeId: string, progress: number, tripIdx: number, simMinutes: number): PaxState {
+  const hour = Math.floor(simMinutes / 60);
+  const hourlyArr = HOURLY_ARR[Math.min(23, Math.max(0, hour))] || 180;
+  const demandScale = Math.max(0.25, hourlyArr / 750); // scale relative to peak (750 at 13:00)
+  const isReturn = tripIdx % 2 === 1;
+
+  if (routeId === "rawai-airport" || routeId === "orange-line") {
+    // Stops:      Airport  BangTao  Surin  Kamala  PATONG  Karon  Kata  Chalong  Rawai/OldTown
+    const stops = [0,       0.08,    0.15,  0.22,   0.38,   0.52,  0.62, 0.78,    1.0];
+    const brdS  = [25,      0,       0,     0,      2,      0,     0,    0,       0];   // southbound boarding
+    const altS  = [0,       2,       1,     2,      15,     2,     1,    1,       1];   // southbound alighting
+    const brdN  = [0,       1,       0,     1,      15,     2,     1,    2,       3];   // northbound boarding
+    const altN  = [0,       0,       0,     0,      0,      0,     0,    0,       25];  // northbound (all off at airport)
+    const board = isReturn ? brdN : brdS;
+    const alight = isReturn ? altN : altS;
+    let pax = 0, boarded = 0, lastDelta = 0;
+    for (let i = 0; i < stops.length; i++) {
+      if (progress >= stops[i]) {
+        const b = Math.round(board[i] * demandScale);
+        const a = Math.min(pax, Math.round(alight[i] * demandScale));
+        pax = Math.min(BUS_CAPACITY, pax + b - a);
+        boarded += b;
+        lastDelta = b - a;
+      }
+    }
+    const addressable = Math.round(hourlyArr * 0.15);
+    const demandPct = addressable > 0 ? Math.round((Math.round(25 * demandScale) / addressable) * 100) : 0;
+    return { pax: Math.max(0, pax), totalBoarded: boarded, trend: lastDelta > 0 ? "boarding" : lastDelta < 0 ? "alighting" : "steady", demandPct };
+  }
+
+  if (routeId === "patong-old-bus-station") {
+    const stops = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+    const brdOut = [20, 2, 0, 0, 0, 0];  // Patong → Old Town
+    const altOut = [0, 3, 4, 5, 5, 5];
+    const brdIn  = [0, 0, 2, 3, 5, 15];  // Old Town → Patong
+    const altIn  = [25, 0, 0, 0, 0, 0];
+    const board = isReturn ? brdIn : brdOut;
+    const alight = isReturn ? altIn : altOut;
+    let pax = 0, boarded = 0, lastDelta = 0;
+    for (let i = 0; i < stops.length; i++) {
+      if (progress >= stops[i]) {
+        const b = Math.round(board[i] * demandScale);
+        const a = Math.min(pax, Math.round(alight[i] * demandScale));
+        pax = Math.min(BUS_CAPACITY, pax + b - a);
+        boarded += b;
+        lastDelta = b - a;
+      }
+    }
+    return { pax: Math.max(0, pax), totalBoarded: boarded, trend: lastDelta > 0 ? "boarding" : lastDelta < 0 ? "alighting" : "steady", demandPct: 0 };
+  }
+
+  if (routeId === "dragon-line") {
+    // Loop: picks up 12, drops off gradually, picks up again
+    const pax = Math.round(12 * demandScale * Math.sin(progress * Math.PI));
+    return { pax: Math.max(0, Math.min(25, pax)), totalBoarded: Math.round(12 * demandScale), trend: progress < 0.5 ? "boarding" : "alighting", demandPct: 0 };
+  }
+
+  // Ferries: simpler model
+  const pax = Math.round(18 * demandScale * (progress < 0.1 ? progress * 10 : progress > 0.9 ? (1 - progress) * 10 : 1));
+  return { pax: Math.max(0, Math.min(25, pax)), totalBoarded: Math.round(18 * demandScale), trend: progress < 0.5 ? "boarding" : "alighting", demandPct: 0 };
+}
+
+// Backward compat: simple pax count for non-sim mode
 function simPassengers(vid: string, m: number): number {
   return stableHash(vid + String(Math.floor(m / 10))) % (BUS_CAPACITY + 1);
 }
@@ -642,13 +712,31 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
   const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
   const routeCounters: Record<string, number> = {};
-  const fleetRows = displayVehicles.slice(0, 10).map((v) => {
+  const TD_MAP: Record<string,number> = {"rawai-airport":130,"patong-old-bus-station":50,"dragon-line":25,"orange-line":90,"rassada-phi-phi":90,"rassada-ao-nang":120,"bang-rong-koh-yao":45,"chalong-racha":60};
+  const HW_MAP: Record<string,number> = {"rawai-airport":60,"patong-old-bus-station":30,"dragon-line":30,"orange-line":60};
+  const fleetRows = displayVehicles.slice(0, 12).map((v) => {
     routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
     const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
-    // Always show passengers — sim uses simPassengers(), live uses time-of-day estimate
     const nowMin = simMinutes ?? (new Date().getHours() * 60 + new Date().getMinutes());
-    const pax = simPassengers(v.vehicleId, nowMin);
-    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax };
+
+    // Extract departure minute from vehicleId (format: sv-{route}-{depMin})
+    const depMin = parseInt(v.vehicleId.split("-").pop() ?? "0", 10);
+    const tripDur = TD_MAP[v.routeId] ?? 60;
+    const headway = HW_MAP[v.routeId] ?? 60;
+    const age = nowMin - depMin;
+    const progress = Math.max(0, Math.min(1, age / tripDur));
+    const tripIdx = Math.floor((depMin - 360) / headway);
+
+    // Use realistic pickup/dropoff model when simulating, fallback for live
+    let paxState: PaxState;
+    if (simMinutes !== null && v.vehicleId.startsWith("sv-")) {
+      paxState = simPaxAtProgress(v.routeId, progress, tripIdx, nowMin);
+    } else {
+      const fallbackPax = simPassengers(v.vehicleId, nowMin);
+      paxState = { pax: fallbackPax, totalBoarded: fallbackPax, trend: "steady" as const, demandPct: 0 };
+    }
+
+    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax: paxState.pax, totalBoarded: paxState.totalBoarded, trend: paxState.trend, demandPct: paxState.demandPct, progress };
   });
   const routeSummary = routes.map((r) => ({ ...r, vehicles: displayVehicles.filter((v) => v.routeId === r.id).length }));
 
@@ -747,7 +835,13 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
                       <strong>{v.label}</strong> · {v.driver} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
-                      <span className="fleet-row__sub">{routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h{eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}</span>
+                      <span className="fleet-row__sub">
+                        {routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h
+                        {eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}
+                        {v.trend !== "steady" ? <span style={{ color: v.trend === "boarding" ? "#16b8b0" : "#b58900", fontWeight: 600, marginLeft: 4 }}>{v.trend === "boarding" ? "▲ boarding" : "▼ alighting"}</span> : null}
+                        {v.totalBoarded > 0 ? <span style={{ color: "#999", marginLeft: 4 }}>· ฿{(v.totalBoarded * 100).toLocaleString()} collected</span> : null}
+                        {v.demandPct > 0 ? <span style={{ color: "#16b8b0", marginLeft: 4 }}>· {v.demandPct}% of demand</span> : null}
+                      </span>
                     </span>
                     <span className={`fleet-row__load ${isFull ? "fleet-row__load--full" : isLow ? "fleet-row__load--low" : ""}`}>{loadPct}%</span>
                     <span className="fleet-row__seats">
