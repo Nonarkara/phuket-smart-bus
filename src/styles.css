@@ -4868,3 +4868,231 @@ a { color: var(--tint); }
 .map-badge {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
+
+/* ══════════════════════════════════════════════════
+   TISSOT PRX POLISH — Every detail considered
+   ══════════════════════════════════════════════════ */
+
+/* Collapsed sheet — premium, breathing, purposeful */
+.welcome-sheet--collapsed {
+  max-height: 72px;
+  padding: 0 24px 12px;
+  cursor: pointer;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.welcome-sheet__peek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.welcome-sheet__next-bus {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.welcome-sheet__next-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.welcome-sheet__next-time {
+  font-family: "Inter", "Helvetica Neue", sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: #16b8b0;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.welcome-sheet__next-time--dim {
+  color: var(--text-tertiary);
+  font-size: 18px;
+}
+
+.welcome-sheet__next-time--scheduled {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.welcome-sheet__peek-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.welcome-sheet__peek-fare {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.welcome-sheet__peek-hint {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+/* ── Ops console hero metrics — revenue is the star ── */
+.sim-metric:first-child {
+  /* Buses active — supporting */
+}
+
+/* Revenue metric — larger, hero treatment */
+.sim-timeline__metrics .sim-metric:nth-child(5) {
+  background: rgba(22, 184, 176, 0.06);
+  border: 1px solid rgba(22, 184, 176, 0.15);
+}
+.sim-timeline__metrics .sim-metric:nth-child(5) .sim-metric__value {
+  font-size: 20px;
+  color: #16b8b0;
+}
+
+/* Capture % — second hero */
+.sim-timeline__metrics .sim-metric:nth-child(6) .sim-metric__value {
+  font-size: 18px;
+}
+
+/* Lost revenue — danger emphasis */
+.sim-metric--lost {
+  background: rgba(220, 50, 47, 0.06);
+  border: 1px solid rgba(220, 50, 47, 0.12);
+}
+.sim-metric--lost .sim-metric__value {
+  font-size: 18px;
+}
+
+/* ── Fleet card — hero number for load ── */
+.fleet-row__load {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 36px;
+}
+
+/* ── Ops card titles — ultra refined ── */
+.ops-card__title {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 12px;
+}
+
+/* ── News feed — breathing between items ── */
+.news-item {
+  margin-bottom: 2px;
+  padding: 10px 10px;
+}
+.news-item__header strong {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.news-item__desc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #777;
+}
+
+/* ── Sim summary modal — Tissot level ── */
+.sim-summary {
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.sim-summary h2 {
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+  margin-bottom: 24px;
+}
+.sim-summary__grid {
+  gap: 12px;
+}
+.sim-summary__stat {
+  padding: 16px 12px;
+  border-radius: 12px;
+}
+.sim-summary__stat-val {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.sim-summary__stat-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+.sim-summary__btn {
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+.sim-summary__btn--primary {
+  box-shadow: 0 4px 12px rgba(22, 184, 176, 0.3);
+}
+.sim-summary__btn--primary:hover {
+  box-shadow: 0 6px 20px rgba(22, 184, 176, 0.4);
+  transform: translateY(-1px);
+  transition: all 0.2s var(--ease-spring);
+}
+
+/* ── Landing live stats — premium glass ── */
+.live-stat {
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.live-stat__val {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.live-stat__label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* ── Ops header — breathe ── */
+.ops__brand h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* ── Map badge — premium ── */
+.map-badge {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 7px 12px;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Desktop title — thinner, more elegant ── */
+.desktop-shell__title {
+  font-size: 28px;
+  font-weight: 200;
+  letter-spacing: -0.03em;
+}
+.desktop-shell__subtitle {
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.5);
+}

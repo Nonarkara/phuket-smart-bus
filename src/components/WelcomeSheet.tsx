@@ -188,16 +188,33 @@ export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: Wel
     const primaryDest = nextPatong ? "Patong" : "Airport";
 
     if (!expanded) {
+      // Format intelligently: "<12 min" when soon, "08:15" when far out, "Service resumes 06:00" when none
+      let timeDisplay: string;
+      let timeClass = "";
+      if (primaryNext === null) {
+        timeDisplay = "Resumes 06:00";
+        timeClass = "welcome-sheet__next-time--dim";
+      } else if (primaryNext <= 60) {
+        timeDisplay = `${primaryNext} min`;
+      } else {
+        const h = Math.floor((new Date().getHours() * 60 + new Date().getMinutes() + primaryNext) / 60) % 24;
+        const m = (new Date().getMinutes() + primaryNext) % 60;
+        timeDisplay = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        timeClass = "welcome-sheet__next-time--scheduled";
+      }
+
       return (
         <div className="welcome-sheet welcome-sheet--collapsed" onClick={() => setExpanded(true)}>
           <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
           <div className="welcome-sheet__peek">
             <div className="welcome-sheet__next-bus">
-              <span className="welcome-sheet__next-label">Next bus</span>
-              <span className="welcome-sheet__next-time">{primaryNext ?? "—"} min</span>
-              <span className="welcome-sheet__next-dest">→ {primaryDest}</span>
+              <span className="welcome-sheet__next-label">Next bus to {primaryDest}</span>
+              <span className={`welcome-sheet__next-time ${timeClass}`}>{timeDisplay}</span>
             </div>
-            <span className="welcome-sheet__peek-fare">฿{BUS_FARE} flat</span>
+            <div className="welcome-sheet__peek-right">
+              <span className="welcome-sheet__peek-fare">฿{BUS_FARE}</span>
+              <span className="welcome-sheet__peek-hint">Tap for routes</span>
+            </div>
           </div>
         </div>
       );
