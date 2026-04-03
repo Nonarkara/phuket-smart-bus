@@ -4466,3 +4466,265 @@ a { color: var(--tint); }
 .map-lang--compact:hover {
   opacity: 1;
 }
+
+/* ══════════════════════════════════════════════════
+   RED DOT POLISH — Micro-interactions, Accessibility,
+   Shadows, Typography, Cinematic
+   ══════════════════════════════════════════════════ */
+
+/* ── 1. EASING CURVES (replace flat transitions) ── */
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-decel: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-momentum: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Welcome sheet momentum */
+.welcome-sheet {
+  transition: max-height 0.35s var(--ease-momentum);
+}
+
+/* Fleet row hover — lift + tint */
+.fleet-row {
+  transition: all 0.2s var(--ease-spring);
+  border-radius: 6px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.fleet-row:hover {
+  background: rgba(22, 184, 176, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateX(3px);
+}
+
+/* Route row hover */
+.ops-route-row {
+  transition: all 0.15s var(--ease-decel);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ops-route-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+  padding-left: 4px;
+}
+
+/* Hub line hover */
+.ops-hub-line {
+  transition: all 0.15s var(--ease-decel);
+  border-radius: 4px;
+  padding: 5px 4px;
+  cursor: pointer;
+}
+.ops-hub-line:hover {
+  background: rgba(22, 184, 176, 0.04);
+}
+
+/* News item hover */
+.news-item {
+  transition: all 0.15s var(--ease-decel);
+  border-radius: 6px;
+}
+.news-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* News warning visibility */
+.news-item--warning { background: rgba(220, 50, 47, 0.06); }
+.news-item--caution { background: rgba(181, 137, 0, 0.04); }
+
+/* Layer button refinement */
+.ops__layer-btn {
+  transition: all 0.2s var(--ease-spring);
+}
+.ops__layer-btn:hover {
+  background: rgba(22, 184, 176, 0.08);
+  color: #16b8b0;
+  border-color: rgba(22, 184, 176, 0.2);
+  transform: scale(1.02);
+}
+.ops__layer-btn.is-active {
+  border-color: #16b8b0;
+  background: rgba(22, 184, 176, 0.12);
+  color: #16b8b0;
+}
+
+/* Sim pulse — breathe with scale */
+@keyframes sim-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.15); }
+}
+
+/* Seat fill bars — deceleration */
+.fleet-row__seat-fill {
+  transition: width 0.4s var(--ease-decel);
+}
+.city-demand-row__bar > span {
+  transition: width 0.4s var(--ease-decel);
+}
+
+/* Sim progress bar */
+.ops__sim-bar-fill, .sim-timeline__playhead {
+  transition: width 0.35s var(--ease-decel), left 0.35s var(--ease-decel);
+}
+
+/* Button spring bounce */
+.welcome-sheet__quick-pill,
+.welcome-sheet__search-btn,
+.sim-timeline__btn,
+.desktop-shell__ops-btn {
+  transition: all 0.2s var(--ease-spring);
+}
+.welcome-sheet__quick-pill:active,
+.sim-timeline__btn:active,
+.desktop-shell__ops-btn:active {
+  transform: scale(0.95);
+}
+
+/* News stagger entry */
+@keyframes news-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.news-item { animation: news-slide-in 0.3s var(--ease-decel) both; }
+.news-item:nth-child(1) { animation-delay: 0ms; }
+.news-item:nth-child(2) { animation-delay: 60ms; }
+.news-item:nth-child(3) { animation-delay: 120ms; }
+.news-item:nth-child(4) { animation-delay: 180ms; }
+.news-item:nth-child(5) { animation-delay: 240ms; }
+.news-item:nth-child(6) { animation-delay: 300ms; }
+.news-item:nth-child(n+7) { animation-delay: 360ms; }
+
+/* ── 2. ACCESSIBILITY ── */
+
+/* Focus rings */
+*:focus-visible {
+  outline: 2px solid #16b8b0;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Touch targets — minimum 44px */
+.welcome-sheet__quick-pill {
+  padding: 10px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .welcome-sheet { transition: none; }
+  .map-badge__pulse { animation: none; }
+}
+
+/* ── 3. SHADOW & DEPTH SYSTEM ── */
+
+/* Card rest shadow */
+.ops-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s var(--ease-decel);
+}
+.ops-card:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* Metric cells — translucent instead of flat white */
+.ops-metric {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* Sim metric boxes */
+.sim-metric {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: all 0.2s var(--ease-spring);
+}
+.sim-metric:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+/* ── 4. TYPOGRAPHY TIGHTENING ── */
+
+/* Next bus timer — readable weight */
+.welcome-sheet__next-time {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Decision headline — minimum weight 300 */
+.decision-panel__headline {
+  font-weight: 300;
+}
+
+/* Consistent uppercase labels */
+.ops-card__title,
+.ops__news-title,
+.city-section__title,
+.sim-metric__label,
+.ops-kpi__label,
+.fleet-row__adherence {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── 5. SIMULATION CINEMATIC ── */
+
+/* Sim mode — subtle atmosphere shift */
+.ops--sim-mode {
+  background: #f0faf9;
+}
+.ops--sim-mode .ops__header {
+  background: linear-gradient(135deg, #fff 0%, #f0faf9 100%);
+}
+
+/* End-of-sim summary — stagger fade in */
+@keyframes summary-stagger {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sim-summary h2 { animation: summary-stagger 0.4s var(--ease-decel) 0ms both; }
+.sim-summary__grid { animation: summary-stagger 0.4s var(--ease-decel) 150ms both; }
+.sim-summary__actions { animation: summary-stagger 0.4s var(--ease-decel) 300ms both; }
+.sim-summary p { animation: summary-stagger 0.4s var(--ease-decel) 200ms both; }
+
+/* Summary stat hover */
+.sim-summary__stat {
+  transition: all 0.2s var(--ease-spring);
+  cursor: default;
+}
+.sim-summary__stat:hover {
+  background: #f0f0f2;
+  transform: scale(1.03);
+}
+
+/* Sim badge — breathing pulse with scale */
+.ops__sim-badge::before {
+  animation: sim-pulse 1.5s var(--ease-momentum) infinite;
+}
+
+/* Live stats on landing — glass depth */
+.live-stat {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s var(--ease-spring);
+}
+.live-stat:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Info panel — premium feel */
+.ops__info-panel {
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+}

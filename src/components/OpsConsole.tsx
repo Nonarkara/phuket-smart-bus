@@ -349,7 +349,7 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
           {simRunning ? <div className="sim-timeline__playhead" style={{ left: `${progress * 100}%` }} /> : null}
         </div>
         {simRunning && simMinutes !== null ? (
-          <span className="sim-timeline__clock">{String(Math.floor(simMinutes / 60)).padStart(2, "0")}:{String(simMinutes % 60).padStart(2, "0")}</span>
+          <span className="sim-timeline__clock" role="status" aria-label="Simulation time">{String(Math.floor(simMinutes / 60)).padStart(2, "0")}:{String(simMinutes % 60).padStart(2, "0")}</span>
         ) : null}
       </div>
       <div className="sim-timeline__metrics">

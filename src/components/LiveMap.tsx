@@ -135,7 +135,9 @@ export function LiveMap({
   }, [animatedVehicles]);
 
   useEffect(() => {
-    if (renderedVehiclesRef.current.length === 0 || !shouldAnimateVehicleFrame(renderedVehiclesRef.current, vehicles)) {
+    // Respect reduced motion preference
+    const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced || renderedVehiclesRef.current.length === 0 || !shouldAnimateVehicleFrame(renderedVehiclesRef.current, vehicles)) {
       setAnimatedVehicles(vehicles);
       return;
     }

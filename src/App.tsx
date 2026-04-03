@@ -568,8 +568,8 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 </div>
               ) : null}
               {/* Next bus badge — the single most useful piece of info */}
-              <div className="map-badge">
-                <span className="map-badge__pulse" />
+              <div className="map-badge" role="status" aria-live="polite">
+                <span className="map-badge__pulse" aria-hidden="true" />
                 {totalLiveVehicles > 0
                   ? `${totalLiveVehicles} buses · Next: Patong ${(() => { const h = new Date().getHours(); return Math.max(3, 60 - new Date().getMinutes()); })()} min`
                   : `${totalLiveVehicles} vehicles`}
