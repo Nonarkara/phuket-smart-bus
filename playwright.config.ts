@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
+const apiPort = Number(process.env.API_PORT ?? 3099);
 const baseURL = `http://127.0.0.1:${port}`;
+const apiURL = `http://127.0.0.1:${apiPort}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -28,9 +30,16 @@ export default defineConfig({
       }
     }
   ],
-  webServer: {
-    command: `vite --host 127.0.0.1 --port ${port} --strictPort`,
-    url: baseURL,
-    reuseExistingServer: false
-  }
+  webServer: [
+    {
+      command: `PORT=${apiPort} npm run dev:api:test`,
+      url: `${apiURL}/health/live`,
+      reuseExistingServer: false
+    },
+    {
+      command: `API_PORT=${apiPort} PLAYWRIGHT_PORT=${port} npm run dev:web:test`,
+      url: baseURL,
+      reuseExistingServer: false
+    }
+  ]
 });

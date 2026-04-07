@@ -21,7 +21,7 @@ import {
   getRoutes,
   getStops,
   getVehicles
-} from "./api";
+} from "./engine/dataProvider";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -42,17 +42,17 @@ const PRIMARY_ROUTE_IDS: RouteId[] = [
 ];
 const NEARBY_STOP_RADIUS_METERS = 700;
 
-type AppView = "map" | "info";
+type AppView = "map" | "more";
 type MorePanel = "stops" | "pass" | null;
 type MapRouteFilter = RouteId | "all-core";
 
-const VIEW_PATHS: Record<AppView, string> = { map: "/", info: "/info" };
+const VIEW_PATHS: Record<AppView, string> = { map: "/", more: "/more" };
 
 function getInitialView(): AppView | "ops" {
   if (typeof window === "undefined") return "map";
   const p = window.location.pathname;
   if (p.startsWith("/ops")) return "ops";
-  if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "info";
+  if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
 }
 
@@ -117,12 +117,12 @@ function InfoIcon() {
 
 const TAB_ICONS: Record<AppView, () => React.ReactNode> = {
   map: MapIcon,
-  info: InfoIcon,
+  more: InfoIcon,
 };
 
 const TAB_LABELS: Record<AppView, keyof typeof ui> = {
   map: "navMap",
-  info: "navInfo",
+  more: "navMore",
 };
 
 export default function App() {
@@ -293,12 +293,12 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
         if (alive) {
           const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
           const fallbackRoutes: Route[] = [
-            { id: "rawai-airport" as any, name: lt("Airport Line"), shortName: lt("Airport Line"), overview: lt("Airport to Rawai"), axis: "north_south" as any, axisLabel: lt("N-S"), tier: "core" as any, color: "#16b8b0", accentColor: "#16b8b0", bounds: [[7.7804,98.3225],[8.1090,98.3070]] as any, pathSegments: [[[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]]] as any, stopCount: 5, defaultStopId: "airport-1", activeVehicles: 4, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo — backend offline") } },
-            { id: "patong-old-bus-station" as any, name: lt("Patong Line"), shortName: lt("Patong Line"), overview: lt("Patong to Old Town"), axis: "east_west" as any, axisLabel: lt("E-W"), tier: "core" as any, color: "#e5574f", accentColor: "#e5574f", bounds: [[7.8830,98.2930],[7.8840,98.3960]] as any, pathSegments: [[[7.8830,98.2930],[7.8900,98.3200],[7.8840,98.3800],[7.8840,98.3960]]] as any, stopCount: 4, defaultStopId: "patong-1", activeVehicles: 2, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo") } },
-            { id: "dragon-line" as any, name: lt("Dragon Line"), shortName: lt("Dragon Line"), overview: lt("Old Town Loop"), axis: "loop" as any, axisLabel: lt("Loop"), tier: "auxiliary" as any, color: "#f0b429", accentColor: "#f0b429", bounds: [[7.8840,98.3850],[7.8900,98.3960]] as any, pathSegments: [[[7.8840,98.3960],[7.8870,98.3920],[7.8900,98.3850],[7.8840,98.3960]]] as any, stopCount: 3, defaultStopId: "dragon-1", activeVehicles: 1, status: lt("Demo mode"), sourceStatus: { source: "bus" as any, state: "fallback" as any, updatedAt: new Date().toISOString(), detail: lt("Demo") } },
+            { id: "rawai-airport", name: lt("Airport Line"), shortName: lt("Airport Line"), overview: lt("Airport to Rawai"), axis: "north_south", axisLabel: lt("N-S"), tier: "core", color: "#16b8b0", accentColor: "#16b8b0", bounds: [[7.7804, 98.3225], [8.109, 98.307]], pathSegments: [[[7.7804, 98.3225], [7.842, 98.308], [7.905, 98.305], [8.07, 98.31], [8.109, 98.307]]], stopCount: 5, defaultStopId: "airport-1", activeVehicles: 4, status: lt("Demo mode"), sourceStatus: { source: "bus", state: "fallback", updatedAt: new Date().toISOString(), detail: lt("Demo — backend offline"), freshnessSeconds: null, fallbackReason: "backend_offline" } },
+            { id: "patong-old-bus-station", name: lt("Patong Line"), shortName: lt("Patong Line"), overview: lt("Patong to Old Town"), axis: "east_west", axisLabel: lt("E-W"), tier: "core", color: "#e5574f", accentColor: "#e5574f", bounds: [[7.883, 98.293], [7.884, 98.396]], pathSegments: [[[7.883, 98.293], [7.89, 98.32], [7.884, 98.38], [7.884, 98.396]]], stopCount: 4, defaultStopId: "patong-1", activeVehicles: 2, status: lt("Demo mode"), sourceStatus: { source: "bus", state: "fallback", updatedAt: new Date().toISOString(), detail: lt("Demo"), freshnessSeconds: null, fallbackReason: "backend_offline" } },
+            { id: "dragon-line", name: lt("Dragon Line"), shortName: lt("Dragon Line"), overview: lt("Old Town Loop"), axis: "loop", axisLabel: lt("Loop"), tier: "auxiliary", color: "#f0b429", accentColor: "#f0b429", bounds: [[7.884, 98.385], [7.89, 98.396]], pathSegments: [[[7.884, 98.396], [7.887, 98.392], [7.89, 98.385], [7.884, 98.396]]], stopCount: 3, defaultStopId: "dragon-1", activeVehicles: 1, status: lt("Demo mode"), sourceStatus: { source: "bus", state: "fallback", updatedAt: new Date().toISOString(), detail: lt("Demo"), freshnessSeconds: null, fallbackReason: "backend_offline" } },
           ];
           setRoutes(fallbackRoutes);
-          setSelectedRouteId("rawai-airport" as any);
+          setSelectedRouteId("rawai-airport");
           setBootError(null);
         }
       } finally {
@@ -635,7 +635,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
         ) : null}
 
         {/* ===== INFO (Stops + Pass) ===== */}
-        {view === "info" ? (
+        {view === "more" ? (
           <main className="stops-view">
             <div className="stops-view__header">
               <div className="more-tabs">
@@ -726,7 +726,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
 
       {/* --- Bottom Navigation — 3 tabs --- */}
       <nav className="bottom-nav" aria-label="Navigation">
-        {(["map", "info"] as AppView[]).map((tab) => {
+        {(["map", "more"] as AppView[]).map((tab) => {
           const Icon = TAB_ICONS[tab];
           return (
             <button

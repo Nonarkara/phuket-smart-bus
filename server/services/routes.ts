@@ -15,7 +15,12 @@ import { readJsonFile, fromRoot } from "../lib/files.js";
 import { ROUTE_DEFINITIONS } from "../config.js";
 import { buildTimetableSummary } from "../lib/time.js";
 import { text } from "../lib/i18n.js";
-import type { DataSourceStatus, Route, RouteId, Stop } from "../../shared/types.js";
+import type {
+  DataSourceStatus,
+  OperationalRouteId,
+  Route,
+  Stop
+} from "../../shared/types.js";
 
 type StopCollection = FeatureCollection<Point, GeoJsonProperties>;
 type LineCollection = FeatureCollection<LineString | MultiLineString, GeoJsonProperties>;
@@ -38,9 +43,9 @@ const lineCollections = Object.fromEntries(
       fromRoot("server", "data", "upstream", config.lineFile)
     )
   ])
-) as Record<RouteId, LineCollection>;
+) as Record<OperationalRouteId, LineCollection>;
 
-function buildStops(routeId: RouteId) {
+function buildStops(routeId: OperationalRouteId) {
   const config = ROUTE_DEFINITIONS[routeId];
 
   return stopsCollection.features
@@ -96,23 +101,23 @@ function buildStops(routeId: RouteId) {
 const stopsByRoute = Object.fromEntries(
   Object.keys(ROUTE_DEFINITIONS).map((routeId) => [
     routeId,
-    buildStops(routeId as RouteId)
+    buildStops(routeId as OperationalRouteId)
   ])
-) as Record<RouteId, Stop[]>;
+) as Record<OperationalRouteId, Stop[]>;
 
 const routeBase = Object.fromEntries(
   Object.entries(ROUTE_DEFINITIONS).map(([routeId, config]) => {
-    const segments = flattenLineSegments(lineCollections[routeId as RouteId]);
+    const segments = flattenLineSegments(lineCollections[routeId as OperationalRouteId]);
     const flat = flattenBoundsSegments(segments);
     const defaultStop =
-      stopsByRoute[routeId as RouteId].find(
+      stopsByRoute[routeId as OperationalRouteId].find(
         (stop) => stop.name.en === config.defaultStopName
-      ) ?? stopsByRoute[routeId as RouteId][0];
+      ) ?? stopsByRoute[routeId as OperationalRouteId][0];
 
     return [
       routeId,
       {
-        id: routeId as RouteId,
+        id: routeId as OperationalRouteId,
         name: config.name,
         shortName: config.shortName,
         overview: config.overview,
@@ -123,16 +128,16 @@ const routeBase = Object.fromEntries(
         accentColor: config.accentColor,
         bounds: getBounds(flat),
         pathSegments: segments,
-        stopCount: stopsByRoute[routeId as RouteId].length,
+        stopCount: stopsByRoute[routeId as OperationalRouteId].length,
         defaultStopId: defaultStop.id
       }
     ];
   })
 ) as Omit<Route, "activeVehicles" | "status" | "sourceStatus"> extends infer Base
-  ? Record<RouteId, Base>
+  ? Record<OperationalRouteId, Base>
   : never;
 
-export function getStopsForRoute(routeId: RouteId) {
+export function getStopsForRoute(routeId: OperationalRouteId) {
   const config = ROUTE_DEFINITIONS[routeId];
 
   return stopsByRoute[routeId].map((stop) => {
@@ -146,12 +151,15 @@ export function getStopsForRoute(routeId: RouteId) {
   });
 }
 
-export function getStopById(routeId: RouteId, stopId: string) {
+export function getStopById(routeId: OperationalRouteId, stopId: string) {
   return getStopsForRoute(routeId).find((stop) => stop.id === stopId) ?? null;
 }
 
-export function getRoutes(sourceStatus: DataSourceStatus, activeVehicles: Record<RouteId, number>) {
-  return (Object.keys(routeBase) as RouteId[])
+export function getRoutes(
+  sourceStatus: DataSourceStatus,
+  activeVehicles: Record<OperationalRouteId, number>
+) {
+  return (Object.keys(routeBase) as OperationalRouteId[])
     .sort((left, right) => {
       const tierOrder = { core: 0, auxiliary: 1, ferry: 2 } as const;
       return (tierOrder[routeBase[left].tier] ?? 9) - (tierOrder[routeBase[right].tier] ?? 9);

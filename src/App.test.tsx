@@ -79,16 +79,16 @@ describe("App", () => {
     expect(screen.getByText("mode:route")).toBeInTheDocument();
     expect(screen.getByText("user-location:on")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Map" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Info" })).toBeInTheDocument();
-    expect(screen.getByText("Where do you want to go?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
   });
 
-  it("switches between Map and Info tabs", async () => {
+  it("switches between Map and More tabs", async () => {
     render(<App />);
 
     await screen.findByTestId("live-map");
 
-    await userEvent.click(screen.getByRole("button", { name: "Info" }));
+    await userEvent.click(screen.getByRole("button", { name: "More" }));
     expect(screen.getByRole("button", { name: "Stops" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pass" })).toBeInTheDocument();
 

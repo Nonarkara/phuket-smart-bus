@@ -1,4 +1,5 @@
 import type { DemandHotspot, MetricProvenance } from "../../shared/types.js";
+import { insertDemandRequest, readDemandRequests } from "../lib/db.js";
 
 type DemandRequest = {
   lat: number;
@@ -38,6 +39,17 @@ function purgeExpiredRequests(now = Date.now()) {
   }
 }
 
+function getPersistedDemandRequests(now = Date.now()) {
+  purgeExpiredRequests(now);
+  const persisted = readDemandRequests(ONE_HOUR_MS);
+
+  if (persisted.length > 0) {
+    return persisted;
+  }
+
+  return demandRequests;
+}
+
 function distanceScore(lat: number, lng: number, zone: DemandZone) {
   return Math.sqrt((zone.lat - lat) ** 2 + (zone.lng - lng) ** 2);
 }
@@ -74,6 +86,10 @@ export function findDemandZone(lat: number, lng: number) {
   return [...DEMAND_ZONES].sort((left, right) => distanceScore(lat, lng, left) - distanceScore(lat, lng, right))[0];
 }
 
+export function clearDemandRequestStore() {
+  demandRequests.splice(0, demandRequests.length);
+}
+
 export function recordDemandRequest(lat: number, lng: number, now = Date.now()) {
   const zone = findDemandZone(lat, lng);
 
@@ -83,8 +99,9 @@ export function recordDemandRequest(lat: number, lng: number, now = Date.now()) 
 
   demandRequests.push({ lat, lng, zone: zone.zone, ts: now });
   purgeExpiredRequests(now);
+  insertDemandRequest(lat, lng, zone.zone, now);
 
-  const totalRequests = demandRequests.filter((request) => request.zone === zone.zone).length;
+  const totalRequests = getPersistedDemandRequests(now).filter((request) => request.zone === zone.zone).length;
 
   return {
     zone: zone.zone,
@@ -93,13 +110,12 @@ export function recordDemandRequest(lat: number, lng: number, now = Date.now()) 
 }
 
 export function getDemandHotspots(now = new Date()) {
-  purgeExpiredRequests(now.getTime());
-
+  const recentRequests = getPersistedDemandRequests(now.getTime());
   const hour = now.getHours();
   const scale = getDemandScale(hour);
   const liveCounts = new Map<string, number>();
 
-  for (const request of demandRequests) {
+  for (const request of recentRequests) {
     liveCounts.set(request.zone, (liveCounts.get(request.zone) ?? 0) + 1);
   }
 
@@ -127,6 +143,6 @@ export function getDemandHotspots(now = new Date()) {
 
   return {
     hotspots,
-    totalRequests: demandRequests.length
+    totalRequests: recentRequests.length
   };
 }

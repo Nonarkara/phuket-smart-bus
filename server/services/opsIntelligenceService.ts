@@ -1,6 +1,7 @@
 import type {
   Advisory,
   AdvisorySeverity,
+  CompetitorBenchmark,
   CurrentDemandSupply,
   DataSourceStatus,
   DemandHotspot,
@@ -10,7 +11,7 @@ import type {
   MetricProvenance,
   OpsDashboardPayload,
   OpsMapOverlayMarker,
-  RouteId,
+  OperationalRouteId,
   RoutePressure,
   ServiceRevenueBreakdown,
   SimulationSnapshot,
@@ -24,8 +25,9 @@ import {
   REPLAY_START_MINUTES,
   REPLAY_STEP_MINUTES
 } from "../../shared/productConfig.js";
-import { FERRY_ROUTE_IDS, ROUTE_DEFINITIONS } from "../config.js";
+import { COMPETITOR_BENCHMARKS, FERRY_ROUTE_IDS, ROUTE_DEFINITIONS } from "../config.js";
 import { text } from "../lib/i18n.js";
+import { resolveOpsDataMode, sourceStatusesToFallbackReasons } from "../lib/sourceStatus.js";
 import { parseClockMinutes, formatClockLabel, getBangkokNowMinutes } from "../lib/time.js";
 import { readRecentHistory } from "../lib/db.js";
 import { getOperationsOverview } from "./operationsService.js";
@@ -43,9 +45,13 @@ import { getDailyFlightSchedule } from "./providers/flightProvider.js";
 type FlightWithMinutes = FlightInfo & { minutes: number };
 type AirportFlow = "arrival_to_city" | "city_to_airport";
 
-const FERRY_ROUTE_SET = new Set<RouteId>(FERRY_ROUTE_IDS);
-const CORE_BUS_ROUTE_IDS: RouteId[] = ["rawai-airport", "patong-old-bus-station", "dragon-line"];
-const ROUTE_MARKER_COORDINATES: Record<RouteId, [number, number]> = {
+const FERRY_ROUTE_SET = new Set<OperationalRouteId>(FERRY_ROUTE_IDS);
+const CORE_BUS_ROUTE_IDS: OperationalRouteId[] = [
+  "rawai-airport",
+  "patong-old-bus-station",
+  "dragon-line"
+];
+const ROUTE_MARKER_COORDINATES: Record<OperationalRouteId, [number, number]> = {
   "rawai-airport": [8.1132, 98.3169],
   "patong-old-bus-station": [7.8961, 98.2969],
   "dragon-line": [7.8842, 98.3923],
@@ -303,7 +309,11 @@ function buildCurrentDemandSupply(date = new Date()): CurrentDemandSupply {
   };
 }
 
-function buildLocalServiceDemand(routeId: RouteId, departures: number, seatSupply: number) {
+function buildLocalServiceDemand(
+  routeId: OperationalRouteId,
+  departures: number,
+  seatSupply: number
+) {
   if (routeId === "patong-old-bus-station") {
     return Math.round(Math.min(seatSupply, departures * 14));
   }
@@ -377,6 +387,26 @@ function buildServiceRevenueBreakdown(hourly: HourlyCapacityGap[]): ServiceReven
               )
     };
   });
+}
+
+function buildCompetitorBenchmarks(totalAddressableDemand: number): CompetitorBenchmark[] {
+  const benchmark = COMPETITOR_BENCHMARKS["orange-line"];
+  const serviceWindowMinutes = REPLAY_END_MINUTES - REPLAY_START_MINUTES;
+  const departures = Math.max(1, Math.floor(serviceWindowMinutes / benchmark.headwayMinutes));
+  const seatSupply = departures * Math.round(BUS_SEAT_CAPACITY * 1.6);
+  const estimatedDemand = Math.round(totalAddressableDemand * 0.42);
+  const carriedRiders = Math.min(estimatedDemand, seatSupply);
+
+  return [
+    {
+      ...benchmark,
+      estimatedDemand,
+      seatSupply,
+      carriedRiders,
+      revenueThb: carriedRiders * benchmark.fareThb,
+      capturePct: roundPct(carriedRiders, estimatedDemand)
+    }
+  ];
 }
 
 async function buildWeatherIntelligence(now = new Date()) {
@@ -455,7 +485,7 @@ async function buildWeatherIntelligence(now = new Date()) {
     intelligence,
     provenance:
       weatherResult.status.state === "live" && aqiResult.status.state === "live" ? "live" : "fallback",
-    sourceStatuses: [weatherResult.status]
+    sourceStatuses: [weatherResult.status, aqiResult.status]
   } as const;
 }
 
@@ -483,7 +513,7 @@ function buildRoutePressure(
     currentDemandSupply.addressableDepartureDemandNext2h;
   const airportRouteSupply =
     currentDemandSupply.arrivalSeatSupplyNext2h + currentDemandSupply.departureSeatSupplyNext2h;
-  const hotspotDemandByRoute: Record<RouteId, number> = {
+  const hotspotDemandByRoute: Record<OperationalRouteId, number> = {
     "rawai-airport": airportRouteDemand,
     "patong-old-bus-station": hotspots
       .filter((hotspot) =>
@@ -499,7 +529,7 @@ function buildRoutePressure(
     "chalong-racha": 12
   };
 
-  return (Object.keys(ROUTE_DEFINITIONS) as RouteId[]).map<RoutePressure>((routeId) => {
+  return (Object.keys(ROUTE_DEFINITIONS) as OperationalRouteId[]).map<RoutePressure>((routeId) => {
     const routeVehicleCount = vehicles.filter((vehicle) => vehicle.routeId === routeId).length;
     const seatSupply = routeId === "rawai-airport" ? airportRouteSupply : routeVehicleCount * BUS_SEAT_CAPACITY;
     const demand = hotspotDemandByRoute[routeId] ?? 0;
@@ -633,10 +663,27 @@ export async function getSimulationSnapshot(
   const currentDemandSupply = buildCurrentDemandSupply(simDate);
   const weatherPanel = await buildWeatherIntelligence(simDate);
   const trafficPanel = await buildTrafficPanel();
+  const sourceStatuses = [
+    {
+      source: "bus" as const,
+      state: "fallback" as const,
+      updatedAt: simDate.toISOString(),
+      detail: text(
+        "Schedule replay is driving the simulation snapshot",
+        "การจำลองนี้ขับด้วยตารางเวลาแทนข้อมูลสด"
+      ),
+      freshnessSeconds: 0,
+      fallbackReason: "bus: schedule replay simulation"
+    },
+    ...weatherPanel.sourceStatuses,
+    ...trafficPanel.sourceStatuses
+  ];
 
   return {
     simMinutes,
     simTime: `${String(Math.floor(simMinutes / 60)).padStart(2, "0")}:${String(simMinutes % 60).padStart(2, "0")}`,
+    dataMode: resolveOpsDataMode(sourceStatuses),
+    fallbackReasons: sourceStatusesToFallbackReasons(sourceStatuses),
     vehicles,
     routePressure: buildRoutePressure(
       vehicles,
@@ -645,7 +692,11 @@ export async function getSimulationSnapshot(
       weatherPanel.severity,
       trafficPanel.severity
     ),
-    transferHubs: getTransferHubs(simDate, "estimated")
+    transferHubs: getTransferHubs(simDate, "estimated"),
+    competitorBenchmarks: buildCompetitorBenchmarks(
+      currentDemandSupply.addressableArrivalDemandNext2h +
+        currentDemandSupply.addressableDepartureDemandNext2h
+    )
   };
 }
 
@@ -666,16 +717,19 @@ export async function getOpsDashboardPayload(now = new Date()): Promise<OpsDashb
     trafficPanel.severity
   );
   const activeVehicles = Object.fromEntries(
-    (Object.keys(ROUTE_DEFINITIONS) as RouteId[]).map((routeId) => [
+    (Object.keys(ROUTE_DEFINITIONS) as OperationalRouteId[]).map((routeId) => [
       routeId,
       snapshot.vehicles.filter((vehicle) => vehicle.routeId === routeId).length
     ])
-  ) as Record<RouteId, number>;
+  ) as Record<OperationalRouteId, number>;
   const transferHubs = getTransferHubs(now, snapshot.status.state === "live" ? "live" : "estimated");
   const history = readRecentHistory();
+  const sourceStatuses = [snapshot.status, ...trafficPanel.sourceStatuses, ...weatherPanel.sourceStatuses];
 
   return {
     checkedAt: now.toISOString(),
+    dataMode: resolveOpsDataMode(sourceStatuses),
+    fallbackReasons: sourceStatusesToFallbackReasons(sourceStatuses),
     fleet: {
       vehicles: snapshot.vehicles,
       totalVehicles: snapshot.vehicles.length,
@@ -716,13 +770,23 @@ export async function getOpsDashboardPayload(now = new Date()): Promise<OpsDashb
         weatherPanel.intelligence
       )
     },
-    sources: [snapshot.status, ...trafficPanel.sourceStatuses, ...weatherPanel.sourceStatuses]
+    competitorBenchmarks: buildCompetitorBenchmarks(
+      currentDemandSupply.addressableArrivalDemandNext2h +
+        currentDemandSupply.addressableDepartureDemandNext2h
+    ),
+    sources: sourceStatuses
   };
 }
 
 export function getInvestorSimulationPayload(date = new Date()): InvestorSimulationPayload {
   const hourly = buildAirportHourlyGaps(date);
   const services = buildServiceRevenueBreakdown(hourly);
+  const competitorBenchmarks = buildCompetitorBenchmarks(
+    hourly.reduce(
+      (sum, item) => sum + item.addressableArrivalDemand + item.addressableDepartureDemand,
+      0
+    )
+  );
   const totals = {
     rawAirportArrivalPax: hourly.reduce((sum, item) => sum + item.rawArrivalPax, 0),
     rawAirportDeparturePax: hourly.reduce((sum, item) => sum + item.rawDeparturePax, 0),
@@ -765,6 +829,8 @@ export function getInvestorSimulationPayload(date = new Date()): InvestorSimulat
 
   return {
     generatedAt: date.toISOString(),
+    dataMode: "demo",
+    fallbackReasons: ["bus: investor replay uses modeled demand and schedule-derived supply"],
     assumptions: {
       seatCapacityPerBus: BUS_SEAT_CAPACITY,
       flatFareThb: INVESTOR_FLAT_FARE_THB,
@@ -775,6 +841,7 @@ export function getInvestorSimulationPayload(date = new Date()): InvestorSimulat
     },
     hourly,
     services,
+    competitorBenchmarks,
     totals,
     opportunities: {
       summary:

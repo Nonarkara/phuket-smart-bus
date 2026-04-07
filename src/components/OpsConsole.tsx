@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
+  CompetitorBenchmark,
+  DataSourceStatus,
   HourlyCapacityGap,
   InvestorSimulationPayload,
   OpsDashboardPayload,
   OpsMapOverlayMarker,
   OverlayLayerId,
+  OperationalRouteId,
   Route,
   RoutePressure,
   SimulationSnapshot,
   TransferHub,
   VehiclePosition
 } from "@shared/types";
-import { getInvestorSimulation, getOpsDashboard, getSimulationFrame } from "../api";
+import { getInvestorSimulation, getOpsDashboard, getSimulationFrame } from "../engine/dataProvider";
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
 
 /* ══════════════════════════════════════════════════
@@ -54,13 +57,18 @@ const HOURLY_ARR = [0,0,0,0,0,0,180,320,450,380,520,600,680,750,700,580,500,420,
 
 type PaxState = { pax: number; totalBoarded: number; trend: "boarding" | "alighting" | "steady"; demandPct: number };
 
-function simPaxAtProgress(routeId: string, progress: number, tripIdx: number, simMinutes: number): PaxState {
+function simPaxAtProgress(
+  routeId: OperationalRouteId,
+  progress: number,
+  tripIdx: number,
+  simMinutes: number
+): PaxState {
   const hour = Math.floor(simMinutes / 60);
   const hourlyArr = HOURLY_ARR[Math.min(23, Math.max(0, hour))] || 180;
   const demandScale = Math.max(0.25, hourlyArr / 750); // scale relative to peak (750 at 13:00)
   const isReturn = tripIdx % 2 === 1;
 
-  if (routeId === "rawai-airport" || routeId === "orange-line") {
+  if (routeId === "rawai-airport") {
     // Stops:      Airport  BangTao  Surin  Kamala  PATONG  Karon  Kata  Chalong  Rawai/OldTown
     const stops = [0,       0.08,    0.15,  0.22,   0.38,   0.52,  0.62, 0.78,    1.0];
     const brdS  = [25,      0,       0,     0,      2,      0,     0,    0,       0];   // southbound boarding
@@ -129,23 +137,23 @@ const DRIVER_NAMES = [
 ];
 function driverName(vid: string) { return DRIVER_NAMES[stableHash(vid) % DRIVER_NAMES.length]; }
 function driverRating(vid: string) { return Math.round((38 + stableHash(vid + "r") % 13) * 10) / 100; }
-function simSpeed(progress: number, routeId: string): number {
-  const isFerry = FERRY_ROUTE_IDS.has(routeId as any);
+function simSpeed(progress: number, routeId: OperationalRouteId): number {
+  const isFerry = FERRY_ROUTE_IDS.has(routeId);
   if (isFerry) return 15 + Math.sin(progress * Math.PI) * 10; // 15-25 knots
   // Buses avg 22 km/h with stops (actual Phuket data: 47km in 2h10m)
   // Speed varies: slower near stops (15 km/h), faster between (35 km/h)
   return Math.round((22 + Math.sin(progress * Math.PI * 4) * 13) * 10) / 10;
 }
 
-const ROUTE_MARKER_COORDINATES = {
+const ROUTE_MARKER_COORDINATES: Record<OperationalRouteId, [number, number]> = {
   "rawai-airport": [8.1132, 98.3169], "patong-old-bus-station": [7.8961, 98.2969],
-  "dragon-line": [7.8842, 98.3923], "orange-line": [7.9500, 98.3200],
+  "dragon-line": [7.8842, 98.3923],
   "rassada-phi-phi": [7.8574, 98.3866],
   "rassada-ao-nang": [7.8574, 98.3866], "bang-rong-koh-yao": [8.0317, 98.4192],
   "chalong-racha": [7.8216, 98.3613]
-} as const;
+};
 
-const FERRY_ROUTE_IDS = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
+const FERRY_ROUTE_IDS = new Set<OperationalRouteId>(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
 
 const LAYER_DEFS: { id: OverlayLayerId; label: string; icon: string }[] = [
   { id: "traffic", label: "Traffic", icon: "⚠" },
@@ -160,12 +168,59 @@ function colorForPressure(level: RoutePressure["level"]) {
 function colorForHubStatus(status: TransferHub["status"]) {
   return status === "ready" ? "#16b8b0" : status === "watch" ? "#b58900" : "#999";
 }
+function colorForDataMode(mode: OpsDashboardPayload["dataMode"]) {
+  return mode === "live" ? "#16b8b0" : mode === "degraded" ? "#b58900" : "#dc322f";
+}
+function labelForDataMode(mode: OpsDashboardPayload["dataMode"]) {
+  return mode === "live" ? "Live" : mode === "degraded" ? "Degraded" : "Demo";
+}
 
 function fleetSummary(vehicles: VehiclePosition[]) {
   const busCount = vehicles.filter((v) => !FERRY_ROUTE_IDS.has(v.routeId)).length;
   const ferryCount = vehicles.filter((v) => FERRY_ROUTE_IDS.has(v.routeId)).length;
   const movingCount = vehicles.filter((v) => v.status === "moving").length;
   return { totalVehicles: vehicles.length, busCount, ferryCount, movingCount, dwellingCount: vehicles.length - movingCount };
+}
+
+function lt(value: string) {
+  return { en: value, th: value, zh: value, de: value, fr: value, es: value };
+}
+
+function fallbackSourceStatus(
+  source: DataSourceStatus["source"],
+  updatedAt: string,
+  detail = "Fallback demo snapshot"
+): DataSourceStatus {
+  return {
+    source,
+    state: "fallback",
+    updatedAt,
+    detail: lt(detail),
+    freshnessSeconds: null,
+    fallbackReason: "demo_mode"
+  };
+}
+
+function buildFallbackCompetitorBenchmarks(): CompetitorBenchmark[] {
+  return [
+    {
+      routeId: "orange-line",
+      routeName: lt("Orange Line (Govt)"),
+      tier: "competitor",
+      operatorLabel: "Phuket government pilot",
+      fareThb: 100,
+      headwayMinutes: 60,
+      tripDurationMinutes: 90,
+      estimatedDemand: 400,
+      seatSupply: 960,
+      carriedRiders: 350,
+      revenueThb: 35_000,
+      capturePct: 88,
+      overlapRouteIds: ["rawai-airport", "patong-old-bus-station"],
+      provenance: "fallback",
+      notes: lt("Government-operated benchmark overlapping the airport-to-town corridor.")
+    }
+  ];
 }
 
 /* ══════════════════════════════════════════════════
@@ -477,61 +532,269 @@ function buildIncidentMarkers(simMinutes: number | null): MapMarkerOverlay[] {
    ══════════════════════════════════════════════════ */
 function buildFallbackDashboard(): OpsDashboardPayload {
   const now = new Date();
+  const updatedAt = now.toISOString();
   const bh = Number(now.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", hour12: false }));
   // Minimum 0.3 activity so demo always shows some vehicles
   const busAct = Math.max(0.3, bh < 6 ? 0.2 : bh < 7 ? 0.3 : bh < 9 ? 0.7 : bh < 18 ? 1.0 : bh < 21 ? 0.6 : bh < 23 ? 0.3 : 0.2);
   const ferryAct = Math.max(0.2, bh < 8 ? 0.2 : bh < 9 ? 0.4 : bh < 17 ? 1.0 : bh < 19 ? 0.5 : 0.2);
-  const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
-  const RD = [
-    { id: "rawai-airport", sn: "Airport Line", c: "#16b8b0", t: "core", f: false, wp: [[7.7804,98.3225],[7.8420,98.3080],[7.9050,98.3050],[8.0700,98.3100],[8.1090,98.3070]] },
-    { id: "patong-old-bus-station", sn: "Patong Line", c: "#e5574f", t: "core", f: false, wp: [[7.8830,98.2930],[7.8900,98.3200],[7.8840,98.3800],[7.8840,98.3960]] },
-    { id: "dragon-line", sn: "Dragon Line", c: "#f0b429", t: "auxiliary", f: false, wp: [[7.8840,98.3960],[7.8870,98.3920],[7.8900,98.3850],[7.8840,98.3960]] },
-    { id: "rassada-phi-phi", sn: "Phi Phi Ferry", c: "#58a6ff", t: "ferry", f: true, wp: [[7.8574,98.3866],[7.8200,98.4500],[7.7500,98.7700]] },
-    { id: "rassada-ao-nang", sn: "Ao Nang Ferry", c: "#a371f7", t: "ferry", f: true, wp: [[7.8574,98.3866],[7.9500,98.6000],[8.0300,98.8200]] },
-    { id: "bang-rong-koh-yao", sn: "Koh Yao Ferry", c: "#3fb950", t: "ferry", f: true, wp: [[8.0317,98.4192],[8.0800,98.5000],[8.1100,98.5800]] },
-    { id: "chalong-racha", sn: "Racha Ferry", c: "#d29922", t: "ferry", f: true, wp: [[7.8216,98.3613],[7.7500,98.3600],[7.6000,98.3650]] },
-    { id: "orange-line", sn: "Orange Line", c: "#FF6B00", t: "competitor", f: false, wp: [[8.1090,98.3070],[8.0500,98.3090],[8.0000,98.3100],[7.9500,98.3200],[7.9100,98.3500],[7.8900,98.3700],[7.8840,98.3960]] },
-  ] as const;
+  const routeSeeds: Array<{
+    id: OperationalRouteId;
+    sn: string;
+    color: string;
+    tier: Route["tier"];
+    axis: Route["axis"];
+    isFerry: boolean;
+    waypoints: [number, number][];
+  }> = [
+    { id: "rawai-airport", sn: "Airport Line", color: "#16b8b0", tier: "core", axis: "north_south", isFerry: false, waypoints: [[7.7804, 98.3225], [7.842, 98.308], [7.905, 98.305], [8.07, 98.31], [8.109, 98.307]] },
+    { id: "patong-old-bus-station", sn: "Patong Line", color: "#e5574f", tier: "core", axis: "east_west", isFerry: false, waypoints: [[7.883, 98.293], [7.89, 98.32], [7.884, 98.38], [7.884, 98.396]] },
+    { id: "dragon-line", sn: "Dragon Line", color: "#f0b429", tier: "auxiliary", axis: "loop", isFerry: false, waypoints: [[7.884, 98.396], [7.887, 98.392], [7.89, 98.385], [7.884, 98.396]] },
+    { id: "rassada-phi-phi", sn: "Phi Phi Ferry", color: "#58a6ff", tier: "ferry", axis: "marine", isFerry: true, waypoints: [[7.8574, 98.3866], [7.82, 98.45], [7.75, 98.77]] },
+    { id: "rassada-ao-nang", sn: "Ao Nang Ferry", color: "#a371f7", tier: "ferry", axis: "marine", isFerry: true, waypoints: [[7.8574, 98.3866], [7.95, 98.6], [8.03, 98.82]] },
+    { id: "bang-rong-koh-yao", sn: "Koh Yao Ferry", color: "#3fb950", tier: "ferry", axis: "marine", isFerry: true, waypoints: [[8.0317, 98.4192], [8.08, 98.5], [8.11, 98.58]] },
+    { id: "chalong-racha", sn: "Racha Ferry", color: "#d29922", tier: "ferry", axis: "marine", isFerry: true, waypoints: [[7.8216, 98.3613], [7.75, 98.36], [7.6, 98.365]] }
+  ];
   const vehicles: VehiclePosition[] = [];
-  for (const rd of RD) {
-    const act = rd.f ? ferryAct : busAct;
+  for (const route of routeSeeds) {
+    const act = route.isFerry ? ferryAct : busAct;
     if (act <= 0) continue;
-    const cnt = rd.f ? Math.round(act * 2) : Math.round(act * (rd.id === "rawai-airport" ? 6 : 3));
+    const cnt = route.isFerry ? Math.round(act * 2) : Math.round(act * (route.id === "rawai-airport" ? 6 : 3));
     for (let i = 0; i < cnt; i++) {
       const p = (i + 0.5) / cnt;
-      const wp = rd.wp as unknown as [number,number][];
+      const wp = route.waypoints;
       const pp = p * (wp.length - 1);
       const idx = Math.min(Math.floor(pp), wp.length - 2);
       const seg = pp - idx;
       vehicles.push({
-        id: `fb-${rd.id}-${i}`, routeId: rd.id as any, licensePlate: `PKT-${1000+vehicles.length}`,
-        vehicleId: `v-${rd.id}-${i}`, deviceId: null,
-        coordinates: [wp[idx][0]+(wp[idx+1][0]-wp[idx][0])*seg, wp[idx][1]+(wp[idx+1][1]-wp[idx][1])*seg],
-        heading: i%2===0?0:180, speedKph: act>0?25+Math.random()*15:0,
-        destination: lt(rd.sn), updatedAt: now.toISOString(), telemetrySource: "schedule_mock",
-        freshness: "fresh", status: Math.random()>0.3?"moving":"dwelling", distanceToDestinationMeters: null, stopsAway: null,
+        id: `fb-${route.id}-${i}`, routeId: route.id, licensePlate: `PKT-${1000 + vehicles.length}`,
+        vehicleId: `v-${route.id}-${i}`, deviceId: null,
+        coordinates: [wp[idx]![0] + (wp[idx + 1]![0] - wp[idx]![0]) * seg, wp[idx]![1] + (wp[idx + 1]![1] - wp[idx]![1]) * seg],
+        heading: i % 2 === 0 ? 0 : 180, speedKph: act > 0 ? 25 + Math.random() * 15 : 0,
+        destination: lt(route.sn), updatedAt, telemetrySource: "schedule_mock",
+        freshness: "fresh", status: Math.random() > 0.3 ? "moving" : "dwelling", distanceToDestinationMeters: null, stopsAway: null,
       });
     }
   }
-  const bc = vehicles.filter(v=>!FERRY_ROUTE_IDS.has(v.routeId)).length;
-  const fc = vehicles.filter(v=>FERRY_ROUTE_IDS.has(v.routeId)).length;
-  const mc = vehicles.filter(v=>v.status==="moving").length;
-  const pm = (bh>=10&&bh<=14)?1.0:(bh>=18&&bh<=20)?0.8:(bh>=7&&bh<=22)?0.5:0.1;
-  const rA = Math.round(1200*pm), rD = Math.round(900*pm);
-  const aA = Math.round(rA*0.15), aD = Math.round(rD*0.15);
-  const ss = bc*25, cA = Math.min(aA,ss), cD = Math.min(aD,ss);
-  const isMon = now.getMonth()>=4&&now.getMonth()<=9;
-  const forecast = Array.from({length:12},(_,i)=>{const h=(bh+i)%24;return{hour:`${String(h).padStart(2,"0")}:00`,tempC:30+Math.round(Math.random()*4),rainProb:isMon?30+Math.round(Math.random()*40):10+Math.round(Math.random()*20),precipMm:isMon?Math.random()*3:Math.random()*0.5,windKph:8+Math.round(Math.random()*10),code:1000}});
-  const rp: RoutePressure[] = RD.map(rd=>{const d=rd.id==="rawai-airport"?Math.round(aA*0.6):rd.f?12:8;const s=vehicles.filter(v=>v.routeId===rd.id).length*25;const r=s>0?Math.min(1,s/d):0;return{routeId:rd.id as any,level:r>=1?"balanced" as const:r>=0.7?"watch" as const:"strained" as const,demand:d,seatSupply:s,gap:Math.max(0,d-s),coverageRatio:r,delayRiskMinutes:0,provenance:"fallback" as const}});
-  const hs = [{id:"patong",zone:"Patong",lat:7.8961,lng:98.2969,base:12},{id:"airport",zone:"Airport",lat:8.1132,lng:98.3169,base:10},{id:"kata",zone:"Kata",lat:7.8165,lng:98.2972,base:6},{id:"town",zone:"Old Town",lat:7.8840,lng:98.3960,base:8}].map(h=>{const d=Math.round(h.base*pm);return{id:h.id,zone:h.zone,lat:h.lat,lng:h.lng,demand:d,liveRequests:0,modeledDemand:d,coverageRatio:d>8?0.45:0.7,gap:Math.max(0,Math.round(d*0.4)),provenance:"fallback" as const}});
-  const th: TransferHub[] = [{id:"rassada",name:lt("Rassada Hub"),coordinates:[7.8557,98.4013],feederRouteIds:["dragon-line","patong-old-bus-station"] as any,ferryRouteIds:["rassada-phi-phi","rassada-ao-nang"] as any,walkMinutes:12,transferBufferMinutes:20},{id:"chalong",name:lt("Chalong Hub"),coordinates:[7.8216,98.3613],feederRouteIds:["rawai-airport"] as any,ferryRouteIds:["chalong-racha"] as any,walkMinutes:15,transferBufferMinutes:20},{id:"bang-rong",name:lt("Bang Rong Hub"),coordinates:[8.0317,98.4192],feederRouteIds:["rawai-airport"] as any,ferryRouteIds:["bang-rong-koh-yao"] as any,walkMinutes:18,transferBufferMinutes:25}].map(h=>({...h,provenance:"fallback" as const,status:"inactive" as const,rationale:lt("Fallback"),activeWindowLabel:null,nextWindowStartLabel:null,activeConnections:[]}));
-  const mk: OpsMapOverlayMarker[] = [...hs.map(h=>({id:`hs-${h.id}`,layerId:"hotspots" as OverlayLayerId,lat:h.lat,lng:h.lng,color:h.gap>=4?"#dc322f":"#b58900",radius:h.demand>8?14:10,label:`${h.zone}: ${h.demand}`,fillOpacity:0.2})),...th.map(h=>({id:`hub-${h.id}`,layerId:"transfer_hubs" as OverlayLayerId,lat:h.coordinates[0],lng:h.coordinates[1],color:"#999",radius:12,label:h.name.en,fillOpacity:0.2}))];
-  const routes: Route[] = RD.map(rd=>({id:rd.id as any,name:lt(rd.sn),shortName:lt(rd.sn),overview:lt(rd.sn),axis:rd.f?"marine" as const:"north_south" as const,axisLabel:lt(rd.f?"Marine":"Land"),tier:rd.t as any,color:rd.c,accentColor:rd.c,bounds:[rd.wp[0],rd.wp[rd.wp.length-1]] as any,pathSegments:[rd.wp] as any,stopCount:rd.wp.length,defaultStopId:`${rd.id}-1`,activeVehicles:vehicles.filter(v=>v.routeId===rd.id).length,status:lt("Fallback"),sourceStatus:{source:"bus" as const,state:"fallback" as const,updatedAt:now.toISOString(),detail:lt("Fallback")}}));
-  return {checkedAt:now.toISOString(),fleet:{vehicles,totalVehicles:vehicles.length,busCount:bc,ferryCount:fc,movingCount:mc,dwellingCount:vehicles.length-mc,routePressure:rp},routes,demandSupply:{rawAirportArrivalPaxNext2h:rA,rawAirportDeparturePaxNext2h:rD,addressableArrivalDemandNext2h:aA,addressableDepartureDemandNext2h:aD,arrivalSeatSupplyNext2h:ss,departureSeatSupplyNext2h:ss,carriedArrivalDemandNext2h:cA,carriedDepartureDemandNext2h:cD,unmetArrivalDemandNext2h:Math.max(0,aA-ss),unmetDepartureDemandNext2h:Math.max(0,aD-ss),arrivalCaptureOfAddressablePct:aA>0?Math.round(cA/aA*100):0,departureCaptureOfAddressablePct:aD>0?Math.round(cD/aD*100):0,additionalBusesNeededPeak:Math.max(0,Math.ceil((aA-ss)/25)),provenance:"fallback" as const},weather:{severity:"info" as const,intelligence:{current:{tempC:32,rainProb:isMon?45:15,precipMm:0,windKph:12,aqi:42,pm25:11},forecast,monsoonSeason:isMon,monsoonNote:isMon?"Monsoon — afternoon showers":"Dry season",driverAlerts:[]},provenance:"fallback" as const},traffic:{severity:"info" as const,advisories:[{id:"fb-1",routeId:"all" as any,source:"operations" as const,severity:"info" as const,title:lt("Normal Traffic"),message:lt("No incidents"),recommendation:lt("Standard"),updatedAt:now.toISOString(),active:true,tags:[]}],provenance:"fallback" as const,sourceStatuses:[]},hotspots:{hotspots:hs,totalRequests:0},transferHubs:th,history:{recentEvents:[],vehicleHistoryCount:0},mapOverlays:{tileLayers:[],markers:mk},sources:[{source:"bus" as const,state:"fallback" as const,updatedAt:now.toISOString(),detail:lt("Fallback")},{source:"traffic" as const,state:"fallback" as const,updatedAt:now.toISOString(),detail:lt("Fallback")},{source:"weather" as const,state:"fallback" as const,updatedAt:now.toISOString(),detail:lt("Fallback")}]};
+  const busCount = vehicles.filter((vehicle) => !FERRY_ROUTE_IDS.has(vehicle.routeId)).length;
+  const ferryCount = vehicles.filter((vehicle) => FERRY_ROUTE_IDS.has(vehicle.routeId)).length;
+  const movingCount = vehicles.filter((vehicle) => vehicle.status === "moving").length;
+  const peakMultiplier = (bh >= 10 && bh <= 14) ? 1.0 : (bh >= 18 && bh <= 20) ? 0.8 : (bh >= 7 && bh <= 22) ? 0.5 : 0.1;
+  const rawArrivals = Math.round(1200 * peakMultiplier);
+  const rawDepartures = Math.round(900 * peakMultiplier);
+  const addressableArrivals = Math.round(rawArrivals * 0.15);
+  const addressableDepartures = Math.round(rawDepartures * 0.15);
+  const seatSupply = busCount * 25;
+  const carriedArrivals = Math.min(addressableArrivals, seatSupply);
+  const carriedDepartures = Math.min(addressableDepartures, seatSupply);
+  const isMonsoon = now.getMonth() >= 4 && now.getMonth() <= 9;
+  const forecast = Array.from({ length: 12 }, (_, index) => {
+    const hour = (bh + index) % 24;
+    return {
+      hour: `${String(hour).padStart(2, "0")}:00`,
+      tempC: 30 + Math.round(Math.random() * 4),
+      rainProb: isMonsoon ? 30 + Math.round(Math.random() * 40) : 10 + Math.round(Math.random() * 20),
+      precipMm: isMonsoon ? Math.random() * 3 : Math.random() * 0.5,
+      windKph: 8 + Math.round(Math.random() * 10),
+      code: 1000
+    };
+  });
+  const routePressure: RoutePressure[] = routeSeeds.map((route) => {
+    const demand = route.id === "rawai-airport" ? Math.round(addressableArrivals * 0.6) : route.isFerry ? 12 : 8;
+    const suppliedSeats = vehicles.filter((vehicle) => vehicle.routeId === route.id).length * 25;
+    const coverageRatio = suppliedSeats > 0 ? Math.min(1, suppliedSeats / demand) : 0;
+    return {
+      routeId: route.id,
+      level: coverageRatio >= 1 ? "balanced" : coverageRatio >= 0.7 ? "watch" : "strained",
+      demand,
+      seatSupply: suppliedSeats,
+      gap: Math.max(0, demand - suppliedSeats),
+      coverageRatio,
+      delayRiskMinutes: 0,
+      provenance: "fallback"
+    };
+  });
+  const hotspots: OpsDashboardPayload["hotspots"]["hotspots"] = [
+    { id: "patong", zone: "Patong", lat: 7.8961, lng: 98.2969, base: 12 },
+    { id: "airport", zone: "Airport", lat: 8.1132, lng: 98.3169, base: 10 },
+    { id: "kata", zone: "Kata", lat: 7.8165, lng: 98.2972, base: 6 },
+    { id: "town", zone: "Old Town", lat: 7.884, lng: 98.396, base: 8 }
+  ].map((hotspot) => {
+    const demand = Math.round(hotspot.base * peakMultiplier);
+    return {
+      id: hotspot.id,
+      zone: hotspot.zone,
+      lat: hotspot.lat,
+      lng: hotspot.lng,
+      demand,
+      liveRequests: 0,
+      modeledDemand: demand,
+      coverageRatio: demand > 8 ? 0.45 : 0.7,
+      gap: Math.max(0, Math.round(demand * 0.4)),
+      provenance: "fallback"
+    };
+  });
+  const transferHubs: TransferHub[] = [
+    {
+      id: "rassada",
+      name: lt("Rassada Hub"),
+      coordinates: [7.8557, 98.4013],
+      feederRouteIds: ["dragon-line", "patong-old-bus-station"],
+      ferryRouteIds: ["rassada-phi-phi", "rassada-ao-nang"],
+      walkMinutes: 12,
+      transferBufferMinutes: 20,
+      provenance: "fallback",
+      status: "inactive",
+      rationale: lt("Fallback"),
+      activeWindowLabel: null,
+      nextWindowStartLabel: null,
+      activeConnections: []
+    },
+    {
+      id: "chalong",
+      name: lt("Chalong Hub"),
+      coordinates: [7.8216, 98.3613],
+      feederRouteIds: ["rawai-airport"],
+      ferryRouteIds: ["chalong-racha"],
+      walkMinutes: 15,
+      transferBufferMinutes: 20,
+      provenance: "fallback",
+      status: "inactive",
+      rationale: lt("Fallback"),
+      activeWindowLabel: null,
+      nextWindowStartLabel: null,
+      activeConnections: []
+    },
+    {
+      id: "bang-rong",
+      name: lt("Bang Rong Hub"),
+      coordinates: [8.0317, 98.4192],
+      feederRouteIds: ["rawai-airport"],
+      ferryRouteIds: ["bang-rong-koh-yao"],
+      walkMinutes: 18,
+      transferBufferMinutes: 25,
+      provenance: "fallback",
+      status: "inactive",
+      rationale: lt("Fallback"),
+      activeWindowLabel: null,
+      nextWindowStartLabel: null,
+      activeConnections: []
+    }
+  ];
+  const markers: OpsMapOverlayMarker[] = [
+    ...hotspots.map((hotspot) => ({
+      id: `hs-${hotspot.id}`,
+      layerId: "hotspots" as const,
+      lat: hotspot.lat,
+      lng: hotspot.lng,
+      color: hotspot.gap >= 4 ? "#dc322f" : "#b58900",
+      radius: hotspot.demand > 8 ? 14 : 10,
+      label: `${hotspot.zone}: ${hotspot.demand}`,
+      fillOpacity: 0.2
+    })),
+    ...transferHubs.map((hub) => ({
+      id: `hub-${hub.id}`,
+      layerId: "transfer_hubs" as const,
+      lat: hub.coordinates[0],
+      lng: hub.coordinates[1],
+      color: "#999",
+      radius: 12,
+      label: hub.name.en,
+      fillOpacity: 0.2
+    }))
+  ];
+  const routes: Route[] = routeSeeds.map((route) => ({
+    id: route.id,
+    name: lt(route.sn),
+    shortName: lt(route.sn),
+    overview: lt(route.sn),
+    axis: route.axis,
+    axisLabel: lt(route.isFerry ? "Marine" : route.axis === "east_west" ? "E-W" : route.axis === "loop" ? "Loop" : "N-S"),
+    tier: route.tier,
+    color: route.color,
+    accentColor: route.color,
+    bounds: [route.waypoints[0]!, route.waypoints[route.waypoints.length - 1]!],
+    pathSegments: [route.waypoints],
+    stopCount: route.waypoints.length,
+    defaultStopId: `${route.id}-1`,
+    activeVehicles: vehicles.filter((vehicle) => vehicle.routeId === route.id).length,
+    status: lt("Fallback"),
+    sourceStatus: fallbackSourceStatus("bus", updatedAt)
+  }));
+  return {
+    checkedAt: updatedAt,
+    dataMode: "demo",
+    fallbackReasons: ["Demo snapshot active"],
+    fleet: {
+      vehicles,
+      totalVehicles: vehicles.length,
+      busCount,
+      ferryCount,
+      movingCount,
+      dwellingCount: vehicles.length - movingCount,
+      routePressure
+    },
+    routes,
+    demandSupply: {
+      rawAirportArrivalPaxNext2h: rawArrivals,
+      rawAirportDeparturePaxNext2h: rawDepartures,
+      addressableArrivalDemandNext2h: addressableArrivals,
+      addressableDepartureDemandNext2h: addressableDepartures,
+      arrivalSeatSupplyNext2h: seatSupply,
+      departureSeatSupplyNext2h: seatSupply,
+      carriedArrivalDemandNext2h: carriedArrivals,
+      carriedDepartureDemandNext2h: carriedDepartures,
+      unmetArrivalDemandNext2h: Math.max(0, addressableArrivals - seatSupply),
+      unmetDepartureDemandNext2h: Math.max(0, addressableDepartures - seatSupply),
+      arrivalCaptureOfAddressablePct: addressableArrivals > 0 ? Math.round((carriedArrivals / addressableArrivals) * 100) : 0,
+      departureCaptureOfAddressablePct: addressableDepartures > 0 ? Math.round((carriedDepartures / addressableDepartures) * 100) : 0,
+      additionalBusesNeededPeak: Math.max(0, Math.ceil((addressableArrivals - seatSupply) / 25)),
+      provenance: "fallback"
+    },
+    weather: {
+      severity: "info",
+      intelligence: {
+        current: { tempC: 32, rainProb: isMonsoon ? 45 : 15, precipMm: 0, windKph: 12, aqi: 42, pm25: 11 },
+        forecast,
+        monsoonSeason: isMonsoon,
+        monsoonNote: isMonsoon ? "Monsoon - afternoon showers" : "Dry season",
+        driverAlerts: []
+      },
+      provenance: "fallback"
+    },
+    traffic: {
+      severity: "info",
+      advisories: [
+        {
+          id: "fb-1",
+          routeId: "all",
+          source: "operations",
+          severity: "info",
+          title: lt("Normal Traffic"),
+          message: lt("No incidents"),
+          recommendation: lt("Standard"),
+          updatedAt,
+          active: true,
+          tags: []
+        }
+      ],
+      provenance: "fallback"
+    },
+    hotspots: { hotspots, totalRequests: 0 },
+    transferHubs,
+    history: { recentEvents: [], vehicleHistoryCount: 0 },
+    mapOverlays: { tileLayers: [], markers },
+    competitorBenchmarks: buildFallbackCompetitorBenchmarks(),
+    sources: [
+      fallbackSourceStatus("bus", updatedAt),
+      fallbackSourceStatus("traffic", updatedAt),
+      fallbackSourceStatus("weather", updatedAt),
+      fallbackSourceStatus("aqi", updatedAt)
+    ]
+  };
 }
 
 function buildFallbackInvestorPayload(): InvestorSimulationPayload {
-  const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
+  const dashboard = buildFallbackDashboard();
   const HA = [0,0,0,0,0,0,180,320,450,380,520,600,680,750,700,580,500,420,380,300,250,150,80,0];
   const HD = [0,0,0,0,0,50,120,250,350,300,400,480,520,580,550,450,380,320,280,200,150,100,50,0];
   const S=0.15,F=100,SE=25;
@@ -543,7 +806,107 @@ function buildFallbackInvestorPayload(): InvestorSimulationPayload {
   const dr=(tCA+tCD)*F,lr=(tUA+tUD)*F;
   const pb=Math.max(...hourly.map(h=>h.additionalArrivalBusesNeeded+h.additionalDepartureBusesNeeded));
   const pg=hourly.reduce((b,h)=>h.unmetArrivalDemand>(b?.unmetArrivalDemand??0)?h:b,hourly[0]);
-  return {generatedAt:new Date().toISOString(),assumptions:{seatCapacityPerBus:SE,flatFareThb:F,addressableDemandShare:S,replayStepMinutes:3,replayStartMinutes:360,replayEndMinutes:1440},hourly,services:[{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"Airport → City",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAA,carriedRiders:tCA,unmetRiders:tUA,revenueThb:tCA*F,capturePct:tAA>0?Math.round(tCA/tAA*100):0,provenance:"fallback" as any,strategicValue:lt("Primary airport connector")},{routeId:"rawai-airport" as any,routeName:lt("Airport Line"),directionLabel:"City → Airport",tier:"core" as any,departures:52,seatSupply:1300,estimatedDemand:tAD,carriedRiders:tCD,unmetRiders:tUD,revenueThb:tCD*F,capturePct:tAD>0?Math.round(tCD/tAD*100):0,provenance:"fallback" as any,strategicValue:null},{routeId:"patong-old-bus-station" as any,routeName:lt("Patong Line"),directionLabel:"Both",tier:"core" as any,departures:36,seatSupply:900,estimatedDemand:220,carriedRiders:180,unmetRiders:40,revenueThb:18000,capturePct:82,provenance:"fallback" as any,strategicValue:lt("Operating at ฿8,000/day loss (fuel+driver ฿26,000 vs ฿18,000 revenue). Strategically essential: feeds Airport Line passengers from Patong hotel belt. Without it, Airport Line loses ~30% ridership.")},{routeId:"dragon-line" as any,routeName:lt("Dragon Line"),directionLabel:"Loop",tier:"auxiliary" as any,departures:24,seatSupply:600,estimatedDemand:180,carriedRiders:180,unmetRiders:0,revenueThb:18000,capturePct:100,provenance:"fallback" as any,strategicValue:null},{routeId:"orange-line" as any,routeName:lt("Orange Line (Govt)"),directionLabel:"Airport ↔ Town",tier:"competitor" as any,departures:24,seatSupply:960,estimatedDemand:400,carriedRiders:350,unmetRiders:50,revenueThb:35000,capturePct:88,provenance:"fallback" as any,strategicValue:lt("Government-operated competitor. Overlaps Airport Line on Airport–Town segment. ฿100 flat fare, hourly 06:00-18:00.")}],touchpoints:[],totals:{rawAirportArrivalPax:hourly.reduce((s,h)=>s+h.rawArrivalPax,0),rawAirportDeparturePax:hourly.reduce((s,h)=>s+h.rawDeparturePax,0),addressableArrivalDemand:tAA,addressableDepartureDemand:tAD,carriedArrivalDemand:tCA,carriedDepartureDemand:tCD,unmetArrivalDemand:tUA,unmetDepartureDemand:tUD,totalAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,addressableAirportCapturePct:(tAA+tAD)>0?Math.round((tCA+tCD)/(tAA+tAD)*100):0,dailyRevenueThb:dr,lostRevenueThb:lr,peakAdditionalBusesNeeded:pb},opportunities:{summary:`Peak gap at ${pg.hour} — ${pg.unmetArrivalDemand+pg.unmetDepartureDemand} unmet pax. Adding ${pb} buses captures ฿${lr.toLocaleString()}.`,peakArrivalGapHour:pg.hour,peakDepartureGapHour:pg.hour,strongestRevenueServiceRouteId:"rawai-airport" as any}};
+  const generatedAt = new Date().toISOString();
+  const services: InvestorSimulationPayload["services"] = [
+    {
+      routeId: "rawai-airport",
+      routeName: lt("Airport Line"),
+      directionLabel: "Airport -> City",
+      tier: "core",
+      departures: 52,
+      seatSupply: 1300,
+      estimatedDemand: tAA,
+      carriedRiders: tCA,
+      unmetRiders: tUA,
+      revenueThb: tCA * F,
+      capturePct: tAA > 0 ? Math.round((tCA / tAA) * 100) : 0,
+      provenance: "fallback",
+      strategicValue: lt("Primary airport connector")
+    },
+    {
+      routeId: "rawai-airport",
+      routeName: lt("Airport Line"),
+      directionLabel: "City -> Airport",
+      tier: "core",
+      departures: 52,
+      seatSupply: 1300,
+      estimatedDemand: tAD,
+      carriedRiders: tCD,
+      unmetRiders: tUD,
+      revenueThb: tCD * F,
+      capturePct: tAD > 0 ? Math.round((tCD / tAD) * 100) : 0,
+      provenance: "fallback",
+      strategicValue: null
+    },
+    {
+      routeId: "patong-old-bus-station",
+      routeName: lt("Patong Line"),
+      directionLabel: "Both",
+      tier: "core",
+      departures: 36,
+      seatSupply: 900,
+      estimatedDemand: 220,
+      carriedRiders: 180,
+      unmetRiders: 40,
+      revenueThb: 18_000,
+      capturePct: 82,
+      provenance: "fallback",
+      strategicValue: lt("Strategic feeder from Patong hotels into the airport trunk.")
+    },
+    {
+      routeId: "dragon-line",
+      routeName: lt("Dragon Line"),
+      directionLabel: "Loop",
+      tier: "auxiliary",
+      departures: 24,
+      seatSupply: 600,
+      estimatedDemand: 180,
+      carriedRiders: 180,
+      unmetRiders: 0,
+      revenueThb: 18_000,
+      capturePct: 100,
+      provenance: "fallback",
+      strategicValue: null
+    }
+  ];
+  return {
+    generatedAt,
+    dataMode: "demo",
+    fallbackReasons: ["Demo snapshot active"],
+    assumptions: {
+      seatCapacityPerBus: SE,
+      flatFareThb: F,
+      addressableDemandShare: S,
+      replayStepMinutes: 3,
+      replayStartMinutes: 360,
+      replayEndMinutes: 1440
+    },
+    hourly,
+    services,
+    competitorBenchmarks: dashboard.competitorBenchmarks,
+    totals: {
+      rawAirportArrivalPax: hourly.reduce((sum, item) => sum + item.rawArrivalPax, 0),
+      rawAirportDeparturePax: hourly.reduce((sum, item) => sum + item.rawDeparturePax, 0),
+      addressableArrivalDemand: tAA,
+      addressableDepartureDemand: tAD,
+      carriedArrivalDemand: tCA,
+      carriedDepartureDemand: tCD,
+      unmetArrivalDemand: tUA,
+      unmetDepartureDemand: tUD,
+      totalAirportCapturePct: (tAA + tAD) > 0 ? Math.round(((tCA + tCD) / (tAA + tAD)) * 100) : 0,
+      addressableAirportCapturePct: (tAA + tAD) > 0 ? Math.round(((tCA + tCD) / (tAA + tAD)) * 100) : 0,
+      dailyRevenueThb: dr,
+      lostRevenueThb: lr,
+      peakAdditionalBusesNeeded: pb
+    },
+    opportunities: {
+      summary: `Peak gap at ${pg.hour} - ${pg.unmetArrivalDemand + pg.unmetDepartureDemand} unmet pax. Adding ${pb} buses captures THB ${lr.toLocaleString()}.`,
+      peakArrivalGapHour: pg.hour,
+      peakDepartureGapHour: pg.hour,
+      strongestRevenueServiceRouteId: "rawai-airport"
+    },
+    touchpoints: dashboard.transferHubs
+  };
 }
 
 function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): SimulationSnapshot {
@@ -551,15 +914,13 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
   const busAct = hour<6?0:hour<7?0.3:hour<9?0.7:hour<18?1.0:hour<21?0.6:hour<23?0.2:0;
   const ferryAct = hour<8?0:hour<9?0.4:hour<17?1.0:hour<19?0.5:0;
   // Routes with realistic waypoints (densified for smooth animation)
-  const RW: Record<string,[number,number][]> = {
+  const RW: Record<OperationalRouteId,[number,number][]> = {
     // Airport Line: Airport (north) → Rawai (south), 47km, 2h10m with stops
     "rawai-airport": densifyPath([[7.7804,98.3225],[7.8120,98.3150],[7.8420,98.3080],[7.8750,98.3050],[7.9050,98.3050],[7.9500,98.3060],[8.0000,98.3080],[8.0700,98.3100],[8.1090,98.3070]],25),
     // Patong Line: Patong → Old Town, 18km, 50min
     "patong-old-bus-station": densifyPath([[7.8830,98.2930],[7.8860,98.3050],[7.8900,98.3200],[7.8880,98.3400],[7.8860,98.3600],[7.8840,98.3800],[7.8840,98.3960]],20),
     // Dragon Line: Old Town loop, 8km, 25min
     "dragon-line": densifyPath([[7.8840,98.3960],[7.8860,98.3940],[7.8870,98.3920],[7.8880,98.3890],[7.8900,98.3850],[7.8880,98.3880],[7.8860,98.3920],[7.8840,98.3960]],20),
-    // Orange Line (competitor): Airport ↔ Old Town, govt-run, 35km, 90min, separate company
-    "orange-line": densifyPath([[8.1090,98.3070],[8.0500,98.3090],[8.0000,98.3100],[7.9500,98.3200],[7.9100,98.3500],[7.8900,98.3700],[7.8840,98.3960]],20),
     // Ferries
     "rassada-phi-phi": densifyPath([[7.8574,98.3866],[7.8400,98.4200],[7.8200,98.4500],[7.8000,98.5500],[7.7500,98.7700]],20),
     "rassada-ao-nang": densifyPath([[7.8574,98.3866],[7.8800,98.4500],[7.9500,98.6000],[8.0000,98.7200],[8.0300,98.8200]],20),
@@ -567,28 +928,26 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
     "chalong-racha": densifyPath([[7.8216,98.3613],[7.7900,98.3610],[7.7500,98.3600],[7.7000,98.3620],[7.6000,98.3650]],20),
   };
   // Realistic trip durations based on actual Phuket Smart Bus data (rome2rio, mamalovesphuket)
-  const TD: Record<string,number> = {
+  const TD: Record<OperationalRouteId,number> = {
     "rawai-airport": 130,                // 2h10m — Airport to Rawai with 15 stops (47km, avg 22km/h)
     "patong-old-bus-station": 50,         // 50min — Patong to Old Town (18km)
     "dragon-line": 25,                    // 25min — Old Town loop (8km)
-    "orange-line": 90,                    // 1.5h — Airport to Old Town (35km, govt orange bus)
     "rassada-phi-phi": 90, "rassada-ao-nang": 120, "bang-rong-koh-yao": 45, "chalong-racha": 60
   };
   // Headway: how often each route dispatches
-  const HW: Record<string,number> = {
+  const HW: Record<OperationalRouteId,number> = {
     "rawai-airport": 60,                  // Hourly (actual schedule)
     "patong-old-bus-station": 30,         // Every 30min
     "dragon-line": 30,                    // Every 30min
-    "orange-line": 60,                    // Hourly (govt schedule 06:00-18:00)
     "rassada-phi-phi": 60, "rassada-ao-nang": 120, "bang-rong-koh-yao": 90, "chalong-racha": 120
   };
   const vehicles: VehiclePosition[] = [];
-  const lt = (s: string) => ({en:s,th:s,zh:s,de:s,fr:s,es:s});
-  for (const [rid, wp] of Object.entries(RW)) {
-    const isFerry = FERRY_ROUTE_IDS.has(rid as any);
+  for (const rid of Object.keys(RW) as OperationalRouteId[]) {
+    const wp = RW[rid];
+    const isFerry = FERRY_ROUTE_IDS.has(rid);
     const act = isFerry ? ferryAct : busAct;
     if (act <= 0) continue;
-    const tripMin = TD[rid]??60, headway = HW[rid]??30, firstDep = isFerry?480:360;
+    const tripMin = TD[rid] ?? 60, headway = HW[rid] ?? 30, firstDep = isFerry ? 480 : 360;
     for (let dep=firstDep; dep<simMinutes+tripMin; dep+=headway) {
       const age = simMinutes-dep;
       if (age<0||age>tripMin) continue;
@@ -605,10 +964,19 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
       const nIdx = Math.min(idx+1,wp.length-1);
       const dLat=wp[nIdx][0]-wp[idx][0], dLng=wp[nIdx][1]-wp[idx][1];
       const heading = reverse?(Math.atan2(-dLng,-dLat)*180/Math.PI+360)%360:(Math.atan2(dLng,dLat)*180/Math.PI+360)%360;
-      vehicles.push({id:`sim-${rid}-${dep}`,routeId:rid as any,licensePlate:`SIM-${vehicles.length}`,vehicleId:`sv-${rid}-${dep}`,deviceId:null,coordinates:[lat,lng],heading,speedKph:simSpeed(progress,rid),destination:lt(rid),updatedAt:new Date().toISOString(),telemetrySource:"schedule_mock",freshness:"fresh",status:progress>0.95||progress<0.05?"dwelling":"moving",distanceToDestinationMeters:null,stopsAway:null});
+      vehicles.push({id:`sim-${rid}-${dep}`,routeId:rid,licensePlate:`SIM-${vehicles.length}`,vehicleId:`sv-${rid}-${dep}`,deviceId:null,coordinates:[lat,lng],heading,speedKph:simSpeed(progress,rid),destination:lt(rid),updatedAt:new Date().toISOString(),telemetrySource:"schedule_mock",freshness:"fresh",status:progress>0.95||progress<0.05?"dwelling":"moving",distanceToDestinationMeters:null,stopsAway:null});
     }
   }
-  return {simMinutes,simTime:`${String(Math.floor(simMinutes/60)).padStart(2,"0")}:${String(simMinutes%60).padStart(2,"0")}`,vehicles,routePressure:fb.fleet.routePressure,transferHubs:fb.transferHubs};
+  return {
+    simMinutes,
+    simTime:`${String(Math.floor(simMinutes/60)).padStart(2,"0")}:${String(simMinutes%60).padStart(2,"0")}`,
+    dataMode: fb.dataMode,
+    fallbackReasons: fb.fallbackReasons,
+    vehicles,
+    routePressure: fb.fleet.routePressure,
+    transferHubs: fb.transferHubs,
+    competitorBenchmarks: fb.competitorBenchmarks
+  };
 }
 
 /* ══════════════════════════════════════════════════
@@ -620,22 +988,31 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [simSnapshot, setSimSnapshot] = useState<SimulationSnapshot | null>(null);
   const [simRunning, setSimRunning] = useState(false);
   const [simLoading, setSimLoading] = useState(false);
+  const [opsError, setOpsError] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSimSummary, setShowSimSummary] = useState(false);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
   const replayAbortRef = useRef(false);
   const nextReplayMinuteRef = useRef<number | null>(null);
-  const useClientSimRef = useRef(true); // Always use client sim for instant start
 
   useEffect(() => { const id = setInterval(() => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" })), 1000); return () => clearInterval(id); }, []);
 
   useEffect(() => {
     let alive = true;
-    // Show fallback immediately, then try to upgrade to live data
-    setDashboard(buildFallbackDashboard());
-    const load = async () => { try { const p = await getOpsDashboard(); if (alive) setDashboard(p); } catch { /* fallback already loaded */ } };
-    void load(); const id = setInterval(() => void load(), OPS_POLL_MS);
+    const load = async () => {
+      try {
+        const payload = await getOpsDashboard();
+        if (!alive) return;
+        setDashboard(payload);
+        setOpsError(null);
+      } catch {
+        if (!alive) return;
+        setOpsError("Backend unavailable. Ops console is waiting for an authoritative dashboard payload.");
+      }
+    };
+    void load();
+    const id = setInterval(() => void load(), OPS_POLL_MS);
     return () => { alive = false; clearInterval(id); };
   }, []);
 
@@ -647,14 +1024,18 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
       if (cancelled || replayAbortRef.current || nm === null) return;
       if (nm > investor.assumptions.replayEndMinutes) { setSimRunning(false); nextReplayMinuteRef.current = null; setShowSimSummary(true); return; }
       try {
-        let frame: SimulationSnapshot;
-        if (useClientSimRef.current) { frame = buildFallbackSimFrame(nm, dashboard!); }
-        else { try { frame = await getSimulationFrame(nm); } catch { useClientSimRef.current = true; frame = buildFallbackSimFrame(nm, dashboard!); } }
+        const frame = await getSimulationFrame(nm);
         if (cancelled || replayAbortRef.current) return;
         setSimSnapshot(frame);
+        setOpsError(null);
         nextReplayMinuteRef.current = nm + investor.assumptions.replayStepMinutes;
         setTimeout(() => void tick(), SIM_TICK_MS);
-      } catch { setSimRunning(false); nextReplayMinuteRef.current = null; }
+      } catch {
+        if (cancelled || replayAbortRef.current) return;
+        setSimRunning(false);
+        nextReplayMinuteRef.current = null;
+        setOpsError("Simulation feed unavailable. Backend did not return the next replay frame.");
+      }
     };
     setTimeout(() => void tick(), SIM_TICK_MS);
     return () => { cancelled = true; };
@@ -681,30 +1062,39 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   }, [activeLayers, currentMarkers, incidentMarkers]);
 
   const simMinutes = simRunning && simSnapshot ? simSnapshot.simMinutes : null;
+  const activeTransferHubs = simRunning && simSnapshot ? simSnapshot.transferHubs : dashboard?.transferHubs ?? [];
+  const activeCompetitorBenchmarks =
+    simRunning && simSnapshot ? simSnapshot.competitorBenchmarks : dashboard?.competitorBenchmarks ?? [];
+  const activeDataMode = simRunning && simSnapshot ? simSnapshot.dataMode : dashboard?.dataMode ?? "demo";
+  const activeFallbackReasons =
+    simRunning && simSnapshot ? simSnapshot.fallbackReasons : dashboard?.fallbackReasons ?? [];
 
   function toggleLayer(id: OverlayLayerId) { setActiveLayers((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
   async function toggleReplay() {
     if (simRunning) { replayAbortRef.current = true; setSimRunning(false); nextReplayMinuteRef.current = null; return; }
+    if (!dashboard) return;
     setSimLoading(true); replayAbortRef.current = false;
     try {
-      let ip: InvestorSimulationPayload;
-      if (useClientSimRef.current || investor) { ip = investor ?? buildFallbackInvestorPayload(); }
-      else { try { ip = await getInvestorSimulation(); } catch { useClientSimRef.current = true; ip = buildFallbackInvestorPayload(); } }
-      const fm = ip.assumptions.replayStartMinutes;
-      let ff: SimulationSnapshot;
-      if (useClientSimRef.current) { ff = buildFallbackSimFrame(fm, dashboard!); }
-      else { try { ff = await getSimulationFrame(fm); } catch { useClientSimRef.current = true; ff = buildFallbackSimFrame(fm, dashboard!); } }
-      setInvestor(ip); setSimSnapshot(ff);
-      nextReplayMinuteRef.current = fm + ip.assumptions.replayStepMinutes;
+      const nextInvestor = await getInvestorSimulation();
+      const firstFrame = await getSimulationFrame(nextInvestor.assumptions.replayStartMinutes);
+      setInvestor(nextInvestor);
+      setSimSnapshot(firstFrame);
+      setOpsError(null);
+      const fm = nextInvestor.assumptions.replayStartMinutes;
+      nextReplayMinuteRef.current = fm + nextInvestor.assumptions.replayStepMinutes;
       setSimRunning(true);
+    } catch {
+      setSimRunning(false);
+      nextReplayMinuteRef.current = null;
+      setOpsError("Simulation unavailable. Check backend data mode or replay endpoint health.");
     } finally { setSimLoading(false); }
   }
 
   if (!dashboard) return (
     <div className="ops">
       <header className="ops__header"><div className="ops__brand">{onToggle?<button className="ops__back" type="button" onClick={onToggle}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg></button>:null}<h1>PKSB Operations</h1></div></header>
-      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="ops-card" style={{textAlign:"center"}}><h2 className="ops-card__title">Connecting</h2><p className="ops-card__rec">Loading fleet and operations data.</p></div></div>
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}><div className="ops-card" style={{textAlign:"center"}}><h2 className="ops-card__title">{opsError ? "Backend unavailable" : "Connecting"}</h2><p className="ops-card__rec">{opsError ?? "Loading fleet and operations data."}</p></div></div>
     </div>
   );
 
@@ -712,8 +1102,8 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
   const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
   const routeCounters: Record<string, number> = {};
-  const TD_MAP: Record<string,number> = {"rawai-airport":130,"patong-old-bus-station":50,"dragon-line":25,"orange-line":90,"rassada-phi-phi":90,"rassada-ao-nang":120,"bang-rong-koh-yao":45,"chalong-racha":60};
-  const HW_MAP: Record<string,number> = {"rawai-airport":60,"patong-old-bus-station":30,"dragon-line":30,"orange-line":60};
+  const TD_MAP: Record<OperationalRouteId, number> = {"rawai-airport":130,"patong-old-bus-station":50,"dragon-line":25,"rassada-phi-phi":90,"rassada-ao-nang":120,"bang-rong-koh-yao":45,"chalong-racha":60};
+  const HW_MAP: Record<OperationalRouteId, number> = {"rawai-airport":60,"patong-old-bus-station":30,"dragon-line":30,"rassada-phi-phi":60,"rassada-ao-nang":120,"bang-rong-koh-yao":90,"chalong-racha":120};
   const fleetRows = displayVehicles.slice(0, 12).map((v) => {
     routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
     const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
@@ -762,6 +1152,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           {onToggle ? <button className="ops__back" type="button" onClick={onToggle}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg></button> : null}
           <h1>PKSB Operations</h1>
           {simRunning ? <span className="ops__sim-badge">Simulation</span> : null}
+          <span className="ops__sim-badge" style={{ background: colorForDataMode(activeDataMode), color: "#fff" }} title={activeFallbackReasons.join(" · ") || "All primary sources live"}>
+            {labelForDataMode(activeDataMode)}
+          </span>
         </div>
         <div className="ops__flight-ticker">
           <span className="ops__ticker-label">HKT</span>
@@ -800,6 +1193,13 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
         {/* RIGHT: Bus Operations */}
         <div className="ops__analytics">
+          {opsError ? (
+            <section className="ops-card">
+              <h2 className="ops-card__title">Backend Notice</h2>
+              <p className="ops-card__rec">{opsError}</p>
+            </section>
+          ) : null}
+
           {/* Each bus with load %, seats, ETA */}
           <section className="ops-card ops-card--tight">
             {(() => {
@@ -892,29 +1292,36 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </div>
           </section>
 
+          <section className="ops-card">
+            <h2 className="ops-card__title">Competitor Benchmark</h2>
+            {activeCompetitorBenchmarks.map((benchmark) => (
+              <div key={benchmark.routeId} className="ops-route-row">
+                <span className="ops-route-row__dot" style={{ background: "#ff6b00" }} />
+                <span className="ops-route-row__name">{benchmark.routeName.en}</span>
+                <span className="ops-route-row__count">฿{benchmark.fareThb}</span>
+                <span className="ops-route-row__tier">{benchmark.capturePct}% cap</span>
+              </div>
+            ))}
+            {activeFallbackReasons.length > 0 ? (
+              <p className="ops-card__rec">{activeFallbackReasons.join(" · ")}</p>
+            ) : null}
+          </section>
+
           {/* Hubs with live countdowns */}
           <section className="ops-card ops-card--tight">
             <h2 className="ops-card__title">Bus → Boat</h2>
-            {[
-              { name: "Rassada", dest: "Phi Phi", departures: [510, 540, 570, 630, 690, 810, 870, 930] },
-              { name: "Chalong", dest: "Racha", departures: [510, 540, 600, 780, 900] },
-              { name: "Bang Rong", dest: "Koh Yao", departures: [450, 510, 570, 630, 780, 900, 960] },
-            ].map((hub) => {
-              const now = simMinutes ?? 0;
-              const next = hub.departures.find((d) => d > now);
-              const minUntil = next ? next - now : null;
-              const fmtTime = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-              const color = minUntil === null ? "#999" : minUntil <= 15 ? "#dc322f" : minUntil <= 30 ? "#b58900" : "#16b8b0";
+            {activeTransferHubs.map((hub) => {
+              const color = colorForHubStatus(hub.status);
               return (
-                <div key={hub.name} className="ops-hub-line">
+                <div key={hub.id} className="ops-hub-line">
                   <span className="ops-hub-line__dot" style={{ background: color }} />
-                  <span>{hub.name} → {hub.dest}</span>
-                  {next ? (
+                  <span>{hub.name.en}</span>
+                  {hub.nextWindowStartLabel ? (
                     <span style={{ marginLeft: "auto", fontFamily: '"SF Mono", monospace', fontSize: 10, color, fontWeight: 600 }}>
-                      {fmtTime(next)} ({minUntil} min)
+                      {hub.nextWindowStartLabel}
                     </span>
                   ) : (
-                    <span style={{ marginLeft: "auto", fontSize: 9, color: "#999" }}>No more today</span>
+                    <span style={{ marginLeft: "auto", fontSize: 9, color: "#999" }}>No live ferry window</span>
                   )}
                 </div>
               );

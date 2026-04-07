@@ -1,0 +1,44 @@
+[
+  {
+    "id": "itic-airport-corridor",
+    "routeId": "rawai-airport",
+    "severity": "caution",
+    "source": "itic",
+    "updatedAt": "2026-03-08T13:30:00+07:00",
+    "tags": ["airport", "arterial-road"],
+    "titleEn": "Airport corridor is running slower than midday baseline",
+    "titleTh": "คอร์ริดอร์สนามบินช้ากว่าค่ากลางช่วงกลางวัน",
+    "messageEn": "Traffic density on the airport approach can stretch waiting time even when buses are moving.",
+    "messageTh": "ความหนาแน่นการจราจรขาเข้าสนามบินอาจทำให้การรอรถนานขึ้นแม้รถยังวิ่งอยู่",
+    "recommendationEn": "Arrive 10 minutes earlier for airport-bound trips.",
+    "recommendationTh": "เผื่อเวลาเพิ่ม 10 นาทีสำหรับการเดินทางไปสนามบิน"
+  },
+  {
+    "id": "itic-patong-hill",
+    "routeId": "patong-old-bus-station",
+    "severity": "warning",
+    "source": "itic",
+    "updatedAt": "2026-03-08T13:40:00+07:00",
+    "tags": ["patong", "hill-road"],
+    "titleEn": "Patong approach is seeing stop-and-go conditions",
+    "titleTh": "ทางเข้าป่าตองมีสภาพจราจรหยุด-ไหล",
+    "messageEn": "Traffic into Patong is unstable enough that timetable confidence should be treated cautiously.",
+    "messageTh": "การจราจรเข้าป่าตองไม่เสถียรจนควรใช้ตารางเวลาอย่างระมัดระวัง",
+    "recommendationEn": "Use a wider buffer if you need a specific arrival time in Patong.",
+    "recommendationTh": "เผื่อเวลามากขึ้นหากต้องการถึงป่าตองตรงเวลา"
+  },
+  {
+    "id": "ops-old-town-events",
+    "routeId": "dragon-line",
+    "severity": "info",
+    "source": "operations",
+    "updatedAt": "2026-03-08T12:50:00+07:00",
+    "tags": ["old-town", "events"],
+    "titleEn": "Old Town pickup demand is peaking",
+    "titleTh": "ความต้องการขึ้นรถในเมืองเก่ากำลังสูง",
+    "messageEn": "The loop is still moving, but expect busier boarding at central old-town stops.",
+    "messageTh": "รถยังวิ่งปกติ แต่การขึ้นรถในจุดใจกลางเมืองเก่าอาจใช้เวลามากขึ้น",
+    "recommendationEn": "Board one stop earlier if you want more seat choice.",
+    "recommendationTh": "หากอยากมีโอกาสนั่งมากขึ้น ให้ขึ้นก่อนถึงป้ายหลักหนึ่งป้าย"
+  }
+]

@@ -4,7 +4,7 @@ import type {
   AirportGuideKind,
   AirportGuidePayload,
   AirportQuickDestination,
-  RouteId,
+  OperationalRouteId,
   Stop,
   VehiclePosition
 } from "../../shared/types.js";
@@ -21,8 +21,8 @@ import {
 } from "./providers/weatherProvider.js";
 import { getStopsForRoute } from "./routes.js";
 
-const AIRPORT_ROUTE_ID: RouteId = "rawai-airport";
-const TRANSFER_ROUTE_ID: RouteId = "patong-old-bus-station";
+const AIRPORT_ROUTE_ID: OperationalRouteId = "rawai-airport";
+const TRANSFER_ROUTE_ID: OperationalRouteId = "patong-old-bus-station";
 const AIRPORT_STOP_NAME = "Phuket Airport";
 const AIRPORT_BOARDING_RADIUS_METERS = 260;
 const AIRPORT_BUS_FARE_THB = 100;
@@ -179,7 +179,7 @@ function scoreText(query: string, haystack: string) {
   return tokens.reduce((score, token) => score + (haystack.includes(token) ? 3 : 0), 0);
 }
 
-function findStopByEnglishName(routeId: RouteId, stopNames: readonly string[]) {
+function findStopByEnglishName(routeId: OperationalRouteId, stopNames: readonly string[]) {
   const stops = routeId === AIRPORT_ROUTE_ID ? getAirportDirectionStops() : getStopsForRoute(routeId);
   return stops.find((stop) => stopNames.includes(stop.name.en)) ?? null;
 }

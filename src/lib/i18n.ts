@@ -466,6 +466,14 @@ export const ui = {
     fr: "Météo",
     es: "Clima"
   },
+  sourceAqi: {
+    en: "Air quality",
+    th: "คุณภาพอากาศ",
+    zh: "空气质量",
+    de: "Luftqualität",
+    fr: "Qualité de l’air",
+    es: "Calidad del aire"
+  },
   mapLoading: {
     en: "Loading route data...",
     th: "กำลังโหลดข้อมูลเส้นทาง...",

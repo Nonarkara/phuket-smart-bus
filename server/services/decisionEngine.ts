@@ -4,7 +4,7 @@ import type {
   DecisionLevel,
   DecisionSummary,
   EnvironmentContext,
-  RouteId,
+  OperationalRouteId,
   Stop,
   VehiclePosition
 } from "../../shared/types.js";
@@ -146,7 +146,7 @@ function buildReasons(
 function buildBusAdvantages(
   weather: WeatherSnapshot | null,
   aqi: AqiSnapshot | null,
-  routeId: RouteId
+  routeId: OperationalRouteId
 ): EnvironmentContext["busAdvantages"] {
   const advantages: EnvironmentContext["busAdvantages"] = [];
 
@@ -223,7 +223,7 @@ function buildBusAdvantages(
 function buildEnvironmentContext(
   weather: WeatherSnapshot | null,
   aqi: AqiSnapshot | null,
-  routeId: RouteId
+  routeId: OperationalRouteId
 ): EnvironmentContext | null {
   if (!weather && !aqi) return null;
 
@@ -239,7 +239,7 @@ function buildEnvironmentContext(
 }
 
 export function buildDecisionSummary(
-  routeId: RouteId,
+  routeId: OperationalRouteId,
   stop: Stop,
   vehicles: VehiclePosition[],
   advisories: Advisory[],
@@ -251,7 +251,16 @@ export function buildDecisionSummary(
     source: "bus" as const,
     state: "fallback" as const,
     updatedAt: new Date().toISOString(),
-    detail: { en: "Bus status unavailable", th: "สถานะรถไม่พร้อมใช้งาน", zh: "巴士状态不可用", de: "Busstatus nicht verfügbar", fr: "Statut bus indisponible", es: "Estado del bus no disponible" }
+    detail: {
+      en: "Bus status unavailable",
+      th: "สถานะรถไม่พร้อมใช้งาน",
+      zh: "巴士状态不可用",
+      de: "Busstatus nicht verfügbar",
+      fr: "Statut bus indisponible",
+      es: "Estado del bus no disponible"
+    },
+    freshnessSeconds: null,
+    fallbackReason: "bus: status unavailable"
   };
   const level = rankLevel(stop, vehicles, advisories, busStatus);
   const nearestVehicle = vehicles.length

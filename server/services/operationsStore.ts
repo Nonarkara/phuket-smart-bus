@@ -10,6 +10,17 @@ import type {
   VehicleTelemetrySample
 } from "../../shared/types.js";
 import { LIVE_STALE_AFTER_MS } from "../config.js";
+import {
+  clearRealtimeState,
+  insertPassengerFlowSamples,
+  readDriverMonitorSamples,
+  readPassengerFlowEvents,
+  readSeatCameraSamples,
+  readTelemetrySamples,
+  upsertDriverMonitorSamples,
+  upsertSeatCameraSamples,
+  upsertTelemetrySamples
+} from "../lib/db.js";
 import { routeDestinationLabel, text } from "../lib/i18n.js";
 
 const MAX_EVENT_HISTORY = 250;
@@ -96,7 +107,43 @@ function buildDriverAttention(sample: DriverMonitorSample): DriverAttentionStatu
   };
 }
 
+function getLatestTelemetrySamples() {
+  const persistedSamples = readTelemetrySamples();
+  return persistedSamples.length > 0 ? persistedSamples : Array.from(telemetryByVehicleId.values());
+}
+
+function getLatestSeatCameraSamples() {
+  const persistedSamples = readSeatCameraSamples();
+  return persistedSamples.length > 0 ? persistedSamples : Array.from(seatCameraByVehicleId.values());
+}
+
+function getLatestDriverMonitorSamples() {
+  const persistedSamples = readDriverMonitorSamples();
+  return persistedSamples.length > 0 ? persistedSamples : Array.from(driverMonitorByVehicleId.values());
+}
+
+function getPersistedPassengerFlowEvents(limit = MAX_EVENT_HISTORY, lookbackMs?: number) {
+  const persistedEvents = readPassengerFlowEvents(limit, lookbackMs);
+
+  if (persistedEvents.length > 0) {
+    return persistedEvents.map<PassengerFlowEvent>((event) => ({
+      ...event,
+      stopName: null
+    }));
+  }
+
+  return passengerFlowEvents.slice(0, limit);
+}
+
 export function clearOperationsStore() {
+  telemetryByVehicleId.clear();
+  seatCameraByVehicleId.clear();
+  driverMonitorByVehicleId.clear();
+  passengerFlowEvents.splice(0, passengerFlowEvents.length);
+  clearRealtimeState();
+}
+
+export function clearOperationsStoreCache() {
   telemetryByVehicleId.clear();
   seatCameraByVehicleId.clear();
   driverMonitorByVehicleId.clear();
@@ -107,18 +154,24 @@ export function recordVehicleTelemetry(samples: VehicleTelemetrySample[]) {
   for (const sample of samples) {
     telemetryByVehicleId.set(getVehicleKey(sample.vehicleId), sample);
   }
+
+  upsertTelemetrySamples(samples);
 }
 
 export function recordSeatCameraSamples(samples: SeatCameraSample[]) {
   for (const sample of samples) {
     seatCameraByVehicleId.set(getVehicleKey(sample.vehicleId), sample);
   }
+
+  upsertSeatCameraSamples(samples);
 }
 
 export function recordDriverMonitorSamples(samples: DriverMonitorSample[]) {
   for (const sample of samples) {
     driverMonitorByVehicleId.set(getVehicleKey(sample.vehicleId), sample);
   }
+
+  upsertDriverMonitorSamples(samples);
 }
 
 export function recordPassengerFlowSamples(samples: PassengerFlowSample[]) {
@@ -142,16 +195,20 @@ export function recordPassengerFlowSamples(samples: PassengerFlowSample[]) {
   if (passengerFlowEvents.length > MAX_EVENT_HISTORY) {
     passengerFlowEvents.length = MAX_EVENT_HISTORY;
   }
+
+  insertPassengerFlowSamples(samples);
 }
 
 export function getTelemetryVehicles() {
-  return Array.from(telemetryByVehicleId.values())
+  return getLatestTelemetrySamples()
     .filter((sample) => isFresh(sample.capturedAt))
     .map(buildTelemetryVehicle);
 }
 
 export function getLiveSeatAvailability(vehicleId: string) {
-  const sample = seatCameraByVehicleId.get(getVehicleKey(vehicleId));
+  const sample = getLatestSeatCameraSamples().find(
+    (entry) => getVehicleKey(entry.vehicleId) === getVehicleKey(vehicleId)
+  );
 
   if (!sample || !isFresh(sample.capturedAt)) {
     return null;
@@ -161,7 +218,9 @@ export function getLiveSeatAvailability(vehicleId: string) {
 }
 
 export function getDriverAttention(vehicleId: string) {
-  const sample = driverMonitorByVehicleId.get(getVehicleKey(vehicleId));
+  const sample = getLatestDriverMonitorSamples().find(
+    (entry) => getVehicleKey(entry.vehicleId) === getVehicleKey(vehicleId)
+  );
 
   if (!sample || !isFresh(sample.capturedAt)) {
     return null;
@@ -175,7 +234,7 @@ export function getVehiclePassengerFlowSummary(
   lookbackMs = FLOW_SUMMARY_LOOKBACK_MS
 ): PassengerFlowSummary | null {
   const now = Date.now();
-  const recentEvents = passengerFlowEvents.filter(
+  const recentEvents = getPersistedPassengerFlowEvents(MAX_EVENT_HISTORY, lookbackMs).filter(
     (event) =>
       event.vehicleId === getVehicleKey(vehicleId) &&
       now - toTimestamp(event.updatedAt) <= lookbackMs
@@ -197,5 +256,5 @@ export function getVehiclePassengerFlowSummary(
 }
 
 export function getRecentPassengerFlowEvents(limit = 12) {
-  return passengerFlowEvents.slice(0, limit);
+  return getPersistedPassengerFlowEvents(limit);
 }

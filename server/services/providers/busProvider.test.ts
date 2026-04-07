@@ -94,6 +94,7 @@ describe("busProvider", () => {
 
     expect(snapshot.status.state).toBe("fallback");
     expect(snapshot.status.detail.en).toContain("timetable-shaped mock fleet");
+    expect(snapshot.status.fallbackReason).toContain("bus:");
     expect(snapshot.vehicles.length).toBeGreaterThan(0);
     expect(snapshot.vehicles.every((vehicle) => vehicle.telemetrySource === "schedule_mock")).toBe(true);
   });

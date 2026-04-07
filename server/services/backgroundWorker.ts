@@ -1,7 +1,13 @@
 import { getBusSnapshot } from "./providers/busProvider.js";
-import { writeVehicleSnapshot, writeHealthLog, pruneDatabase } from "../lib/db.js";
+import {
+  pruneDatabase,
+  writeHealthLog,
+  writeVehicleSnapshot,
+  writeWorkerHeartbeat
+} from "../lib/db.js";
 import { getWeatherSnapshot } from "./providers/weatherProvider.js";
 import { getAqiSnapshot } from "./providers/aqiProvider.js";
+import { getTrafficSnapshot } from "./providers/trafficProvider.js";
 
 const SNAPSHOT_INTERVAL_MS = 15_000;    // Write vehicle positions every 15 seconds
 const PRUNE_INTERVAL_MS = 60 * 60_000; // Prune old data every hour
@@ -11,11 +17,27 @@ let pruneTimer: ReturnType<typeof setInterval> | null = null;
 
 async function captureSnapshot() {
   try {
-    const snapshot = await getBusSnapshot();
+    const [snapshot, trafficSnapshot, weatherSnapshot, aqiSnapshot] = await Promise.all([
+      getBusSnapshot(),
+      getTrafficSnapshot(),
+      getWeatherSnapshot(),
+      getAqiSnapshot()
+    ]);
     writeVehicleSnapshot(snapshot.vehicles);
+    writeWorkerHeartbeat("background-worker");
 
-    const healthStatus = snapshot.status.state === "live" ? "ok" : "degraded";
-    writeHealthLog(healthStatus, JSON.stringify(snapshot.status));
+    const sourceStatuses = [
+      snapshot.status,
+      trafficSnapshot.status,
+      weatherSnapshot.status,
+      aqiSnapshot.status
+    ];
+    const healthStatus =
+      sourceStatuses.filter((status) => status.source === "bus" || status.source === "weather")
+        .every((status) => status.state === "live")
+        ? "ok"
+        : "degraded";
+    writeHealthLog(healthStatus, JSON.stringify(sourceStatuses));
 
     if (snapshot.vehicles.length > 0) {
       console.log(
@@ -23,6 +45,11 @@ async function captureSnapshot() {
       );
     }
   } catch (error) {
+    writeWorkerHeartbeat(
+      "background-worker",
+      "error",
+      error instanceof Error ? error.message : String(error)
+    );
     console.error("[worker] Snapshot capture failed:", error);
   }
 }
@@ -31,7 +58,8 @@ async function warmCaches() {
   try {
     await Promise.allSettled([
       getWeatherSnapshot(),
-      getAqiSnapshot()
+      getAqiSnapshot(),
+      getTrafficSnapshot()
     ]);
   } catch {
     // Caches will be warmed on next request

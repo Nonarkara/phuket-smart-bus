@@ -1,12 +1,16 @@
-import type { RouteId, RouteTier, Stop } from "../../shared/types.js";
+import type {
+  OperationalRouteId,
+  OperationalRouteTier,
+  Stop
+} from "../../shared/types.js";
 import { FERRY_ROUTE_IDS, ROUTE_DEFINITIONS } from "../config.js";
 import { formatClockLabel, parseScheduleEntries } from "../lib/time.js";
 import { getStopsForRoute } from "./routes.js";
 
 export type ScheduledService = {
   id: string;
-  routeId: RouteId;
-  routeTier: RouteTier;
+  routeId: OperationalRouteId;
+  routeTier: OperationalRouteTier;
   directionLabel: string;
   originStopId: string;
   originStopName: string;
@@ -18,8 +22,8 @@ export type ScheduledService = {
   inferredHubTravelMinutes: number | null;
 };
 
-const routeIds = Object.keys(ROUTE_DEFINITIONS) as RouteId[];
-const serviceCache = new Map<RouteId, ScheduledService[]>();
+const routeIds = Object.keys(ROUTE_DEFINITIONS) as OperationalRouteId[];
+const serviceCache = new Map<OperationalRouteId, ScheduledService[]>();
 
 function forwardDiff(fromMinutes: number, toMinutes: number) {
   return ((toMinutes - fromMinutes) % (24 * 60) + 24 * 60) % (24 * 60);
@@ -70,7 +74,7 @@ function deriveTripDuration(stops: Stop[], departures: number[]) {
   return Math.max(median(pairDurations) ?? 20, 20);
 }
 
-function inferHubTravelMinutes(routeId: RouteId) {
+function inferHubTravelMinutes(routeId: OperationalRouteId) {
   if (routeId === "dragon-line") {
     return 12;
   }
@@ -86,7 +90,7 @@ function inferHubTravelMinutes(routeId: RouteId) {
   return null;
 }
 
-function buildScheduledServices(routeId: RouteId) {
+function buildScheduledServices(routeId: OperationalRouteId) {
   const grouped = new Map<string, Stop[]>();
 
   for (const stop of getStopsForRoute(routeId)) {
@@ -129,7 +133,7 @@ function buildScheduledServices(routeId: RouteId) {
     .filter((service): service is ScheduledService => Boolean(service));
 }
 
-export function getScheduledServices(routeId?: RouteId): ScheduledService[] {
+export function getScheduledServices(routeId?: OperationalRouteId): ScheduledService[] {
   if (routeId) {
     const cached = serviceCache.get(routeId);
 

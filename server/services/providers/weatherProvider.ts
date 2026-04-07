@@ -3,11 +3,13 @@ import type {
   AdvisorySeverity,
   AirportWeatherSummary,
   DataSourceStatus,
-  RouteId
+  OperationalRouteId
 } from "../../../shared/types.js";
 import { OPEN_METEO_URL, WEATHER_CACHE_MS } from "../../config.js";
 import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { text } from "../../lib/i18n.js";
+import { buildSourceStatus, formatFallbackReason } from "../../lib/sourceStatus.js";
+import { fetchJsonWithRetry } from "../../lib/upstream.js";
 
 type WeatherPayload = {
   current?: {
@@ -46,6 +48,12 @@ let cache:
       status: DataSourceStatus;
     }
   | undefined;
+
+type WeatherSnapshotResult = {
+  expiresAt: number;
+  snapshot: WeatherSnapshot;
+  status: DataSourceStatus;
+};
 
 function toSnapshot(payload: WeatherPayload): WeatherSnapshot {
   const precipitationProbability =
@@ -133,64 +141,64 @@ export function buildAirportWeatherSummary(snapshot: WeatherSnapshot): AirportWe
 }
 
 async function fetchWeatherPayload() {
-  const response = await fetch(
+  return fetchJsonWithRetry<WeatherPayload>(
     `${OPEN_METEO_URL}?latitude=7.88&longitude=98.39&current=temperature_2m,weather_code,precipitation,wind_speed_10m&hourly=precipitation_probability,precipitation,weather_code&forecast_days=1&timezone=Asia%2FBangkok`,
+    {},
     {
-      signal: AbortSignal.timeout(5_000)
+      timeoutMs: 5_000,
+      retries: 1
     }
   );
+}
 
-  if (!response.ok) {
-    throw new Error(`Weather feed failed with ${response.status}`);
-  }
-
-  const payload = (await response.json()) as WeatherPayload;
-
+function assertWeatherPayload(payload: WeatherPayload) {
   if (payload.error) {
     throw new Error("Weather feed returned an error payload");
   }
-
-  return payload;
 }
 
-export async function getWeatherSnapshot() {
+export async function getWeatherSnapshot(): Promise<WeatherSnapshotResult> {
   if (cache && cache.expiresAt > Date.now()) {
     return cache;
   }
 
   try {
     const payload = await fetchWeatherPayload();
-    cache = {
+    assertWeatherPayload(payload);
+    const next: WeatherSnapshotResult = {
       expiresAt: Date.now() + WEATHER_CACHE_MS,
       snapshot: toSnapshot(payload),
-      status: {
-        source: "weather",
-        state: "live",
-        updatedAt: payload.current?.time ?? new Date().toISOString(),
-        detail: text("Open-Meteo current conditions loaded", "โหลดสภาพอากาศ Open-Meteo แล้ว")
-      }
+      status: buildSourceStatus(
+        "weather",
+        "live",
+        payload.current?.time ?? new Date().toISOString(),
+        text("Open-Meteo current conditions loaded", "โหลดสภาพอากาศ Open-Meteo แล้ว")
+      )
     };
-  } catch {
-    cache = {
+    cache = next;
+    return next;
+  } catch (error) {
+    const next: WeatherSnapshotResult = {
       expiresAt: Date.now() + WEATHER_CACHE_MS,
       snapshot: toSnapshot(fallbackWeather),
-      status: {
-        source: "weather",
-        state: "fallback",
-        updatedAt: fallbackWeather.current?.time ?? new Date().toISOString(),
-        detail: text("Using weather fallback sample", "กำลังใช้ข้อมูลอากาศตัวอย่าง")
-      }
+      status: buildSourceStatus(
+        "weather",
+        "fallback",
+        fallbackWeather.current?.time ?? new Date().toISOString(),
+        text("Using weather fallback sample", "กำลังใช้ข้อมูลอากาศตัวอย่าง"),
+        formatFallbackReason("weather", error)
+      )
     };
+    cache = next;
+    return next;
   }
-
-  return cache;
 }
 
 export function clearWeatherSnapshotCache() {
   cache = undefined;
 }
 
-export async function getWeatherAdvisories(routeId: RouteId) {
+export async function getWeatherAdvisories(routeId: OperationalRouteId) {
   const { snapshot, status } = await getWeatherSnapshot();
   const advisories: Advisory[] = [];
 

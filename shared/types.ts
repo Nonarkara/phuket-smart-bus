@@ -1,18 +1,27 @@
 export type Lang = "en" | "th" | "zh" | "de" | "fr" | "es";
 
-export type RouteId =
+export type OperationalRouteId =
   | "rawai-airport"
   | "patong-old-bus-station"
   | "dragon-line"
-  | "orange-line"
   | "rassada-phi-phi"
   | "rassada-ao-nang"
   | "bang-rong-koh-yao"
   | "chalong-racha";
 
+export type CompetitorRouteId = "orange-line";
+
+export type RouteId = OperationalRouteId;
+
+export type MarketRouteId = RouteId | CompetitorRouteId;
+
 export type RouteAxis = "north_south" | "east_west" | "loop" | "marine";
 
-export type RouteTier = "core" | "auxiliary" | "ferry" | "competitor";
+export type OperationalRouteTier = "core" | "auxiliary" | "ferry";
+
+export type RouteTier = OperationalRouteTier;
+
+export type MarketRouteTier = RouteTier | "competitor";
 
 export type DecisionLevel =
   | "go_now"
@@ -25,7 +34,11 @@ export type SourceState = "live" | "fallback" | "unavailable";
 
 export type AdvisorySeverity = "info" | "caution" | "warning";
 
-export type SourceName = "bus" | "traffic" | "weather";
+export type SourceName = "bus" | "traffic" | "weather" | "aqi";
+
+export type OpsDataMode = "live" | "degraded" | "demo";
+
+export type DataMode = "live" | "demo";
 
 export type NextBusBasis = "live" | "schedule" | "fallback";
 
@@ -61,6 +74,8 @@ export interface DataSourceStatus {
   state: SourceState;
   updatedAt: string;
   detail: LocalizedText;
+  freshnessSeconds: number | null;
+  fallbackReason: string | null;
 }
 
 export interface NearbyPlace {
@@ -117,7 +132,7 @@ export interface DriverAttentionStatus {
 }
 
 export interface AirportDestinationMatch {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   stopId: string;
   stopName: LocalizedText;
   nearbyPlaceName: string;
@@ -129,7 +144,7 @@ export interface AirportDestinationMatch {
 export interface AirportQuickDestination {
   id: string;
   label: LocalizedText;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   stopId: string;
   kind: Exclude<AirportGuideKind, "ready" | "not_supported">;
   travelMinutes: number | null;
@@ -157,7 +172,7 @@ export interface AirportWeatherSummary {
 }
 
 export interface AirportDeparture {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   routeName: LocalizedText;
   label: string;
   minutesUntil: number | null;
@@ -170,7 +185,7 @@ export interface AirportDeparture {
 
 export interface Stop {
   id: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   sequence: number;
   name: LocalizedText;
   direction: LocalizedText;
@@ -183,13 +198,13 @@ export interface Stop {
 }
 
 export interface Route {
-  id: RouteId;
+  id: OperationalRouteId;
   name: LocalizedText;
   shortName: LocalizedText;
   overview: LocalizedText;
   axis: RouteAxis;
   axisLabel: LocalizedText;
-  tier: RouteTier;
+  tier: OperationalRouteTier;
   color: string;
   accentColor: string;
   bounds: [LatLngTuple, LatLngTuple];
@@ -203,7 +218,7 @@ export interface Route {
 
 export interface VehiclePosition {
   id: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   licensePlate: string;
   vehicleId: string;
   deviceId: string | null;
@@ -221,7 +236,7 @@ export interface VehiclePosition {
 
 export interface Advisory {
   id: string;
-  routeId: RouteId | "all";
+  routeId: OperationalRouteId | "all";
   source: "itic" | "weather" | "operations";
   severity: AdvisorySeverity;
   title: LocalizedText;
@@ -243,7 +258,7 @@ export interface EnvironmentContext {
 }
 
 export interface DecisionSummary {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   stopId: string;
   level: DecisionLevel;
   headline: LocalizedText;
@@ -339,7 +354,7 @@ export interface PriceComparison {
   destinationName: LocalizedText;
   taxi: { minThb: number; maxThb: number; minutes: number };
   tukTuk: { minThb: number; maxThb: number; minutes: number };
-  bus: { fareThb: number; minutes: number; routeId: RouteId };
+  bus: { fareThb: number; minutes: number; routeId: OperationalRouteId };
   savingsMin: number;
   savingsMax: number;
   ridersToday: number;
@@ -348,13 +363,31 @@ export interface PriceComparison {
 export interface HealthPayload {
   status: "ok" | "degraded";
   checkedAt: string;
-  sources: DataSourceStatus[];
+  mode: DataMode;
+  appVersion: string;
+  database: {
+    available: boolean;
+    writable: boolean;
+    mode: "postgres" | "sqlite" | "memory";
+    path: string | null;
+  };
+  worker: {
+    status: "ok" | "stale" | "missing";
+    updatedAt: string | null;
+    maxAgeMs: number;
+  };
+  sources: Array<
+    DataSourceStatus & {
+      critical: boolean;
+      demoOnly: boolean;
+    }
+  >;
 }
 
 export interface VehicleTelemetrySample {
   deviceId: string;
   vehicleId: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   licensePlate: string | null;
   coordinates: LatLngTuple;
   heading: number;
@@ -366,7 +399,7 @@ export interface VehicleTelemetrySample {
 export interface SeatCameraSample {
   cameraId: string;
   vehicleId: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   capacity: number;
   occupiedSeats: number;
   seatsLeft: number;
@@ -376,7 +409,7 @@ export interface SeatCameraSample {
 export interface DriverMonitorSample {
   cameraId: string;
   vehicleId: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   attentionState: DriverAttentionState;
   confidence: number | null;
   capturedAt: string;
@@ -385,7 +418,7 @@ export interface DriverMonitorSample {
 export interface PassengerFlowSample {
   cameraId: string;
   vehicleId: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   stopId: string | null;
   coordinates: LatLngTuple;
   eventType: PassengerFlowEventType;
@@ -395,7 +428,7 @@ export interface PassengerFlowSample {
 
 export interface PassengerFlowEvent {
   id: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   vehicleId: string;
   stopId: string | null;
   stopName: LocalizedText | null;
@@ -407,11 +440,11 @@ export interface PassengerFlowEvent {
 }
 
 export interface OperationsRouteSummary {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   routeName: LocalizedText;
   shortName: LocalizedText;
   axisLabel: LocalizedText;
-  tier: RouteTier;
+  tier: OperationalRouteTier;
   vehiclesOnline: number;
   gpsDevicesLive: number;
   seatCamerasLive: number;
@@ -464,7 +497,7 @@ export interface OpsMapOverlayMarker {
 }
 
 export interface TransferHubConnection {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   directionLabel: string;
   nextDepartureLabel: string | null;
   minutesUntil: number | null;
@@ -475,8 +508,8 @@ export interface TransferHub {
   id: string;
   name: LocalizedText;
   coordinates: LatLngTuple;
-  feederRouteIds: RouteId[];
-  ferryRouteIds: RouteId[];
+  feederRouteIds: OperationalRouteId[];
+  ferryRouteIds: OperationalRouteId[];
   walkMinutes: number;
   transferBufferMinutes: number;
   provenance: MetricProvenance;
@@ -488,7 +521,7 @@ export interface TransferHub {
 }
 
 export interface RoutePressure {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   level: "balanced" | "watch" | "strained";
   demand: number;
   seatSupply: number;
@@ -557,6 +590,8 @@ export interface OpsMapOverlaySet {
 
 export interface OpsDashboardPayload {
   checkedAt: string;
+  dataMode: OpsDataMode;
+  fallbackReasons: string[];
   fleet: OpsFleetSnapshot;
   routes: Route[];
   demandSupply: CurrentDemandSupply;
@@ -572,6 +607,7 @@ export interface OpsDashboardPayload {
     vehicleHistoryCount: number;
   };
   mapOverlays: OpsMapOverlaySet;
+  competitorBenchmarks: CompetitorBenchmark[];
   sources: DataSourceStatus[];
 }
 
@@ -604,10 +640,10 @@ export interface HourlyCapacityGap {
 }
 
 export interface ServiceRevenueBreakdown {
-  routeId: RouteId;
+  routeId: MarketRouteId;
   routeName: LocalizedText;
   directionLabel: string;
-  tier: RouteTier;
+  tier: MarketRouteTier;
   departures: number;
   seatSupply: number;
   estimatedDemand: number;
@@ -617,6 +653,24 @@ export interface ServiceRevenueBreakdown {
   capturePct: number;
   provenance: MetricProvenance;
   strategicValue: LocalizedText | null;
+}
+
+export interface CompetitorBenchmark {
+  routeId: CompetitorRouteId;
+  routeName: LocalizedText;
+  tier: "competitor";
+  operatorLabel: string;
+  fareThb: number;
+  headwayMinutes: number;
+  tripDurationMinutes: number;
+  estimatedDemand: number;
+  seatSupply: number;
+  carriedRiders: number;
+  revenueThb: number;
+  capturePct: number;
+  overlapRouteIds: OperationalRouteId[];
+  provenance: MetricProvenance;
+  notes: LocalizedText;
 }
 
 export interface InvestorTotals {
@@ -639,14 +693,17 @@ export interface InvestorOpportunities {
   summary: string;
   peakArrivalGapHour: string | null;
   peakDepartureGapHour: string | null;
-  strongestRevenueServiceRouteId: RouteId | null;
+  strongestRevenueServiceRouteId: MarketRouteId | null;
 }
 
 export interface InvestorSimulationPayload {
   generatedAt: string;
+  dataMode: OpsDataMode;
+  fallbackReasons: string[];
   assumptions: InvestorAssumptions;
   hourly: HourlyCapacityGap[];
   services: ServiceRevenueBreakdown[];
+  competitorBenchmarks: CompetitorBenchmark[];
   totals: InvestorTotals;
   opportunities: InvestorOpportunities;
   touchpoints: TransferHub[];
@@ -655,7 +712,10 @@ export interface InvestorSimulationPayload {
 export interface SimulationSnapshot {
   simMinutes: number;
   simTime: string;
+  dataMode: OpsDataMode;
+  fallbackReasons: string[];
   vehicles: VehiclePosition[];
   routePressure: RoutePressure[];
   transferHubs: TransferHub[];
+  competitorBenchmarks: CompetitorBenchmark[];
 }

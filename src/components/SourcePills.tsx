@@ -10,7 +10,8 @@ export function SourcePills({ lang, sources }: Props) {
   const sourceLabels = {
     bus: pick(ui.sourceBus, lang),
     traffic: pick(ui.sourceTraffic, lang),
-    weather: pick(ui.sourceWeather, lang)
+    weather: pick(ui.sourceWeather, lang),
+    aqi: pick(ui.sourceAqi, lang)
   } satisfies Record<DataSourceStatus["source"], string>;
 
   return (

@@ -1,16 +1,34 @@
-import type { LocalizedText, RouteAxis, RouteId, RouteTier } from "../shared/types.js";
+import { readFileSync } from "node:fs";
+import type {
+  CompetitorBenchmark,
+  CompetitorRouteId,
+  DataMode,
+  LocalizedText,
+  OperationalRouteId,
+  OperationalRouteTier,
+  RouteAxis
+} from "../shared/types.js";
 import { text } from "./lib/i18n.js";
 
 export const BANGKOK_TIME_ZONE = "Asia/Bangkok";
+export const APP_VERSION = (
+  JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version?: string }
+).version ?? "0.1.0";
+export const IS_PRODUCTION_DEPLOY =
+  process.env.NODE_ENV === "production" || Boolean(process.env.RENDER);
+export const DATA_MODE: DataMode = process.env.DATA_MODE === "live" ? "live" : "demo";
+export const DATABASE_URL = process.env.DATABASE_URL ?? null;
+export const REDIS_URL = process.env.REDIS_URL ?? null;
 
 export const BUS_FEED_URL =
   "https://smartbus-pk-api.phuket.cloud/api/bus-news-2/";
 
-// This token is already shipped in the public Phuket Smart Bus tracker bundle.
-// Keep it scoped to prototype use only and replace it before any production work.
-export const PUBLIC_TRACKER_TOKEN =
-  process.env.SMARTBUS_BEARER_TOKEN ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoyMDY1NzUwMjQ4LCJpYXQiOjE3NTAzOTAyNDgsImp0aSI6ImIwMmE1YmI2ZDM1NTRjMjFiODJiNDRmNWE0MmQ4MmZhIiwidXNlcl9pZCI6NX0.bNz_c8ItQoT8Ozxws9aOfuLMWjeL5Yeyddr7Ex9F8jY";
+export const SMARTBUS_BEARER_TOKEN = process.env.SMARTBUS_BEARER_TOKEN ?? null;
+export const PKSB_INGEST_API_KEY = process.env.PKSB_INGEST_API_KEY ?? null;
+export const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 export const OPEN_METEO_URL =
   process.env.OPEN_METEO_BASE_URL ?? "https://api.open-meteo.com/v1/forecast";
@@ -21,8 +39,23 @@ export const WEATHER_CACHE_MS = 15 * 60_000;
 export const TRAFFIC_CACHE_MS = 5 * 60_000;
 export const AQI_CACHE_MS = 15 * 60_000;
 export const LIVE_STALE_AFTER_MS = 3 * 60_000;
+export const REQUEST_BODY_LIMIT = "256kb";
+export const INGEST_BATCH_LIMIT = 250;
+export const INGEST_RATE_LIMIT_MAX = 60;
+export const INGEST_RATE_LIMIT_WINDOW_MS = 60_000;
+export const WORKER_HEARTBEAT_MAX_AGE_MS = 90_000;
 
-export const FERRY_ROUTE_IDS: RouteId[] = [
+export const OPERATIONAL_ROUTE_IDS: OperationalRouteId[] = [
+  "rawai-airport",
+  "patong-old-bus-station",
+  "dragon-line",
+  "rassada-phi-phi",
+  "rassada-ao-nang",
+  "bang-rong-koh-yao",
+  "chalong-racha"
+];
+
+export const FERRY_ROUTE_IDS: OperationalRouteId[] = [
   "rassada-phi-phi",
   "rassada-ao-nang",
   "bang-rong-koh-yao",
@@ -30,7 +63,7 @@ export const FERRY_ROUTE_IDS: RouteId[] = [
 ];
 
 export const ROUTE_DEFINITIONS: Record<
-  RouteId,
+  OperationalRouteId,
   {
     sourceRoute: string;
     lineFile: string;
@@ -41,7 +74,7 @@ export const ROUTE_DEFINITIONS: Record<
     overview: LocalizedText;
     axis: RouteAxis;
     axisLabel: LocalizedText;
-    tier: RouteTier;
+    tier: OperationalRouteTier;
     defaultStopName: string;
     timetableSource: {
       label: LocalizedText;
@@ -193,41 +226,100 @@ export const PRICE_COMPARISONS = [
     destinationName: text("Airport", "สนามบิน", "机场", "Flughafen", "Aéroport", "Aeropuerto"),
     taxi: { minThb: 800, maxThb: 1200, minutes: 45 },
     tukTuk: { minThb: 500, maxThb: 700, minutes: 55 },
-    bus: { fareThb: 50, minutes: 75, routeId: "rawai-airport" as RouteId },
+    bus: { fareThb: 50, minutes: 75, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "patong",
     destinationName: text("Patong Beach", "หาดป่าตอง", "芭东海滩", "Patong Strand", "Plage de Patong", "Playa Patong"),
     taxi: { minThb: 600, maxThb: 1000, minutes: 30 },
     tukTuk: { minThb: 300, maxThb: 500, minutes: 40 },
-    bus: { fareThb: 30, minutes: 50, routeId: "patong-old-bus-station" as RouteId },
+    bus: { fareThb: 30, minutes: 50, routeId: "patong-old-bus-station" as OperationalRouteId },
   },
   {
     destinationId: "kata",
     destinationName: text("Kata Beach", "หาดกะตะ", "卡塔海滩", "Kata Strand", "Plage de Kata", "Playa Kata"),
     taxi: { minThb: 500, maxThb: 800, minutes: 25 },
     tukTuk: { minThb: 250, maxThb: 400, minutes: 35 },
-    bus: { fareThb: 30, minutes: 40, routeId: "rawai-airport" as RouteId },
+    bus: { fareThb: 30, minutes: 40, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "oldtown",
     destinationName: text("Old Town", "เมืองเก่า", "老城", "Altstadt", "Vieille ville", "Casco antiguo"),
     taxi: { minThb: 300, maxThb: 500, minutes: 15 },
     tukTuk: { minThb: 150, maxThb: 300, minutes: 20 },
-    bus: { fareThb: 20, minutes: 25, routeId: "patong-old-bus-station" as RouteId },
+    bus: { fareThb: 20, minutes: 25, routeId: "patong-old-bus-station" as OperationalRouteId },
   },
   {
     destinationId: "rassada",
     destinationName: text("Rassada Pier", "ท่าเรือรัษฎา", "拉萨达码头", "Rassada Pier", "Quai Rassada", "Muelle Rassada"),
     taxi: { minThb: 400, maxThb: 700, minutes: 20 },
     tukTuk: { minThb: 200, maxThb: 400, minutes: 25 },
-    bus: { fareThb: 30, minutes: 35, routeId: "rawai-airport" as RouteId },
+    bus: { fareThb: 30, minutes: 35, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "central",
     destinationName: text("Central Festival", "เซ็นทรัล เฟสติวัล", "中央节日广场", "Central Festival", "Central Festival", "Central Festival"),
     taxi: { minThb: 300, maxThb: 500, minutes: 15 },
     tukTuk: { minThb: 150, maxThb: 300, minutes: 20 },
-    bus: { fareThb: 20, minutes: 30, routeId: "rawai-airport" as RouteId },
+    bus: { fareThb: 20, minutes: 30, routeId: "rawai-airport" as OperationalRouteId },
   },
 ];
+
+export const COMPETITOR_ROUTE_IDS: CompetitorRouteId[] = ["orange-line"];
+
+export const COMPETITOR_BENCHMARKS: Record<CompetitorRouteId, Omit<CompetitorBenchmark, "estimatedDemand" | "seatSupply" | "carriedRiders" | "revenueThb" | "capturePct">> = {
+  "orange-line": {
+    routeId: "orange-line",
+    routeName: text(
+      "Orange Line (Government)",
+      "สายสีส้ม (ภาครัฐ)",
+      "橙线（政府）",
+      "Orange Line (Staat)",
+      "Orange Line (gouvernement)",
+      "Orange Line (gobierno)"
+    ),
+    tier: "competitor",
+    operatorLabel: "Government-operated",
+    fareThb: 100,
+    headwayMinutes: 60,
+    tripDurationMinutes: 90,
+    overlapRouteIds: ["rawai-airport", "dragon-line"],
+    provenance: "estimated",
+    notes: text(
+      "Benchmark competitor on the Airport to Phuket Town corridor.",
+      "คู่เทียบเชิงกลยุทธ์บนคอร์ริดอร์สนามบินถึงเมืองภูเก็ต"
+    )
+  }
+};
+
+export function isAllowedCorsOrigin(origin: string | undefined) {
+  if (!origin) {
+    return true;
+  }
+
+  if (CORS_ORIGINS.length === 0) {
+    return DATA_MODE === "demo";
+  }
+
+  return CORS_ORIGINS.includes(origin);
+}
+
+export function assertRuntimeConfig() {
+  if (DATA_MODE !== "live") {
+    return;
+  }
+
+  const missing: string[] = [];
+
+  if (!SMARTBUS_BEARER_TOKEN) {
+    missing.push("SMARTBUS_BEARER_TOKEN");
+  }
+
+  if (!PKSB_INGEST_API_KEY) {
+    missing.push("PKSB_INGEST_API_KEY");
+  }
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required live-mode configuration: ${missing.join(", ")}`);
+  }
+}

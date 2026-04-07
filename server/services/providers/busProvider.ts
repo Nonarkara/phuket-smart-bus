@@ -1,6 +1,8 @@
-import type { RouteId, VehiclePosition, DataSourceStatus } from "../../../shared/types.js";
-import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, PUBLIC_TRACKER_TOKEN } from "../../config.js";
+import type { DataSourceStatus, OperationalRouteId, VehiclePosition } from "../../../shared/types.js";
+import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, SMARTBUS_BEARER_TOKEN } from "../../config.js";
 import { routeDestinationLabel, text } from "../../lib/i18n.js";
+import { buildSourceStatus, formatFallbackReason } from "../../lib/sourceStatus.js";
+import { fetchJsonWithRetry } from "../../lib/upstream.js";
 import { getTelemetryVehicles } from "../operationsStore.js";
 import { buildScheduleMockFleet } from "./mockFleetProvider.js";
 import { FERRY_ROUTE_IDS } from "../../config.js";
@@ -32,7 +34,13 @@ let cache:
     }
   | undefined;
 
-export function inferRoute(record: RawBusRecord): RouteId | null {
+type BusSnapshotResult = {
+  expiresAt: number;
+  vehicles: VehiclePosition[];
+  status: DataSourceStatus;
+};
+
+export function inferRoute(record: RawBusRecord): OperationalRouteId | null {
   const hint = [
     record.buffer,
     record.data.buffer,
@@ -98,7 +106,12 @@ export function normalizeRecord(record: RawBusRecord): VehiclePosition | null {
   };
 }
 
-function buildStatus(state: DataSourceStatus["state"], updatedAt: string, detail: string): DataSourceStatus {
+function buildStatus(
+  state: DataSourceStatus["state"],
+  updatedAt: string,
+  detail: string,
+  fallbackReason: string | null = null
+): DataSourceStatus {
   const thaiDetail =
     detail === "Live vehicle feed healthy"
       ? "ระบบรถสดทำงานปกติ"
@@ -108,12 +121,7 @@ function buildStatus(state: DataSourceStatus["state"], updatedAt: string, detail
           ? "กำลังใช้ฝูงรถจำลองตามตารางเวลา"
         : "กำลังใช้ตัวอย่างข้อมูลแทน";
 
-  return {
-    source: "bus",
-    state,
-    updatedAt,
-    detail: text(detail, thaiDetail)
-  };
+  return buildSourceStatus("bus", state, updatedAt, text(detail, thaiDetail), fallbackReason);
 }
 
 export function mergeVehiclesWithTelemetry(baseVehicles: VehiclePosition[]) {
@@ -131,18 +139,22 @@ export function mergeVehiclesWithTelemetry(baseVehicles: VehiclePosition[]) {
 }
 
 async function fetchLiveRecords() {
-  const response = await fetch(BUS_FEED_URL, {
-    headers: {
-      Authorization: `Bearer ${PUBLIC_TRACKER_TOKEN}`
-    },
-    signal: AbortSignal.timeout(5_000)
-  });
-
-  if (!response.ok) {
-    throw new Error(`Bus feed failed with ${response.status}`);
+  if (!SMARTBUS_BEARER_TOKEN) {
+    throw new Error("missing SMARTBUS_BEARER_TOKEN");
   }
 
-  return (await response.json()) as RawBusRecord[];
+  return fetchJsonWithRetry<RawBusRecord[]>(
+    BUS_FEED_URL,
+    {
+      headers: {
+        Authorization: `Bearer ${SMARTBUS_BEARER_TOKEN}`
+      }
+    },
+    {
+      timeoutMs: 5_000,
+      retries: 1
+    }
+  );
 }
 
 const ferryRouteSet = new Set<string>(FERRY_ROUTE_IDS);
@@ -152,7 +164,7 @@ function getMockFerryVehicles(): VehiclePosition[] {
   return buildScheduleMockFleet().filter((v) => ferryRouteSet.has(v.routeId));
 }
 
-export async function getBusSnapshot() {
+export async function getBusSnapshot(): Promise<BusSnapshotResult> {
   if (cache && cache.expiresAt > Date.now()) {
     return cache;
   }
@@ -170,39 +182,46 @@ export async function getBusSnapshot() {
     const latestUpdate =
       vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
-    cache = {
+    const next: BusSnapshotResult = {
       expiresAt: Date.now() + BUS_CACHE_MS,
       vehicles,
       status: buildStatus("live", latestUpdate, "Live vehicle feed healthy")
     };
+    cache = next;
+    return next;
+  } catch (error) {
+    const fallbackReason = formatFallbackReason("bus", error);
 
-    return cache;
-  } catch {
     if (telemetryVehicles.length > 0) {
       const vehicles = [...telemetryVehicles, ...ferryVehicles];
       const latestTelemetryUpdate =
         vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
-      cache = {
+      const next: BusSnapshotResult = {
         expiresAt: Date.now() + BUS_CACHE_MS,
         vehicles,
         status: buildStatus("live", latestTelemetryUpdate, "Using direct GPS telemetry")
       };
-
-      return cache;
+      cache = next;
+      return next;
     }
 
     const vehicles = buildScheduleMockFleet();
     const latestUpdate =
       vehicles.map((vehicle) => vehicle.updatedAt).sort().at(-1) ?? new Date().toISOString();
 
-    cache = {
+    const next: BusSnapshotResult = {
       expiresAt: Date.now() + BUS_CACHE_MS,
       vehicles,
-      status: buildStatus("fallback", latestUpdate, "Using timetable-shaped mock fleet")
+      status: buildStatus(
+        "fallback",
+        latestUpdate,
+        "Using timetable-shaped mock fleet",
+        fallbackReason
+      )
     };
-
-    return cache;
+    cache = next;
+    return next;
   }
 }
 
@@ -210,7 +229,7 @@ export function clearBusSnapshotCache() {
   cache = undefined;
 }
 
-export async function getVehiclesForRoute(routeId: RouteId) {
+export async function getVehiclesForRoute(routeId: OperationalRouteId) {
   const snapshot = await getBusSnapshot();
   return {
     vehicles: snapshot.vehicles.filter((vehicle) => vehicle.routeId === routeId),

@@ -1,11 +1,16 @@
-import type { Advisory, DataSourceStatus, RouteId } from "../../../shared/types.js";
+import type {
+  Advisory,
+  DataSourceStatus,
+  OperationalRouteId
+} from "../../../shared/types.js";
 import { TRAFFIC_CACHE_MS } from "../../config.js";
 import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { text } from "../../lib/i18n.js";
+import { buildSourceStatus } from "../../lib/sourceStatus.js";
 
 type RawAdvisory = {
   id: string;
-  routeId: RouteId | "all";
+  routeId: OperationalRouteId | "all";
   severity: Advisory["severity"];
   source: Advisory["source"];
   updatedAt: string;
@@ -30,12 +35,18 @@ let cache:
     }
   | undefined;
 
-export async function getTrafficSnapshot() {
+type TrafficSnapshotResult = {
+  expiresAt: number;
+  advisories: Advisory[];
+  status: DataSourceStatus;
+};
+
+export async function getTrafficSnapshot(): Promise<TrafficSnapshotResult> {
   if (cache && cache.expiresAt > Date.now()) {
     return cache;
   }
 
-  cache = {
+  const next: TrafficSnapshotResult = {
     expiresAt: Date.now() + TRAFFIC_CACHE_MS,
     advisories: rawAdvisories.map<Advisory>((item) => ({
       id: item.id,
@@ -49,21 +60,23 @@ export async function getTrafficSnapshot() {
       message: text(item.messageEn, item.messageTh),
       recommendation: text(item.recommendationEn, item.recommendationTh)
     })),
-    status: {
-      source: "traffic",
-      state: "fallback",
-      updatedAt: new Date().toISOString(),
-      detail: text(
+    status: buildSourceStatus(
+      "traffic",
+      "fallback",
+      new Date().toISOString(),
+      text(
         "Prototype iTIC advisory layer using fixture data",
         "ต้นแบบชั้นข้อมูล iTIC ด้วยข้อมูลจำลอง"
-      )
-    }
+      ),
+      "traffic: fixture advisory layer"
+    )
   };
+  cache = next;
 
-  return cache;
+  return next;
 }
 
-export async function getTrafficAdvisories(routeId: RouteId) {
+export async function getTrafficAdvisories(routeId: OperationalRouteId) {
   const snapshot = await getTrafficSnapshot();
   return {
     status: snapshot.status,

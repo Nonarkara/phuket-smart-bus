@@ -1,4 +1,8 @@
-import type { RouteId, Stop, VehiclePosition } from "../../../shared/types.js";
+import type {
+  OperationalRouteId,
+  Stop,
+  VehiclePosition
+} from "../../../shared/types.js";
 import { haversineDistanceMeters } from "../../lib/geo.js";
 import { readJsonFile, fromRoot } from "../../lib/files.js";
 import { routeDestinationLabel } from "../../lib/i18n.js";
@@ -25,11 +29,11 @@ type RawBusRecord = {
 type FleetVehicle = {
   vehicleId: string;
   licensePlate: string;
-  routeId: RouteId;
+  routeId: OperationalRouteId;
 };
 
 type DirectionProfile = {
-  routeId: RouteId;
+  routeId: OperationalRouteId;
   directionLabel: string;
   stops: Stop[];
   departures: number[];
@@ -47,7 +51,7 @@ type TripOccurrence = {
   ageMinutes: number;
 };
 
-const routeIds: RouteId[] = [
+const routeIds: OperationalRouteId[] = [
   "rawai-airport",
   "patong-old-bus-station",
   "dragon-line",
@@ -56,14 +60,14 @@ const routeIds: RouteId[] = [
   "bang-rong-koh-yao",
   "chalong-racha"
 ];
-const ferryRouteSet = new Set<RouteId>(FERRY_ROUTE_IDS);
+const ferryRouteSet = new Set<OperationalRouteId>(FERRY_ROUTE_IDS);
 const landRouteIds = routeIds.filter((routeId) => !ferryRouteSet.has(routeId));
 
 const fallbackSample = readJsonFile<RawBusRecord[]>(
   fromRoot("server", "data", "fixtures", "bus_live_sample.json")
 );
 
-function inferRoute(record: RawBusRecord): RouteId | null {
+function inferRoute(record: RawBusRecord): OperationalRouteId | null {
   const hint = [
     record.buffer,
     record.data.buffer,
@@ -110,14 +114,18 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-function buildRouteTargets(totalVehicles: number, knownCounts: Record<RouteId, number>) {
+function buildRouteTargets(totalVehicles: number, knownCounts: Record<OperationalRouteId, number>) {
   const weights = landRouteIds.map((routeId) => ({
     routeId,
     weight: getStopsForRoute(routeId).length
   }));
   const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
-  const targets = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
-  const minimums = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
+  const targets = Object.fromEntries(
+    landRouteIds.map((routeId) => [routeId, 0])
+  ) as Record<OperationalRouteId, number>;
+  const minimums = Object.fromEntries(
+    landRouteIds.map((routeId) => [routeId, 0])
+  ) as Record<OperationalRouteId, number>;
   const remainders = weights.map((item) => {
     const rawTarget = (totalVehicles * item.weight) / totalWeight;
     const minimum = Math.max(knownCounts[item.routeId], estimateRequiredFleet(item.routeId));
@@ -187,7 +195,9 @@ function buildFleetRoster() {
     unknown.push(vehicle);
   }
 
-  const knownCounts = Object.fromEntries(landRouteIds.map((routeId) => [routeId, 0])) as Record<RouteId, number>;
+  const knownCounts = Object.fromEntries(
+    landRouteIds.map((routeId) => [routeId, 0])
+  ) as Record<OperationalRouteId, number>;
 
   for (const vehicle of known) {
     if (vehicle.routeId in knownCounts) {
@@ -198,7 +208,7 @@ function buildFleetRoster() {
   const targets = buildRouteTargets(sortedRecords.length, knownCounts);
   const remainingCapacity = Object.fromEntries(
     landRouteIds.map((routeId) => [routeId, targets[routeId] - knownCounts[routeId]])
-  ) as Record<RouteId, number>;
+  ) as Record<OperationalRouteId, number>;
 
   const assignedUnknown = unknown.map<FleetVehicle>((vehicle) => {
     const routeId =
@@ -292,7 +302,7 @@ function buildCumulativeDistances(stops: Stop[]) {
   return distances;
 }
 
-function buildDirectionProfiles(routeId: RouteId) {
+function buildDirectionProfiles(routeId: OperationalRouteId) {
   const grouped = new Map<string, Stop[]>();
 
   for (const stop of getStopsForRoute(routeId)) {
@@ -336,9 +346,9 @@ function buildDirectionProfiles(routeId: RouteId) {
 
 const profilesByRoute = Object.fromEntries(
   routeIds.map((routeId) => [routeId, buildDirectionProfiles(routeId)])
-) as Record<RouteId, DirectionProfile[]>;
+) as Record<OperationalRouteId, DirectionProfile[]>;
 
-function estimateRequiredFleet(routeId: RouteId) {
+function estimateRequiredFleet(routeId: OperationalRouteId) {
   return profilesByRoute[routeId].reduce((count, profile) => {
     const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 5, 12);
     const layoverMinutes = clamp(Math.round(profile.headwayMinutes / 4), 4, 10);
@@ -371,7 +381,7 @@ const fleetByRoute = Object.fromEntries(
     routeId,
     fleetRoster.filter((vehicle) => vehicle.routeId === routeId)
   ])
-) as Record<RouteId, FleetVehicle[]>;
+) as Record<OperationalRouteId, FleetVehicle[]>;
 
 function getRotationOffset(now: Date, poolLength: number) {
   if (poolLength === 0) {
@@ -502,7 +512,11 @@ function buildVehiclePosition(
   };
 }
 
-function buildVehiclesForRoute(routeId: RouteId, currentMinutes: number, now: Date) {
+function buildVehiclesForRoute(
+  routeId: OperationalRouteId,
+  currentMinutes: number,
+  now: Date
+) {
   const pool = fleetByRoute[routeId];
   const prioritizedOccurrences = profilesByRoute[routeId]
     .flatMap((profile) => buildTripOccurrences(profile, currentMinutes))
@@ -568,7 +582,7 @@ export function getMockFleetSummary(now = new Date()) {
   const vehicles = buildScheduleMockFleet(now);
   const activeByRoute = Object.fromEntries(
     routeIds.map((routeId) => [routeId, vehicles.filter((vehicle) => vehicle.routeId === routeId).length])
-  ) as Record<RouteId, number>;
+  ) as Record<OperationalRouteId, number>;
 
   return {
     rosterSize: fleetRoster.length,

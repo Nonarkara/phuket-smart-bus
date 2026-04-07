@@ -1,17 +1,38 @@
 import type {
   Advisory,
   AirportGuidePayload,
+  DataSourceStatus,
   DecisionSummary,
   HealthPayload,
+  InvestorSimulationPayload,
+  OpsDashboardPayload,
   Route,
   RouteId,
+  SimulationSnapshot,
   Stop,
+  TransferHub,
   VehiclePosition
 } from "@shared/types";
 import { localizedText } from "@shared/localizedText";
 
 export const mockAirportLocation: [number, number] = [8.10846, 98.30655];
 const lt = localizedText;
+const mockBusSourceStatus: DataSourceStatus = {
+  source: "bus",
+  state: "live",
+  updatedAt: "2026-03-08T14:00:00Z",
+  detail: lt("Live vehicle feed healthy", "ระบบรถสดทำงานปกติ"),
+  freshnessSeconds: 12,
+  fallbackReason: null
+};
+const mockDecisionSourceStatuses: DataSourceStatus[] = [mockBusSourceStatus];
+const mockHealthSources: HealthPayload["sources"] = [
+  {
+    ...mockBusSourceStatus,
+    critical: true,
+    demoOnly: false
+  }
+];
 
 function buildVehicle(
   id: string,
@@ -71,12 +92,7 @@ export const mockRoutes: Route[] = [
     defaultStopId: "rawai-airport-42",
     activeVehicles: 3,
     status: lt("3 buses reporting live", "มีรถออนไลน์ 3 คัน"),
-    sourceStatus: {
-      source: "bus",
-      state: "live",
-      updatedAt: "2026-03-08T14:00:00Z",
-      detail: lt("Live vehicle feed healthy", "ระบบรถสดทำงานปกติ")
-    }
+    sourceStatus: mockBusSourceStatus
   },
   {
     id: "patong-old-bus-station",
@@ -103,12 +119,7 @@ export const mockRoutes: Route[] = [
     defaultStopId: "patong-old-bus-station-1",
     activeVehicles: 2,
     status: lt("2 buses reporting live", "มีรถออนไลน์ 2 คัน"),
-    sourceStatus: {
-      source: "bus",
-      state: "live",
-      updatedAt: "2026-03-08T14:00:00Z",
-      detail: lt("Live vehicle feed healthy", "ระบบรถสดทำงานปกติ")
-    }
+    sourceStatus: mockBusSourceStatus
   }
 ];
 
@@ -312,14 +323,7 @@ export const mockAirportDecision: DecisionSummary = {
   routeStatus: lt("Live service with rider caution", "มีรถสดแต่ควรเผื่อเวลา"),
   environment: null,
   updatedAt: "2026-03-08T14:00:00Z",
-  sourceStatuses: [
-    {
-      source: "bus",
-      state: "live",
-      updatedAt: "2026-03-08T14:00:00Z",
-      detail: lt("Live vehicle feed healthy", "ระบบรถสดทำงานปกติ")
-    }
-  ]
+  sourceStatuses: mockDecisionSourceStatuses
 };
 
 export const mockPatongDecision: DecisionSummary = {
@@ -349,7 +353,256 @@ export const mockPatongDecision: DecisionSummary = {
 export const mockHealthPayload: HealthPayload = {
   status: "ok",
   checkedAt: "2026-03-08T14:00:00Z",
-  sources: mockAirportDecision.sourceStatuses
+  mode: "live",
+  appVersion: "0.1.0",
+  database: {
+    available: true,
+    writable: true,
+    mode: "sqlite",
+    path: ":memory:"
+  },
+  worker: {
+    status: "ok",
+    updatedAt: "2026-03-08T14:00:00Z",
+    maxAgeMs: 60_000
+  },
+  sources: mockHealthSources
+};
+
+const mockTrafficSourceStatus: DataSourceStatus = {
+  source: "traffic",
+  state: "fallback",
+  updatedAt: "2026-03-08T14:00:00Z",
+  detail: lt("Traffic advisories on fallback layer", "ข้อมูลจราจรใช้ชั้นข้อมูลสำรอง"),
+  freshnessSeconds: null,
+  fallbackReason: "traffic: fixture advisory layer"
+};
+
+const mockWeatherSourceStatus: DataSourceStatus = {
+  source: "weather",
+  state: "live",
+  updatedAt: "2026-03-08T14:00:00Z",
+  detail: lt("Weather feed healthy", "ระบบอากาศทำงานปกติ"),
+  freshnessSeconds: 45,
+  fallbackReason: null
+};
+
+const mockAqiSourceStatus: DataSourceStatus = {
+  source: "aqi",
+  state: "live",
+  updatedAt: "2026-03-08T14:00:00Z",
+  detail: lt("AQI feed healthy", "ระบบคุณภาพอากาศทำงานปกติ"),
+  freshnessSeconds: 45,
+  fallbackReason: null
+};
+
+const mockOpsTransferHubs: TransferHub[] = [
+  {
+    id: "rassada",
+    name: lt("Rassada Hub", "ฮับรัษฎา"),
+    coordinates: [7.8557, 98.4013],
+    feederRouteIds: ["dragon-line", "patong-old-bus-station"],
+    ferryRouteIds: ["rassada-phi-phi"],
+    walkMinutes: 12,
+    transferBufferMinutes: 20,
+    provenance: "estimated",
+    status: "watch",
+    rationale: lt("Next ferry window opens soon.", "หน้าต่างเรือรอบถัดไปกำลังจะเปิด"),
+    activeWindowLabel: null,
+    nextWindowStartLabel: "16:30",
+    activeConnections: []
+  }
+];
+
+export const mockOpsDashboard: OpsDashboardPayload = {
+  checkedAt: "2026-03-08T14:00:00Z",
+  dataMode: "demo",
+  fallbackReasons: ["simulation: scheduled replay model"],
+  fleet: {
+    vehicles: [...mockAirportVehicles, ...mockPatongVehicles],
+    totalVehicles: mockAirportVehicles.length + mockPatongVehicles.length,
+    busCount: mockAirportVehicles.length + mockPatongVehicles.length,
+    ferryCount: 0,
+    movingCount: 4,
+    dwellingCount: 1,
+    routePressure: [
+      {
+        routeId: "rawai-airport",
+        level: "watch",
+        demand: 42,
+        seatSupply: 50,
+        gap: 0,
+        coverageRatio: 1,
+        delayRiskMinutes: 4,
+        provenance: "estimated"
+      },
+      {
+        routeId: "patong-old-bus-station",
+        level: "balanced",
+        demand: 22,
+        seatSupply: 25,
+        gap: 0,
+        coverageRatio: 1,
+        delayRiskMinutes: 2,
+        provenance: "estimated"
+      }
+    ]
+  },
+  routes: mockRoutes,
+  demandSupply: {
+    rawAirportArrivalPaxNext2h: 180,
+    rawAirportDeparturePaxNext2h: 120,
+    addressableArrivalDemandNext2h: 27,
+    addressableDepartureDemandNext2h: 18,
+    arrivalSeatSupplyNext2h: 50,
+    departureSeatSupplyNext2h: 50,
+    carriedArrivalDemandNext2h: 27,
+    carriedDepartureDemandNext2h: 18,
+    unmetArrivalDemandNext2h: 0,
+    unmetDepartureDemandNext2h: 0,
+    arrivalCaptureOfAddressablePct: 100,
+    departureCaptureOfAddressablePct: 100,
+    additionalBusesNeededPeak: 0,
+    provenance: "estimated"
+  },
+  weather: {
+    severity: "info",
+    intelligence: {
+      current: { tempC: 31, rainProb: 25, precipMm: 0.2, windKph: 12, aqi: 44, pm25: 11 },
+      forecast: Array.from({ length: 12 }, (_, index) => ({
+        hour: `${String(15 + index).padStart(2, "0")}:00`,
+        tempC: 31,
+        rainProb: 25,
+        precipMm: 0.2,
+        windKph: 12,
+        code: 1000
+      })),
+      monsoonSeason: false,
+      monsoonNote: "Dry season bias",
+      driverAlerts: []
+    },
+    provenance: "live"
+  },
+  traffic: {
+    severity: "caution",
+    advisories: mockAirportAdvisories,
+    provenance: "fallback"
+  },
+  hotspots: {
+    hotspots: [
+      {
+        id: "airport",
+        zone: "Airport",
+        lat: 8.10846,
+        lng: 98.30655,
+        demand: 12,
+        liveRequests: 3,
+        modeledDemand: 9,
+        coverageRatio: 0.8,
+        gap: 2,
+        provenance: "estimated"
+      }
+    ],
+    totalRequests: 3
+  },
+  transferHubs: mockOpsTransferHubs,
+  history: {
+    recentEvents: [],
+    vehicleHistoryCount: 6
+  },
+  mapOverlays: {
+    tileLayers: [],
+    markers: []
+  },
+  competitorBenchmarks: [
+    {
+      routeId: "orange-line",
+      routeName: lt("Orange Line (Government)", "สายสีส้ม (ภาครัฐ)"),
+      tier: "competitor",
+      operatorLabel: "Government-operated",
+      fareThb: 100,
+      headwayMinutes: 60,
+      tripDurationMinutes: 90,
+      estimatedDemand: 120,
+      seatSupply: 320,
+      carriedRiders: 120,
+      revenueThb: 12_000,
+      capturePct: 100,
+      overlapRouteIds: ["rawai-airport", "dragon-line"],
+      provenance: "estimated",
+      notes: lt("Benchmark competitor on the airport to town corridor.", "คู่เทียบเชิงกลยุทธ์บนคอร์ริดอร์สนามบินถึงเมือง")
+    }
+  ],
+  sources: [mockBusSourceStatus, mockTrafficSourceStatus, mockWeatherSourceStatus, mockAqiSourceStatus]
+};
+
+export const mockInvestorSimulation: InvestorSimulationPayload = {
+  generatedAt: "2026-03-08T14:00:00Z",
+  dataMode: "demo",
+  fallbackReasons: ["simulation: scheduled replay model"],
+  assumptions: {
+    seatCapacityPerBus: 25,
+    flatFareThb: 100,
+    addressableDemandShare: 0.15,
+    replayStepMinutes: 3,
+    replayStartMinutes: 360,
+    replayEndMinutes: 1440
+  },
+  hourly: [
+    {
+      hour: "06:00",
+      rawArrivalPax: 180,
+      rawDeparturePax: 120,
+      addressableArrivalDemand: 27,
+      addressableDepartureDemand: 18,
+      arrivalSeatSupply: 50,
+      departureSeatSupply: 50,
+      carriedArrivalDemand: 27,
+      carriedDepartureDemand: 18,
+      unmetArrivalDemand: 0,
+      unmetDepartureDemand: 0,
+      requiredArrivalDepartures: 2,
+      requiredDepartureDepartures: 1,
+      additionalArrivalBusesNeeded: 0,
+      additionalDepartureBusesNeeded: 0,
+      lostRevenueThb: 0
+    }
+  ],
+  services: [],
+  competitorBenchmarks: mockOpsDashboard.competitorBenchmarks,
+  totals: {
+    rawAirportArrivalPax: 180,
+    rawAirportDeparturePax: 120,
+    addressableArrivalDemand: 27,
+    addressableDepartureDemand: 18,
+    carriedArrivalDemand: 27,
+    carriedDepartureDemand: 18,
+    unmetArrivalDemand: 0,
+    unmetDepartureDemand: 0,
+    totalAirportCapturePct: 100,
+    addressableAirportCapturePct: 100,
+    dailyRevenueThb: 4_500,
+    lostRevenueThb: 0,
+    peakAdditionalBusesNeeded: 0
+  },
+  opportunities: {
+    summary: "Modeled service covers the current replay window.",
+    peakArrivalGapHour: null,
+    peakDepartureGapHour: null,
+    strongestRevenueServiceRouteId: "rawai-airport"
+  },
+  touchpoints: mockOpsTransferHubs
+};
+
+export const mockSimulationSnapshot: SimulationSnapshot = {
+  simMinutes: 360,
+  simTime: "06:00",
+  dataMode: "demo",
+  fallbackReasons: ["simulation: scheduled replay model"],
+  vehicles: [...mockAirportVehicles, ...mockPatongVehicles],
+  routePressure: mockOpsDashboard.fleet.routePressure,
+  transferHubs: mockOpsTransferHubs,
+  competitorBenchmarks: mockOpsDashboard.competitorBenchmarks
 };
 
 export const mockAirportGuide: AirportGuidePayload = {
@@ -442,13 +695,15 @@ export const mockAirportGuide: AirportGuidePayload = {
       travelMinutes: 46
     }
   ],
-  sourceStatuses: mockHealthPayload.sources,
+  sourceStatuses: mockDecisionSourceStatuses,
   checkedAt: "2026-03-08T14:00:00Z"
 };
 
 const payloadByPath = new Map<string, unknown>([
   ["/api/routes", mockRoutes],
   ["/api/health", mockHealthPayload],
+  ["/api/ops/dashboard", mockOpsDashboard],
+  ["/api/ops/investor-sim", mockInvestorSimulation],
   ["/api/routes/rawai-airport/stops", mockAirportStops],
   ["/api/routes/rawai-airport/vehicles", { vehicles: mockAirportVehicles }],
   ["/api/routes/rawai-airport/advisories", { advisories: mockAirportAdvisories }],
@@ -479,6 +734,14 @@ export function getMockApiPayload(input: string | URL) {
     }
 
     return null;
+  }
+
+  if (url.pathname === "/api/simulate") {
+    return {
+      ...mockSimulationSnapshot,
+      simMinutes: Number(url.searchParams.get("t") ?? mockSimulationSnapshot.simMinutes),
+      simTime: mockSimulationSnapshot.simTime
+    };
   }
 
   return null;

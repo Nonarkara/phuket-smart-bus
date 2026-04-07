@@ -1,11 +1,21 @@
-import type { OperationsOverviewPayload, OperationsRouteSummary, PassengerFlowEvent, RouteId } from "../../shared/types.js";
+import type {
+  OperationalRouteId,
+  OperationsOverviewPayload,
+  OperationsRouteSummary,
+  PassengerFlowEvent
+} from "../../shared/types.js";
 import { ROUTE_DEFINITIONS } from "../config.js";
 import { estimateSeatAvailability } from "./providers/seatProvider.js";
 import { getBusSnapshot } from "./providers/busProvider.js";
 import { getRecentPassengerFlowEvents } from "./operationsStore.js";
 import { getStopById } from "./routes.js";
 
-const CORE_ROUTE_IDS = (Object.entries(ROUTE_DEFINITIONS) as [RouteId, (typeof ROUTE_DEFINITIONS)[RouteId]][])
+const CORE_ROUTE_IDS = (
+  Object.entries(ROUTE_DEFINITIONS) as [
+    OperationalRouteId,
+    (typeof ROUTE_DEFINITIONS)[OperationalRouteId]
+  ][]
+)
   .filter(([, config]) => config.tier === "core")
   .map(([routeId]) => routeId);
 
@@ -32,7 +42,11 @@ function enrichPassengerEvent(event: PassengerFlowEvent): PassengerFlowEvent {
   };
 }
 
-function buildRouteSummary(routeId: RouteId, events: PassengerFlowEvent[], vehicles: Awaited<ReturnType<typeof getBusSnapshot>>["vehicles"]) {
+function buildRouteSummary(
+  routeId: OperationalRouteId,
+  events: PassengerFlowEvent[],
+  vehicles: Awaited<ReturnType<typeof getBusSnapshot>>["vehicles"]
+) {
   const routeConfig = ROUTE_DEFINITIONS[routeId];
   const routeVehicles = vehicles.filter((vehicle) => vehicle.routeId === routeId);
   const seatSummaries = routeVehicles
@@ -79,7 +93,10 @@ export async function getOperationsOverview(): Promise<OperationsOverviewPayload
   const snapshot = await getBusSnapshot();
   const recentEvents = getRecentPassengerFlowEvents(250)
     .map(enrichPassengerEvent)
-    .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+    .sort(
+      (left: PassengerFlowEvent, right: PassengerFlowEvent) =>
+        new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
 
   return {
     checkedAt: new Date().toISOString(),

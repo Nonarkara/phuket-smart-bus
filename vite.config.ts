@@ -7,6 +7,11 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
 
 export default defineConfig({
   plugins: [react()],
+  assetsInclude: [],
+  json: {
+    stringify: false
+  },
+  base: process.env.GITHUB_PAGES ? "/phuket-smart-bus/" : "/",
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },
@@ -18,10 +23,7 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 4173,
-    proxy: {
-      "/api": `http://127.0.0.1:${process.env.API_PORT ?? "3099"}`
-    }
+    port: 4173
   },
   build: {
     outDir: "dist/client"

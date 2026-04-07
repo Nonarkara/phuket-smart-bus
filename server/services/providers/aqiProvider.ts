@@ -1,6 +1,8 @@
 import type { DataSourceStatus } from "../../../shared/types.js";
 import { AQI_CACHE_MS } from "../../config.js";
 import { text } from "../../lib/i18n.js";
+import { buildSourceStatus, formatFallbackReason } from "../../lib/sourceStatus.js";
+import { fetchJsonWithRetry } from "../../lib/upstream.js";
 
 export type AqiSnapshot = {
   updatedAt: string;
@@ -17,24 +19,28 @@ let cache:
     }
   | undefined;
 
+type AqiSnapshotResult = {
+  expiresAt: number;
+  snapshot: AqiSnapshot;
+  status: DataSourceStatus;
+};
+
 async function fetchAqi(): Promise<AqiSnapshot> {
-  const response = await fetch(
-    "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=7.88&longitude=98.39&current=pm2_5,pm10,us_aqi&timezone=Asia%2FBangkok",
-    { signal: AbortSignal.timeout(5_000) }
-  );
-
-  if (!response.ok) {
-    throw new Error(`AQI feed failed with ${response.status}`);
-  }
-
-  const data = (await response.json()) as {
+  const data = await fetchJsonWithRetry<{
     current?: {
       time: string;
       pm2_5: number;
       pm10: number;
       us_aqi: number;
     };
-  };
+  }>(
+    "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=7.88&longitude=98.39&current=pm2_5,pm10,us_aqi&timezone=Asia%2FBangkok",
+    {},
+    {
+      timeoutMs: 5_000,
+      retries: 1
+    }
+  );
 
   return {
     updatedAt: data.current?.time ?? new Date().toISOString(),
@@ -51,37 +57,44 @@ const FALLBACK_SNAPSHOT: AqiSnapshot = {
   usAqi: 55
 };
 
-export async function getAqiSnapshot() {
+export async function getAqiSnapshot(): Promise<AqiSnapshotResult> {
   if (cache && cache.expiresAt > Date.now()) {
     return cache;
   }
 
   try {
     const snapshot = await fetchAqi();
-    cache = {
+    const next: AqiSnapshotResult = {
       expiresAt: Date.now() + AQI_CACHE_MS,
       snapshot,
-      status: {
-        source: "weather",
-        state: "live",
-        updatedAt: snapshot.updatedAt,
-        detail: text("Open-Meteo AQI loaded", "โหลดข้อมูลคุณภาพอากาศแล้ว")
-      }
+      status: buildSourceStatus(
+        "aqi",
+        "live",
+        snapshot.updatedAt,
+        text("Open-Meteo AQI loaded", "โหลดข้อมูลคุณภาพอากาศแล้ว")
+      )
     };
-  } catch {
-    cache = {
+    cache = next;
+    return next;
+  } catch (error) {
+    const next: AqiSnapshotResult = {
       expiresAt: Date.now() + AQI_CACHE_MS,
       snapshot: FALLBACK_SNAPSHOT,
-      status: {
-        source: "weather",
-        state: "fallback",
-        updatedAt: new Date().toISOString(),
-        detail: text("Using AQI fallback", "ใช้ข้อมูลคุณภาพอากาศสำรอง")
-      }
+      status: buildSourceStatus(
+        "aqi",
+        "fallback",
+        new Date().toISOString(),
+        text("Using AQI fallback", "ใช้ข้อมูลคุณภาพอากาศสำรอง"),
+        formatFallbackReason("aqi", error)
+      )
     };
+    cache = next;
+    return next;
   }
+}
 
-  return cache;
+export function clearAqiSnapshotCache() {
+  cache = undefined;
 }
 
 export function getAqiLabel(usAqi: number): { en: string; level: "good" | "moderate" | "unhealthy_sensitive" | "unhealthy" } {

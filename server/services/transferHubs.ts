@@ -1,4 +1,4 @@
-import type { MetricProvenance, RouteId, TransferHub } from "../../shared/types.js";
+import type { MetricProvenance, OperationalRouteId, TransferHub } from "../../shared/types.js";
 import { formatClockLabel, getBangkokNowMinutes } from "../lib/time.js";
 import { text } from "../lib/i18n.js";
 import {
@@ -13,8 +13,8 @@ type HubConfig = {
   id: string;
   name: ReturnType<typeof text>;
   coordinates: [number, number];
-  feederRouteIds: RouteId[];
-  ferryRouteIds: RouteId[];
+  feederRouteIds: OperationalRouteId[];
+  ferryRouteIds: OperationalRouteId[];
   walkMinutes: number;
   transferBufferMinutes: number;
   rationale: ReturnType<typeof text>;

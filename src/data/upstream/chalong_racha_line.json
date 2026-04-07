@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+    "type": "Feature",
+    "properties": { "route": "chalong_racha" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [98.3613, 7.8281],
+        [98.360, 7.780],
+        [98.360, 7.730],
+        [98.362, 7.680],
+        [98.3647, 7.6061]
+      ]
+    }
+  }]
+}

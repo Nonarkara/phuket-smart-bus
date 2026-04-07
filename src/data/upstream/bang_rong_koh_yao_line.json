@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+    "type": "Feature",
+    "properties": { "route": "bang_rong_koh_yao" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [98.4186, 8.0133],
+        [98.45, 8.025],
+        [98.50, 8.050],
+        [98.55, 8.075],
+        [98.6, 8.1122]
+      ]
+    }
+  }]
+}
