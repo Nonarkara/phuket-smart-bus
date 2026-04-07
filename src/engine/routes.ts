@@ -9,6 +9,7 @@ import {
   flattenBoundsSegments,
   flattenLineSegments,
   getBounds,
+  haversineDistanceMeters,
   toLatLng
 } from "./geo";
 import { ROUTE_DEFINITIONS } from "./config";
@@ -159,6 +160,63 @@ export function getStopsForRoute(routeId: OperationalRouteId) {
 
 export function getStopById(routeId: OperationalRouteId, stopId: string) {
   return getStopsForRoute(routeId).find((stop) => stop.id === stopId) ?? null;
+}
+
+/**
+ * Extract individual polyline features as LatLngTuple[] arrays.
+ * Each GeoJSON feature is one direction of a route.
+ */
+function extractPolylineFeatures(routeId: OperationalRouteId): LatLngTuple[][] {
+  const collection = lineCollections[routeId];
+  const result: LatLngTuple[][] = [];
+
+  for (const feature of collection.features) {
+    const geo = feature.geometry;
+    if (geo.type === "MultiLineString") {
+      for (const segment of geo.coordinates) {
+        result.push(segment.map(toLatLng));
+      }
+    } else if (geo.type === "LineString") {
+      result.push(geo.coordinates.map(toLatLng));
+    }
+  }
+
+  return result;
+}
+
+const polylineCache = new Map<string, LatLngTuple[]>();
+
+/**
+ * Get the polyline for a specific route + direction.
+ * Matches by finding the polyline whose start is closest to the first stop.
+ */
+export function getDirectionPolyline(routeId: OperationalRouteId, firstStopCoords: LatLngTuple): LatLngTuple[] {
+  const key = `${routeId}:${firstStopCoords[0].toFixed(4)},${firstStopCoords[1].toFixed(4)}`;
+  const cached = polylineCache.get(key);
+  if (cached) return cached;
+
+  const features = extractPolylineFeatures(routeId);
+
+  if (features.length === 0) return [];
+  if (features.length === 1) {
+    polylineCache.set(key, features[0]);
+    return features[0];
+  }
+
+  // Match the polyline whose start point is closest to the first stop
+  let bestFeature = features[0];
+  let bestDistance = Infinity;
+
+  for (const polyline of features) {
+    const startDist = haversineDistanceMeters(polyline[0], firstStopCoords);
+    if (startDist < bestDistance) {
+      bestDistance = startDist;
+      bestFeature = polyline;
+    }
+  }
+
+  polylineCache.set(key, bestFeature);
+  return bestFeature;
 }
 
 export function getRoutes(

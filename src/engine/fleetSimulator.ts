@@ -1,4 +1,5 @@
 import type {
+  LatLngTuple,
   OperationalRouteId,
   Stop,
   VehiclePosition
@@ -9,7 +10,7 @@ import {
   getBangkokNowMinutes,
   parseScheduleEntries
 } from "./time";
-import { getStopsForRoute } from "./routes";
+import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS } from "./config";
 import busLiveSample from "../data/fixtures/bus_live_sample.json";
 
@@ -39,9 +40,12 @@ type DirectionProfile = {
   departures: number[];
   headwayMinutes: number;
   tripDurationMinutes: number;
-  routeLengthMeters: number;
-  stopOffsets: number[];
-  cumulativeDistances: number[];
+  stopOffsets: number[]; // minutes from departure for each stop
+  // Polyline geometry for road-snapped interpolation
+  polyline: LatLngTuple[];
+  polylineCumMeters: number[];
+  polylineTotalMeters: number;
+  stopPolylineMeters: number[]; // distance along polyline for each stop
 };
 
 type TripOccurrence = {
@@ -87,6 +91,85 @@ function median(values: number[]) {
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
+
+// --- Polyline utilities ---
+
+function buildPolylineCumulativeMeters(polyline: LatLngTuple[]): number[] {
+  const cum = [0];
+  for (let i = 1; i < polyline.length; i++) {
+    cum.push(cum[i - 1] + haversineDistanceMeters(polyline[i - 1], polyline[i]));
+  }
+  return cum;
+}
+
+/** Find the nearest point on the polyline to a given coordinate, return distance along polyline */
+function snapToPolyline(
+  point: LatLngTuple,
+  polyline: LatLngTuple[],
+  cumMeters: number[]
+): number {
+  let bestDist = Infinity;
+  let bestPolyDist = 0;
+
+  for (let i = 0; i < polyline.length; i++) {
+    const d = haversineDistanceMeters(point, polyline[i]);
+    if (d < bestDist) {
+      bestDist = d;
+      bestPolyDist = cumMeters[i];
+    }
+  }
+
+  return bestPolyDist;
+}
+
+/** Interpolate a position along the polyline at a given distance in meters */
+function interpolateAlongPolyline(
+  distanceMeters: number,
+  polyline: LatLngTuple[],
+  cumMeters: number[]
+): { coordinates: LatLngTuple; heading: number } {
+  const total = cumMeters[cumMeters.length - 1];
+  const d = clamp(distanceMeters, 0, total);
+
+  // Binary search for the segment
+  let lo = 0;
+  let hi = cumMeters.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (cumMeters[mid] <= d) lo = mid;
+    else hi = mid;
+  }
+
+  const segStart = cumMeters[lo];
+  const segEnd = cumMeters[hi];
+  const segLen = segEnd - segStart;
+  const ratio = segLen > 0 ? (d - segStart) / segLen : 0;
+
+  const from = polyline[lo];
+  const to = polyline[hi];
+
+  const coordinates: LatLngTuple = [
+    from[0] + (to[0] - from[0]) * ratio,
+    from[1] + (to[1] - from[1]) * ratio
+  ];
+
+  const heading = bearingDeg(from, to);
+
+  return { coordinates, heading };
+}
+
+function bearingDeg(from: LatLngTuple, to: LatLngTuple): number {
+  const startLat = (from[0] * Math.PI) / 180;
+  const endLat = (to[0] * Math.PI) / 180;
+  const deltaLon = ((to[1] - from[1]) * Math.PI) / 180;
+  const y = Math.sin(deltaLon) * Math.cos(endLat);
+  const x =
+    Math.cos(startLat) * Math.sin(endLat) -
+    Math.sin(startLat) * Math.cos(endLat) * Math.cos(deltaLon);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+// --- Fleet roster ---
 
 function buildRouteTargets(totalVehicles: number, knownCounts: Record<OperationalRouteId, number>) {
   const weights = landRouteIds.map((routeId) => ({
@@ -177,6 +260,8 @@ function buildFleetRoster() {
   return [...known, ...assignedUnknown];
 }
 
+// --- Schedule derivation ---
+
 function deriveHeadway(departures: number[], interval: number | null) {
   if (interval !== null) return interval;
   const diffs = departures
@@ -222,16 +307,7 @@ function deriveTripDuration(stops: Stop[], departures: number[], stopOffsets: nu
   return clamp(Math.max(median(pairDurations) ?? 0, stopOffsets.at(-1) ?? 0, 20), 20, 6 * 60);
 }
 
-function buildCumulativeDistances(stops: Stop[]) {
-  const distances = [0];
-  for (let index = 1; index < stops.length; index += 1) {
-    distances.push(
-      distances[index - 1] +
-        haversineDistanceMeters(stops[index - 1]!.coordinates, stops[index]!.coordinates)
-    );
-  }
-  return distances;
-}
+// --- Build direction profiles with polyline geometry ---
 
 function buildDirectionProfiles(routeId: OperationalRouteId) {
   const grouped = new Map<string, Stop[]>();
@@ -253,7 +329,41 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
 
       const stopOffsets = deriveStopOffsets(stops, departures);
       const tripDurationMinutes = deriveTripDuration(stops, departures, stopOffsets);
-      const cumulativeDistances = buildCumulativeDistances(stops);
+
+      // Get the polyline for this direction (matched by first stop proximity)
+      const polyline = getDirectionPolyline(routeId, stops[0].coordinates);
+
+      let polylineCumMeters: number[];
+      let polylineTotalMeters: number;
+      let stopPolylineMeters: number[];
+
+      if (polyline.length >= 2) {
+        polylineCumMeters = buildPolylineCumulativeMeters(polyline);
+        polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];
+        // Snap each stop to the nearest polyline point
+        stopPolylineMeters = stops.map((stop) =>
+          snapToPolyline(stop.coordinates, polyline, polylineCumMeters)
+        );
+        // Ensure monotonically increasing (stops should progress along the route)
+        for (let i = 1; i < stopPolylineMeters.length; i++) {
+          if (stopPolylineMeters[i] < stopPolylineMeters[i - 1]) {
+            stopPolylineMeters[i] = stopPolylineMeters[i - 1];
+          }
+        }
+      } else {
+        // Fallback for routes with no polyline (ferries) — straight-line
+        polylineCumMeters = [0];
+        polylineTotalMeters = 0;
+        let cumDist = 0;
+        stopPolylineMeters = stops.map((stop, i) => {
+          if (i === 0) return 0;
+          cumDist += haversineDistanceMeters(stops[i - 1].coordinates, stop.coordinates);
+          return cumDist;
+        });
+        polylineTotalMeters = cumDist;
+        // Build a simple 2-point polyline from first to last stop
+        polylineCumMeters = [0, polylineTotalMeters];
+      }
 
       return {
         routeId,
@@ -262,9 +372,11 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
         departures,
         headwayMinutes: deriveHeadway(departures, interval),
         tripDurationMinutes,
-        routeLengthMeters: cumulativeDistances.at(-1) ?? 0,
         stopOffsets,
-        cumulativeDistances
+        polyline,
+        polylineCumMeters,
+        polylineTotalMeters,
+        stopPolylineMeters
       };
     })
     .filter((profile): profile is DirectionProfile => Boolean(profile));
@@ -308,29 +420,18 @@ const fleetByRoute = Object.fromEntries(
   ])
 ) as Record<OperationalRouteId, FleetVehicle[]>;
 
-function getRotationOffset(now: Date, poolLength: number) {
-  if (poolLength === 0) return 0;
-  const hourSeed = Math.floor(now.getTime() / 3_600_000);
-  return Math.abs(hourSeed) % poolLength;
+// --- Stable vehicle assignment ---
+// Hash a trip identity to a deterministic pool index so the same bus always serves the same trip
+function stableTripHash(routeId: string, directionLabel: string, departureMinutes: number): number {
+  let h = 0;
+  const key = `${routeId}:${directionLabel}:${departureMinutes}`;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) - h + key.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
 }
 
-function interpolateCoordinate(from: Stop, to: Stop, ratio: number) {
-  return [
-    from.coordinates[0] + (to.coordinates[0] - from.coordinates[0]) * ratio,
-    from.coordinates[1] + (to.coordinates[1] - from.coordinates[1]) * ratio
-  ] as [number, number];
-}
-
-function estimateHeading(from: Stop, to: Stop) {
-  const startLat = (from.coordinates[0] * Math.PI) / 180;
-  const endLat = (to.coordinates[0] * Math.PI) / 180;
-  const deltaLon = ((to.coordinates[1] - from.coordinates[1]) * Math.PI) / 180;
-  const y = Math.sin(deltaLon) * Math.cos(endLat);
-  const x =
-    Math.cos(startLat) * Math.sin(endLat) -
-    Math.sin(startLat) * Math.cos(endLat) * Math.cos(deltaLon);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-}
+// --- Trip occurrences ---
 
 function buildTripOccurrences(profile: DirectionProfile, currentMinutes: number) {
   const prestartMinutes = clamp(Math.round(profile.headwayMinutes / 3), 5, 12);
@@ -349,6 +450,8 @@ function buildTripOccurrences(profile: DirectionProfile, currentMinutes: number)
     .sort((left, right) => left.ageMinutes - right.ageMinutes);
 }
 
+// --- Vehicle positioning (polyline-snapped) ---
+
 function buildVehiclePosition(
   vehicle: FleetVehicle,
   occurrence: TripOccurrence,
@@ -356,48 +459,91 @@ function buildVehiclePosition(
 ): VehiclePosition {
   const { profile, ageMinutes } = occurrence;
   const lastStopIndex = profile.stops.length - 1;
-  let coordinates = profile.stops[0]!.coordinates;
-  let heading = estimateHeading(profile.stops[0]!, profile.stops[1]!);
+  const hasPolyline = profile.polyline.length >= 2;
+
+  let coordinates: LatLngTuple;
+  let heading: number;
   let speedKph = 0;
   let status: VehiclePosition["status"] = "dwelling";
-  let distanceToDestinationMeters = profile.routeLengthMeters;
+  let distanceToDestinationMeters = profile.polylineTotalMeters;
   let stopsAway = lastStopIndex;
 
   if (ageMinutes >= profile.tripDurationMinutes) {
-    coordinates = profile.stops[lastStopIndex]!.coordinates;
-    heading = estimateHeading(profile.stops[Math.max(0, lastStopIndex - 1)]!, profile.stops[lastStopIndex]!);
+    // At terminal — use last stop's snapped position on polyline
+    if (hasPolyline) {
+      const pos = interpolateAlongPolyline(
+        profile.stopPolylineMeters[lastStopIndex],
+        profile.polyline,
+        profile.polylineCumMeters
+      );
+      coordinates = pos.coordinates;
+      heading = pos.heading;
+    } else {
+      coordinates = profile.stops[lastStopIndex]!.coordinates;
+      heading = bearingDeg(profile.stops[Math.max(0, lastStopIndex - 1)]!.coordinates, profile.stops[lastStopIndex]!.coordinates);
+    }
     distanceToDestinationMeters = 0;
     stopsAway = 0;
-  } else if (ageMinutes > 0) {
+  } else if (ageMinutes <= 0) {
+    // Prestart — at first stop
+    if (hasPolyline) {
+      const pos = interpolateAlongPolyline(
+        profile.stopPolylineMeters[0],
+        profile.polyline,
+        profile.polylineCumMeters
+      );
+      coordinates = pos.coordinates;
+      heading = pos.heading;
+    } else {
+      coordinates = profile.stops[0]!.coordinates;
+      heading = bearingDeg(profile.stops[0]!.coordinates, profile.stops[1]!.coordinates);
+    }
+  } else {
+    // In transit — interpolate along polyline
     const currentOffset = clamp(ageMinutes, 0, profile.tripDurationMinutes);
+
+    // Find which stop segment we're in (by time)
     let segmentIndex = profile.stopOffsets.findIndex((offset, index) => {
       const nextOffset = profile.stopOffsets[index + 1];
       return nextOffset !== undefined && currentOffset <= nextOffset;
     });
     if (segmentIndex < 0) segmentIndex = Math.max(0, profile.stopOffsets.length - 2);
 
-    const startStop = profile.stops[segmentIndex]!;
-    const endStop = profile.stops[segmentIndex + 1]!;
     const startOffset = profile.stopOffsets[segmentIndex]!;
     const endOffset = profile.stopOffsets[segmentIndex + 1]!;
     const segmentRatio =
       endOffset > startOffset ? (currentOffset - startOffset) / (endOffset - startOffset) : 0;
     const ratio = clamp(segmentRatio, 0, 1);
-    const travelledMeters =
-      profile.cumulativeDistances[segmentIndex]! +
-      haversineDistanceMeters(startStop.coordinates, endStop.coordinates) * ratio;
 
-    coordinates = interpolateCoordinate(startStop, endStop, ratio);
-    heading = estimateHeading(startStop, endStop);
+    // Convert time-based ratio to distance along polyline
+    const startMeters = profile.stopPolylineMeters[segmentIndex]!;
+    const endMeters = profile.stopPolylineMeters[segmentIndex + 1]!;
+    const currentMeters = startMeters + (endMeters - startMeters) * ratio;
+
+    if (hasPolyline) {
+      const pos = interpolateAlongPolyline(currentMeters, profile.polyline, profile.polylineCumMeters);
+      coordinates = pos.coordinates;
+      heading = pos.heading;
+    } else {
+      // Fallback straight-line for ferries
+      const from = profile.stops[segmentIndex]!.coordinates;
+      const to = profile.stops[segmentIndex + 1]!.coordinates;
+      coordinates = [
+        from[0] + (to[0] - from[0]) * ratio,
+        from[1] + (to[1] - from[1]) * ratio
+      ];
+      heading = bearingDeg(from, to);
+    }
+
     speedKph =
       profile.tripDurationMinutes > 0
-        ? Math.round((profile.routeLengthMeters / 1000 / (profile.tripDurationMinutes / 60)) * 10) / 10
+        ? Math.round((profile.polylineTotalMeters / 1000 / (profile.tripDurationMinutes / 60)) * 10) / 10
         : 0;
     const segmentDuration = endOffset - startOffset;
     const atStart = ratio < 0.05;
     const atEnd = ratio > 0.95;
     status = (atStart || atEnd) && segmentDuration > 2 ? "dwelling" : "moving";
-    distanceToDestinationMeters = Math.max(0, profile.routeLengthMeters - travelledMeters);
+    distanceToDestinationMeters = Math.max(0, profile.polylineTotalMeters - currentMeters);
     stopsAway = Math.max(0, lastStopIndex - segmentIndex - (ratio >= 0.85 ? 1 : 0));
   }
 
@@ -420,23 +566,23 @@ function buildVehiclePosition(
   };
 }
 
+// --- Build vehicles for route (stable assignment) ---
+
 function buildVehiclesForRoute(
   routeId: OperationalRouteId,
   currentMinutes: number,
   now: Date
 ) {
   const pool = fleetByRoute[routeId];
-  const prioritizedOccurrences = profilesByRoute[routeId]
-    .flatMap((profile) => buildTripOccurrences(profile, currentMinutes))
-    .sort(
-      (left, right) =>
-        left.scheduledDepartureMinutes - right.scheduledDepartureMinutes ||
-        left.profile.directionLabel.localeCompare(right.profile.directionLabel)
-    );
+  if (pool.length === 0) return [];
 
-  if (prioritizedOccurrences.length === 0 || pool.length === 0) return [];
+  const allOccurrences = profilesByRoute[routeId]
+    .flatMap((profile) => buildTripOccurrences(profile, currentMinutes));
 
-  const occurrences = prioritizedOccurrences
+  if (allOccurrences.length === 0) return [];
+
+  // Priority: active trips first, then prestart, then layover
+  const sorted = allOccurrences
     .slice()
     .sort((left, right) => {
       const leftPriority =
@@ -449,20 +595,30 @@ function buildVehiclesForRoute(
         left.scheduledDepartureMinutes - right.scheduledDepartureMinutes
       );
     })
-    .slice(0, pool.length)
-    .sort(
-      (left, right) =>
-        left.scheduledDepartureMinutes - right.scheduledDepartureMinutes ||
-        left.profile.directionLabel.localeCompare(right.profile.directionLabel)
-    );
+    .slice(0, pool.length);
 
-  const offset = getRotationOffset(now, pool.length);
-  const orderedPool = pool.map((_, index) => pool[(offset + index) % pool.length]!);
   const nowIso = now.toISOString();
 
-  return occurrences.map((occurrence, index) =>
-    buildVehiclePosition(orderedPool[index]!, occurrence, nowIso)
-  );
+  // Stable assignment: each trip gets a deterministic vehicle from the pool
+  const usedIndices = new Set<number>();
+
+  return sorted.map((occurrence) => {
+    const hash = stableTripHash(
+      occurrence.profile.routeId,
+      occurrence.profile.directionLabel,
+      occurrence.scheduledDepartureMinutes
+    );
+    // Find first unused pool slot starting from hash position
+    let idx = hash % pool.length;
+    let attempts = 0;
+    while (usedIndices.has(idx) && attempts < pool.length) {
+      idx = (idx + 1) % pool.length;
+      attempts++;
+    }
+    usedIndices.add(idx);
+
+    return buildVehiclePosition(pool[idx]!, occurrence, nowIso);
+  });
 }
 
 export function buildScheduleMockFleet(now = new Date()) {
