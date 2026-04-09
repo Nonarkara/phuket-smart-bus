@@ -1,9 +1,32 @@
-import { divIcon } from "leaflet";
+import { divIcon, type DivIcon, type Marker as LeafletMarker } from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
 import { getVehiclesNow } from "@/engine/dataProvider";
+
+/** Marker that imperatively updates position via setLatLng for smooth animation. */
+function MovingMarker({ position, icon, children }: { position: LatLngTuple; icon: DivIcon; children?: React.ReactNode }) {
+  const markerRef = useRef<LeafletMarker>(null);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setLatLng(position);
+    }
+  }, [position[0], position[1]]);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setIcon(icon);
+    }
+  }, [icon]);
+
+  return (
+    <Marker ref={markerRef} position={position} icon={icon}>
+      {children}
+    </Marker>
+  );
+}
 
 export type MapOverlay = {
   id: string;
@@ -127,19 +150,28 @@ export function LiveMap({
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
-  // Direct engine rendering: compute fresh polyline-snapped positions every 250ms
-  // instead of interpolating between poll snapshots (which takes straight-line shortcuts).
-  const [animatedVehicles, setAnimatedVehicles] = useState(vehicles);
+  // Direct engine rendering: compute fresh polyline-snapped positions on every
+  // animation frame (throttled to ~4fps) instead of interpolating between poll
+  // snapshots which takes straight-line shortcuts off the polyline.
+  const [animatedVehicles, setAnimatedVehicles] = useState(() => getVehiclesNow());
+  const lastTickRef = useRef(0);
 
   useEffect(() => {
     const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const interval = prefersReduced ? 2000 : 250; // 4fps normal, 0.5fps reduced motion
+    const throttleMs = prefersReduced ? 2000 : 250;
+    let frameId = 0;
 
-    const tick = () => { setAnimatedVehicles(getVehiclesNow()); };
-    tick(); // immediate first frame
-    const id = window.setInterval(tick, interval);
-    return () => { window.clearInterval(id); };
-  }, []); // no deps — runs once, ticks forever
+    const tick = (now: number) => {
+      if (now - lastTickRef.current >= throttleMs) {
+        lastTickRef.current = now;
+        setAnimatedVehicles(getVehiclesNow());
+      }
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, []); // runs once, ticks forever via rAF
 
   return (
     <div className="map-frame" data-testid={testId}>
@@ -213,13 +245,13 @@ export function LiveMap({
             (vehicle.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
 
           return (
-            <Marker
+            <MovingMarker
               key={`${vehicle.routeId}-${vehicle.id}`}
               position={vehicle.coordinates}
               icon={buildVehicleIcon(vehicle, vehicleColor, highlightVehicleId === vehicle.vehicleId)}
             >
               <Tooltip>{vehicle.licensePlate}</Tooltip>
-            </Marker>
+            </MovingMarker>
           );
         })}
         {userLocation ? (
