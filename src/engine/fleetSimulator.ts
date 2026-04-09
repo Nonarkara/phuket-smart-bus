@@ -536,10 +536,26 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
   });
 }
 
-/** All vehicles including orange line competitor, computed at current instant.
- *  Uses fractional minutes (seconds precision) for smooth sub-minute animation. */
+// ---------------------------------------------------------------------------
+// Time acceleration for demo — 1 real second = SIM_SPEED simulated seconds.
+// Anchored to the real clock so the simulation always starts at "now" and
+// accelerates forward. Buses visibly glide at any zoom level.
+// ---------------------------------------------------------------------------
+
+const SIM_SPEED = 10; // 10× real time
+const simAnchorReal = Date.now();
+const simAnchorMinutes = getBangkokNowFractionalMinutes(new Date(simAnchorReal));
+
+function getSimulatedMinutes(): number {
+  const elapsedRealMs = Date.now() - simAnchorReal;
+  const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
+  return simAnchorMinutes + elapsedSimMinutes;
+}
+
+/** All vehicles including orange line competitor, computed at the simulated instant.
+ *  Runs at 10× real time so buses visibly move at every zoom level. */
 export function getVehiclesNow(now = new Date()): VehiclePosition[] {
-  const nowMin = getBangkokNowFractionalMinutes(now);
+  const nowMin = getSimulatedMinutes();
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];
