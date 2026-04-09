@@ -20,8 +20,10 @@ import {
   getHealth,
   getRoutes,
   getStops,
-  getVehicles
+  getVehicles,
+  getVehiclesNow
 } from "./engine/dataProvider";
+import { getImpactMetrics } from "./engine/impactSimulator";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -180,21 +182,27 @@ export default function App() {
   );
 }
 
-/* ── Live stats for landing page ── */
+/* ── Live stats for landing page (uses 10x simulated time from engine) ── */
 function LiveStatsWidget() {
-  const [tick, setTick] = useState(0);
-  useEffect(() => { const id = setInterval(() => setTick((t) => t + 1), 3000); return () => clearInterval(id); }, []);
-  const h = new Date().getHours();
-  const scale = h >= 10 && h <= 14 ? 1.0 : h >= 7 && h <= 22 ? 0.6 : 0.1;
-  const riders = Math.round((1450 + tick * 12) * scale);
-  const buses = Math.round(8 + scale * 7);
-  const co2 = (riders * 18 * 0.15 / 1000).toFixed(1);
+  const [stats, setStats] = useState(() => {
+    const v = getVehiclesNow();
+    const m = getImpactMetrics(v.length);
+    return { riders: m.ridersToday, buses: v.length, co2: m.co2SavedFormatted };
+  });
+  useEffect(() => {
+    const id = setInterval(() => {
+      const v = getVehiclesNow();
+      const m = getImpactMetrics(v.length);
+      setStats({ riders: m.ridersToday, buses: v.length, co2: m.co2SavedFormatted });
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
   return (
     <div className="live-stats">
-      <div className="live-stat"><span className="live-stat__val">{riders.toLocaleString()}</span><span className="live-stat__label">Riders today</span></div>
-      <div className="live-stat"><span className="live-stat__val">{buses}</span><span className="live-stat__label">Buses active</span></div>
+      <div className="live-stat"><span className="live-stat__val">{stats.riders.toLocaleString()}</span><span className="live-stat__label">Riders today</span></div>
+      <div className="live-stat"><span className="live-stat__val">{stats.buses}</span><span className="live-stat__label">Buses active</span></div>
       <div className="live-stat"><span className="live-stat__val">97%</span><span className="live-stat__label">On-time</span></div>
-      <div className="live-stat"><span className="live-stat__val">{co2}t</span><span className="live-stat__label">CO₂ saved</span></div>
+      <div className="live-stat"><span className="live-stat__val">{stats.co2}</span><span className="live-stat__label">CO₂ saved</span></div>
     </div>
   );
 }

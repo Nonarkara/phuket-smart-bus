@@ -1,5 +1,5 @@
-import { getBangkokNowMinutes } from "./time";
 import { getSeasonalMultiplier, isHighSeason } from "./environmentSimulator";
+import { getSimulatedMinutes } from "./fleetSimulator";
 
 // Hourly demand curve (passengers per hour, peak day baseline)
 const HOURLY_DEMAND = [
@@ -42,8 +42,8 @@ export interface ImpactMetrics {
 
 export function getImpactMetrics(activeBuses: number, now = new Date()): ImpactMetrics {
   const month = now.getMonth() + 1;
-  const currentMinutes = getBangkokNowMinutes(now);
-  const currentHour = Math.floor(currentMinutes / 60);
+  const currentMinutes = getSimulatedMinutes(); // uses 10x accelerated time
+  const currentHour = Math.floor(currentMinutes / 60) % 24;
   const minuteFraction = (currentMinutes % 60) / 60;
   const seasonal = getSeasonalMultiplier(month);
   const highSeason = isHighSeason(month);

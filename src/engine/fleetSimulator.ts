@@ -546,7 +546,7 @@ const SIM_SPEED = 10; // 10× real time
 const simAnchorReal = Date.now();
 const simAnchorMinutes = getBangkokNowFractionalMinutes(new Date(simAnchorReal));
 
-function getSimulatedMinutes(): number {
+export function getSimulatedMinutes(): number {
   const elapsedRealMs = Date.now() - simAnchorReal;
   const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
   return simAnchorMinutes + elapsedSimMinutes;
