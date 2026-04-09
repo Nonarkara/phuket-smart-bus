@@ -1,31 +1,70 @@
-import { divIcon, type DivIcon, type Marker as LeafletMarker } from "leaflet";
+import L, { divIcon } from "leaflet";
 import { useEffect, useRef, useState } from "react";
-import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
 import { getVehiclesNow } from "@/engine/dataProvider";
 
-/** Marker that imperatively updates position via setLatLng for smooth animation. */
-function MovingMarker({ position, icon, children }: { position: LatLngTuple; icon: DivIcon; children?: React.ReactNode }) {
-  const markerRef = useRef<LeafletMarker>(null);
+/**
+ * Imperative vehicle layer — creates/updates/removes raw Leaflet markers
+ * every 2 seconds, completely bypassing React re-renders for smooth animation.
+ * CSS transition on the marker icon handles the visual interpolation.
+ */
+function VehicleLayer({ routeColorById, highlightVehicleId }: {
+  routeColorById: Record<string, string>;
+  highlightVehicleId: string | null;
+}) {
+  const map = useMap();
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
-    if (markerRef.current) {
-      markerRef.current.setLatLng(position);
-    }
-  }, [position[0], position[1]]);
+    const TICK_MS = 2000;
 
-  useEffect(() => {
-    if (markerRef.current) {
-      markerRef.current.setIcon(icon);
-    }
-  }, [icon]);
+    function tick() {
+      const vehicles = getVehiclesNow();
+      const seen = new Set<string>();
 
-  return (
-    <Marker ref={markerRef} position={position} icon={icon}>
-      {children}
-    </Marker>
-  );
+      for (const v of vehicles) {
+        const key = `${v.routeId}-${v.id}`;
+        seen.add(key);
+
+        const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
+        const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
+        const icon = isFerry
+          ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
+          : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
+
+        const existing = markersRef.current.get(key);
+        if (existing) {
+          existing.setLatLng(v.coordinates);
+          existing.setIcon(icon);
+        } else {
+          const marker = L.marker(v.coordinates, { icon }).addTo(map);
+          marker.bindTooltip(v.licensePlate);
+          markersRef.current.set(key, marker);
+        }
+      }
+
+      // Remove markers for vehicles that are no longer active
+      for (const [key, marker] of markersRef.current) {
+        if (!seen.has(key)) {
+          map.removeLayer(marker);
+          markersRef.current.delete(key);
+        }
+      }
+    }
+
+    tick(); // immediate first frame
+    const id = setInterval(tick, TICK_MS);
+
+    return () => {
+      clearInterval(id);
+      for (const marker of markersRef.current.values()) map.removeLayer(marker);
+      markersRef.current.clear();
+    };
+  }, [map, routeColorById, highlightVehicleId]);
+
+  return null; // purely imperative — no React DOM output
 }
 
 export type MapOverlay = {
@@ -150,28 +189,12 @@ export function LiveMap({
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
-  // Direct engine rendering: compute fresh polyline-snapped positions on every
-  // animation frame (throttled to ~4fps) instead of interpolating between poll
-  // snapshots which takes straight-line shortcuts off the polyline.
+  // Vehicle count for the route rail badges (updated periodically)
   const [animatedVehicles, setAnimatedVehicles] = useState(() => getVehiclesNow());
-  const lastTickRef = useRef(0);
-
   useEffect(() => {
-    const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const throttleMs = prefersReduced ? 2000 : 250;
-    let frameId = 0;
-
-    const tick = (now: number) => {
-      if (now - lastTickRef.current >= throttleMs) {
-        lastTickRef.current = now;
-        setAnimatedVehicles(getVehiclesNow());
-      }
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, []); // runs once, ticks forever via rAF
+    const id = setInterval(() => setAnimatedVehicles(getVehiclesNow()), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="map-frame" data-testid={testId}>
@@ -239,21 +262,7 @@ export function LiveMap({
                 />
               ))
           : null}
-        {animatedVehicles.map((vehicle) => {
-          const vehicleColor =
-            routeColorById[vehicle.routeId] ??
-            (vehicle.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
-
-          return (
-            <MovingMarker
-              key={`${vehicle.routeId}-${vehicle.id}`}
-              position={vehicle.coordinates}
-              icon={buildVehicleIcon(vehicle, vehicleColor, highlightVehicleId === vehicle.vehicleId)}
-            >
-              <Tooltip>{vehicle.licensePlate}</Tooltip>
-            </MovingMarker>
-          );
-        })}
+        <VehicleLayer routeColorById={routeColorById} highlightVehicleId={highlightVehicleId} />
         {userLocation ? (
           <CircleMarker
             center={userLocation}

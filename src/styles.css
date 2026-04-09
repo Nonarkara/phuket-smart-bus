@@ -1218,7 +1218,7 @@ a { color: var(--tint); }
 }
 
 /* ===== Bus Markers ===== */
-.bus-marker-icon { background: transparent; border: 0; }
+.bus-marker-icon { background: transparent; border: 0; transition: transform 2s linear; will-change: transform; }
 
 .bus-marker {
   position: relative;
@@ -1259,7 +1259,7 @@ a { color: var(--tint); }
 }
 
 /* ===== Ferry Markers ===== */
-.ferry-marker-icon { background: transparent; border: 0; }
+.ferry-marker-icon { background: transparent; border: 0; transition: transform 2s linear; will-change: transform; }
 
 .ferry-marker {
   position: relative;
