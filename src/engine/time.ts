@@ -26,6 +26,13 @@ export function getBangkokNowMinutes(date = new Date()) {
   return hour * 60 + minute;
 }
 
+/** Fractional minutes (includes seconds + ms) for smooth sub-minute animation. */
+export function getBangkokNowFractionalMinutes(date = new Date()) {
+  const intMinutes = getBangkokNowMinutes(date);
+  const seconds = date.getSeconds() + date.getMilliseconds() / 1000;
+  return intMinutes + seconds / 60;
+}
+
 export function parseClockMinutes(value: string) {
   const match = value.trim().match(/^(\d{1,2}):(\d{2})(AM|PM)?$/i);
 

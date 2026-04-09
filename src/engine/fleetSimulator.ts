@@ -8,6 +8,7 @@ import { haversineDistanceMeters } from "./geo";
 import { routeDestinationLabel } from "./i18n";
 import {
   getBangkokNowMinutes,
+  getBangkokNowFractionalMinutes,
   parseScheduleEntries
 } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
@@ -535,9 +536,10 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
   });
 }
 
-/** All vehicles including orange line competitor, computed at current instant. */
+/** All vehicles including orange line competitor, computed at current instant.
+ *  Uses fractional minutes (seconds precision) for smooth sub-minute animation. */
 export function getVehiclesNow(now = new Date()): VehiclePosition[] {
-  const nowMin = getBangkokNowMinutes(now);
+  const nowMin = getBangkokNowFractionalMinutes(now);
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];
