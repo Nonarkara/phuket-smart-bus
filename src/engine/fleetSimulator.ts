@@ -546,10 +546,18 @@ const SIM_SPEED = 30; // 30× real time — buses visibly glide at any zoom leve
 const simAnchorReal = Date.now();
 const simAnchorMinutes = getBangkokNowFractionalMinutes(new Date(simAnchorReal));
 
+// Service window: 06:00 (360) to 22:30 (1350). If sim drifts past midnight,
+// wrap back to the start of the service window so buses are always running.
+const SERVICE_START = 360;  // 06:00
+const SERVICE_END = 1350;   // 22:30
+const SERVICE_WINDOW = SERVICE_END - SERVICE_START; // 990 min = 16.5 hours
+
 export function getSimulatedMinutes(): number {
   const elapsedRealMs = Date.now() - simAnchorReal;
   const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
-  return simAnchorMinutes + elapsedSimMinutes;
+  const raw = simAnchorMinutes + elapsedSimMinutes;
+  // Wrap within the service window so buses are always active
+  return SERVICE_START + ((raw - SERVICE_START) % SERVICE_WINDOW + SERVICE_WINDOW) % SERVICE_WINDOW;
 }
 
 /** All vehicles including orange line competitor, computed at the simulated instant.

@@ -189,48 +189,54 @@ export const ROUTE_DEFINITIONS: Record<
 // Tuk-tuks are unmetered, unregulated, and notoriously overpriced for tourists.
 // Wide tuk-tuk range implies "you WILL have to bargain" — plus luggage fees, tips.
 // Smart Bus: 100 THB flat fare for airport line, 50 THB for local lines.
+// Real travel times (from official timetable):
+// Airport → Patong: 100 min (1h40m) via Surin/Kamala
+// Airport → Old Town: 56 min
+// Airport → Rawai: 95 min (full route end to end)
+// Patong → Old Town: 35 min
+// Patong → Promthep Cape: 48 min
 export const PRICE_COMPARISONS = [
   {
     destinationId: "airport",
     destinationName: text("Airport", "สนามบิน", "机场", "Flughafen", "Aéroport", "Aeropuerto"),
     taxi: { minThb: 800, maxThb: 1500, minutes: 45 },
     tukTuk: { minThb: 500, maxThb: 4000, minutes: 55 },
-    bus: { fareThb: 100, minutes: 75, routeId: "rawai-airport" as OperationalRouteId },
+    bus: { fareThb: 100, minutes: 95, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "patong",
     destinationName: text("Patong Beach", "หาดป่าตอง", "芭东海滩", "Patong Strand", "Plage de Patong", "Playa Patong"),
     taxi: { minThb: 600, maxThb: 1000, minutes: 30 },
     tukTuk: { minThb: 500, maxThb: 3000, minutes: 40 },
-    bus: { fareThb: 100, minutes: 50, routeId: "rawai-airport" as OperationalRouteId },
+    bus: { fareThb: 100, minutes: 100, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "kata",
     destinationName: text("Kata Beach", "หาดกะตะ", "卡塔海滩", "Kata Strand", "Plage de Kata", "Playa Kata"),
     taxi: { minThb: 500, maxThb: 900, minutes: 25 },
     tukTuk: { minThb: 400, maxThb: 2500, minutes: 35 },
-    bus: { fareThb: 100, minutes: 40, routeId: "rawai-airport" as OperationalRouteId },
+    bus: { fareThb: 100, minutes: 75, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "oldtown",
     destinationName: text("Old Town", "เมืองเก่า", "老城", "Altstadt", "Vieille ville", "Casco antiguo"),
     taxi: { minThb: 400, maxThb: 700, minutes: 15 },
     tukTuk: { minThb: 300, maxThb: 1500, minutes: 20 },
-    bus: { fareThb: 50, minutes: 25, routeId: "patong-old-bus-station" as OperationalRouteId },
+    bus: { fareThb: 50, minutes: 56, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "rassada",
     destinationName: text("Rassada Pier", "ท่าเรือรัษฎา", "拉萨达码头", "Rassada Pier", "Quai Rassada", "Muelle Rassada"),
     taxi: { minThb: 500, maxThb: 800, minutes: 20 },
     tukTuk: { minThb: 400, maxThb: 2000, minutes: 25 },
-    bus: { fareThb: 100, minutes: 35, routeId: "rawai-airport" as OperationalRouteId },
+    bus: { fareThb: 100, minutes: 50, routeId: "rawai-airport" as OperationalRouteId },
   },
   {
     destinationId: "central",
     destinationName: text("Central Festival", "เซ็นทรัล เฟสติวัล", "中央节日广场", "Central Festival", "Central Festival", "Central Festival"),
     taxi: { minThb: 400, maxThb: 700, minutes: 15 },
     tukTuk: { minThb: 300, maxThb: 1500, minutes: 20 },
-    bus: { fareThb: 100, minutes: 30, routeId: "rawai-airport" as OperationalRouteId },
+    bus: { fareThb: 100, minutes: 52, routeId: "rawai-airport" as OperationalRouteId },
   },
 ];
 
