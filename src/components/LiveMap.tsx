@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
-import { buildAnimatedVehicleFrame, shouldAnimateVehicleFrame } from "@/lib/vehicleAnimation";
+import { getVehiclesNow } from "@/engine/dataProvider";
 
 export type MapOverlay = {
   id: string;
@@ -127,40 +127,19 @@ export function LiveMap({
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
+  // Direct engine rendering: compute fresh polyline-snapped positions every 250ms
+  // instead of interpolating between poll snapshots (which takes straight-line shortcuts).
   const [animatedVehicles, setAnimatedVehicles] = useState(vehicles);
-  const renderedVehiclesRef = useRef(vehicles);
 
   useEffect(() => {
-    renderedVehiclesRef.current = animatedVehicles;
-  }, [animatedVehicles]);
-
-  useEffect(() => {
-    // Respect reduced motion preference
     const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced || renderedVehiclesRef.current.length === 0 || !shouldAnimateVehicleFrame(renderedVehiclesRef.current, vehicles)) {
-      setAnimatedVehicles(vehicles);
-      return;
-    }
+    const interval = prefersReduced ? 2000 : 250; // 4fps normal, 0.5fps reduced motion
 
-    let frameId = 0;
-    const fromVehicles = renderedVehiclesRef.current;
-    const startedAt = performance.now();
-
-    const animate = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / animationDurationMs);
-      setAnimatedVehicles(buildAnimatedVehicleFrame(fromVehicles, vehicles, progress));
-
-      if (progress < 1) {
-        frameId = window.requestAnimationFrame(animate);
-      }
-    };
-
-    frameId = window.requestAnimationFrame(animate);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [animationDurationMs, vehicles]);
+    const tick = () => { setAnimatedVehicles(getVehiclesNow()); };
+    tick(); // immediate first frame
+    const id = window.setInterval(tick, interval);
+    return () => { window.clearInterval(id); };
+  }, []); // no deps — runs once, ticks forever
 
   return (
     <div className="map-frame" data-testid={testId}>

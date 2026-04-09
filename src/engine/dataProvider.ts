@@ -35,7 +35,7 @@ import {
   REPLAY_START_MINUTES,
   REPLAY_END_MINUTES
 } from "@shared/productConfig";
-import { buildScheduleMockFleet, getMockFleetSummary } from "./fleetSimulator";
+import { buildScheduleMockFleet, getMockFleetSummary, getVehiclesNow as getVehiclesNowEngine } from "./fleetSimulator";
 import { getRoutes as getRoutesEngine, getStopsForRoute, getStopById } from "./routes";
 import { buildDecisionSummary, estimateSeatAvailability } from "./decisionEngine";
 import { getTransferHubs } from "./transferHubs";
@@ -48,6 +48,7 @@ import {
   isHighSeason
 } from "./environmentSimulator";
 import { getImpactMetrics } from "./impactSimulator";
+import { getFlightsAroundNow, getAllFlights, getHourlyArrivalPax } from "./flightData";
 import { APP_VERSION, PRICE_COMPARISONS, ROUTE_DEFINITIONS, COMPETITOR_BENCHMARKS, OPERATIONAL_ROUTE_IDS, FERRY_ROUTE_IDS } from "./config";
 import { text } from "./i18n";
 import { haversineDistanceMeters } from "./geo";
@@ -234,41 +235,28 @@ export function getOpsOverview(): Promise<OperationsOverviewPayload> {
 }
 
 export function getOpsFlights(): Promise<{ flights: FlightInfo[] }> {
-  const now = new Date();
-  const currentHour = Math.floor(getBangkokNowMinutes(now) / 60);
-  const flights: FlightInfo[] = [];
-
-  for (let h = Math.max(6, currentHour - 1); h <= Math.min(23, currentHour + 3); h++) {
-    const pax = 150 + Math.round(Math.sin((h - 6) * Math.PI / 17) * 120);
-    flights.push({
-      flightNo: `TG${100 + h}`,
-      airline: "Thai Airways",
-      origin: h % 3 === 0 ? "Bangkok (BKK)" : h % 3 === 1 ? "Singapore (SIN)" : "Kuala Lumpur (KUL)",
-      scheduledTime: `${String(h).padStart(2, "0")}:${h % 2 === 0 ? "30" : "00"}`,
-      estimatedPax: pax,
-      type: h % 2 === 0 ? "arrival" : "departure"
-    });
-  }
-
-  return Promise.resolve({ flights });
+  return Promise.resolve({ flights: getFlightsAroundNow() });
 }
 
-export async function getOpsDemand(): Promise<DemandForecast> {
+export function getOpsDemand(): Promise<DemandForecast> {
   const now = new Date();
   const currentHour = Math.floor(getBangkokNowMinutes(now) / 60);
   const vehicles = buildScheduleMockFleet(now);
-  const seasonal = getSeasonalMultiplier(now.getMonth() + 1);
+  const hourlyPax = getHourlyArrivalPax();
+  const next2hPax = (hourlyPax[currentHour] ?? 0) + (hourlyPax[(currentHour + 1) % 24] ?? 0);
+  const flights = getFlightsAroundNow(now);
+  const arrivalFlights = flights.filter((f) => f.type === "arrival");
 
-  return {
+  return Promise.resolve({
     currentHour: `${String(currentHour).padStart(2, "0")}:00`,
-    arrivalsNext2h: Math.round(300 * seasonal),
-    estimatedPaxNext2h: Math.round(450 * seasonal),
-    busDemandEstimate: Math.round(68 * seasonal),
+    arrivalsNext2h: arrivalFlights.length,
+    estimatedPaxNext2h: next2hPax,
+    busDemandEstimate: Math.round(next2hPax * 0.15 / 25), // 15% addressable, 25 seats/bus
     currentFleetOnline: vehicles.length,
-    recommendedFleet: Math.round(vehicles.length * 1.2),
-    recommendation: vehicles.length >= Math.round(vehicles.length * 1.1) ? "Fleet coverage adequate" : "Consider deploying additional buses",
-    flights: (await getOpsFlights()).flights
-  };
+    recommendedFleet: Math.max(vehicles.length, Math.round(next2hPax * 0.15 / 25)),
+    recommendation: next2hPax > 1000 ? "Peak demand — consider deploying additional buses" : "Fleet coverage adequate",
+    flights
+  });
 }
 
 export function getAllVehicles(): Promise<{ vehicles: VehiclePosition[]; updatedAt: string }> {
@@ -464,3 +452,10 @@ export function getSimulationFrame(simMinutes: number): Promise<SimulationSnapsh
     }))
   });
 }
+
+// ---------------------------------------------------------------------------
+// Synchronous vehicle access for direct-render animation (no poll needed)
+// ---------------------------------------------------------------------------
+
+/** Compute all vehicle positions at the current instant. Call from animation frames. */
+export { getVehiclesNowEngine as getVehiclesNow };
