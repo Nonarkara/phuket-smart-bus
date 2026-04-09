@@ -578,9 +578,13 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
               {/* Next bus badge — the single most useful piece of info */}
               <div className="map-badge" role="status" aria-live="polite">
                 <span className="map-badge__pulse" aria-hidden="true" />
-                {totalLiveVehicles > 0
-                  ? `${totalLiveVehicles} buses · Next: Patong ${(() => { const h = new Date().getHours(); return Math.max(3, 60 - new Date().getMinutes()); })()} min`
-                  : `${totalLiveVehicles} vehicles`}
+                {(() => {
+                  const allV = getVehiclesNow();
+                  const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
+                  const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
+                  const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
+                  return nearest ? `${busCount} buses · Next: Patong ${nearest} min` : `${busCount} buses active`;
+                })()}
               </div>
               {/* Floating route pills */}
               <div className="map-pills">

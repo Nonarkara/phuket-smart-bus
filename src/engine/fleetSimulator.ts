@@ -542,7 +542,7 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 // accelerates forward. Buses visibly glide at any zoom level.
 // ---------------------------------------------------------------------------
 
-const SIM_SPEED = 10; // 10× real time
+const SIM_SPEED = 30; // 30× real time — buses visibly glide at any zoom level
 const simAnchorReal = Date.now();
 const simAnchorMinutes = getBangkokNowFractionalMinutes(new Date(simAnchorReal));
 

@@ -18,7 +18,9 @@ function VehicleLayer({ routeColorById, highlightVehicleId }: {
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
-    const TICK_MS = 2000;
+    // Tick every 1s; CSS transition is 1.5s so movements always overlap = no pauses.
+    const TICK_MS = 1000;
+    let iconCache = new Map<string, L.DivIcon>(); // avoid rebuilding icons every tick
 
     function tick() {
       const vehicles = getVehiclesNow();
@@ -28,24 +30,23 @@ function VehicleLayer({ routeColorById, highlightVehicleId }: {
         const key = `${v.routeId}-${v.id}`;
         seen.add(key);
 
-        const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
-        const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
-        const icon = isFerry
-          ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
-          : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
-
         const existing = markersRef.current.get(key);
         if (existing) {
+          // Only update position — skip icon rebuild for performance
           existing.setLatLng(v.coordinates);
-          existing.setIcon(icon);
         } else {
+          const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
+          const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
+          const icon = isFerry
+            ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
+            : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
           const marker = L.marker(v.coordinates, { icon }).addTo(map);
           marker.bindTooltip(v.licensePlate);
           markersRef.current.set(key, marker);
         }
       }
 
-      // Remove markers for vehicles that are no longer active
+      // Remove markers for vehicles no longer active
       for (const [key, marker] of markersRef.current) {
         if (!seen.has(key)) {
           map.removeLayer(marker);
@@ -54,7 +55,7 @@ function VehicleLayer({ routeColorById, highlightVehicleId }: {
       }
     }
 
-    tick(); // immediate first frame
+    tick();
     const id = setInterval(tick, TICK_MS);
 
     return () => {

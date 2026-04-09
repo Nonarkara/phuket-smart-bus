@@ -1,6 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Lang, PriceComparison, Stop, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
+import { getVehiclesNow } from "../engine/dataProvider";
+import { getSimulatedMinutes } from "../engine/fleetSimulator";
 
 type SheetStep = "ask" | "result" | "booked" | "pass";
 
@@ -115,16 +117,14 @@ const DEST_SCHEDULE: Record<string, number[]> = {
 };
 
 function getNextBusMin(dest: string): number | null {
-  const now = new Date();
-  const bkk = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
-  const nowMin = bkk.getHours() * 60 + bkk.getMinutes();
+  const nowMin = getSimulatedMinutes() % 1440;
   const sched = DEST_SCHEDULE[dest];
   if (!sched) return null;
   const next = sched.find((m) => m > nowMin);
-  return next ? next - nowMin : null;
+  return next ? Math.round(next - nowMin) : null;
 }
 
-export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: WelcomeSheetProps) {
+export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNavigateToStop }: WelcomeSheetProps) {
   const [step, setStep] = useState<SheetStep>("ask");
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
@@ -135,20 +135,27 @@ export function WelcomeSheet({ lang, vehicles, allStops, onNavigateToStop }: Wel
   const [passActivated, setPassActivated] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Live vehicles from the 30x simulation engine (updates every 1s)
+  const [liveVehicles, setLiveVehicles] = useState(() => getVehiclesNow());
+  useEffect(() => {
+    const id = setInterval(() => setLiveVehicles(getVehiclesNow()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const vehicles = liveVehicles;
+
   // Compute real bus data for matched stop's route
   const routeVehicles = matchedStop
     ? vehicles.filter(v => v.routeId === matchedStop.routeId)
     : [];
   const movingOnRoute = routeVehicles.filter(v => v.status === "moving");
-  // Estimate minutes: use speed + distance, capped at reasonable range
   const closestBus = movingOnRoute.length > 0 ? movingOnRoute.reduce((a, b) =>
     (a.distanceToDestinationMeters ?? Infinity) < (b.distanceToDestinationMeters ?? Infinity) ? a : b
   ) : null;
   const nextBusMinutes = closestBus
-    ? Math.min(45, Math.max(3, Math.round((closestBus.stopsAway ?? 5) * 2.5)))
+    ? Math.min(45, Math.max(1, Math.round((closestBus.stopsAway ?? 5) * 2.5)))
     : routeVehicles.length > 0 ? 15 : null;
   const totalSeats = routeVehicles.length * SEATS_PER_BUS;
-  const occupiedEstimate = Math.floor(totalSeats * 0.4); // ~40% load factor mock
+  const occupiedEstimate = Math.floor(totalSeats * 0.4);
   const seatsLeft = Math.max(0, totalSeats - occupiedEstimate);
 
   // Grab fare for comparison
