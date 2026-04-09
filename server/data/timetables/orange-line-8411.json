@@ -1,0 +1,26 @@
+{
+  "route": "orange-airport-town",
+  "label": "Orange Airport Bus (Route 8411)",
+  "operator": "Phuket Provincial Administration",
+  "fare": { "min": 85, "max": 100, "currency": "THB" },
+  "color": "#FF8C00",
+  "hours": { "start": "08:00", "end": "21:00" },
+  "frequencyMinutes": { "min": 60, "max": 90 },
+  "stops": [
+    { "id": "phuket-airport", "name": "Phuket Airport", "name_th": "สนามบินภูเก็ต", "lat": 8.1080, "lng": 98.3168 },
+    { "id": "heroines-monument", "name": "Heroines Monument", "name_th": "อนุสาวรีย์สองวีรสตรี", "lat": 7.9920, "lng": 98.3380 },
+    { "id": "boat-lagoon", "name": "Boat Lagoon", "name_th": "โบ๊ทลากูน", "lat": 7.9621, "lng": 98.3852 },
+    { "id": "central-big-c", "name": "Central / Big C", "name_th": "เซ็นทรัล / บิ๊กซี", "lat": 7.9100, "lng": 98.3870 },
+    { "id": "pearl-village", "name": "Pearl Village Hotel (The Slate)", "name_th": "เพิร์ล วิลเลจ", "lat": 8.0852, "lng": 98.2983 },
+    { "id": "bus-terminal-1", "name": "Phuket Town Bus Terminal 1", "name_th": "สถานีขนส่งภูเก็ต 1", "lat": 7.8841, "lng": 98.3958 }
+  ],
+  "departures": {
+    "airportToTown": [
+      "08:00", "09:15", "10:30", "11:45", "13:00", "14:15", "15:30", "16:45", "18:00", "19:15", "20:30"
+    ],
+    "townToAirport": [
+      "08:30", "09:45", "11:00", "12:15", "13:30", "14:45", "16:00", "17:15", "18:30", "19:45", "21:00"
+    ]
+  },
+  "tripDurationMinutes": 80
+}

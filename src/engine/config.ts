@@ -260,3 +260,26 @@ export const COMPETITOR_BENCHMARKS: Record<CompetitorRouteId, Omit<CompetitorBen
     )
   }
 };
+
+export const ORANGE_LINE_CONFIG = {
+  routeId: "orange-line" as CompetitorRouteId,
+  name: text("Orange Line (Route 8411)", "สายสีส้ม (เส้นทาง 8411)"),
+  shortName: text("Orange Line", "สายสีส้ม"),
+  color: "#FF8C00",
+  tier: "competitor" as const,
+  fareThb: 100,
+  // Airport to Phuket Town (Bus Terminal 1), ~80 min
+  stops: [
+    { name: "Phuket Airport", nameTh: "สนามบินภูเก็ต", coordinates: [8.1080, 98.3168] as [number, number] },
+    { name: "Boat Lagoon", nameTh: "โบ๊ทลากูน", coordinates: [7.9621, 98.3852] as [number, number] },
+    { name: "Central / Big C", nameTh: "เซ็นทรัล / บิ๊กซี", coordinates: [7.8762, 98.3884] as [number, number] },
+    { name: "Pearl Village Hotel", nameTh: "เพิร์ลวิลเลจ", coordinates: [7.8825, 98.3933] as [number, number] },
+    { name: "Phuket Bus Terminal 1", nameTh: "สถานีขนส่งภูเก็ต 1", coordinates: [7.8842, 98.3923] as [number, number] },
+  ],
+  // Departures from Airport (8AM-9PM, every 60-90 min)
+  airportDepartures: [480, 570, 660, 750, 840, 930, 1020, 1110, 1200, 1260], // 8:00,9:30,11:00,12:30,14:00,15:30,17:00,18:30,20:00,21:00
+  // Departures from Terminal 1 (8AM-9PM, every 60-90 min)
+  townDepartures: [510, 600, 690, 780, 870, 960, 1050, 1140, 1230], // 8:30,10:00,11:30,13:00,14:30,16:00,17:30,19:00,20:30
+  tripDurationMinutes: 80,
+  headwayMinutes: 75,
+};
