@@ -188,39 +188,43 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   }
 
   // --- Step 1: Collapsed = "Next bus" teaser, Expanded = full search ---
-  // Live ticking countdown — updates every second at 30x speed
-  const [tickingNext, setTickingNext] = useState(() => ({
-    min: getNextBusMin("Patong") ?? getNextBusMin("Airport"),
-    dest: getNextBusMin("Patong") !== null ? "Patong" : "Airport"
-  }));
+  // Live ticking countdown — updates every 200ms for visible seconds ticking
+  const [tickingDisplay, setTickingDisplay] = useState({ text: "", dest: "Patong", cls: "" });
   useEffect(() => {
-    const id = setInterval(() => {
-      const p = getNextBusMin("Patong");
-      const a = getNextBusMin("Airport");
-      setTickingNext({ min: p ?? a, dest: p !== null ? "Patong" : "Airport" });
-    }, 1000);
+    function refresh() {
+      const simMin = getSimulatedMinutes() % 1440;
+      const pSched = DEST_SCHEDULE["Patong"];
+      const aSched = DEST_SCHEDULE["Airport"];
+      const pNext = pSched?.find((m) => m > simMin);
+      const aNext = aSched?.find((m) => m > simMin);
+      const pDiff = pNext ? pNext - simMin : null;
+      const aDiff = aNext ? aNext - simMin : null;
+      const diff = pDiff ?? aDiff;
+      const dest = pDiff !== null ? "Patong" : "Airport";
+
+      if (diff === null) {
+        setTickingDisplay({ text: "Resumes 06:00", dest, cls: "welcome-sheet__next-time--dim" });
+      } else {
+        const totalSec = Math.max(0, Math.round(diff * 60));
+        const mm = Math.floor(totalSec / 60);
+        const ss = totalSec % 60;
+        setTickingDisplay({
+          text: mm > 0 ? `${mm}:${String(ss).padStart(2, "0")}` : `${ss}s`,
+          dest,
+          cls: ""
+        });
+      }
+    }
+    refresh();
+    const id = setInterval(refresh, 200); // 5fps for smooth seconds
     return () => clearInterval(id);
   }, []);
 
   if (step === "ask") {
-    const primaryNext = tickingNext.min;
-    const primaryDest = tickingNext.dest;
-
     if (!expanded) {
-      let timeDisplay: string;
-      let timeClass = "";
-      if (primaryNext === null) {
-        timeDisplay = "Resumes 06:00";
-        timeClass = "welcome-sheet__next-time--dim";
-      } else if (primaryNext <= 60) {
-        timeDisplay = `${primaryNext} min`;
-      } else {
-        const simMin = getSimulatedMinutes();
-        const h = Math.floor((simMin + primaryNext) / 60) % 24;
-        const m = Math.floor((simMin + primaryNext) % 60);
-        timeDisplay = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-        timeClass = "welcome-sheet__next-time--scheduled";
-      }
+      const timeDisplay = tickingDisplay.text;
+      const timeClass = tickingDisplay.cls;
+      const primaryDest = tickingDisplay.dest;
 
       return (
         <div className="welcome-sheet welcome-sheet--collapsed" onClick={() => setExpanded(true)}>
