@@ -1026,6 +1026,12 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
    MAIN COMPONENT
    ══════════════════════════════════════════════════ */
 export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
+  // Scale OpsConsole proportionally on large displays via CSS zoom
+  useEffect(() => {
+    document.documentElement.classList.add("ops-mode");
+    return () => document.documentElement.classList.remove("ops-mode");
+  }, []);
+
   const [dashboard, setDashboard] = useState<OpsDashboardPayload | null>(null);
   const [investor, setInvestor] = useState<InvestorSimulationPayload | null>(null);
   const [simSnapshot, setSimSnapshot] = useState<SimulationSnapshot | null>(null);
