@@ -188,14 +188,25 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   }
 
   // --- Step 1: Collapsed = "Next bus" teaser, Expanded = full search ---
+  // Live ticking countdown — updates every second at 30x speed
+  const [tickingNext, setTickingNext] = useState(() => ({
+    min: getNextBusMin("Patong") ?? getNextBusMin("Airport"),
+    dest: getNextBusMin("Patong") !== null ? "Patong" : "Airport"
+  }));
+  useEffect(() => {
+    const id = setInterval(() => {
+      const p = getNextBusMin("Patong");
+      const a = getNextBusMin("Airport");
+      setTickingNext({ min: p ?? a, dest: p !== null ? "Patong" : "Airport" });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   if (step === "ask") {
-    const nextPatong = getNextBusMin("Patong");
-    const nextAirport = getNextBusMin("Airport");
-    const primaryNext = nextPatong ?? nextAirport;
-    const primaryDest = nextPatong ? "Patong" : "Airport";
+    const primaryNext = tickingNext.min;
+    const primaryDest = tickingNext.dest;
 
     if (!expanded) {
-      // Format intelligently: "<12 min" when soon, "08:15" when far out, "Service resumes 06:00" when none
       let timeDisplay: string;
       let timeClass = "";
       if (primaryNext === null) {
@@ -204,8 +215,9 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
       } else if (primaryNext <= 60) {
         timeDisplay = `${primaryNext} min`;
       } else {
-        const h = Math.floor((new Date().getHours() * 60 + new Date().getMinutes() + primaryNext) / 60) % 24;
-        const m = (new Date().getMinutes() + primaryNext) % 60;
+        const simMin = getSimulatedMinutes();
+        const h = Math.floor((simMin + primaryNext) / 60) % 24;
+        const m = Math.floor((simMin + primaryNext) % 60);
         timeDisplay = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         timeClass = "welcome-sheet__next-time--scheduled";
       }

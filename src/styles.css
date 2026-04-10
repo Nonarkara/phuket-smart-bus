@@ -4306,6 +4306,24 @@ a { color: var(--tint); }
   margin-top: 2px;
 }
 
+/* Live pulse indicator — green dot that breathes */
+.live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34C759;
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: live-breathe 2s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.6);
+}
+
+@keyframes live-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
 /* ── Schedule Adherence Badge ── */
 .fleet-row__adherence {
   font-size: 8px;

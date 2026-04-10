@@ -24,6 +24,7 @@ import {
   getVehiclesNow
 } from "./engine/dataProvider";
 import { getImpactMetrics } from "./engine/impactSimulator";
+import { getSimulatedMinutes } from "./engine/fleetSimulator";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -182,27 +183,101 @@ export default function App() {
   );
 }
 
-/* ── Live stats for landing page (uses 10x simulated time from engine) ── */
+/* ── Map badge with simulated Bangkok clock ── */
+function MapBadge() {
+  const [info, setInfo] = useState(() => computeBadge());
+  useEffect(() => {
+    const id = setInterval(() => setInfo(computeBadge()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="map-badge" role="status" aria-live="polite">
+      <span className="map-badge__pulse" aria-hidden="true" />
+      {info}
+    </div>
+  );
+}
+
+function computeBadge(): string {
+  const simMin = getSimulatedMinutes();
+  const h = Math.floor(simMin / 60) % 24;
+  const m = Math.floor(simMin % 60);
+  const clock = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const allV = getVehiclesNow();
+  const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
+  const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
+  const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
+  return nearest
+    ? `${clock} · ${busCount} buses · Next: Patong ${nearest} min`
+    : `${clock} · ${busCount} buses active`;
+}
+
+/* ── Animated counter: smoothly rolls from old→new value ── */
+function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(value);
+  const prevRef = useRef(value);
+  useEffect(() => {
+    const from = prevRef.current;
+    prevRef.current = value;
+    const diff = value - from;
+    if (diff === 0) return;
+    const duration = 1500;
+    const t0 = performance.now();
+    let raf = 0;
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + diff * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <span>{display.toLocaleString()}{suffix ?? ""}</span>;
+}
+
+/* ── Live stats for landing page (animated, dynamic, alive) ── */
 function LiveStatsWidget() {
   const [stats, setStats] = useState(() => {
     const v = getVehiclesNow();
     const m = getImpactMetrics(v.length);
-    return { riders: m.ridersToday, buses: v.length, co2: m.co2SavedFormatted };
+    const moving = v.filter(x => x.status === "moving").length;
+    const total = v.filter(x => x.status !== "unknown").length;
+    const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
+    return { riders: m.ridersToday, buses: v.length, co2: m.co2SavedKg, onTime };
   });
   useEffect(() => {
     const id = setInterval(() => {
       const v = getVehiclesNow();
       const m = getImpactMetrics(v.length);
-      setStats({ riders: m.ridersToday, buses: v.length, co2: m.co2SavedFormatted });
+      const moving = v.filter(x => x.status === "moving").length;
+      const total = v.filter(x => x.status !== "unknown").length;
+      const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
+      setStats({ riders: m.ridersToday, buses: v.length, co2: m.co2SavedKg, onTime });
     }, 2000);
     return () => clearInterval(id);
   }, []);
+
+  const co2Label = stats.co2 >= 1000 ? `${(stats.co2 / 1000).toFixed(1)}t` : `${Math.round(stats.co2)} kg`;
+
   return (
     <div className="live-stats">
-      <div className="live-stat"><span className="live-stat__val">{stats.riders.toLocaleString()}</span><span className="live-stat__label">Riders today</span></div>
-      <div className="live-stat"><span className="live-stat__val">{stats.buses}</span><span className="live-stat__label">Buses active</span></div>
-      <div className="live-stat"><span className="live-stat__val">97%</span><span className="live-stat__label">On-time</span></div>
-      <div className="live-stat"><span className="live-stat__val">{stats.co2}</span><span className="live-stat__label">CO₂ saved</span></div>
+      <div className="live-stat">
+        <span className="live-stat__val"><AnimatedCounter value={stats.riders} /></span>
+        <span className="live-stat__label">Riders today</span>
+      </div>
+      <div className="live-stat">
+        <span className="live-stat__val"><span className="live-pulse" /><AnimatedCounter value={stats.buses} /></span>
+        <span className="live-stat__label">Buses active</span>
+      </div>
+      <div className="live-stat">
+        <span className="live-stat__val"><AnimatedCounter value={stats.onTime} suffix="%" /></span>
+        <span className="live-stat__label">On-time</span>
+      </div>
+      <div className="live-stat">
+        <span className="live-stat__val">{co2Label}</span>
+        <span className="live-stat__label">CO₂ saved</span>
+      </div>
     </div>
   );
 }
@@ -576,16 +651,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 </div>
               ) : null}
               {/* Next bus badge — the single most useful piece of info */}
-              <div className="map-badge" role="status" aria-live="polite">
-                <span className="map-badge__pulse" aria-hidden="true" />
-                {(() => {
-                  const allV = getVehiclesNow();
-                  const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
-                  const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
-                  const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
-                  return nearest ? `${busCount} buses · Next: Patong ${nearest} min` : `${busCount} buses active`;
-                })()}
-              </div>
+              <MapBadge />
               {/* Floating route pills */}
               <div className="map-pills">
                 <button
