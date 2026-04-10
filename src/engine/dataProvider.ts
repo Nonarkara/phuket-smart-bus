@@ -367,6 +367,52 @@ export function getOpsDashboard(): Promise<OpsDashboardPayload> {
   });
 }
 
+function buildHourlyCapacityGaps() {
+  // Realistic hourly demand curve based on airport flight patterns
+  // Index 0 = hour 06:00, index 1 = hour 07:00, ..., index 17 = hour 23:00
+  // (SimTimeline expects hourly[0] = REPLAY_START hour = 06:00)
+  const hourlyArrPax = [280,520,680,720,600,480,420,380,440,520,480,360,240,160,80,40,20,0];
+  const hourlyDepPax = [80,180,320,400,480,420,380,340,320,380,440,520,480,360,240,160,80,20];
+  const busesPerHour = 10;
+
+  return Array.from({ length: 18 }, (_, i) => {
+    const h = i + 6; // actual hour of day
+    const arrPax = hourlyArrPax[i] ?? 0;
+    const depPax = hourlyDepPax[i] ?? 0;
+    const addrArr = Math.round(arrPax * ADDRESSABLE_DEMAND_SHARE);
+    const addrDep = Math.round(depPax * ADDRESSABLE_DEMAND_SHARE);
+    const arrSupply = busesPerHour * BUS_SEAT_CAPACITY;
+    const depSupply = busesPerHour * BUS_SEAT_CAPACITY;
+    const carriedArr = Math.min(addrArr, arrSupply);
+    const carriedDep = Math.min(addrDep, depSupply);
+    const unmetArr = Math.max(0, addrArr - arrSupply);
+    const unmetDep = Math.max(0, addrDep - depSupply);
+    const reqArrDep = Math.ceil(addrArr / BUS_SEAT_CAPACITY);
+    const reqDepDep = Math.ceil(addrDep / BUS_SEAT_CAPACITY);
+    const addArr = Math.max(0, reqArrDep - busesPerHour);
+    const addDep = Math.max(0, reqDepDep - busesPerHour);
+
+    return {
+      hour: `${String(h).padStart(2, "0")}:00`,
+      rawArrivalPax: arrPax,
+      rawDeparturePax: depPax,
+      addressableArrivalDemand: addrArr,
+      addressableDepartureDemand: addrDep,
+      arrivalSeatSupply: arrSupply,
+      departureSeatSupply: depSupply,
+      carriedArrivalDemand: carriedArr,
+      carriedDepartureDemand: carriedDep,
+      unmetArrivalDemand: unmetArr,
+      unmetDepartureDemand: unmetDep,
+      requiredArrivalDepartures: reqArrDep,
+      requiredDepartureDepartures: reqDepDep,
+      additionalArrivalBusesNeeded: addArr,
+      additionalDepartureBusesNeeded: addDep,
+      lostRevenueThb: (unmetArr + unmetDep) * INVESTOR_FLAT_FARE_THB
+    };
+  });
+}
+
 export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
   const now = new Date();
   const transferHubs = getTransferHubs(now);
@@ -383,7 +429,7 @@ export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
       replayStartMinutes: REPLAY_START_MINUTES,
       replayEndMinutes: REPLAY_END_MINUTES
     },
-    hourly: [],
+    hourly: buildHourlyCapacityGaps(),
     services: [],
     competitorBenchmarks: Object.values(COMPETITOR_BENCHMARKS).map((b) => ({
       ...b,

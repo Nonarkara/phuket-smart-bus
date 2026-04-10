@@ -10,17 +10,18 @@ import { getVehiclesNow } from "@/engine/dataProvider";
  * every 2 seconds, completely bypassing React re-renders for smooth animation.
  * CSS transition on the marker icon handles the visual interpolation.
  */
-function VehicleLayer({ routeColorById, highlightVehicleId }: {
+function VehicleLayer({ routeColorById, highlightVehicleId, externalVehicles }: {
   routeColorById: Record<string, string>;
   highlightVehicleId: string | null;
+  externalVehicles?: VehiclePosition[]; // if provided, use these instead of engine
 }) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const extRef = useRef(externalVehicles);
+  extRef.current = externalVehicles;
 
   useEffect(() => {
-    // Tick every 1s; CSS transition is 1.5s so movements always overlap = no pauses.
     const TICK_MS = 1000;
-    let iconCache = new Map<string, L.DivIcon>(); // avoid rebuilding icons every tick
 
     function tick() {
       const vehicles = getVehiclesNow();
@@ -263,7 +264,7 @@ export function LiveMap({
                 />
               ))
           : null}
-        <VehicleLayer routeColorById={routeColorById} highlightVehicleId={highlightVehicleId} />
+        <VehicleLayer routeColorById={routeColorById} highlightVehicleId={highlightVehicleId} externalVehicles={vehicles} />
         {userLocation ? (
           <CircleMarker
             center={userLocation}
