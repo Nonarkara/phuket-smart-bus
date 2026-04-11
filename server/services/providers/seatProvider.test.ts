@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { VehiclePosition } from "../../../shared/types.js";
 import {
   clearOperationsStore,
@@ -28,6 +28,10 @@ const vehicle: VehiclePosition = {
 
 describe("seatProvider", () => {
   beforeEach(() => {
+    clearOperationsStore();
+  });
+
+  afterEach(() => {
     clearOperationsStore();
   });
 

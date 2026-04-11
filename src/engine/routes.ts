@@ -17,6 +17,7 @@ import { buildTimetableSummary } from "./time";
 import { text } from "./i18n";
 import type {
   DataSourceStatus,
+  LatLngTuple,
   OperationalRouteId,
   Route,
   Stop

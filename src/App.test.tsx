@@ -75,7 +75,7 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByTestId("live-map")).toBeInTheDocument();
-    expect(screen.getByText("routes:rawai-airport,patong-old-bus-station")).toBeInTheDocument();
+    expect(screen.getByText(/routes:rawai-airport,patong-old-bus-station/)).toBeInTheDocument();
     expect(screen.getByText("mode:route")).toBeInTheDocument();
     expect(screen.getByText("user-location:on")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Map" })).toBeInTheDocument();

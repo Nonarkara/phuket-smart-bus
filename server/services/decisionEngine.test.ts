@@ -1,4 +1,6 @@
+import { beforeEach } from "vitest";
 import type { Stop, VehiclePosition } from "../../shared/types.js";
+import { clearOperationsStore } from "./operationsStore.js";
 import { buildDecisionSummary } from "./decisionEngine.js";
 
 const stop: Stop = {
@@ -77,6 +79,10 @@ const statuses = [
 ];
 
 describe("decisionEngine", () => {
+  beforeEach(() => {
+    clearOperationsStore();
+  });
+
   it("promotes the rider to go now when the bus is close", () => {
     const summary = buildDecisionSummary("rawai-airport", stop, vehicles, [], statuses);
 

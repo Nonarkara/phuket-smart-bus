@@ -17,7 +17,7 @@ test("mocked shell keeps the map and info tourist flow intact", async ({ page })
   await page.goto("/");
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Info" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "More" })).toBeVisible();
   await expect(page.getByText(/Next bus to/i)).toBeVisible();
 
   await page.getByText(/Tap for routes/i).click();
@@ -29,7 +29,7 @@ test("mocked shell keeps the map and info tourist flow intact", async ({ page })
 test("mocked shell still supports the info and pass flow", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Info" }).click();
+  await page.getByRole("button", { name: "More" }).click();
 
   await expect(page.getByRole("button", { name: "Stops" })).toBeVisible();
   await page.getByRole("button", { name: "Pass" }).click();
