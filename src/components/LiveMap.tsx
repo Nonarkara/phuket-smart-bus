@@ -1,5 +1,5 @@
 import L, { divIcon } from "leaflet";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
@@ -17,14 +17,9 @@ function VehicleLayer({ routeColorById, highlightVehicleId, externalVehicles }: 
 }) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
-  const extRef = useRef(externalVehicles);
-  extRef.current = externalVehicles;
 
   useEffect(() => {
-    const TICK_MS = 1000;
-
-    function tick() {
-      const vehicles = getVehiclesNow();
+    function sync(vehicles: VehiclePosition[]) {
       const seen = new Set<string>();
 
       for (const v of vehicles) {
@@ -32,15 +27,17 @@ function VehicleLayer({ routeColorById, highlightVehicleId, externalVehicles }: 
         seen.add(key);
 
         const existing = markersRef.current.get(key);
+        const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
+        const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
+        const icon = isFerry
+          ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
+          : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
+
         if (existing) {
-          // Only update position — skip icon rebuild for performance
           existing.setLatLng(v.coordinates);
+          existing.setIcon(icon);
+          existing.setTooltipContent(v.licensePlate);
         } else {
-          const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
-          const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
-          const icon = isFerry
-            ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
-            : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
           const marker = L.marker(v.coordinates, { icon }).addTo(map);
           marker.bindTooltip(v.licensePlate);
           markersRef.current.set(key, marker);
@@ -56,15 +53,23 @@ function VehicleLayer({ routeColorById, highlightVehicleId, externalVehicles }: 
       }
     }
 
-    tick();
-    const id = setInterval(tick, TICK_MS);
+    if (externalVehicles) {
+      sync(externalVehicles);
+      return;
+    }
+
+    sync(getVehiclesNow());
+    const id = setInterval(() => sync(getVehiclesNow()), 1000);
 
     return () => {
       clearInterval(id);
-      for (const marker of markersRef.current.values()) map.removeLayer(marker);
-      markersRef.current.clear();
     };
-  }, [map, routeColorById, highlightVehicleId]);
+  }, [map, routeColorById, highlightVehicleId, externalVehicles]);
+
+  useEffect(() => () => {
+    for (const marker of markersRef.current.values()) map.removeLayer(marker);
+    markersRef.current.clear();
+  }, [map]);
 
   return null; // purely imperative — no React DOM output
 }
@@ -191,12 +196,6 @@ export function LiveMap({
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
-  // Vehicle count for the route rail badges (updated periodically)
-  const [animatedVehicles, setAnimatedVehicles] = useState(() => getVehiclesNow());
-  useEffect(() => {
-    const id = setInterval(() => setAnimatedVehicles(getVehiclesNow()), 5000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <div className="map-frame" data-testid={testId}>
@@ -248,7 +247,7 @@ export function LiveMap({
           );
         })}
         {highlightVehicleId
-          ? animatedVehicles
+          ? vehicles
               .filter((vehicle) => vehicle.vehicleId === highlightVehicleId)
               .map((vehicle) => (
                 <CircleMarker

@@ -33,6 +33,8 @@ vi.mock("./components/LiveMap", () => ({
 describe("App", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    window.dispatchEvent(new Event("resize"));
     Object.defineProperty(window.navigator, "geolocation", {
       configurable: true,
       value: {

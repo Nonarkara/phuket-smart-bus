@@ -10,6 +10,7 @@
 import type { LatLngTuple } from "@shared/types";
 import { getDirectionPolyline } from "./routes";
 import { haversineDistanceMeters } from "./geo";
+import { getOpsFlightSchedule } from "./opsFlightSchedule";
 
 // ---------------------------------------------------------------------------
 // Time
@@ -55,41 +56,18 @@ export type Flight = {
   pax: number;
   arrMin: number; // minutes from midnight
   type: "arr" | "dep";
+  terminal?: string;
 };
 
-// Peak day (Dec 30): ~190 arrivals. We model the most visible ones.
-const FLIGHTS: Flight[] = [
-  // Morning wave 06:00-09:00
-  { flightNo: "TG201", airline: "Thai Airways", origin: "Bangkok", pax: 174, arrMin: 365, type: "arr" },
-  { flightNo: "FD3021", airline: "AirAsia", origin: "Bangkok", pax: 186, arrMin: 380, type: "arr" },
-  { flightNo: "QR838", airline: "Qatar Airways", origin: "Doha", pax: 280, arrMin: 400, type: "arr" },
-  { flightNo: "EK378", airline: "Emirates", origin: "Dubai", pax: 385, arrMin: 420, type: "arr" },
-  { flightNo: "SQ720", airline: "Singapore Airlines", origin: "Singapore", pax: 303, arrMin: 445, type: "arr" },
-  { flightNo: "AK800", airline: "AirAsia", origin: "Kuala Lumpur", pax: 186, arrMin: 475, type: "arr" },
-  { flightNo: "PG270", airline: "Bangkok Airways", origin: "Bangkok", pax: 144, arrMin: 490, type: "arr" },
-  { flightNo: "SL802", airline: "Thai Lion Air", origin: "Bangkok", pax: 189, arrMin: 510, type: "arr" },
-  // Mid-morning 09:00-12:00
-  { flightNo: "CA821", airline: "Air China", origin: "Beijing", pax: 280, arrMin: 545, type: "arr" },
-  { flightNo: "MU2071", airline: "China Eastern", origin: "Shanghai", pax: 280, arrMin: 570, type: "arr" },
-  { flightNo: "CX771", airline: "Cathay Pacific", origin: "Hong Kong", pax: 280, arrMin: 610, type: "arr" },
-  { flightNo: "KE667", airline: "Korean Air", origin: "Seoul", pax: 280, arrMin: 635, type: "arr" },
-  { flightNo: "9C8901", airline: "Spring Airlines", origin: "Shanghai", pax: 186, arrMin: 655, type: "arr" },
-  { flightNo: "TG207", airline: "Thai Airways", origin: "Bangkok", pax: 174, arrMin: 680, type: "arr" },
-  // Afternoon 12:00-16:00
-  { flightNo: "TR530", airline: "Scoot", origin: "Singapore", pax: 280, arrMin: 720, type: "arr" },
-  { flightNo: "6E1401", airline: "IndiGo", origin: "Delhi", pax: 186, arrMin: 760, type: "arr" },
-  { flightNo: "TG211", airline: "Thai Airways", origin: "Bangkok", pax: 174, arrMin: 800, type: "arr" },
-  { flightNo: "CZ6081", airline: "China Southern", origin: "Guangzhou", pax: 280, arrMin: 840, type: "arr" },
-  { flightNo: "MH781", airline: "Malaysia Airlines", origin: "Kuala Lumpur", pax: 280, arrMin: 870, type: "arr" },
-  // Evening 16:00-21:00
-  { flightNo: "ZF2401", airline: "Azur Air", origin: "Moscow", pax: 350, arrMin: 960, type: "arr" },
-  { flightNo: "SU271", airline: "Aeroflot", origin: "Moscow", pax: 310, arrMin: 990, type: "arr" },
-  { flightNo: "DE2177", airline: "Condor", origin: "Frankfurt", pax: 280, arrMin: 1020, type: "arr" },
-  { flightNo: "S7761", airline: "S7 Airlines", origin: "Novosibirsk", pax: 186, arrMin: 1050, type: "arr" },
-  { flightNo: "NO531", airline: "Neos", origin: "Milan", pax: 280, arrMin: 1080, type: "arr" },
-  { flightNo: "ZF2403", airline: "Azur Air", origin: "Yekaterinburg", pax: 350, arrMin: 1110, type: "arr" },
-  { flightNo: "TG217", airline: "Thai Airways", origin: "Bangkok", pax: 174, arrMin: 1200, type: "arr" },
-];
+const FULL_DAY_FLIGHTS: Flight[] = getOpsFlightSchedule().map((flight) => ({
+  flightNo: flight.flightNo,
+  airline: flight.airline,
+  origin: flight.city,
+  pax: flight.pax,
+  arrMin: flight.schedMin,
+  type: flight.type,
+  terminal: flight.terminal
+}));
 
 // ---------------------------------------------------------------------------
 // Demand Model: flights → passengers needing buses
@@ -105,6 +83,10 @@ const BUS_CAPTURE_RATE = 0.12;
 // After landing, passengers take 20-45 min to clear customs+baggage
 const CUSTOMS_MIN = 20;
 const CUSTOMS_MAX = 45;
+
+const FLIGHTS = FULL_DAY_FLIGHTS.filter(
+  (flight) => flight.type === "arr" && flight.arrMin >= SVC_START - CUSTOMS_MAX && flight.arrMin <= SVC_END
+);
 
 // Destination split (where bus passengers want to go)
 export type Destination = { name: string; pct: number; travelMin: number; grabThb: number; busThb: number };

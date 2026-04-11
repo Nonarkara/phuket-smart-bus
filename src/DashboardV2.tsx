@@ -11,7 +11,13 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
-import { computeSimState, getFlightFeed, type SimState, type Flight, type RegionData, DESTINATIONS } from "./engine/simulation";
+import { computeSimState, type SimState, type RegionData } from "./engine/simulation";
+import {
+  buildFlightHourBuckets,
+  getOpsFlightSchedule,
+  type FlightHourBucket,
+  type OpsFlight
+} from "./engine/opsFlightSchedule";
 import { getDirectionPolyline } from "./engine/routes";
 
 // ---------------------------------------------------------------------------
@@ -39,6 +45,45 @@ function Counter({ value, prefix, suffix }: { value: number; prefix?: string; su
   return <span className="counter">{prefix}{display.toLocaleString()}{suffix}</span>;
 }
 
+function formatCurrencyCompact(value: number) {
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: value >= 100_000 ? 1 : 0
+  }).format(value);
+}
+
+function InsightCard({
+  eyebrow,
+  headline,
+  detail,
+  tone = "neutral"
+}: {
+  eyebrow: string;
+  headline: string;
+  detail: string;
+  tone?: "neutral" | "demand" | "supply";
+}) {
+  return (
+    <section className={`v2-insight v2-insight--${tone}`}>
+      <span className="v2-insight__eyebrow">{eyebrow}</span>
+      <strong className="v2-insight__headline">{headline}</strong>
+      <p className="v2-insight__detail">{detail}</p>
+    </section>
+  );
+}
+
+function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
+  return L.divIcon({
+    className: "v2-bus-icon",
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    html: `<div class="v2-bus ${vehicle.status === "moving" ? "is-moving" : ""}" style="--heading: ${vehicle.heading}deg">
+      <div class="v2-bus__arrow"></div>
+      <div class="v2-bus__body">${vehicle.pax}</div>
+    </div>`
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Vehicle Layer — imperative Leaflet markers
 // ---------------------------------------------------------------------------
@@ -48,48 +93,35 @@ function VehicleLayer({ vehicles }: { vehicles: SimState["vehicles"] }) {
   const markers = useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
-    const TICK = 1500;
+    const seen = new Set<string>();
 
-    function tick() {
-      const state = computeSimState();
-      const seen = new Set<string>();
+    for (const vehicle of vehicles) {
+      const key = vehicle.id;
+      seen.add(key);
+      const existing = markers.current.get(key);
 
-      for (const v of state.vehicles) {
-        const key = v.id;
-        seen.add(key);
-        const existing = markers.current.get(key);
-        if (existing) {
-          existing.setLatLng([v.lat, v.lng]);
-        } else {
-          const icon = L.divIcon({
-            className: "v2-bus-icon",
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-            html: `<div class="v2-bus ${v.status === "moving" ? "is-moving" : ""}" style="--heading: ${v.heading}deg">
-              <div class="v2-bus__body">${v.pax}</div>
-            </div>`,
-          });
-          const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
-          m.bindTooltip(`${v.plate} · ${v.pax}/${25} pax · ${v.route}`, { direction: "top" });
-          markers.current.set(key, m);
-        }
-      }
-
-      for (const [key, m] of markers.current) {
-        if (!seen.has(key)) {
-          map.removeLayer(m);
-          markers.current.delete(key);
-        }
+      if (existing) {
+        existing.setLatLng([vehicle.lat, vehicle.lng]);
+        existing.setIcon(buildBusMarkerIcon(vehicle));
+        existing.setTooltipContent(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`);
+      } else {
+        const marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
+        marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`, { direction: "top" });
+        markers.current.set(key, marker);
       }
     }
 
-    tick();
-    const id = setInterval(tick, TICK);
-    return () => {
-      clearInterval(id);
-      markers.current.forEach(m => map.removeLayer(m));
-      markers.current.clear();
-    };
+    for (const [key, marker] of markers.current) {
+      if (!seen.has(key)) {
+        map.removeLayer(marker);
+        markers.current.delete(key);
+      }
+    }
+  }, [map, vehicles]);
+
+  useEffect(() => () => {
+    markers.current.forEach((marker) => map.removeLayer(marker));
+    markers.current.clear();
   }, [map]);
 
   return null;
@@ -109,53 +141,134 @@ function RoutePolylines() {
   return (
     <>
       {airportPoly.length > 0 && (
-        <Polyline positions={airportPoly} pathOptions={{ color: "#16b8b0", weight: 4, opacity: 0.7 }} />
+        <>
+          <Polyline positions={airportPoly} pathOptions={{ color: "rgba(22,184,176,0.18)", weight: 12, opacity: 1 }} />
+          <Polyline positions={airportPoly} pathOptions={{ color: "#16b8b0", weight: 4, opacity: 0.9 }} />
+        </>
       )}
     </>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Animated flight ticker — flights pop in as they land
+// Demand rail — full-day flight schedule and hourly pulse
 // ---------------------------------------------------------------------------
 
-const fmtTime = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(Math.floor(m % 60)).padStart(2, "0")}`;
+function classifyFlightRow(flight: OpsFlight, simMinutes: number) {
+  const delta = flight.schedMin - simMinutes;
+  if (Math.abs(delta) <= 12) return "active";
+  if (delta < -12) return "past";
+  return "future";
+}
 
-function FlightTicker({ landed, upcoming, simMinutes }: { landed: Flight[]; upcoming: Flight[]; simMinutes: number }) {
-  // Show last 6 landed (newest first) + next 3 upcoming
-  const recentLanded = [...landed].sort((a, b) => b.arrMin - a.arrMin).slice(0, 6);
-  const nextUp = upcoming.slice(0, 3);
+function HourlyFlightPulse({ buckets, simMinutes }: { buckets: FlightHourBucket[]; simMinutes: number }) {
+  const currentHour = Math.floor(simMinutes / 60) % 24;
+  const maxPax = Math.max(...buckets.map((bucket) => Math.max(bucket.arrivalPax, bucket.departurePax)), 1);
 
   return (
-    <div className="v2-ticker">
-      {nextUp.length > 0 && (
-        <div className="v2-ticker__section">
-          <div className="v2-ticker__label">INCOMING</div>
-          {nextUp.map(f => (
-            <div key={f.flightNo} className="v2-ticker__row v2-ticker__row--upcoming">
-              <span className="v2-ticker__time">{fmtTime(f.arrMin)}</span>
-              <span className="v2-ticker__flight">{f.flightNo}</span>
-              <span className="v2-ticker__origin">{f.origin}</span>
-              <span className="v2-ticker__pax">{f.pax}</span>
+    <div className="v2-hourly">
+      <div className="v2-hourly__title">Full-Day Flight Pulse</div>
+      <div className="v2-hourly__legend">
+        <span className="v2-hourly__legend-item v2-hourly__legend-item--arr">Arrivals</span>
+        <span className="v2-hourly__legend-item v2-hourly__legend-item--dep">Departures</span>
+      </div>
+      <div className="v2-hourly__rows">
+        {buckets.map((bucket) => (
+          <div
+            key={bucket.hour}
+            className={`v2-hourly__row ${bucket.hour === currentHour ? "is-current" : ""}`}
+          >
+            <span className="v2-hourly__time">{String(bucket.hour).padStart(2, "0")}:00</span>
+            <div className="v2-hourly__track">
+              <div
+                className="v2-hourly__fill v2-hourly__fill--arr"
+                style={{ width: `${(bucket.arrivalPax / maxPax) * 100}%` }}
+              />
+              <div
+                className="v2-hourly__fill v2-hourly__fill--dep"
+                style={{ width: `${(bucket.departurePax / maxPax) * 100}%` }}
+              />
             </div>
-          ))}
-        </div>
-      )}
-      <div className="v2-ticker__section">
-        <div className="v2-ticker__label">LANDED</div>
-        {recentLanded.map(f => {
-          const justLanded = (simMinutes - f.arrMin) < 3; // within 3 sim-minutes
+            <span className="v2-hourly__meta">{bucket.arrivals}/{bucket.departures}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FlightScheduleRail({ flights, simMinutes }: { flights: OpsFlight[]; simMinutes: number }) {
+  const focusRef = useRef<HTMLDivElement | null>(null);
+  const arrivals = flights.filter((flight) => flight.type === "arr").length;
+  const departures = flights.length - arrivals;
+  const focusIndex = flights.findIndex((flight) => flight.schedMin >= simMinutes - 10);
+  const anchoredIndex = focusIndex === -1 ? flights.length - 1 : focusIndex;
+
+  useEffect(() => {
+    focusRef.current?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+  }, [anchoredIndex]);
+
+  return (
+    <div className="v2-schedule">
+      <div className="v2-schedule__header">
+        <div className="v2-schedule__title">Flight Schedule</div>
+        <div className="v2-schedule__meta">{arrivals} in · {departures} out</div>
+      </div>
+      <div className="v2-schedule__rail">
+        {flights.map((flight, index) => {
+          const status = classifyFlightRow(flight, simMinutes);
+          const rowRef = index === anchoredIndex ? focusRef : undefined;
           return (
-            <div key={f.flightNo + f.arrMin} className={`v2-ticker__row v2-ticker__row--landed ${justLanded ? "v2-ticker__row--flash" : ""}`}>
-              <span className="v2-ticker__time">{fmtTime(f.arrMin)}</span>
-              <span className="v2-ticker__flight">{f.flightNo}</span>
-              <span className="v2-ticker__origin">{f.origin}</span>
-              <span className="v2-ticker__pax">{f.pax}</span>
+            <div
+              key={`${flight.flightNo}-${flight.schedMin}-${flight.type}`}
+              ref={rowRef}
+              className={`v2-schedule__row v2-schedule__row--${status}`}
+            >
+              <span className="v2-schedule__time">{flight.timeLabel}</span>
+              <span className={`v2-schedule__type v2-schedule__type--${flight.type}`}>
+                {flight.type === "arr" ? "IN" : "OUT"}
+              </span>
+              <span className="v2-schedule__flight">{flight.flightNo}</span>
+              <span className="v2-schedule__city">{flight.city}</span>
+              <span className="v2-schedule__pax">{flight.pax}</span>
             </div>
           );
         })}
-        {recentLanded.length === 0 && <div className="v2-ticker__empty">Waiting for first arrival...</div>}
       </div>
+    </div>
+  );
+}
+
+function DestinationResponse({
+  breakdown
+}: {
+  breakdown: SimState["destBreakdown"];
+}) {
+  const visible = breakdown.filter((destination) => destination.served > 0);
+  const peakServed = Math.max(...visible.map((destination) => destination.served), 1);
+
+  if (visible.length === 0) {
+    return <p className="v2-dest-row__empty">Waiting for first passengers...</p>;
+  }
+
+  return (
+    <div className="v2-destinations">
+      <h3 className="v2-destinations__title">Response by Destination</h3>
+      {visible.map((destination) => (
+        <div key={destination.name} className="v2-dest-card">
+          <div className="v2-dest-card__meta">
+            <span className="v2-dest-row__name">{destination.name}</span>
+            <span className="v2-dest-row__served">{destination.served} pax</span>
+          </div>
+          <div className="v2-dest-card__track">
+            <div
+              className="v2-dest-card__fill"
+              style={{ width: `${(destination.served / peakServed) * 100}%` }}
+            />
+          </div>
+          <span className="v2-dest-row__rev">฿{destination.revenue.toLocaleString()}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -190,12 +303,25 @@ function RegionChart({ data, maxPax }: { data: RegionData[]; maxPax: number }) {
 
 export default function DashboardV2() {
   const [state, setState] = useState(() => computeSimState());
-  const [flights, setFlights] = useState(() => getFlightFeed());
+  const [dailyFlights] = useState(() => getOpsFlightSchedule());
+  const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));
+  const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
+  const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
+  const currentHourBucket = hourlyFlights[Math.floor(state.simMinutes / 60) % 24] ?? hourlyFlights[0];
+  const nextIncomingFlight = arrivalsToday.find((flight) => flight.schedMin >= state.simMinutes) ?? arrivalsToday.at(-1) ?? null;
+  const nextPeakBucket = hourlyFlights
+    .filter((bucket) => bucket.hour >= Math.floor(state.simMinutes / 60) && bucket.arrivalPax > 0)
+    .sort((left, right) => right.arrivalPax - left.arrivalPax)[0] ?? currentHourBucket;
+  const responsePct = state.paxWantBus > 0 ? Math.round((state.paxBoarded / state.paxWantBus) * 100) : 100;
+  const liveCapture = state.paxWantBus > 0 ? Math.round((state.paxDelivered / state.paxWantBus) * 100) : 0;
+  const serviceGap = Math.max(0, state.paxWantBus - state.paxBoarded);
+  const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
+  const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
+  const avgSavingsPerRider = state.paxDelivered > 0 ? Math.round(state.savingsThb / state.paxDelivered) : 0;
 
   useEffect(() => {
     const id = setInterval(() => {
       setState(computeSimState());
-      setFlights(getFlightFeed());
     }, 1000);
     return () => clearInterval(id);
   }, []);
@@ -205,8 +331,14 @@ export default function DashboardV2() {
       {/* Header */}
       <header className="v2-header">
         <div className="v2-header__brand">
+          <span className="v2-header__eyebrow">Airport Ops Console</span>
           <h1>Phuket Smart Bus</h1>
           <span className="v2-header__sub">Demand-Supply Intelligence</span>
+        </div>
+        <div className="v2-header__story">
+          <span className="v2-header__story-label">Right now</span>
+          <strong className="v2-header__story-value">{currentDemandPax.toLocaleString()} arriving pax this hour</strong>
+          <span className="v2-header__story-detail">{state.paxAtAirport} waiting for buses · {responsePct}% boarding capture</span>
         </div>
         <div className="v2-header__clock">
           <span className="v2-header__live">●</span>
@@ -214,8 +346,9 @@ export default function DashboardV2() {
           <span className="v2-header__speed">20× simulation</span>
         </div>
         <div className="v2-header__meta">
-          <span>HKT Airport</span>
-          <span>Peak Season · Dec 30</span>
+          <span>{arrivalsToday.length} arrivals</span>
+          <span>{departuresToday.length} departures</span>
+          <span>HKT peak-day model</span>
         </div>
       </header>
 
@@ -225,28 +358,58 @@ export default function DashboardV2() {
         <aside className="v2-panel v2-panel--demand">
           <h2 className="v2-panel__title">Demand · HKT Airport</h2>
 
+          <InsightCard
+            eyebrow="Inbound Pressure"
+            headline={`${currentDemandPax.toLocaleString()} arrivals this hour`}
+            detail={
+              nextIncomingFlight
+                ? `Next inbound ${nextIncomingFlight.flightNo} from ${nextIncomingFlight.city} at ${nextIncomingFlight.timeLabel}. Biggest remaining surge: ${String(nextPeakBucket.hour).padStart(2, "0")}:00.`
+                : "No more inbound flights in the modelled day."
+            }
+            tone="demand"
+          />
+
           <div className="v2-kpi-row">
             <div className="v2-kpi">
               <div className="v2-kpi__val"><Counter value={state.totalArrPax} /></div>
-              <div className="v2-kpi__label">Arrived</div>
+              <div className="v2-kpi__label">Arrived so far</div>
             </div>
             <div className="v2-kpi v2-kpi--accent">
               <div className="v2-kpi__val"><Counter value={state.paxWantBus} /></div>
-              <div className="v2-kpi__label">Want bus</div>
+              <div className="v2-kpi__label">Likely bus demand</div>
             </div>
             <div className="v2-kpi">
               <div className="v2-kpi__val"><Counter value={state.paxAtAirport} /></div>
-              <div className="v2-kpi__label">Waiting</div>
+              <div className="v2-kpi__label">Still waiting</div>
             </div>
           </div>
 
+          <HourlyFlightPulse buckets={hourlyFlights} simMinutes={state.simMinutes} />
+
           <RegionChart data={state.regionBreakdown} maxPax={Math.max(...state.regionBreakdown.map(r => r.pax), 1)} />
 
-          <FlightTicker landed={state.landedFlights} upcoming={flights.upcoming} simMinutes={state.simMinutes} />
+          <FlightScheduleRail flights={dailyFlights} simMinutes={state.simMinutes} />
         </aside>
 
         {/* Center: Map */}
         <section className="v2-map">
+          <div className="v2-map__hero">
+            <div className="v2-map__hero-card">
+              <span className="v2-map__hero-label">Demand Queue</span>
+              <strong className="v2-map__hero-value">{state.paxAtAirport}</strong>
+              <span className="v2-map__hero-detail">waiting at airport curb</span>
+            </div>
+            <div className="v2-map__hero-card">
+              <span className="v2-map__hero-label">Supply Rolling</span>
+              <strong className="v2-map__hero-value">{state.busesMoving}</strong>
+              <span className="v2-map__hero-detail">buses moving now</span>
+            </div>
+            <div className="v2-map__hero-card">
+              <span className="v2-map__hero-label">Live Gap</span>
+              <strong className="v2-map__hero-value">{serviceGap}</strong>
+              <span className="v2-map__hero-detail">still not boarded</span>
+            </div>
+          </div>
           <MapContainer center={[7.95, 98.35]} zoom={11} className="v2-map__canvas" zoomControl={false} scrollWheelZoom={true}>
             <TileLayer
               attribution="&copy; OSM"
@@ -257,6 +420,7 @@ export default function DashboardV2() {
           </MapContainer>
           <div className="v2-map__overlay">
             <span className="v2-map__stat"><Counter value={state.activeBuses} /> buses · <Counter value={state.busesMoving} /> moving</span>
+            <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
             {state.nextDeparture !== null && (
               <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
             )}
@@ -266,6 +430,13 @@ export default function DashboardV2() {
         {/* Right: Supply side (buses → revenue → impact) */}
         <aside className="v2-panel v2-panel--supply">
           <h2 className="v2-panel__title">Supply & Impact</h2>
+
+          <InsightCard
+            eyebrow="Service Response"
+            headline={`${responsePct}% of bus demand has boarding capacity`}
+            detail={`Delivered riders are at ${liveCapture}% of live demand so far. ${state.activeBuses} buses are active, next dispatch in ${state.nextDeparture ?? 0} minutes.`}
+            tone="supply"
+          />
 
           <div className="v2-kpi-stack">
             <div className="v2-kpi v2-kpi--green">
@@ -277,8 +448,20 @@ export default function DashboardV2() {
               <div className="v2-kpi__label">Revenue earned</div>
             </div>
             <div className="v2-kpi">
-              <div className="v2-kpi__val"><Counter value={state.savingsThb} prefix="฿" /></div>
+              <div className="v2-kpi__val"><span className="counter">฿{formatCurrencyCompact(state.savingsThb)}</span></div>
               <div className="v2-kpi__label">Saved vs Grab/taxi</div>
+            </div>
+            <div className="v2-kpi">
+              <div className="v2-kpi__val"><span className="counter">{Math.round(state.avgOccupancy * 100)}%</span></div>
+              <div className="v2-kpi__label">Average occupancy</div>
+            </div>
+            <div className="v2-kpi">
+              <div className="v2-kpi__val"><span className="counter">฿{avgSavingsPerRider}</span></div>
+              <div className="v2-kpi__label">Saved per rider</div>
+            </div>
+            <div className="v2-kpi">
+              <div className="v2-kpi__val"><span className="counter">{state.nextDeparture ?? 0} min</span></div>
+              <div className="v2-kpi__label">Next airport dispatch</div>
             </div>
           </div>
 
@@ -298,19 +481,7 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          <div className="v2-destinations">
-            <h3 className="v2-destinations__title">By Destination</h3>
-            {state.destBreakdown.filter(d => d.served > 0).map(d => (
-              <div key={d.name} className="v2-dest-row">
-                <span className="v2-dest-row__name">{d.name}</span>
-                <span className="v2-dest-row__served">{d.served} pax</span>
-                <span className="v2-dest-row__rev">฿{d.revenue.toLocaleString()}</span>
-              </div>
-            ))}
-            {state.destBreakdown.every(d => d.served === 0) && (
-              <p className="v2-dest-row__empty">Waiting for first passengers...</p>
-            )}
-          </div>
+          <DestinationResponse breakdown={state.destBreakdown} />
         </aside>
       </main>
 
