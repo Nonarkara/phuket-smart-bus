@@ -25,6 +25,7 @@ import {
 } from "./engine/dataProvider";
 import { getImpactMetrics } from "./engine/impactSimulator";
 import { getSimulatedMinutes } from "./engine/fleetSimulator";
+import DashboardV2 from "./DashboardV2";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -149,10 +150,10 @@ export default function App() {
     window.history.pushState({}, "", "/");
   }
 
-  // Full-screen ops dashboard
-  if (isOps) return <OpsConsole onToggle={goTourist} />;
+  // v2: Show the demand-supply intelligence dashboard
+  if (isOps || !isMobile) return <DashboardV2 />;
 
-  // Mobile: render tourist app directly, no frame
+  // Mobile: render tourist app directly
   if (isMobile) return <TouristApp onToggle={goOps} />;
 
   // Desktop: smartphone frame + side panel + background carousel

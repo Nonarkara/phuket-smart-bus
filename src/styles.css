@@ -5068,3 +5068,118 @@ a { color: var(--tint); }
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.5);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   V2 DASHBOARD — Demand-Supply Intelligence
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.v2 { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: #0a0e14; color: #e0e6ed; font-family: "Inter", system-ui, sans-serif; overflow: hidden; }
+
+/* Header */
+.v2-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: #111820; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+.v2-header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; margin: 0; color: #fff; }
+.v2-header__sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; text-transform: uppercase; }
+.v2-header__clock { display: flex; align-items: center; gap: 8px; }
+.v2-header__live { color: #34c759; font-size: 10px; animation: live-breathe 2s ease-in-out infinite; }
+.v2-header__time { font-family: "SF Mono", "Fira Code", monospace; font-size: 15px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.v2-header__speed { font-size: 10px; color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+.v2-header__meta { display: flex; gap: 12px; font-size: 11px; color: rgba(255,255,255,0.4); }
+
+/* Body grid */
+.v2-body { flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; min-height: 0; overflow: hidden; }
+
+/* Panels */
+.v2-panel { padding: 14px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; }
+.v2-panel--supply { border-right: 0; border-left: 1px solid rgba(255,255,255,0.06); }
+.v2-panel__title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); margin: 0; }
+
+/* KPI row (horizontal) */
+.v2-kpi-row { display: flex; gap: 6px; }
+.v2-kpi-row .v2-kpi { flex: 1; }
+
+/* KPI cards */
+.v2-kpi-stack { display: flex; flex-direction: column; gap: 6px; }
+.v2-kpi { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; }
+.v2-kpi__val { font-family: "SF Mono", "Fira Code", monospace; font-size: 20px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.v2-kpi__label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+.v2-kpi--accent .v2-kpi__val { color: #16b8b0; }
+.v2-kpi--green .v2-kpi__val { color: #34c759; }
+
+/* Region bar chart */
+.v2-regions { display: flex; flex-direction: column; gap: 4px; }
+.v2-regions__title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); margin-bottom: 2px; }
+.v2-region-bar { display: flex; align-items: center; gap: 6px; height: 22px; }
+.v2-region-bar__label { font-size: 10px; color: rgba(255,255,255,0.5); width: 70px; flex-shrink: 0; text-align: right; }
+.v2-region-bar__track { flex: 1; height: 14px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
+.v2-region-bar__fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; min-width: 2px; }
+.v2-region-bar__val { font-family: "SF Mono", monospace; font-size: 10px; color: rgba(255,255,255,0.5); width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Flight ticker */
+.v2-ticker { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; }
+.v2-ticker__section { display: flex; flex-direction: column; gap: 2px; }
+.v2-ticker__label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.25); padding: 4px 0 2px; }
+.v2-ticker__row { display: grid; grid-template-columns: 38px 52px 1fr 32px; gap: 4px; align-items: center; font-size: 11px; padding: 3px 4px; border-radius: 4px; transition: background 0.5s; }
+.v2-ticker__row--landed { color: rgba(255,255,255,0.7); }
+.v2-ticker__row--upcoming { color: rgba(255,255,255,0.35); }
+.v2-ticker__row--flash { background: rgba(22, 184, 176, 0.2); animation: v2-flash 3s ease-out forwards; }
+.v2-ticker__time { font-family: "SF Mono", monospace; font-size: 10px; font-variant-numeric: tabular-nums; }
+.v2-ticker__flight { font-weight: 600; font-size: 10px; }
+.v2-ticker__origin { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2-ticker__pax { font-family: "SF Mono", monospace; font-size: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.v2-ticker__empty { font-size: 11px; color: rgba(255,255,255,0.2); padding: 8px 0; }
+
+@keyframes v2-flash {
+  0% { background: rgba(22, 184, 176, 0.35); }
+  100% { background: rgba(22, 184, 176, 0); }
+}
+
+/* Map */
+.v2-map { position: relative; min-height: 0; }
+.v2-map__canvas { width: 100%; height: 100%; }
+.v2-map__overlay { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 12px; z-index: 999; }
+.v2-map__stat, .v2-map__next { background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 12px; color: rgba(255,255,255,0.8); font-variant-numeric: tabular-nums; }
+
+/* Bus markers */
+.v2-bus-icon { background: transparent; border: 0; transition: transform 1.5s linear; will-change: transform; }
+.v2-bus { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.v2-bus__body { width: 24px; height: 24px; border-radius: 6px; background: #16b8b0; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(22, 184, 176, 0.4); border: 2px solid rgba(255,255,255,0.3); }
+.v2-bus.is-moving .v2-bus__body { box-shadow: 0 2px 12px rgba(22, 184, 176, 0.6); }
+
+/* Impact section */
+.v2-impact { display: flex; flex-direction: column; gap: 4px; }
+.v2-impact__title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); margin-bottom: 2px; }
+.v2-impact__row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.v2-impact__row--highlight { border-bottom: 0; background: rgba(52, 199, 89, 0.08); margin: 2px -8px; padding: 6px 8px; border-radius: 6px; }
+.v2-impact__label { color: rgba(255,255,255,0.5); }
+.v2-impact__val { font-family: "SF Mono", monospace; font-variant-numeric: tabular-nums; color: #fff; }
+.v2-impact__val--green { color: #34c759; }
+
+/* Destinations */
+.v2-destinations { display: flex; flex-direction: column; gap: 2px; }
+.v2-destinations__title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+.v2-dest-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; }
+.v2-dest-row__name { color: rgba(255,255,255,0.6); }
+.v2-dest-row__served { font-family: "SF Mono", monospace; font-variant-numeric: tabular-nums; }
+.v2-dest-row__rev { font-family: "SF Mono", monospace; font-variant-numeric: tabular-nums; color: #34c759; }
+.v2-dest-row__empty { font-size: 11px; color: rgba(255,255,255,0.2); }
+
+/* Footer accumulator bar */
+.v2-footer { flex-shrink: 0; background: #111820; border-top: 1px solid rgba(255,255,255,0.06); }
+.v2-accum { display: flex; justify-content: space-around; padding: 10px 20px; }
+.v2-accum__item { text-align: center; }
+.v2-accum__val { font-family: "SF Mono", "Fira Code", monospace; font-size: 18px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; display: block; }
+.v2-accum__label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.06em; }
+.v2-accum__item--accent .v2-accum__val { color: #16b8b0; }
+.v2-accum__item--green .v2-accum__val { color: #34c759; }
+
+/* Counter */
+.counter { font-variant-numeric: tabular-nums; }
+
+/* Next flight */
+.v2-next-flight { background: rgba(22, 184, 176, 0.08); border: 1px solid rgba(22, 184, 176, 0.15); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.v2-next-flight__label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.3); }
+.v2-next-flight__airline { font-size: 12px; font-weight: 600; color: #16b8b0; }
+.v2-next-flight__detail { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+/* Zoom scaling for large displays */
+.v2 { zoom: clamp(1, calc(100vw / 1920), 3); }
