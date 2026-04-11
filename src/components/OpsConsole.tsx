@@ -465,6 +465,7 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
   const progress = useReplay ? Math.max(0, Math.min(1, (simMinutes - 360) / (1440 - 360))) : 0;
 
   let displayMetrics: { label: string; value: string; unit: string }[];
+  let totalLost = 0;
 
   if (useReplay) {
     const hourIdx = Math.floor(simMinutes / 60) - 6;
@@ -478,6 +479,7 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
     const activeCount = vehicles.filter((v) => v.status === "moving").length;
     const totalAddr = accHourly.reduce((s, h) => s + h.addressableArrivalDemand + h.addressableDepartureDemand, 0);
     const capturePct = totalAddr > 0 ? Math.round((totalPax / totalAddr) * 100) : 100;
+    totalLost = accHourly.reduce((sum, hour) => sum + hour.lostRevenueThb, 0);
     displayMetrics = [
       { label: "Buses", value: String(activeCount), unit: "" },
       { label: "Trips", value: totalRounds.toLocaleString(), unit: "" },

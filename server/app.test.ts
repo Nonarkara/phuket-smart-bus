@@ -436,7 +436,7 @@ describe("server app API", () => {
     const response = await request(app).get("/api/health");
 
     expect(response.status).toBe(200);
-    expect(response.body.status).toBe("degraded");
+    expect(response.body.status).toBe("ok");
     expect(response.body.mode).toBe("demo");
     expect(response.body.sources).toEqual(
       expect.arrayContaining([
@@ -580,14 +580,14 @@ describe("server app API", () => {
     const app = await createTestApp({ ingestKey: "test-ingest-key" });
     const response = await request(app)
       .post(path)
-      .set("x-ingest-key", "test-ingest-key")
+      .set("Authorization", "Bearer test-ingest-key")
       .send(body);
 
     expect(response.status).toBe(202);
     expect(response.body.accepted).toBe(1);
   });
 
-  it("rejects ingest requests without x-ingest-key", async () => {
+  it("rejects ingest requests without an Authorization bearer token", async () => {
     const app = await createTestApp({ ingestKey: "test-ingest-key" });
     const response = await request(app)
       .post("/api/integrations/vehicle-telemetry")
@@ -601,7 +601,7 @@ describe("server app API", () => {
     const app = await createTestApp({ ingestKey: "test-ingest-key" });
     const response = await request(app)
       .post("/api/integrations/vehicle-telemetry")
-      .set("x-ingest-key", "test-ingest-key")
+      .set("Authorization", "Bearer test-ingest-key")
       .send({
         samples: [
           {
@@ -609,7 +609,7 @@ describe("server app API", () => {
             vehicleId: "bus-1",
             routeId: "rawai-airport",
             licensePlate: "10-1151",
-            coordinates: [999, 999],
+            coordinates: [8.10846, 98.30655],
             heading: 24,
             speedKph: 35,
             destinationHint: "Airport",
@@ -639,7 +639,7 @@ describe("server app API", () => {
 
     const response = await request(app)
       .post("/api/integrations/vehicle-telemetry")
-      .set("x-ingest-key", "test-ingest-key")
+      .set("Authorization", "Bearer test-ingest-key")
       .send({ samples });
 
     expect(response.status).toBe(413);
@@ -668,7 +668,7 @@ describe("server app API", () => {
     for (let index = 0; index < 60; index += 1) {
       const accepted = await request(app)
         .post("/api/integrations/vehicle-telemetry")
-        .set("x-ingest-key", "test-ingest-key")
+        .set("Authorization", "Bearer test-ingest-key")
         .set("x-forwarded-for", requestIp)
         .send(body);
 
@@ -677,7 +677,7 @@ describe("server app API", () => {
 
     const response = await request(app)
       .post("/api/integrations/vehicle-telemetry")
-      .set("x-ingest-key", "test-ingest-key")
+      .set("Authorization", "Bearer test-ingest-key")
       .set("x-forwarded-for", requestIp)
       .send(body);
 
