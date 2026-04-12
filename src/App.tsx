@@ -150,8 +150,11 @@ export default function App() {
     window.history.pushState({}, "", "/");
   }
 
-  // v2: Show the demand-supply intelligence dashboard
-  if (isOps || !isMobile) return <DashboardV2 />;
+  // v2 dashboard at /v2 path
+  if (typeof window !== "undefined" && window.location.pathname.includes("/v2")) return <DashboardV2 />;
+
+  // Full-screen ops dashboard
+  if (isOps) return <OpsConsole onToggle={goTourist} />;
 
   // Mobile: render tourist app directly
   if (isMobile) return <TouristApp onToggle={goOps} />;
