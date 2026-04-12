@@ -4,71 +4,162 @@ import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
 import { getVehiclesNow } from "@/engine/dataProvider";
+import { interpolateCoordinate, interpolateHeading } from "@/lib/vehicleAnimation";
 
 /**
  * Imperative vehicle layer — creates/updates/removes raw Leaflet markers
- * every 2 seconds, completely bypassing React re-renders for smooth animation.
- * CSS transition on the marker icon handles the visual interpolation.
+ * without React re-rendering the marker DOM on every frame.
  */
-function VehicleLayer({ routeColorById, highlightVehicleId, externalVehicles }: {
+function VehicleLayer({ routeColorById, routeColorSignature, highlightVehicleId, externalVehicles, animationDurationMs }: {
   routeColorById: Record<string, string>;
+  routeColorSignature: string;
   highlightVehicleId: string | null;
   externalVehicles?: VehiclePosition[]; // if provided, use these instead of engine
+  animationDurationMs: number;
 }) {
   const map = useMap();
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const renderedVehiclesRef = useRef<Map<string, VehiclePosition>>(new Map());
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    function sync(vehicles: VehiclePosition[]) {
-      const seen = new Set<string>();
+    function vehicleKey(vehicle: VehiclePosition) {
+      return `${vehicle.routeId}-${vehicle.id}`;
+    }
 
-      for (const v of vehicles) {
-        const key = `${v.routeId}-${v.id}`;
-        seen.add(key);
+    function syncMarkerElement(
+      marker: L.Marker,
+      vehicle: VehiclePosition,
+      color: string,
+      highlighted: boolean,
+      isFerry: boolean
+    ) {
+      marker.setLatLng(vehicle.coordinates);
+      marker.setTooltipContent(vehicle.licensePlate);
 
-        const existing = markersRef.current.get(key);
-        const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
-        const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
-        const icon = isFerry
-          ? buildFerryIcon(v, color, highlightVehicleId === v.vehicleId)
-          : buildVehicleIcon(v, color, highlightVehicleId === v.vehicleId);
+      const element = marker.getElement();
+      if (!element) return;
 
-        if (existing) {
-          existing.setLatLng(v.coordinates);
-          existing.setIcon(icon);
-          existing.setTooltipContent(v.licensePlate);
-        } else {
-          const marker = L.marker(v.coordinates, { icon }).addTo(map);
-          marker.bindTooltip(v.licensePlate);
-          markersRef.current.set(key, marker);
+      if (isFerry) {
+        const ferry = element.querySelector<HTMLElement>(".ferry-marker");
+        const svg = element.querySelector<SVGElement>("svg");
+        if (ferry) {
+          ferry.classList.toggle("is-highlighted", highlighted);
+          ferry.style.setProperty("--ferry-color", color);
+          ferry.style.setProperty("--ferry-heading", `${vehicle.heading}deg`);
         }
+        if (svg) {
+          svg.style.transform = `rotate(${vehicle.heading}deg)`;
+        }
+        return;
       }
 
-      // Remove markers for vehicles no longer active
+      const bus = element.querySelector<HTMLElement>(".bus-marker");
+      if (bus) {
+        bus.classList.toggle("is-highlighted", highlighted);
+        bus.style.setProperty("--bus-color", color);
+        bus.style.setProperty("--bus-heading", `${vehicle.heading}deg`);
+      }
+    }
+
+    function ensureMarker(vehicle: VehiclePosition, color: string, highlighted: boolean, isFerry: boolean) {
+      const key = vehicleKey(vehicle);
+      const existing = markersRef.current.get(key);
+      if (existing) return existing;
+
+      const icon = isFerry
+        ? buildFerryIcon(vehicle, color, highlighted)
+        : buildVehicleIcon(vehicle, color, highlighted);
+      const marker = L.marker(vehicle.coordinates, { icon }).addTo(map);
+      marker.bindTooltip(vehicle.licensePlate);
+      markersRef.current.set(key, marker);
+      return marker;
+    }
+
+    function applyFrame(vehicles: VehiclePosition[]) {
+      const rendered = new Map<string, VehiclePosition>();
+
+      for (const v of vehicles) {
+        const color = routeColorById[v.routeId] ?? (v.routeId === "dragon-line" ? "#db0000" : "#16b8b0");
+        const isFerry = v.routeId.includes("phi-phi") || v.routeId.includes("ao-nang") || v.routeId.includes("koh-yao") || v.routeId.includes("racha");
+        const marker = ensureMarker(v, color, highlightVehicleId === v.vehicleId, isFerry);
+        syncMarkerElement(marker, v, color, highlightVehicleId === v.vehicleId, isFerry);
+        rendered.set(vehicleKey(v), v);
+      }
+
       for (const [key, marker] of markersRef.current) {
-        if (!seen.has(key)) {
+        if (!rendered.has(key)) {
           map.removeLayer(marker);
           markersRef.current.delete(key);
         }
       }
+
+      renderedVehiclesRef.current = rendered;
+    }
+
+    function animateTo(vehicles: VehiclePosition[], durationMs: number) {
+      const previous = renderedVehiclesRef.current;
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+
+      if (previous.size === 0 || durationMs <= 0) {
+        applyFrame(vehicles);
+        return;
+      }
+
+      const startedAt = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / durationMs);
+        const frame = vehicles.map((vehicle) => {
+          const current = previous.get(vehicleKey(vehicle));
+          if (!current || current.routeId !== vehicle.routeId) {
+            return vehicle;
+          }
+
+          return {
+            ...vehicle,
+            coordinates: interpolateCoordinate(current.coordinates, vehicle.coordinates, progress),
+            heading: interpolateHeading(current.heading, vehicle.heading, progress)
+          };
+        });
+
+        applyFrame(frame);
+
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(step);
+        } else {
+          animationFrameRef.current = null;
+        }
+      };
+
+      animationFrameRef.current = requestAnimationFrame(step);
     }
 
     if (externalVehicles) {
-      sync(externalVehicles);
+      animateTo(externalVehicles, Math.max(0, animationDurationMs - 120));
       return;
     }
 
-    sync(getVehiclesNow());
-    const id = setInterval(() => sync(getVehiclesNow()), 1000);
+    animateTo(getVehiclesNow(), Math.min(animationDurationMs, 900));
+    const id = setInterval(() => animateTo(getVehiclesNow(), Math.min(animationDurationMs, 900)), 1000);
 
     return () => {
       clearInterval(id);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
-  }, [map, routeColorById, highlightVehicleId, externalVehicles]);
+  }, [map, routeColorSignature, highlightVehicleId, externalVehicles, animationDurationMs]);
 
   useEffect(() => () => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
     for (const marker of markersRef.current.values()) map.removeLayer(marker);
     markersRef.current.clear();
+    renderedVehiclesRef.current.clear();
   }, [map]);
 
   return null; // purely imperative — no React DOM output
@@ -196,6 +287,7 @@ export function LiveMap({
 }: Props) {
   const center: LatLngTuple = selectedStop?.coordinates ?? [7.88, 98.37];
   const routeColorById = Object.fromEntries(routes.map((route) => [route.id, route.color]));
+  const routeColorSignature = routes.map((route) => `${route.id}:${route.color}`).join("|");
 
   return (
     <div className="map-frame" data-testid={testId}>
@@ -263,7 +355,13 @@ export function LiveMap({
                 />
               ))
           : null}
-        <VehicleLayer routeColorById={routeColorById} highlightVehicleId={highlightVehicleId} externalVehicles={vehicles} />
+        <VehicleLayer
+          routeColorById={routeColorById}
+          routeColorSignature={routeColorSignature}
+          highlightVehicleId={highlightVehicleId}
+          externalVehicles={vehicles}
+          animationDurationMs={animationDurationMs}
+        />
         {userLocation ? (
           <CircleMarker
             center={userLocation}

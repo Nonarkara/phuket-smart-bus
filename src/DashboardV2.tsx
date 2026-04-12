@@ -19,6 +19,7 @@ import {
   type OpsFlight
 } from "./engine/opsFlightSchedule";
 import { getDirectionPolyline } from "./engine/routes";
+import { interpolateCoordinate, interpolateHeading } from "./lib/vehicleAnimation";
 
 // ---------------------------------------------------------------------------
 // Animated counter — numbers roll up, not snap
@@ -84,6 +85,41 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
   });
 }
 
+const V2_MARKER_GLIDE_MS = 950;
+
+function interpolateBusVehicle(
+  from: SimState["vehicles"][number],
+  to: SimState["vehicles"][number],
+  progress: number
+) {
+  const [lat, lng] = interpolateCoordinate([from.lat, from.lng], [to.lat, to.lng], progress);
+
+  return {
+    ...to,
+    lat,
+    lng,
+    heading: interpolateHeading(from.heading, to.heading, progress),
+  };
+}
+
+function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number]) {
+  marker.setLatLng([vehicle.lat, vehicle.lng]);
+  marker.setTooltipContent(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`);
+
+  const element = marker.getElement();
+  if (!element) return;
+
+  const bus = element.querySelector<HTMLElement>(".v2-bus");
+  const body = element.querySelector<HTMLElement>(".v2-bus__body");
+  if (bus) {
+    bus.classList.toggle("is-moving", vehicle.status === "moving");
+    bus.style.setProperty("--heading", `${vehicle.heading}deg`);
+  }
+  if (body) {
+    body.textContent = String(vehicle.pax);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Vehicle Layer — imperative Leaflet markers
 // ---------------------------------------------------------------------------
@@ -91,37 +127,79 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
 function VehicleLayer({ vehicles }: { vehicles: SimState["vehicles"] }) {
   const map = useMap();
   const markers = useRef<Map<string, L.Marker>>(new Map());
+  const renderedVehicles = useRef<Map<string, SimState["vehicles"][number]>>(new Map());
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const seen = new Set<string>();
+    const ensureMarker = (vehicle: SimState["vehicles"][number]) => {
+      const existing = markers.current.get(vehicle.id);
+      if (existing) return existing;
 
-    for (const vehicle of vehicles) {
-      const key = vehicle.id;
-      seen.add(key);
-      const existing = markers.current.get(key);
+      const marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
+      marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`, { direction: "top" });
+      markers.current.set(vehicle.id, marker);
+      return marker;
+    };
 
-      if (existing) {
-        existing.setLatLng([vehicle.lat, vehicle.lng]);
-        existing.setIcon(buildBusMarkerIcon(vehicle));
-        existing.setTooltipContent(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`);
-      } else {
-        const marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
-        marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/${25} pax · ${vehicle.route}`, { direction: "top" });
-        markers.current.set(key, marker);
+    const applyFrame = (frameVehicles: SimState["vehicles"]) => {
+      const nextRendered = new Map<string, SimState["vehicles"][number]>();
+
+      for (const vehicle of frameVehicles) {
+        const marker = ensureMarker(vehicle);
+        syncBusMarker(marker, vehicle);
+        nextRendered.set(vehicle.id, vehicle);
       }
-    }
 
+      renderedVehicles.current = nextRendered;
+    };
+
+    const seen = new Set(vehicles.map((vehicle) => vehicle.id));
     for (const [key, marker] of markers.current) {
       if (!seen.has(key)) {
         map.removeLayer(marker);
         markers.current.delete(key);
       }
     }
+
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+
+    const previous = renderedVehicles.current;
+    const frameDuration = previous.size > 0 ? V2_MARKER_GLIDE_MS : 0;
+    if (frameDuration === 0) {
+      applyFrame(vehicles);
+      return;
+    }
+
+    const startedAt = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / frameDuration);
+      const frame = vehicles.map((vehicle) => {
+        const current = previous.get(vehicle.id);
+        return current ? interpolateBusVehicle(current, vehicle, progress) : vehicle;
+      });
+
+      applyFrame(frame);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(step);
+      } else {
+        animationRef.current = null;
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(step);
   }, [map, vehicles]);
 
   useEffect(() => () => {
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+    }
     markers.current.forEach((marker) => map.removeLayer(marker));
     markers.current.clear();
+    renderedVehicles.current.clear();
   }, [map]);
 
   return null;
