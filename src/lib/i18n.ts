@@ -886,6 +886,30 @@ export const ui = {
   backToSearch: {
     en: "Back to search", th: "กลับไปค้นหา", zh: "返回搜索",
     de: "Zurück zur Suche", fr: "Retour à la recherche", es: "Volver a buscar"
+  },
+  heroNextBus: {
+    en: "Next Bus", th: "รถบัสถัดไป", zh: "下班车",
+    de: "Nächster Bus", fr: "Prochain bus", es: "Próximo autobús"
+  },
+  heroMinutes: {
+    en: "min away", th: "นาที", zh: "分钟",
+    de: "min entfernt", fr: "min", es: "min"
+  },
+  heroBusPrice: {
+    en: "Smart Bus", th: "Smart Bus", zh: "Smart Bus",
+    de: "Smart Bus", fr: "Smart Bus", es: "Smart Bus"
+  },
+  heroVsGrab: {
+    en: "vs Grab", th: "vs Grab", zh: "vs 出租车",
+    de: "vs Taxi", fr: "vs Taxi", es: "vs Taxi"
+  },
+  heroSavings: {
+    en: "savings", th: "ประหยัด", zh: "省钱",
+    de: "Ersparnis", fr: "économies", es: "ahorros"
+  },
+  heroRequestBus: {
+    en: "Request Bus", th: "เรียกรถบัส", zh: "呼叫巴士",
+    de: "Bus anfordern", fr: "Demander un bus", es: "Solicitar autobús"
   }
 } satisfies Record<string, LocalizedText>;
 

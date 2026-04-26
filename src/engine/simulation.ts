@@ -133,6 +133,32 @@ const REGION_COLORS: Record<string, string> = {
   "Europe": "#43a047",
 };
 
+// ---------------------------------------------------------------------------
+// Line profitability model
+// ---------------------------------------------------------------------------
+
+export type LineMetrics = {
+  lineId: string;
+  lineName: string;
+  passengersServed: number;
+  revenueThb: number;
+  operatingCostThb: number;
+  profitThb: number;
+  profitMargin: number; // 0-100
+  carbonSavedKg: number;
+  kmDriven: number;
+};
+
+const LINE_CONFIG: Record<string, { name: string; kmDaily: number; fare: number; capacity: number }> = {
+  "rawai-airport": { name: "Airport → Patong", kmDaily: 600, fare: 100, capacity: 25 },
+  "patong-old-bus-station": { name: "Patong → Old Town", kmDaily: 200, fare: 100, capacity: 25 },
+  "dragon-line": { name: "Dragon Loop", kmDaily: 50, fare: 100, capacity: 15 },
+};
+
+const FUEL_COST_PER_KM = 0.15; // 0.15 THB/km
+const DRIVER_COST_PER_DAY = 400;
+const MAINTENANCE_PER_TRIP = 50;
+
 function getRegion(origin: string): string {
   return REGION_MAP[origin] ?? "Other";
 }
@@ -307,6 +333,55 @@ export function computeSimState(): SimState {
     tripsCompleted, kmDriven,
     destBreakdown, vehicles,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Per-line profitability metrics
+// ---------------------------------------------------------------------------
+
+export function getLineMetrics(): LineMetrics[] {
+  const state = computeSimState();
+  const now = simNow();
+
+  // Allocate passengers proportionally across lines by activity
+  // Airport line gets most (60% of passengers), Patong gets 25%, Dragon gets 15%
+  const allocationPct = { "rawai-airport": 0.60, "patong-old-bus-station": 0.25, "dragon-line": 0.15 };
+
+  return Object.entries(LINE_CONFIG).map(([lineId, config]) => {
+    const pct = allocationPct[lineId as keyof typeof allocationPct] ?? 0;
+    const passengersServed = Math.round(state.paxDelivered * pct);
+
+    // Revenue from fares
+    const revenueThb = passengersServed * config.fare;
+
+    // Operating cost (hourly)
+    const hoursOperating = now >= 360 ? (now - 360) / 60 : 0; // 06:00 start
+    const trips = Math.ceil(hoursOperating * 60 / 90); // Approx trips per line per day
+    const fuelCost = config.kmDaily * FUEL_COST_PER_KM;
+    const driverCost = DRIVER_COST_PER_DAY * (hoursOperating / 16); // Spread across 16h day
+    const maintenanceCost = trips * MAINTENANCE_PER_TRIP;
+    const operatingCostThb = Math.round(fuelCost + driverCost + maintenanceCost);
+
+    // Profit
+    const profitThb = revenueThb - operatingCostThb;
+    const profitMargin = revenueThb > 0 ? Math.round((profitThb / revenueThb) * 100) : 0;
+
+    // Carbon footprint
+    const avgTripKm = config.kmDaily / Math.max(1, trips);
+    const carbonSavedKg = Math.round(passengersServed * avgTripKm * (0.21 - 0.06));
+
+    return {
+      lineId,
+      lineName: config.name,
+      passengersServed,
+      revenueThb,
+      operatingCostThb,
+      profitThb,
+      profitMargin,
+      carbonSavedKg,
+      kmDriven: config.kmDaily,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------

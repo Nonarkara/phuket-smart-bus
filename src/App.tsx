@@ -34,6 +34,7 @@ import { DecisionPanel } from "./components/DecisionPanel";
 import { StopSpotlight } from "./components/StopSpotlight";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
+import { HeroSection } from "./components/HeroSection";
 // CompareView removed — fare comparison is inline in WelcomeSheet
 import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
@@ -630,6 +631,13 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
         {/* ===== LIVE MAP ===== */}
         {view === "map" ? (
           <main className="map-view">
+            {/* Hero section — next bus countdown + price comparison */}
+            <HeroSection
+              routeId={selectedRouteId}
+              stops={stops}
+              lang={lang}
+              comparisons={comparisons}
+            />
             <div className="map-container">
               <LiveMap
                 lang={lang}

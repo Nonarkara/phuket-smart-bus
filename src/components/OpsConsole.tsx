@@ -17,6 +17,7 @@ import type {
 import { getInvestorSimulation, getOpsDashboard, getSimulationFrame, getVehiclesNow } from "../engine/dataProvider";
 import { getImpactMetrics } from "../engine/impactSimulator";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
+import { ProfitabilityPanel } from "./ProfitabilityPanel";
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
 
 /* ══════════════════════════════════════════════════
@@ -1378,6 +1379,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               );
             })}
           </section>
+
+          {/* Profitability metrics */}
+          <ProfitabilityPanel lang="en" />
         </div>
       </div>
 

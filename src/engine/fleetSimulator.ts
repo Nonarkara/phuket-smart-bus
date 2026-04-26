@@ -43,6 +43,7 @@ type TripOccurrence = {
   departureIndex: number;
   scheduledDepartureMinutes: number;
   ageMinutes: number;
+  tripVariation: number; // 0.92-1.08, multiplier to trip duration
 };
 
 // ---------------------------------------------------------------------------
@@ -320,7 +321,10 @@ function buildTripOccurrences(profile: DirectionProfile, nowMin: number) {
       const ages = [nowMin - dep, nowMin - (dep - 1440)];
       const age = ages.find((a) => a >= -pre && a <= profile.tripDurationMinutes + lay);
       if (age === undefined) return null;
-      return { profile, departureIndex: idx, scheduledDepartureMinutes: dep, ageMinutes: age };
+      // Fuzzy variation: ±8% on trip duration, tied to departure time for consistency
+      const hash = tripHash(profile.routeId, profile.directionLabel, dep);
+      const tripVariation = 0.92 + ((hash % 16) / 100); // 0.92–1.07 pseudo-random per trip
+      return { profile, departureIndex: idx, scheduledDepartureMinutes: dep, ageMinutes: age, tripVariation };
     })
     .filter((t): t is TripOccurrence => Boolean(t));
 }
@@ -334,8 +338,12 @@ function buildVehiclePosition(
   occ: TripOccurrence,
   nowIso: string
 ): VehiclePosition {
-  const { profile, ageMinutes } = occ;
+  const { profile, ageMinutes, tripVariation } = occ;
   const lastIdx = profile.stops.length - 1;
+
+  // Apply fuzzy variation to trip duration
+  const actualTripDuration = profile.tripDurationMinutes * tripVariation;
+  const DWELL_TIME_MINUTES = 3; // Explicit dwell time at each stop
 
   let coordinates: LatLngTuple;
   let heading: number;
@@ -344,7 +352,7 @@ function buildVehiclePosition(
   let distToEnd = profile.polylineTotalMeters;
   let stopsAway = lastIdx;
 
-  if (ageMinutes >= profile.tripDurationMinutes) {
+  if (ageMinutes >= actualTripDuration) {
     // At terminal
     const pos = posOnPolyline(profile.stopPolylineMeters[lastIdx], profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
@@ -355,31 +363,41 @@ function buildVehiclePosition(
     coordinates = pos.coordinates; heading = pos.heading;
   } else {
     // In transit — find segment by time offset, then map to polyline distance
-    const t = clamp(ageMinutes, 0, profile.tripDurationMinutes);
+    const t = clamp(ageMinutes, 0, actualTripDuration);
     let seg = profile.stopOffsets.findIndex((o, i) => {
       const next = profile.stopOffsets[i + 1];
       return next !== undefined && t <= next;
     });
     if (seg < 0) seg = Math.max(0, profile.stopOffsets.length - 2);
 
-    const tStart = profile.stopOffsets[seg]!;
-    const tEnd = profile.stopOffsets[seg + 1]!;
-    const ratio = tEnd > tStart ? clamp((t - tStart) / (tEnd - tStart), 0, 1) : 0;
+    const tStart = profile.stopOffsets[seg]! * tripVariation;
+    const tEnd = profile.stopOffsets[seg + 1]! * tripVariation;
+    const segDur = tEnd - tStart;
+
+    // Determine if bus is in dwelling phase at stop (3 min) or moving
+    const tInSegment = t - tStart;
+    const isDwelling = tInSegment < DWELL_TIME_MINUTES && segDur > DWELL_TIME_MINUTES;
+
+    // If dwelling, position stays at start of segment; otherwise interpolate
+    const ratio = segDur > 0 ? clamp((tInSegment - (isDwelling ? 0 : DWELL_TIME_MINUTES)) / (segDur - DWELL_TIME_MINUTES), 0, 1) : 0;
 
     const mStart = profile.stopPolylineMeters[seg]!;
     const mEnd = profile.stopPolylineMeters[seg + 1]!;
-    const meters = mStart + (mEnd - mStart) * ratio;
+    const meters = isDwelling ? mStart : mStart + (mEnd - mStart) * ratio;
 
     const pos = posOnPolyline(meters, profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
 
-    speedKph = profile.tripDurationMinutes > 0
-      ? Math.round((profile.polylineTotalMeters / 1000 / (profile.tripDurationMinutes / 60)) * 10) / 10
+    // Per-segment speed: segment distance / segment time (excluding dwell)
+    const segmentDistance = mEnd - mStart;
+    const movingTime = segDur - DWELL_TIME_MINUTES;
+    speedKph = movingTime > 0
+      ? Math.round((segmentDistance / 1000 / (movingTime / 60)) * 10) / 10
       : 0;
-    const segDur = tEnd - tStart;
-    status = (ratio < 0.05 || ratio > 0.95) && segDur > 2 ? "dwelling" : "moving";
+
+    status = isDwelling ? "dwelling" : "moving";
     distToEnd = Math.max(0, profile.polylineTotalMeters - meters);
-    stopsAway = Math.max(0, lastIdx - seg - (ratio >= 0.85 ? 1 : 0));
+    stopsAway = Math.max(0, lastIdx - seg - (ratio >= 0.75 ? 1 : 0));
   }
 
   return {
@@ -470,12 +488,16 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 
   const pre = 8;
   const lay = 6;
-  const active: { dep: number; dir: string; stops: typeof cfg.stops; age: number }[] = [];
+  const active: { dep: number; dir: string; stops: typeof cfg.stops; age: number; variation: number }[] = [];
 
   for (const trip of allDeps) {
     const ages = [nowMin - trip.dep, nowMin - (trip.dep - 1440)];
     const age = ages.find((a) => a >= -pre && a <= cfg.tripDurationMinutes + lay);
-    if (age !== undefined) active.push({ ...trip, age });
+    if (age !== undefined) {
+      const h = tripHash("orange-line", trip.dir, trip.dep);
+      const variation = 0.92 + ((h % 16) / 100);
+      active.push({ ...trip, age, variation });
+    }
   }
 
   active.sort((a, b) => {
@@ -496,14 +518,15 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 
     const stops = trip.stops;
     const totalStops = stops.length;
-    const segDur = cfg.tripDurationMinutes / Math.max(1, totalStops - 1);
+    const actualDuration = cfg.tripDurationMinutes * trip.variation;
+    const segDur = actualDuration / Math.max(1, totalStops - 1);
 
     let coordinates: LatLngTuple;
     let heading = 0;
     let status: VehiclePosition["status"] = "dwelling";
     let speedKph = 0;
 
-    if (trip.age >= cfg.tripDurationMinutes) {
+    if (trip.age >= actualDuration) {
       coordinates = stops[totalStops - 1].coordinates;
     } else if (trip.age <= 0) {
       coordinates = stops[0].coordinates;
