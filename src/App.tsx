@@ -219,26 +219,31 @@ function computeBadge(): string {
     : `${day} ${clock} · ${busCount} buses active`;
 }
 
-/* ── Animated counter: smoothly rolls from old→new value ── */
+/* ── Animated counter: smoothly rolls from old→new value.
+ *  Uses setTimeout instead of requestAnimationFrame so the animation
+ *  keeps progressing even when the tab is backgrounded or the page
+ *  is hidden — raf throttles to ~1 Hz (or stops entirely) under those
+ *  conditions and the display gets visibly stuck. */
 function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) {
   const [display, setDisplay] = useState(value);
-  const prevRef = useRef(value);
   useEffect(() => {
-    const from = prevRef.current;
-    prevRef.current = value;
+    if (value === display) return;
+    const from = display;
     const diff = value - from;
-    if (diff === 0) return;
     const duration = 1500;
     const t0 = performance.now();
-    let raf = 0;
-    const step = (now: number) => {
-      const p = Math.min(1, (now - t0) / duration);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const step = () => {
+      const p = Math.min(1, (performance.now() - t0) / duration);
       const eased = 1 - Math.pow(1 - p, 3);
       setDisplay(Math.round(from + diff * eased));
-      if (p < 1) raf = requestAnimationFrame(step);
+      if (p < 1) timer = setTimeout(step, 33);
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    step();
+    return () => { if (timer) clearTimeout(timer); };
+    // We intentionally exclude `display` from deps — including it would
+    // restart the animation on every frame.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
   return <span>{display.toLocaleString()}{suffix ?? ""}</span>;
 }

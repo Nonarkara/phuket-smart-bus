@@ -26,7 +26,10 @@ const simAnchorMs = Date.now();
 const SVC_START = 360; // 06:00 (chart axis floor)
 const SVC_END = 1320;  // 22:00
 const SVC_WINDOW = SVC_END - SVC_START;
-const SIM_OPEN_MIN = 420; // sim starts at 07:00
+const SIM_OPEN_MIN = 540; // sim starts at 09:00 — past the 08:15 first bus,
+                          // so the right-bar metrics tick up from the first
+                          // few seconds of page load instead of sitting at
+                          // a genuine zero for ~2.5 real minutes.
 
 export function simNow(): number {
   const elapsed = ((Date.now() - simAnchorMs) / 60000) * SIM_SPEED;

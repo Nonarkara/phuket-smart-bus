@@ -594,7 +594,9 @@ const simAnchorReal = Date.now();
 const SERVICE_START = 360;  // 06:00 (chart floor)
 const SERVICE_END = 1350;   // 22:30
 const SERVICE_WINDOW = SERVICE_END - SERVICE_START; // 990 min = 16.5 hours
-const SIM_OPEN_MIN = 420;   // sim starts at 07:00
+const SIM_OPEN_MIN = 540;   // sim starts at 09:00 — past the first scheduled
+                            // bus departure (08:15), so the right-bar metrics
+                            // are non-zero within seconds of page load.
 
 export function getSimulatedMinutes(): number {
   const elapsedRealMs = Date.now() - simAnchorReal;
