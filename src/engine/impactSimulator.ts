@@ -1,20 +1,13 @@
 import { getSeasonalMultiplier, isHighSeason } from "./environmentSimulator";
-import { getSimulatedMinutes } from "./fleetSimulator";
+import { simNow, getHourlyDemandSupply } from "./simulation";
 
-// Hourly demand curve (passengers per hour, peak day baseline)
-const HOURLY_DEMAND = [
-  0, 0, 0, 0, 0, 0,        // 00-05: no service
-  180, 320, 480, 520, 440,  // 06-10: morning ramp
-  380, 360, 400, 450, 480,  // 11-15: midday
-  520, 560, 480, 360, 240,  // 16-20: evening peak
-  120, 60, 0                // 21-23: wind down
-];
-
+// Impact constants — must match the v2 demand-supply chain so that the
+// /  right-bar numbers and the /v2 chart are reading from the same engine.
 const CO2_KG_PER_PAX_KM = 0.15;
-const AVG_TRIP_KM = 8.2;
+const AVG_TRIP_KM = 28; // weighted across destinations (matches simulation.ts)
 const AVG_CONGESTION_MINUTES_SAVED_PER_PAX = 4.2;
 const SCOOTER_ACCIDENT_RATE_PER_PAX = 0.000012; // Annual equivalent
-const AVG_FARE_THB = 85; // Weighted avg: 100 THB airport line (majority) + 50 THB local lines
+const AVG_FARE_THB = 100; // ฿100 flat fare (matches simulation.ts)
 
 export interface ImpactMetrics {
   ridersToday: number;
@@ -42,30 +35,35 @@ export interface ImpactMetrics {
 
 export function getImpactMetrics(activeBuses: number, now = new Date()): ImpactMetrics {
   const month = now.getMonth() + 1;
-  const currentMinutes = getSimulatedMinutes(); // uses 10x accelerated time
+  const currentMinutes = simNow();
   const currentHour = Math.floor(currentMinutes / 60) % 24;
   const minuteFraction = (currentMinutes % 60) / 60;
   const seasonal = getSeasonalMultiplier(month);
   const highSeason = isHighSeason(month);
 
-  // Accumulate riders from midnight to now
+  // Pull the same hour-by-hour demand-supply chain that the chart uses.
+  // Sum servedPax for completed hours; pro-rate the current hour by its
+  // fractional progress so the counter ticks up smoothly between hours.
+  const hourly = getHourlyDemandSupply();
   let ridersToday = 0;
   for (let h = 0; h < currentHour; h++) {
-    ridersToday += (HOURLY_DEMAND[h] ?? 0) * seasonal;
+    ridersToday += hourly[h]?.servedPax ?? 0;
   }
-  // Partial current hour
-  ridersToday += (HOURLY_DEMAND[currentHour] ?? 0) * seasonal * minuteFraction;
-  ridersToday = Math.round(ridersToday);
+  ridersToday += (hourly[currentHour]?.servedPax ?? 0) * minuteFraction;
+  ridersToday = Math.round(ridersToday * seasonal);
 
   const co2SavedKg = Math.round(ridersToday * AVG_TRIP_KM * CO2_KG_PER_PAX_KM * 10) / 10;
   const congestionMinutes = Math.round(ridersToday * AVG_CONGESTION_MINUTES_SAVED_PER_PAX);
   const accidentReduction = ridersToday * SCOOTER_ACCIDENT_RATE_PER_PAX;
   const revenue = Math.round(ridersToday * AVG_FARE_THB);
 
-  // Annual projections (extrapolate from today's pace)
+  // Annual projection — extrapolate today's pace forward, never the static
+  // baseline. Floor on a representative day total so the projection is
+  // stable in the first few sim minutes.
+  const fullDayProjection = hourly.reduce((s, h) => s + h.servedPax, 0) * seasonal;
   const dailyProjection = ridersToday > 0 && currentHour > 6
-    ? ridersToday / (currentHour / 24)
-    : HOURLY_DEMAND.reduce((s, v) => s + v, 0) * seasonal;
+    ? ridersToday / Math.max(0.05, (currentMinutes - 360) / (1320 - 360))
+    : fullDayProjection;
   const co2AnnualTonnes = Math.round(dailyProjection * AVG_TRIP_KM * CO2_KG_PER_PAX_KM * 365 / 1000);
   const accidentAnnual = Math.round(dailyProjection * SCOOTER_ACCIDENT_RATE_PER_PAX * 365);
 

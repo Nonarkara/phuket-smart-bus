@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
-import { computeSimState, type SimState, type RegionData } from "./engine/simulation";
+import { computeSimState, getDayInfo, type SimState, type RegionData } from "./engine/simulation";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -421,13 +421,14 @@ export default function DashboardV2() {
         </div>
         <div className="v2-header__clock">
           <span className="v2-header__live">●</span>
+          <span className="v2-header__day">{getDayInfo().label}</span>
           <span className="v2-header__time">{state.clockLabel} BKK</span>
-          <span className="v2-header__speed">20× simulation</span>
+          <span className="v2-header__speed">30× simulation</span>
         </div>
         <div className="v2-header__meta">
           <span>{arrivalsToday.length} arrivals</span>
           <span>{departuresToday.length} departures</span>
-          <span>HKT peak-day model</span>
+          <span>HKT · {getDayInfo().label} pattern</span>
         </div>
       </header>
 

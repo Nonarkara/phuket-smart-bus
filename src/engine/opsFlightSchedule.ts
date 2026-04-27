@@ -47,7 +47,7 @@ function parseMinutes(label: string) {
 
 const peakDay = peakDayFlights as PeakDayFixture;
 
-export const OPS_FLIGHT_SCHEDULE: OpsFlight[] = peakDay.flights
+const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
   .map((flight) => ({
     flightNo: flight.flightNumber,
     airline: flight.airline,
@@ -61,8 +61,100 @@ export const OPS_FLIGHT_SCHEDULE: OpsFlight[] = peakDay.flights
   }))
   .sort((left, right) => left.schedMin - right.schedMin || (left.type === "arr" ? -1 : 1));
 
+// ---------------------------------------------------------------------------
+// Day-of-week fuzz — same calendar day renders the same numbers, different
+// dates shift volume, schedule and origin mix. Tuesday is quiet, Saturday
+// peaks, Sunday returns the weekend traffic. Seed = today's date so the
+// result is deterministic within a calendar day.
+// ---------------------------------------------------------------------------
+
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const DOW_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
+const DOW_VOLUME = [1.10, 0.95, 0.85, 0.85, 1.00, 1.05, 1.18];
+const DOW_CHARTERS: Array<Array<{ flightNo: string; airline: string; city: string; airportCode: string; pax: number }>> = [
+  [{ flightNo: "SQ732", airline: "Singapore Airlines", city: "Singapore", airportCode: "SIN", pax: 198 }],
+  [],
+  [{ flightNo: "CZ8347", airline: "China Southern", city: "Guangzhou", airportCode: "CAN", pax: 234 }],
+  [{ flightNo: "6E1054", airline: "IndiGo", city: "Delhi", airportCode: "DEL", pax: 186 }],
+  [],
+  [{ flightNo: "SU272", airline: "Aeroflot", city: "Moscow", airportCode: "SVO", pax: 312 }],
+  [
+    { flightNo: "ZF1845", airline: "Azur Air", city: "Yekaterinburg", airportCode: "SVX", pax: 298 },
+    { flightNo: "KE637",  airline: "Korean Air", city: "Seoul", airportCode: "ICN", pax: 224 }
+  ]
+];
+
+function todaySeed() {
+  const d = new Date();
+  const dow = d.getDay();
+  const startOfYear = new Date(d.getFullYear(), 0, 0).getTime();
+  const dayOfYear = Math.floor((d.getTime() - startOfYear) / 86_400_000);
+  const seed = d.getFullYear() * 1000 + dayOfYear * 7 + dow;
+  return { seed, dow };
+}
+
+const TODAY = todaySeed();
+const rng = mulberry32(TODAY.seed);
+
+function fmtTime(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = Math.max(0, Math.floor(min % 60));
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
+  const factor = DOW_VOLUME[TODAY.dow];
+  const out: OpsFlight[] = [];
+  for (const f of base) {
+    if (rng() < 0.05) continue; // 5% cancellation
+    const paxJitter = 1 + (rng() - 0.5) * 0.30; // ±15%
+    const timeJitter = Math.round((rng() - 0.5) * 20); // ±10 min
+    const schedMin = Math.max(0, f.schedMin + timeJitter);
+    out.push({
+      ...f,
+      pax: Math.max(0, Math.round(f.pax * factor * paxJitter)),
+      schedMin,
+      timeLabel: fmtTime(schedMin)
+    });
+  }
+  for (const c of DOW_CHARTERS[TODAY.dow]) {
+    const schedMin = Math.round(420 + rng() * 900); // 07:00–22:00
+    out.push({
+      flightNo: c.flightNo,
+      airline: c.airline,
+      city: c.city,
+      airportCode: c.airportCode,
+      pax: Math.round(c.pax * (1 + (rng() - 0.5) * 0.20)),
+      schedMin,
+      timeLabel: fmtTime(schedMin),
+      type: "arr",
+      terminal: "T1"
+    });
+  }
+  return out.sort((a, b) => a.schedMin - b.schedMin || (a.type === "arr" ? -1 : 1));
+}
+
+export const OPS_FLIGHT_SCHEDULE: OpsFlight[] = applyDailyFuzz(BASE_OPS_FLIGHTS);
+
 export function getOpsFlightSchedule() {
   return OPS_FLIGHT_SCHEDULE;
+}
+
+export function getDayLabel(): string {
+  return DOW_LABELS[TODAY.dow];
+}
+
+export function getDayVolumeFactor(): number {
+  return DOW_VOLUME[TODAY.dow];
 }
 
 export function buildFlightHourBuckets(flights = OPS_FLIGHT_SCHEDULE): FlightHourBucket[] {

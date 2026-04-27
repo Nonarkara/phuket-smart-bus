@@ -10,32 +10,27 @@
 import type { LatLngTuple } from "@shared/types";
 import { getDirectionPolyline } from "./routes";
 import { haversineDistanceMeters } from "./geo";
-import { getOpsFlightSchedule } from "./opsFlightSchedule";
+import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlightSchedule";
 
 // ---------------------------------------------------------------------------
 // Time
 // ---------------------------------------------------------------------------
 
-const BANGKOK_TZ = "Asia/Bangkok";
-const SIM_SPEED = 20; // 20x real time — watchable but not frantic
+const SIM_SPEED = 30; // 30x real time — matches fleetSimulator so map and metrics tick together
 const simAnchorMs = Date.now();
 
-function getBangkokFractional(date: Date): number {
-  const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: BANGKOK_TZ, hour: "2-digit", minute: "2-digit", hour12: false });
-  const [h, m] = fmt.format(date).split(":").map(Number);
-  return h * 60 + m + date.getSeconds() / 60 + date.getMilliseconds() / 60000;
-}
-
-const anchorMinutes = getBangkokFractional(new Date(simAnchorMs));
-
-// Service window: wrap within 06:00–22:00 so buses are always running
-const SVC_START = 360; // 06:00
+// Service window: wrap within 06:00–22:00 so buses are always running.
+// Anchor the sim at 07:00 so the first scheduled bus (08:15) is reachable
+// within ~2.5 real minutes of page load — fast feedback for the viewer
+// without skipping the AM ramp entirely.
+const SVC_START = 360; // 06:00 (chart axis floor)
 const SVC_END = 1320;  // 22:00
 const SVC_WINDOW = SVC_END - SVC_START;
+const SIM_OPEN_MIN = 420; // sim starts at 07:00
 
 export function simNow(): number {
   const elapsed = ((Date.now() - simAnchorMs) / 60000) * SIM_SPEED;
-  return SVC_START + ((anchorMinutes + elapsed - SVC_START) % SVC_WINDOW + SVC_WINDOW) % SVC_WINDOW;
+  return SVC_START + ((SIM_OPEN_MIN - SVC_START + elapsed) % SVC_WINDOW + SVC_WINDOW) % SVC_WINDOW;
 }
 
 export function simClock(): string {
@@ -59,6 +54,9 @@ export type Flight = {
   terminal?: string;
 };
 
+// FULL_DAY_FLIGHTS comes from getOpsFlightSchedule() which has already
+// applied today's day-of-week fuzz. Single source of truth for both the
+// flight rail (DashboardV2) and the demand-supply chain.
 const FULL_DAY_FLIGHTS: Flight[] = getOpsFlightSchedule().map((flight) => ({
   flightNo: flight.flightNo,
   airline: flight.airline,
@@ -68,6 +66,10 @@ const FULL_DAY_FLIGHTS: Flight[] = getOpsFlightSchedule().map((flight) => ({
   type: flight.type,
   terminal: flight.terminal
 }));
+
+export function getDayInfo(): { label: string; volumeFactor: number } {
+  return { label: getDayLabel(), volumeFactor: getDayVolumeFactor() };
+}
 
 // ---------------------------------------------------------------------------
 // Demand Model: flights → passengers needing buses

@@ -25,6 +25,7 @@ import {
 } from "./engine/dataProvider";
 import { getImpactMetrics } from "./engine/impactSimulator";
 import { getSimulatedMinutes } from "./engine/fleetSimulator";
+import { getDayInfo } from "./engine/simulation";
 import DashboardV2 from "./DashboardV2";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
@@ -208,13 +209,14 @@ function computeBadge(): string {
   const h = Math.floor(simMin / 60) % 24;
   const m = Math.floor(simMin % 60);
   const clock = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const day = getDayInfo().label;
   const allV = getVehiclesNow();
   const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
   const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
   const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
   return nearest
-    ? `${clock} · ${busCount} buses · Next: Patong ${nearest} min`
-    : `${clock} · ${busCount} buses active`;
+    ? `${day} ${clock} · ${busCount} buses · Next: Patong ${nearest} min`
+    : `${day} ${clock} · ${busCount} buses active`;
 }
 
 /* ── Animated counter: smoothly rolls from old→new value ── */
