@@ -1032,7 +1032,7 @@ a { color: var(--tint); }
 /* Weather pill on map */
 .map-weather {
   position: absolute;
-  top: 0.5rem;
+  top: 76px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -1121,7 +1121,7 @@ a { color: var(--tint); }
 /* Floating language on map */
 .map-lang {
   position: absolute;
-  top: 0.5rem;
+  top: 76px;
   left: 0.5rem;
   z-index: 1000;
   display: flex;
@@ -1193,7 +1193,7 @@ a { color: var(--tint); }
 /* Live count badge — translucent white */
 .map-badge {
   position: absolute;
-  top: 0.5rem;
+  top: 76px;
   right: 0.5rem;
   z-index: 1000;
   display: flex;
@@ -4376,8 +4376,8 @@ a { color: var(--tint); }
 
 /* ── Collapsed Welcome Sheet ── */
 .welcome-sheet--collapsed {
-  max-height: 64px;
-  padding: 0 20px 8px;
+  max-height: 44px;
+  padding: 0 20px 6px;
   cursor: pointer;
 }
 
@@ -4386,6 +4386,10 @@ a { color: var(--tint); }
   align-items: center;
   justify-content: space-between;
   padding: 4px 0;
+}
+
+.welcome-sheet__peek--minimal {
+  justify-content: center;
 }
 
 .welcome-sheet__next-bus {
@@ -4845,12 +4849,11 @@ a { color: var(--tint); }
    TISSOT PRX POLISH — Every detail considered
    ══════════════════════════════════════════════════ */
 
-/* Collapsed sheet — premium, breathing, purposeful */
+/* Collapsed sheet — minimal, lets the map and hero breathe */
 .welcome-sheet--collapsed {
-  max-height: 72px;
-  padding: 0 24px 12px;
+  max-height: 44px;
+  padding: 0 24px 8px;
   cursor: pointer;
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   background: rgba(255, 255, 255, 0.95);
@@ -5484,138 +5487,83 @@ a { color: var(--tint); }
 
 /* ===== Hero Section — Next Bus ===== */
 .hero-section {
-  flex-shrink: 0;
-  padding: 20px 16px 16px;
-  background: #ffffff;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
   border-bottom: 1px solid var(--separator-light);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  border-radius: 0;
+  pointer-events: auto;
 }
 
-.hero-section__title {
-  font-size: 14px;
+/* Hide Leaflet's default zoom buttons on the tourist map — pinch-to-zoom on
+   mobile, scroll-wheel on desktop. The hero overlay needs that real estate
+   for the countdown timer. */
+.map-view .leaflet-control-zoom {
+  display: none !important;
+}
+.map-view .leaflet-top.leaflet-right {
+  top: 76px;
+}
+
+.hero-section__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.hero-section__col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hero-section__col--right {
+  text-align: right;
+}
+
+.hero-section__label {
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-
-.hero-section__destination {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-section__countdown {
-  font-size: 56px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--tint);
   font-variant-numeric: tabular-nums;
   font-family: "Menlo", "SF Mono", monospace;
-  margin: 4px 0 0;
   line-height: 1;
-}
-
-.hero-section__countdown-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-top: -2px;
-}
-
-.hero-section__price-row {
-  display: grid;
-  grid-template-columns: auto 1px auto;
-  gap: 16px;
-  align-items: center;
-  margin-top: 8px;
-  padding: 12px 0;
-}
-
-.hero-section__divider {
-  background: var(--separator-light);
-  width: 1px;
-  height: 48px;
-}
-
-.hero-section__our-price {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  letter-spacing: -0.01em;
 }
 
 .hero-section__price {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--green);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.hero-section__price-label {
-  font-size: 12px;
+.hero-section__compare {
+  font-size: 11px;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   font-weight: 500;
-}
-
-.hero-section__grab-price {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.hero-section__comparison {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hero-section__vs {
-  font-size: 12px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 500;
-}
-
-.hero-section__grab-range {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.hero-section__savings {
-  font-size: 12px;
-  color: var(--green);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.hero-section__cta {
-  padding: 12px 16px;
-  background: var(--tint);
-  color: white;
-  border: 0;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 4px;
-  transition: background 200ms ease, box-shadow 200ms ease;
-  box-shadow: var(--shadow-interactive);
-}
-
-.hero-section__cta:active {
-  background: #0051CC;
-  opacity: 0.92;
 }
 
 @media (max-width: 720px) {
@@ -5629,4 +5577,182 @@ a { color: var(--tint); }
   .v2-map__overlay { position: static; padding: 0 12px 12px; }
   .v2-map__canvas { min-height: 420px; }
   .v2-footer { padding: 0 12px 12px; }
+}
+
+/* ══════════════════════════════════════════════════
+   ANALYTICS PANEL — Demand vs Supply chart
+   ══════════════════════════════════════════════════ */
+
+.analytics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-feature-settings: "tnum" 1;
+}
+
+.analytics-panel__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.analytics-panel__title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+}
+
+.analytics-panel__legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+}
+
+.analytics-panel__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analytics-panel__legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 0;
+}
+
+.analytics-panel__legend-swatch--demand { background: rgba(245, 166, 35, 0.85); }
+.analytics-panel__legend-swatch--supply { background: rgba(80, 200, 200, 0.95); }
+.analytics-panel__legend-swatch--revenue { background: rgba(72, 180, 97, 0.9); }
+
+.analytics-chart {
+  width: 100%;
+}
+
+.analytics-chart__grid {
+  display: grid;
+  grid-template-columns: repeat(17, 1fr);
+  gap: 4px;
+  align-items: stretch;
+  height: 180px;
+}
+
+.analytics-col {
+  display: grid;
+  grid-template-rows: 1fr 24px 14px;
+  gap: 2px;
+  position: relative;
+}
+
+.analytics-col__plot {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  height: 100%;
+  overflow: hidden;
+}
+
+.analytics-col__demand {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(245, 166, 35, 0.78);
+  transition: height 0.6s ease;
+}
+
+.analytics-col__supply {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  height: 2px;
+  background: rgba(80, 200, 200, 1);
+  transition: bottom 0.6s ease;
+}
+
+.analytics-col__revenue-track {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.analytics-col__revenue-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(72, 180, 97, 0.85);
+  transition: height 0.6s ease;
+}
+
+.analytics-col__hour {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.analytics-col--current .analytics-col__plot {
+  background: rgba(80, 200, 200, 0.07);
+  border-bottom-color: rgba(80, 200, 200, 0.6);
+}
+
+.analytics-col--current .analytics-col__hour {
+  color: rgba(80, 200, 200, 0.95);
+  font-weight: 700;
+}
+
+.analytics-col--gap .analytics-col__demand {
+  background: rgba(232, 84, 72, 0.78);
+}
+
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+}
+
+.analytics-summary__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: #0e1218;
+}
+
+.analytics-summary__cell--gap { background: rgba(232, 84, 72, 0.15); }
+.analytics-summary__cell--lost { background: rgba(232, 84, 72, 0.10); }
+
+.analytics-summary__label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.analytics-summary__value {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .analytics-summary { grid-template-columns: repeat(3, 1fr); }
+  .analytics-chart__grid { gap: 2px; height: 140px; }
 }

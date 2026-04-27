@@ -253,11 +253,16 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
         polylineCumMeters = buildPolylineCumMeters(polyline);
         polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];
 
-        // Snap each stop to polyline, enforce monotonic increasing
+        // Snap each stop to polyline, then enforce monotonic increase + min-segment length.
+        // Without the min-segment guard, two stops can snap to the same meter
+        // and create a zero-length segment — buses then jump or freeze at that
+        // stop instead of moving smoothly.
+        const MIN_SEGMENT_METERS = 50;
         stopPolylineMeters = stops.map((s) => snapToPolyline(s.coordinates, polyline, polylineCumMeters));
         for (let i = 1; i < stopPolylineMeters.length; i++) {
-          if (stopPolylineMeters[i] < stopPolylineMeters[i - 1]) {
-            stopPolylineMeters[i] = stopPolylineMeters[i - 1];
+          const prev = stopPolylineMeters[i - 1];
+          if (stopPolylineMeters[i] < prev + MIN_SEGMENT_METERS) {
+            stopPolylineMeters[i] = Math.min(polylineTotalMeters, prev + MIN_SEGMENT_METERS);
           }
         }
       } else {
@@ -374,24 +379,26 @@ function buildVehiclePosition(
     const tEnd = profile.stopOffsets[seg + 1]! * tripVariation;
     const segDur = tEnd - tStart;
 
-    // Determine if bus is in dwelling phase at stop (3 min) or moving
+    // Short segments (rare, e.g. very close stops) skip dwell entirely so the
+    // bus keeps moving rather than getting stuck longer than the segment lasts.
+    const effectiveDwell = segDur > DWELL_TIME_MINUTES * 1.5 ? DWELL_TIME_MINUTES : 0;
     const tInSegment = t - tStart;
-    const isDwelling = tInSegment < DWELL_TIME_MINUTES && segDur > DWELL_TIME_MINUTES;
+    const isDwelling = effectiveDwell > 0 && tInSegment < effectiveDwell;
 
-    // If dwelling, position stays at start of segment; otherwise interpolate
-    const ratio = segDur > 0 ? clamp((tInSegment - (isDwelling ? 0 : DWELL_TIME_MINUTES)) / (segDur - DWELL_TIME_MINUTES), 0, 1) : 0;
+    // Linear interpolation from end-of-dwell to end-of-segment.
+    const movingTime = Math.max(0.0001, segDur - effectiveDwell);
+    const ratio = isDwelling ? 0 : clamp((tInSegment - effectiveDwell) / movingTime, 0, 1);
 
     const mStart = profile.stopPolylineMeters[seg]!;
     const mEnd = profile.stopPolylineMeters[seg + 1]!;
-    const meters = isDwelling ? mStart : mStart + (mEnd - mStart) * ratio;
+    const meters = mStart + (mEnd - mStart) * ratio;
 
     const pos = posOnPolyline(meters, profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
 
-    // Per-segment speed: segment distance / segment time (excluding dwell)
+    // Per-segment speed: segment distance / moving time (excluding dwell)
     const segmentDistance = mEnd - mStart;
-    const movingTime = segDur - DWELL_TIME_MINUTES;
-    speedKph = movingTime > 0
+    speedKph = movingTime > 0 && !isDwelling
       ? Math.round((segmentDistance / 1000 / (movingTime / 60)) * 10) / 10
       : 0;
 

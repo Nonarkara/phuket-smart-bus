@@ -51,15 +51,13 @@ export function HeroSection({ routeId, stops, lang, comparisons }: HeroSectionPr
   const [countdown, setCountdown] = useState(0);
   const [destination, setDestination] = useState("Patong");
 
-  // Update countdown every 200ms for smooth ticking at 30× speed
   useEffect(() => {
     function updateCountdown() {
       const eta = getNextBusEta(routeId, stops);
       if (eta) {
-        // Subtract fractional seconds to account for sim time
         const fracMin = getBangkokNowFractionalMinutes();
         const fracEta = eta.minutes - (fracMin % 1);
-        setCountdown(Math.max(0, Math.ceil(fracEta * 60))); // Convert to seconds
+        setCountdown(Math.max(0, Math.ceil(fracEta * 60)));
         setDestination(eta.destination);
       } else {
         setCountdown(0);
@@ -72,57 +70,31 @@ export function HeroSection({ routeId, stops, lang, comparisons }: HeroSectionPr
 
   const minutes = Math.floor(countdown / 60);
   const seconds = countdown % 60;
-  const countdownStr = `${minutes}:${String(seconds).padStart(2, "0")}`;
+  const countdownStr = countdown > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : "—:——";
 
-  // Find relevant comparison (default to first available or fallback)
-  const comparison = comparisons.find((c) => pick(c.destinationName, lang).toLowerCase() === destination.toLowerCase()) ||
+  const comparison = comparisons.find((c) => pick(c.destinationName, lang).toLowerCase().includes(destination.toLowerCase())) ||
     comparisons.find((c) => pick(c.destinationName, lang).toLowerCase() === "patong") ||
     comparisons[0];
 
-  const comparisonData = comparison ? {
-    destination: pick(comparison.destinationName, lang),
-    busThb: comparison.bus.fareThb,
-    grabThb: comparison.taxi.minThb,
-    grabHigh: comparison.taxi.maxThb
-  } : {
-    destination: "Patong",
-    busThb: 100,
-    grabThb: 450,
-    grabHigh: 900
-  };
+  const busThb = comparison?.bus.fareThb ?? 100;
+  const grabThb = comparison?.taxi.minThb ?? 650;
+  const grabHigh = comparison?.taxi.maxThb ?? 1000;
+  const savings = grabThb > 0 ? Math.round(((grabThb - busThb) / grabThb) * 100) : 85;
 
   return (
     <div className="hero-section">
-      <div className="hero-section__title">{pick(ui.heroNextBus, lang)}</div>
-      <div className="hero-section__destination">{destination}</div>
-
-      <div className="hero-section__countdown">{countdownStr}</div>
-      <div className="hero-section__countdown-label">{pick(ui.heroMinutes, lang)}</div>
-
-      <div className="hero-section__price-row">
-        <div className="hero-section__our-price">
-          <div className="hero-section__price">฿{comparisonData.busThb}</div>
-          <div className="hero-section__price-label">{pick(ui.heroBusPrice, lang)}</div>
+      <div className="hero-section__row">
+        <div className="hero-section__col">
+          <div className="hero-section__label">{pick(ui.heroNextBus, lang)} · {destination}</div>
+          <div className="hero-section__countdown">{countdownStr}</div>
         </div>
-
-        <div className="hero-section__divider" />
-
-        <div className="hero-section__grab-price">
-          <div className="hero-section__comparison">
-            <span className="hero-section__vs">{pick(ui.heroVsGrab, lang)}</span>
-            <span className="hero-section__grab-range">
-              ฿{comparisonData.grabThb}–{comparisonData.grabHigh}
-            </span>
-          </div>
-          <div className="hero-section__savings">
-            {Math.round(((comparisonData.grabThb - comparisonData.busThb) / comparisonData.grabThb) * 100)}% {pick(ui.heroSavings, lang)}
+        <div className="hero-section__col hero-section__col--right">
+          <div className="hero-section__price">฿{busThb}</div>
+          <div className="hero-section__compare">
+            {pick(ui.heroVsGrab, lang)} ฿{grabThb}–{grabHigh} · {savings}% {pick(ui.heroSavings, lang)}
           </div>
         </div>
       </div>
-
-      <button className="hero-section__cta" type="button">
-        {pick(ui.heroRequestBus, lang)}
-      </button>
     </div>
   );
 }

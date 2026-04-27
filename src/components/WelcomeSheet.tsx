@@ -222,22 +222,11 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
 
   if (step === "ask") {
     if (!expanded) {
-      const timeDisplay = tickingDisplay.text;
-      const timeClass = tickingDisplay.cls;
-      const primaryDest = tickingDisplay.dest;
-
       return (
         <div className="welcome-sheet welcome-sheet--collapsed" onClick={() => setExpanded(true)}>
           <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
-          <div className="welcome-sheet__peek">
-            <div className="welcome-sheet__next-bus">
-              <span className="welcome-sheet__next-label">Next bus to {primaryDest}</span>
-              <span className={`welcome-sheet__next-time ${timeClass}`}>{timeDisplay}</span>
-            </div>
-            <div className="welcome-sheet__peek-right">
-              <span className="welcome-sheet__peek-fare">฿{BUS_FARE}</span>
-              <span className="welcome-sheet__peek-hint">Tap for routes</span>
-            </div>
+          <div className="welcome-sheet__peek welcome-sheet__peek--minimal">
+            <span className="welcome-sheet__peek-hint">Plan a trip · Routes · Fares</span>
           </div>
         </div>
       );

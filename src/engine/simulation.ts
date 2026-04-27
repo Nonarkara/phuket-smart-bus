@@ -498,3 +498,54 @@ export function getFlightFeed(): { recent: Flight[]; upcoming: Flight[] } {
     .slice(0, 5);
   return { recent, upcoming };
 }
+
+// ---------------------------------------------------------------------------
+// Hourly demand vs supply — the core of the demand-supply chart
+// ---------------------------------------------------------------------------
+
+export type HourlyDemandSupply = {
+  hour: number;            // 0–23, but only 6–22 are meaningful
+  arrivalPax: number;      // raw arriving passengers from flights
+  busDemandPax: number;    // arrivalPax × BUS_CAPTURE_RATE
+  busSeatsAvailable: number; // scheduled bus capacity at this hour
+  servedPax: number;       // min(demand, supply)
+  unmetPax: number;        // demand - supply when positive
+  revenueThb: number;      // servedPax × fare
+};
+
+export function getHourlyDemandSupply(): HourlyDemandSupply[] {
+  // 1) Bucket flight arrivals into hours, accounting for ~30 min customs lag.
+  const arrivalByHour: number[] = Array.from({ length: 24 }, () => 0);
+  for (const f of FLIGHTS) {
+    // Bus demand appears ~30 min after touchdown (customs+baggage)
+    const bookableMin = f.arrMin + 30;
+    const h = Math.floor(bookableMin / 60);
+    if (h >= 0 && h < 24) arrivalByHour[h] += f.pax;
+  }
+
+  // 2) Bucket scheduled bus departures into hours; each bus leaves with a full
+  //    25-seat capacity. Multiple departures within the same hour stack.
+  const seatsByHour: number[] = Array.from({ length: 24 }, () => 0);
+  for (const dep of AIRPORT_DEPARTURES) {
+    const h = Math.floor(dep / 60);
+    if (h >= 0 && h < 24) seatsByHour[h] += BUS_CAPACITY;
+  }
+
+  // 3) Combine — per-hour demand vs supply.
+  return arrivalByHour.map((pax, hour) => {
+    const busDemandPax = Math.round(pax * BUS_CAPTURE_RATE);
+    const busSeatsAvailable = seatsByHour[hour];
+    const servedPax = Math.min(busDemandPax, busSeatsAvailable);
+    const unmetPax = Math.max(0, busDemandPax - busSeatsAvailable);
+    const revenueThb = servedPax * 100; // ฿100 fare flat
+    return {
+      hour,
+      arrivalPax: pax,
+      busDemandPax,
+      busSeatsAvailable,
+      servedPax,
+      unmetPax,
+      revenueThb
+    };
+  });
+}

@@ -20,6 +20,7 @@ import {
 } from "./engine/opsFlightSchedule";
 import { getDirectionPolyline } from "./engine/routes";
 import { interpolateCoordinate, interpolateHeading } from "./lib/vehicleAnimation";
+import { AnalyticsPanel } from "./components/AnalyticsPanel";
 
 // ---------------------------------------------------------------------------
 // Animated counter — numbers roll up, not snap
@@ -463,6 +464,8 @@ export default function DashboardV2() {
           </div>
 
           <HourlyFlightPulse buckets={hourlyFlights} simMinutes={state.simMinutes} />
+
+          <AnalyticsPanel lang="en" />
 
           <RegionChart data={state.regionBreakdown} maxPax={Math.max(...state.regionBreakdown.map(r => r.pax), 1)} />
 

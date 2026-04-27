@@ -1,125 +1,119 @@
 import { useEffect, useState } from "react";
 import type { Lang } from "@shared/types";
-import { getLineMetrics } from "../engine/simulation";
-import { getSimulatedMinutes } from "../engine/fleetSimulator";
+import { getHourlyDemandSupply, simNow, type HourlyDemandSupply } from "../engine/simulation";
 
 interface AnalyticsPanelProps {
   lang: Lang;
 }
 
-// Simulated hourly data (in reality, this would come from the simulation engine)
-function getHourlyAnalytics(simMinutes: number) {
-  const hour = Math.floor(simMinutes / 60);
-  const hourlyFlights = [2, 3, 5, 6, 8, 7, 6, 5, 4, 3, 3, 2, 2, 2, 3, 3, 4];
-  const hourlyRevenue = [200, 350, 600, 800, 950, 900, 850, 750, 600, 400, 300, 250, 300, 350, 400, 450, 500];
-  const busCapacity = [25, 25, 25, 25, 25, 25, 25];
-  const busDemand = [15, 22, 28, 32, 35, 28, 20];
+const HOURS = Array.from({ length: 17 }, (_, i) => 6 + i); // 06:00 → 22:00
 
-  return {
-    currentHour: hour,
-    flights: hourlyFlights,
-    revenue: hourlyRevenue,
-    busCapacity,
-    busDemand,
-  };
+function fmtThb(n: number): string {
+  if (n >= 1000) return `฿${(n / 1000).toFixed(1)}k`;
+  return `฿${n}`;
 }
 
-export function AnalyticsPanel({ lang }: AnalyticsPanelProps) {
-  const [analytics, setAnalytics] = useState(() => getHourlyAnalytics(getSimulatedMinutes()));
+export function AnalyticsPanel({ lang: _lang }: AnalyticsPanelProps) {
+  const [data, setData] = useState<HourlyDemandSupply[]>(() => getHourlyDemandSupply());
+  const [currentHour, setCurrentHour] = useState<number>(() => Math.floor(simNow() / 60));
 
   useEffect(() => {
     const id = setInterval(() => {
-      setAnalytics(getHourlyAnalytics(getSimulatedMinutes()));
-    }, 2000);
+      setData(getHourlyDemandSupply());
+      setCurrentHour(Math.floor(simNow() / 60));
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
-  const maxFlights = Math.max(...analytics.flights);
-  const maxRevenue = Math.max(...analytics.revenue);
-  const hours = Array.from({ length: 17 }, (_, i) => 6 + i);
+  // Trim to service window
+  const rows = HOURS.map((h) => data[h]).filter(Boolean);
+  if (rows.length === 0) return null;
+
+  const maxDemand = Math.max(1, ...rows.map((r) => r.busDemandPax));
+  const maxSupply = Math.max(1, ...rows.map((r) => r.busSeatsAvailable));
+  const yMax = Math.max(maxDemand, maxSupply, 25);
+  const maxRevenue = Math.max(1, ...rows.map((r) => r.revenueThb));
+
+  const totalDemand = rows.reduce((s, r) => s + r.busDemandPax, 0);
+  const totalServed = rows.reduce((s, r) => s + r.servedPax, 0);
+  const totalUnmet = rows.reduce((s, r) => s + r.unmetPax, 0);
+  const totalRevenue = rows.reduce((s, r) => s + r.revenueThb, 0);
+  const lostRevenue = totalUnmet * 100;
 
   return (
     <div className="analytics-panel">
-      <h3 className="analytics-panel__title">Daily Analytics</h3>
-
-      {/* Flights by hour */}
-      <div className="analytics-section">
-        <h4 className="analytics-section__title">Flights Arriving by Hour</h4>
-        <div className="analytics-chart">
-          {hours.map((h) => {
-            const idx = h - 6;
-            const flights = analytics.flights[idx] ?? 0;
-            const height = maxFlights > 0 ? (flights / maxFlights) * 100 : 0;
-            const isCurrent = h === analytics.currentHour;
-            return (
-              <div
-                key={h}
-                className={`analytics-bar ${isCurrent ? "is-current" : ""}`}
-                style={{ "--height": `${height}%` } as any}
-                title={`${h}:00 - ${flights} flights`}
-              >
-                <span className="analytics-bar__value">{flights}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div className="analytics-legend">
-          Peak arrivals drive demand. Most passengers clear customs within 30 min.
+      <div className="analytics-panel__head">
+        <h3 className="analytics-panel__title">Demand vs Supply · By Hour</h3>
+        <div className="analytics-panel__legend">
+          <span className="analytics-panel__legend-item analytics-panel__legend-item--demand">
+            <span className="analytics-panel__legend-swatch analytics-panel__legend-swatch--demand" /> Bus demand (pax)
+          </span>
+          <span className="analytics-panel__legend-item analytics-panel__legend-item--supply">
+            <span className="analytics-panel__legend-swatch analytics-panel__legend-swatch--supply" /> Seats available
+          </span>
+          <span className="analytics-panel__legend-item analytics-panel__legend-item--revenue">
+            <span className="analytics-panel__legend-swatch analytics-panel__legend-swatch--revenue" /> Revenue (฿)
+          </span>
         </div>
       </div>
 
-      {/* Revenue by hour */}
-      <div className="analytics-section">
-        <h4 className="analytics-section__title">Revenue by Hour</h4>
-        <div className="analytics-chart">
-          {hours.map((h) => {
-            const idx = h - 6;
-            const revenue = analytics.revenue[idx] ?? 0;
-            const height = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0;
-            const isCurrent = h === analytics.currentHour;
+      <div className="analytics-chart">
+        <div className="analytics-chart__grid">
+          {rows.map((r) => {
+            const isCurrent = r.hour === currentHour;
+            const demandPct = (r.busDemandPax / yMax) * 100;
+            const supplyPct = (r.busSeatsAvailable / yMax) * 100;
+            const revenuePct = (r.revenueThb / maxRevenue) * 100;
+            const isGap = r.unmetPax > 0;
             return (
               <div
-                key={`rev-${h}`}
-                className={`analytics-bar analytics-bar--green ${isCurrent ? "is-current" : ""}`}
-                style={{ "--height": `${height}%` } as any}
-                title={`${h}:00 - ฿${revenue}`}
+                key={r.hour}
+                className={`analytics-col ${isCurrent ? "analytics-col--current" : ""} ${isGap ? "analytics-col--gap" : ""}`}
+                title={`${String(r.hour).padStart(2, "0")}:00 · demand ${r.busDemandPax} pax · seats ${r.busSeatsAvailable} · ${fmtThb(r.revenueThb)}${r.unmetPax > 0 ? ` · ${r.unmetPax} unmet` : ""}`}
               >
-                <span className="analytics-bar__value">฿{revenue}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div className="analytics-legend">
-          Morning peak drives 45% of daily revenue. Bus fares are 87% cheaper than taxis.
-        </div>
-      </div>
-
-      {/* Capacity demand */}
-      <div className="analytics-section">
-        <h4 className="analytics-section__title">Capacity Demand vs Supply</h4>
-        <div className="analytics-capacity">
-          {[...Array(7)].map((_, i) => {
-            const demand = analytics.busDemand[i] ?? 0;
-            const capacity = analytics.busCapacity[i] ?? 0;
-            const full = demand >= capacity;
-            return (
-              <div key={i} className="capacity-row">
-                <span className="capacity-row__label">Bus {i + 1}</span>
-                <div className="capacity-row__bar">
+                <div className="analytics-col__plot">
                   <div
-                    className={`capacity-row__fill ${full ? "capacity-row__fill--full" : ""}`}
-                    style={{ width: `${(demand / capacity) * 100}%` }}
+                    className="analytics-col__demand"
+                    style={{ height: `${demandPct}%` }}
+                  />
+                  <div
+                    className="analytics-col__supply"
+                    style={{ bottom: `${supplyPct}%` }}
                   />
                 </div>
-                <span className={`capacity-row__stat ${full ? "capacity-row__stat--full" : ""}`}>
-                  {demand}/{capacity}
-                </span>
+                <div className="analytics-col__revenue-track">
+                  <div
+                    className="analytics-col__revenue-fill"
+                    style={{ height: `${revenuePct}%` }}
+                  />
+                </div>
+                <div className="analytics-col__hour">{String(r.hour).padStart(2, "0")}</div>
               </div>
             );
           })}
         </div>
-        <div className="analytics-legend">
-          Buses 1–3 at capacity during morning peak. Adding peak-hour fleet would increase revenue 23%.
+      </div>
+
+      <div className="analytics-summary">
+        <div className="analytics-summary__cell">
+          <div className="analytics-summary__label">Total demand</div>
+          <div className="analytics-summary__value">{totalDemand.toLocaleString()} pax</div>
+        </div>
+        <div className="analytics-summary__cell">
+          <div className="analytics-summary__label">Served</div>
+          <div className="analytics-summary__value">{totalServed.toLocaleString()} pax</div>
+        </div>
+        <div className="analytics-summary__cell analytics-summary__cell--gap">
+          <div className="analytics-summary__label">Unmet</div>
+          <div className="analytics-summary__value">{totalUnmet.toLocaleString()} pax</div>
+        </div>
+        <div className="analytics-summary__cell">
+          <div className="analytics-summary__label">Revenue</div>
+          <div className="analytics-summary__value">{fmtThb(totalRevenue)}</div>
+        </div>
+        <div className="analytics-summary__cell analytics-summary__cell--lost">
+          <div className="analytics-summary__label">Lost (capacity)</div>
+          <div className="analytics-summary__value">{fmtThb(lostRevenue)}</div>
         </div>
       </div>
     </div>
