@@ -94,11 +94,21 @@ function buildPolylineCumMeters(poly: LatLngTuple[]): number[] {
   return cum;
 }
 
-/** Find the distance along `poly` that is closest to `pt`. */
-function snapToPolyline(pt: LatLngTuple, poly: LatLngTuple[], cum: number[]): number {
+/** Snap a point to the polyline, only considering vertices at or beyond
+ *  `minMeters`. Forward-constrained search keeps successive stop meters
+ *  monotonic in travel order — without it, a stop that lies near a
+ *  doubling-back leg of the road snaps to the wrong leg, the bus
+ *  interpolates between unrelated points and visibly "flies." */
+function snapToPolylineForward(
+  pt: LatLngTuple,
+  poly: LatLngTuple[],
+  cum: number[],
+  minMeters: number
+): number {
   let best = Infinity;
-  let bestD = 0;
+  let bestD = minMeters;
   for (let i = 0; i < poly.length; i++) {
+    if (cum[i] < minMeters) continue;
     const d = haversineDistanceMeters(pt, poly[i]);
     if (d < best) { best = d; bestD = cum[i]; }
   }
@@ -253,17 +263,19 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
         polylineCumMeters = buildPolylineCumMeters(polyline);
         polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];
 
-        // Snap each stop to polyline, then enforce monotonic increase + min-segment length.
-        // Without the min-segment guard, two stops can snap to the same meter
-        // and create a zero-length segment — buses then jump or freeze at that
-        // stop instead of moving smoothly.
+        // Snap each stop to the polyline using a forward-constrained search:
+        // each stop can only match polyline vertices ahead of the previous
+        // stop's snap meter. A simple global nearest-vertex search would let
+        // a stop "jump back" to an earlier crossing on roads that loop
+        // (Rawai→Airport passes through the same beach corridor twice).
         const MIN_SEGMENT_METERS = 50;
-        stopPolylineMeters = stops.map((s) => snapToPolyline(s.coordinates, polyline, polylineCumMeters));
-        for (let i = 1; i < stopPolylineMeters.length; i++) {
-          const prev = stopPolylineMeters[i - 1];
-          if (stopPolylineMeters[i] < prev + MIN_SEGMENT_METERS) {
-            stopPolylineMeters[i] = Math.min(polylineTotalMeters, prev + MIN_SEGMENT_METERS);
-          }
+        stopPolylineMeters = [];
+        let prevMeters = 0;
+        for (let i = 0; i < stops.length; i++) {
+          const floor = i === 0 ? 0 : prevMeters + MIN_SEGMENT_METERS;
+          const m = snapToPolylineForward(stops[i].coordinates, polyline, polylineCumMeters, floor);
+          stopPolylineMeters.push(Math.min(polylineTotalMeters, m));
+          prevMeters = stopPolylineMeters[i];
         }
       } else {
         // Ferries with no/tiny polyline — build straight-line polyline from stops

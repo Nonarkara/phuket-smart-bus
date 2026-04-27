@@ -465,8 +465,6 @@ export default function DashboardV2() {
 
           <HourlyFlightPulse buckets={hourlyFlights} simMinutes={state.simMinutes} />
 
-          <AnalyticsPanel lang="en" />
-
           <RegionChart data={state.regionBreakdown} maxPax={Math.max(...state.regionBreakdown.map(r => r.pax), 1)} />
 
           <FlightScheduleRail flights={dailyFlights} simMinutes={state.simMinutes} />
@@ -566,8 +564,9 @@ export default function DashboardV2() {
         </aside>
       </main>
 
-      {/* Bottom: The Accumulator Bar */}
+      {/* Bottom: Live demand–supply chart paired with the accumulator bar */}
       <footer className="v2-footer">
+        <AnalyticsPanel lang="en" />
         <div className="v2-accum">
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={state.activeBuses} /></span>

@@ -2916,6 +2916,7 @@ a { color: var(--tint); }
   gap: 10px;
   padding: 12px;
   overflow-y: auto;
+  overflow-x: hidden;
   border-left: 1px solid #e8e8e8;
   background: #fff;
 }
@@ -5141,6 +5142,7 @@ a { color: var(--tint); }
 .v2-panel {
   padding: 18px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -5216,7 +5218,7 @@ a { color: var(--tint); }
 .v2-schedule__header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .v2-schedule__title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.4); }
 .v2-schedule__meta { font-family: "SF Mono", monospace; font-size: 10px; color: rgba(255,255,255,0.5); font-variant-numeric: tabular-nums; }
-.v2-schedule__rail { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow-y: auto; padding-right: 2px; }
+.v2-schedule__rail { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
 .v2-schedule__row { display: grid; grid-template-columns: 42px 36px 58px 1fr 40px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 14px; transition: background 0.3s ease, opacity 0.3s ease; scroll-margin-block: 140px; }
 .v2-schedule__row--past { opacity: 0.34; }
 .v2-schedule__row--future { opacity: 0.72; }
@@ -5717,6 +5719,21 @@ a { color: var(--tint); }
 .analytics-col--gap .analytics-col__demand {
   background: rgba(232, 84, 72, 0.78);
 }
+
+.analytics-col--future .analytics-col__plot { opacity: 0.35; }
+.analytics-col--future .analytics-col__hour { color: rgba(255, 255, 255, 0.25); }
+.analytics-col--future .analytics-col__revenue-track { opacity: 0.25; }
+
+.v2-footer .analytics-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 12px;
+  box-shadow: none;
+}
+.v2-footer .analytics-panel .analytics-summary { display: none; }
+.v2-footer .analytics-panel .analytics-panel__head { padding: 0 4px 8px; }
+.v2-footer .analytics-chart { padding: 0; }
 
 .analytics-summary {
   display: grid;

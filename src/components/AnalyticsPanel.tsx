@@ -34,10 +34,11 @@ export function AnalyticsPanel({ lang: _lang }: AnalyticsPanelProps) {
   const yMax = Math.max(maxDemand, maxSupply, 25);
   const maxRevenue = Math.max(1, ...rows.map((r) => r.revenueThb));
 
-  const totalDemand = rows.reduce((s, r) => s + r.busDemandPax, 0);
-  const totalServed = rows.reduce((s, r) => s + r.servedPax, 0);
-  const totalUnmet = rows.reduce((s, r) => s + r.unmetPax, 0);
-  const totalRevenue = rows.reduce((s, r) => s + r.revenueThb, 0);
+  const past = rows.filter((r) => r.hour <= currentHour);
+  const totalDemand = past.reduce((s, r) => s + r.busDemandPax, 0);
+  const totalServed = past.reduce((s, r) => s + r.servedPax, 0);
+  const totalUnmet = past.reduce((s, r) => s + r.unmetPax, 0);
+  const totalRevenue = past.reduce((s, r) => s + r.revenueThb, 0);
   const lostRevenue = totalUnmet * 100;
 
   return (
@@ -61,15 +62,18 @@ export function AnalyticsPanel({ lang: _lang }: AnalyticsPanelProps) {
         <div className="analytics-chart__grid">
           {rows.map((r) => {
             const isCurrent = r.hour === currentHour;
-            const demandPct = (r.busDemandPax / yMax) * 100;
-            const supplyPct = (r.busSeatsAvailable / yMax) * 100;
-            const revenuePct = (r.revenueThb / maxRevenue) * 100;
-            const isGap = r.unmetPax > 0;
+            const isFuture = r.hour > currentHour;
+            const demandPct = isFuture ? 0 : (r.busDemandPax / yMax) * 100;
+            const supplyPct = isFuture ? 0 : (r.busSeatsAvailable / yMax) * 100;
+            const revenuePct = isFuture ? 0 : (r.revenueThb / maxRevenue) * 100;
+            const isGap = !isFuture && r.unmetPax > 0;
             return (
               <div
                 key={r.hour}
-                className={`analytics-col ${isCurrent ? "analytics-col--current" : ""} ${isGap ? "analytics-col--gap" : ""}`}
-                title={`${String(r.hour).padStart(2, "0")}:00 · demand ${r.busDemandPax} pax · seats ${r.busSeatsAvailable} · ${fmtThb(r.revenueThb)}${r.unmetPax > 0 ? ` · ${r.unmetPax} unmet` : ""}`}
+                className={`analytics-col ${isCurrent ? "analytics-col--current" : ""} ${isFuture ? "analytics-col--future" : ""} ${isGap ? "analytics-col--gap" : ""}`}
+                title={isFuture
+                  ? `${String(r.hour).padStart(2, "0")}:00 · pending`
+                  : `${String(r.hour).padStart(2, "0")}:00 · demand ${r.busDemandPax} pax · seats ${r.busSeatsAvailable} · ${fmtThb(r.revenueThb)}${r.unmetPax > 0 ? ` · ${r.unmetPax} unmet` : ""}`}
               >
                 <div className="analytics-col__plot">
                   <div
