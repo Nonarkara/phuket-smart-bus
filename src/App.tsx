@@ -36,7 +36,6 @@ import { StopSpotlight } from "./components/StopSpotlight";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
 import { HeroSection } from "./components/HeroSection";
-// CompareView removed — fare comparison is inline in WelcomeSheet
 import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
 import { haversineDistanceMeters } from "./lib/geo";

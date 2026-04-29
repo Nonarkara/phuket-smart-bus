@@ -6,11 +6,7 @@ import type {
 } from "@shared/types";
 import { haversineDistanceMeters } from "./geo";
 import { routeDestinationLabel } from "./i18n";
-import {
-  getBangkokNowMinutes,
-  getBangkokNowFractionalMinutes,
-  parseScheduleEntries
-} from "./time";
+import { getBangkokNowMinutes, parseScheduleEntries } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG } from "./config";
 
@@ -249,8 +245,8 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
       const { departures, interval } = parseScheduleEntries(stops[0]?.scheduleText ?? "");
       if (stops.length < 2 || departures.length === 0) return null;
 
-      const stopOffsets = deriveStopOffsets(stops, departures);
-      const tripDurationMinutes = deriveTripDuration(stops, departures, stopOffsets);
+      let stopOffsets = deriveStopOffsets(stops, departures);
+      let tripDurationMinutes = deriveTripDuration(stops, departures, stopOffsets);
 
       // Get polyline for this direction
       const polyline = getDirectionPolyline(routeId, stops[0].coordinates);
@@ -262,6 +258,16 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
       if (polyline.length >= 2) {
         polylineCumMeters = buildPolylineCumMeters(polyline);
         polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];
+
+        // Estimate realistic duration: 27 km/h avg speed for buses = ~450 meters per minute.
+        // For ferries (~15 knots) = ~463 meters per minute. Let's use 450 m/min.
+        const isFerry = routeId.includes('ferry') || routeId.includes('boat');
+        const speedMetersPerMin = isFerry ? 460 : 450;
+        const estMins = Math.round(polylineTotalMeters / speedMetersPerMin);
+        if (tripDurationMinutes < estMins) {
+          tripDurationMinutes = estMins;
+        }
+
 
         // Snap each stop to the polyline using a forward-constrained search:
         // each stop can only match polyline vertices ahead of the previous
@@ -277,6 +283,12 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
           stopPolylineMeters.push(Math.min(polylineTotalMeters, m));
           prevMeters = stopPolylineMeters[i];
         }
+
+        // Re-derive stop offsets proportionally to distance to prevent the bus 
+        // from teleporting over segments where the parsed schedule was identical
+        stopOffsets = stopPolylineMeters.map(m => 
+          Math.round((m / polylineTotalMeters) * tripDurationMinutes)
+        );
       } else {
         // Ferries with no/tiny polyline — build straight-line polyline from stops
         const pts: LatLngTuple[] = stops.map((s) => s.coordinates);
@@ -578,36 +590,14 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Time acceleration for demo — 1 real second = SIM_SPEED simulated seconds.
-// Anchored to the real clock so the simulation always starts at "now" and
-// accelerates forward. Buses visibly glide at any zoom level.
-// ---------------------------------------------------------------------------
-
-const SIM_SPEED = 30; // 30× real time — buses visibly glide at any zoom level
-const simAnchorReal = Date.now();
-
-// Service window: 06:00 (360) to 22:30 (1350). Anchor sim at 07:00 so the
-// first scheduled departure (08:15) is reachable within ~2.5 real minutes
-// of page load — fast feedback without skipping the morning entirely.
-// After ~33 real minutes the sim wraps back to 07:00.
-const SERVICE_START = 360;  // 06:00 (chart floor)
-const SERVICE_END = 1350;   // 22:30
-const SERVICE_WINDOW = SERVICE_END - SERVICE_START; // 990 min = 16.5 hours
-const SIM_OPEN_MIN = 540;   // sim starts at 09:00 — past the first scheduled
-                            // bus departure (08:15), so the right-bar metrics
-                            // are non-zero within seconds of page load.
-
 export function getSimulatedMinutes(): number {
-  const elapsedRealMs = Date.now() - simAnchorReal;
-  const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
-  return SERVICE_START + ((SIM_OPEN_MIN - SERVICE_START + elapsedSimMinutes) % SERVICE_WINDOW + SERVICE_WINDOW) % SERVICE_WINDOW;
+  return getBangkokNowMinutes(new Date());
 }
 
-/** All vehicles including orange line competitor, computed at the simulated instant.
- *  Runs at 10× real time so buses visibly move at every zoom level. */
+/** All vehicles including orange line competitor, computed at the real instant.
+ *  Runs at 1× real time so buses move at realistic speeds. */
 export function getVehiclesNow(now = new Date()): VehiclePosition[] {
-  const nowMin = getSimulatedMinutes();
+  const nowMin = getBangkokNowMinutes(now);
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];
