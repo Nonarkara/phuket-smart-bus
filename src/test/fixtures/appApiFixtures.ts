@@ -61,7 +61,9 @@ function buildVehicle(
     freshness: "fresh",
     status: speedKph > 4 ? "moving" : speedKph === 0 ? "dwelling" : "unknown",
     distanceToDestinationMeters: null,
-    stopsAway: null
+    stopsAway: null,
+    polylineMeters: null,
+    polylineFirstStop: null
   };
 }
 

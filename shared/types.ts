@@ -232,6 +232,15 @@ export interface VehiclePosition {
   status: "moving" | "dwelling" | "unknown";
   distanceToDestinationMeters: number | null;
   stopsAway: number | null;
+  /** Distance in meters along the bus's active polyline.
+   *  Lets the renderer interpolate ALONG the road between ticks instead
+   *  of cutting straight lines (which makes buses fly through buildings
+   *  on curved roads). Null when the vehicle is at a depot / unmapped. */
+  polylineMeters: number | null;
+  /** First-stop coordinates of the active direction. Together with
+   *  routeId this is enough for the renderer to look up the same
+   *  polyline the engine used (`getDirectionPolyline(routeId, firstStop)`). */
+  polylineFirstStop: LatLngTuple | null;
 }
 
 export interface Advisory {

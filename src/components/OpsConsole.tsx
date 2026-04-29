@@ -618,7 +618,7 @@ function buildFallbackDashboard(): OpsDashboardPayload {
         coordinates: [wp[idx]![0] + (wp[idx + 1]![0] - wp[idx]![0]) * seg, wp[idx]![1] + (wp[idx + 1]![1] - wp[idx]![1]) * seg],
         heading: i % 2 === 0 ? 0 : 180, speedKph: act > 0 ? 25 + Math.random() * 15 : 0,
         destination: lt(route.sn), updatedAt, telemetrySource: "schedule_mock",
-        freshness: "fresh", status: Math.random() > 0.3 ? "moving" : "dwelling", distanceToDestinationMeters: null, stopsAway: null,
+        freshness: "fresh", status: Math.random() > 0.3 ? "moving" : "dwelling", distanceToDestinationMeters: null, stopsAway: null, polylineMeters: null, polylineFirstStop: null,
       });
     }
   }
@@ -1011,7 +1011,7 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
       const nIdx = Math.min(idx+1,wp.length-1);
       const dLat=wp[nIdx][0]-wp[idx][0], dLng=wp[nIdx][1]-wp[idx][1];
       const heading = reverse?(Math.atan2(-dLng,-dLat)*180/Math.PI+360)%360:(Math.atan2(dLng,dLat)*180/Math.PI+360)%360;
-      vehicles.push({id:`sim-${rid}-${dep}`,routeId:rid,licensePlate:`SIM-${vehicles.length}`,vehicleId:`sv-${rid}-${dep}`,deviceId:null,coordinates:[lat,lng],heading,speedKph:simSpeed(progress,rid),destination:lt(rid),updatedAt:new Date().toISOString(),telemetrySource:"schedule_mock",freshness:"fresh",status:progress>0.95||progress<0.05?"dwelling":"moving",distanceToDestinationMeters:null,stopsAway:null});
+      vehicles.push({id:`sim-${rid}-${dep}`,routeId:rid,licensePlate:`SIM-${vehicles.length}`,vehicleId:`sv-${rid}-${dep}`,deviceId:null,coordinates:[lat,lng],heading,speedKph:simSpeed(progress,rid),destination:lt(rid),updatedAt:new Date().toISOString(),telemetrySource:"schedule_mock",freshness:"fresh",status:progress>0.95||progress<0.05?"dwelling":"moving",distanceToDestinationMeters:null,stopsAway:null,polylineMeters:null,polylineFirstStop:null});
     }
   }
   return {

@@ -5,6 +5,59 @@ import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/ty
 import { pick, ui } from "@/lib/i18n";
 import { getVehiclesNow } from "@/engine/dataProvider";
 import { interpolateCoordinate, interpolateHeading } from "@/lib/vehicleAnimation";
+import { haversineDistanceMeters } from "@/lib/geo";
+import { getDirectionPolyline } from "@/engine/routes";
+import { buildPolylineCumMeters, posOnPolyline } from "@/engine/polyline";
+
+// Polyline lookup cache, keyed by route + direction's first stop. The same
+// route has two polylines (outbound / inbound) — first-stop coords identify
+// which one. Cache forever: polylines are immutable for the session.
+type PolylineCacheEntry = { poly: LatLngTuple[]; cum: number[] };
+const polylineCache = new Map<string, PolylineCacheEntry>();
+function lookupPolyline(routeId: string, firstStop: LatLngTuple): PolylineCacheEntry | null {
+  const key = `${routeId}|${firstStop[0].toFixed(5)},${firstStop[1].toFixed(5)}`;
+  const hit = polylineCache.get(key);
+  if (hit) return hit;
+  try {
+    const poly = getDirectionPolyline(routeId as never, firstStop);
+    if (!poly || poly.length < 2) return null;
+    const entry: PolylineCacheEntry = { poly, cum: buildPolylineCumMeters(poly) };
+    polylineCache.set(key, entry);
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
+/** Interpolate a vehicle's position ALONG its polyline between two ticks.
+ *  Without this, a bus on a curved coastal road visibly cuts through
+ *  buildings and the ocean each second the engine emits a new position. */
+function interpolateAlongPolyline(
+  prev: VehiclePosition,
+  curr: VehiclePosition,
+  progress: number
+): { coordinates: LatLngTuple; heading: number } | null {
+  if (
+    prev.polylineMeters == null ||
+    curr.polylineMeters == null ||
+    !curr.polylineFirstStop
+  ) {
+    return null;
+  }
+  // If the bus changed direction (different first-stop), don't interpolate
+  // along a polyline — it switched routes mid-tick. Snap to the new pos.
+  const prevKey = prev.polylineFirstStop
+    ? `${prev.polylineFirstStop[0].toFixed(5)},${prev.polylineFirstStop[1].toFixed(5)}`
+    : null;
+  const currKey = `${curr.polylineFirstStop[0].toFixed(5)},${curr.polylineFirstStop[1].toFixed(5)}`;
+  if (prevKey !== currKey) return null;
+
+  const cache = lookupPolyline(curr.routeId, curr.polylineFirstStop);
+  if (!cache) return null;
+
+  const m = prev.polylineMeters + (curr.polylineMeters - prev.polylineMeters) * progress;
+  return posOnPolyline(m, cache.poly, cache.cum);
+}
 
 /**
  * Imperative vehicle layer — creates/updates/removes raw Leaflet markers
@@ -118,9 +171,26 @@ function VehicleLayer({ routeColorById, routeColorSignature, highlightVehicleId,
             return vehicle;
           }
 
+          // Polyline-aware interpolation — walks ALONG the road between
+          // the two sample points instead of cutting straight lines. This
+          // is the difference between a bus following the curving coastal
+          // road vs. visibly flying through buildings every second.
+          const onPath = interpolateAlongPolyline(current, vehicle, progress);
+          if (onPath) {
+            return {
+              ...vehicle,
+              coordinates: onPath.coordinates,
+              heading: onPath.heading
+            };
+          }
+
+          // Fallback: straight-line interpolation for vehicles without
+          // polyline data (orange-line, ferries with sparse stops, depot).
+          const dist = haversineDistanceMeters(current.coordinates, vehicle.coordinates);
+          const isJump = dist > 500;
           return {
             ...vehicle,
-            coordinates: interpolateCoordinate(current.coordinates, vehicle.coordinates, progress),
+            coordinates: isJump ? vehicle.coordinates : interpolateCoordinate(current.coordinates, vehicle.coordinates, progress),
             heading: interpolateHeading(current.heading, vehicle.heading, progress)
           };
         });

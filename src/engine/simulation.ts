@@ -13,27 +13,19 @@ import { haversineDistanceMeters } from "./geo";
 import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlightSchedule";
 
 // ---------------------------------------------------------------------------
-// Time
+// Time — single source of truth lives in fleetSimulator.getSimulatedMinutes.
+// Importing here keeps the chart, the right-bar metrics, and the bus
+// markers running on exactly the same clock. Two clocks = drift = the
+// chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-const SIM_SPEED = 30; // 30x real time — matches fleetSimulator so map and metrics tick together
-const simAnchorMs = Date.now();
+import { getSimulatedMinutes } from "./fleetSimulator";
 
-// Service window: wrap within 06:00–22:00 so buses are always running.
-// Anchor the sim at 07:00 so the first scheduled bus (08:15) is reachable
-// within ~2.5 real minutes of page load — fast feedback for the viewer
-// without skipping the AM ramp entirely.
-const SVC_START = 360; // 06:00 (chart axis floor)
+const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
 const SVC_END = 1320;  // 22:00
-const SVC_WINDOW = SVC_END - SVC_START;
-const SIM_OPEN_MIN = 540; // sim starts at 09:00 — past the 08:15 first bus,
-                          // so the right-bar metrics tick up from the first
-                          // few seconds of page load instead of sitting at
-                          // a genuine zero for ~2.5 real minutes.
 
 export function simNow(): number {
-  const elapsed = ((Date.now() - simAnchorMs) / 60000) * SIM_SPEED;
-  return SVC_START + ((SIM_OPEN_MIN - SVC_START + elapsed) % SVC_WINDOW + SVC_WINDOW) % SVC_WINDOW;
+  return getSimulatedMinutes();
 }
 
 export function simClock(): string {
@@ -108,7 +100,7 @@ export const DESTINATIONS: Destination[] = [
 // Bus timetable: departures from airport (minutes from midnight)
 // From the official PKSB timetable (Airport→Rawai direction)
 const AIRPORT_DEPARTURES = [
-  495, 540, 600, 660, 720, 780, 840, 870, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1410
+  495, 540, 600, 660, 720, 780, 840, 870, 900, 930, 960, 990, 1020, 1080, 1140, 1200, 1260, 1320, 1360, 1410
 ];
 
 const BUS_CAPACITY = 25;

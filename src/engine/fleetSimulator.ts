@@ -8,6 +8,7 @@ import { haversineDistanceMeters } from "./geo";
 import { routeDestinationLabel } from "./i18n";
 import { getBangkokNowMinutes, parseScheduleEntries } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
+import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG } from "./config";
 
 // ---------------------------------------------------------------------------
@@ -82,13 +83,7 @@ function bearingDeg(from: LatLngTuple, to: LatLngTuple): number {
 // Polyline helpers
 // ---------------------------------------------------------------------------
 
-function buildPolylineCumMeters(poly: LatLngTuple[]): number[] {
-  const cum = [0];
-  for (let i = 1; i < poly.length; i++) {
-    cum.push(cum[i - 1] + haversineDistanceMeters(poly[i - 1], poly[i]));
-  }
-  return cum;
-}
+const buildPolylineCumMeters = sharedBuildCum;
 
 /** Snap a point to the polyline, only considering vertices at or beyond
  *  `minMeters`. Forward-constrained search keeps successive stop meters
@@ -111,33 +106,7 @@ function snapToPolylineForward(
   return bestD;
 }
 
-/** Interpolate coordinates + heading at `meters` along the polyline. */
-function posOnPolyline(
-  meters: number,
-  poly: LatLngTuple[],
-  cum: number[]
-): { coordinates: LatLngTuple; heading: number } {
-  const total = cum[cum.length - 1];
-  const d = clamp(meters, 0, total);
-
-  // binary search
-  let lo = 0;
-  let hi = cum.length - 1;
-  while (lo < hi - 1) {
-    const mid = (lo + hi) >> 1;
-    if (cum[mid] <= d) lo = mid; else hi = mid;
-  }
-
-  const segLen = cum[hi] - cum[lo];
-  const r = segLen > 0 ? (d - cum[lo]) / segLen : 0;
-  const a = poly[lo];
-  const b = poly[hi];
-
-  return {
-    coordinates: [a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r],
-    heading: bearingDeg(a, b)
-  };
-}
+const posOnPolyline = sharedPosOn;
 
 // ---------------------------------------------------------------------------
 // Fleet roster — 20 realistic land buses + 13 ferries
@@ -380,16 +349,22 @@ function buildVehiclePosition(
   let status: VehiclePosition["status"] = "dwelling";
   let distToEnd = profile.polylineTotalMeters;
   let stopsAway = lastIdx;
+  // Distance along the polyline from its start. The renderer uses this
+  // to interpolate ALONG the curving road between ticks (instead of
+  // straight-lining between consecutive coordinates and cutting corners).
+  let polylineMeters: number = 0;
 
   if (ageMinutes >= actualTripDuration) {
     // At terminal
     const pos = posOnPolyline(profile.stopPolylineMeters[lastIdx], profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
+    polylineMeters = profile.stopPolylineMeters[lastIdx]!;
     distToEnd = 0; stopsAway = 0;
   } else if (ageMinutes <= 0) {
     // Prestart — dwelling at origin
     const pos = posOnPolyline(profile.stopPolylineMeters[0], profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
+    polylineMeters = profile.stopPolylineMeters[0]!;
   } else {
     // In transit — find segment by time offset, then map to polyline distance
     const t = clamp(ageMinutes, 0, actualTripDuration);
@@ -416,6 +391,7 @@ function buildVehiclePosition(
     const mStart = profile.stopPolylineMeters[seg]!;
     const mEnd = profile.stopPolylineMeters[seg + 1]!;
     const meters = mStart + (mEnd - mStart) * ratio;
+    polylineMeters = meters;
 
     const pos = posOnPolyline(meters, profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
@@ -444,7 +420,9 @@ function buildVehiclePosition(
     freshness: "fresh",
     status,
     distanceToDestinationMeters: Math.round(distToEnd),
-    stopsAway
+    stopsAway,
+    polylineMeters,
+    polylineFirstStop: profile.stops[0]?.coordinates ?? null
   };
 }
 
@@ -585,19 +563,46 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
       freshness: "fresh" as const,
       status,
       distanceToDestinationMeters: null,
-      stopsAway: null
+      stopsAway: null,
+      polylineMeters: null,  // orange-line uses straight-segment fallback, not a polyline
+      polylineFirstStop: null
     };
   });
 }
 
+// ---------------------------------------------------------------------------
+// Simulated clock — 15× real time, anchored at 09:00 on page load.
+//
+//   • 15× makes each 95-minute bus trip play in ~6 real minutes — slow
+//     enough to feel like real driving, fast enough that a viewer sees
+//     the day unfold without leaving the page running for hours.
+//   • 09:00 anchor skips the dead pre-08:15 window where no bus has
+//     departed yet — the right bar is alive within seconds of page load.
+//   • Returns FRACTIONAL minutes (not integer) so the bus position
+//     updates smoothly every tick. Integer minutes meant 60s of stillness
+//     followed by a single 580m jump — visibly "flying" between ticks.
+// ---------------------------------------------------------------------------
+
+const SIM_SPEED = 15;
+const simAnchorReal = Date.now();
+const SERVICE_START = 360;   // 06:00 (chart axis floor)
+const SERVICE_END = 1350;    // 22:30
+const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
+const SIM_OPEN_MIN = 540;    // 09:00
+
 export function getSimulatedMinutes(): number {
-  return getBangkokNowMinutes(new Date());
+  const elapsedRealMs = Date.now() - simAnchorReal;
+  const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
+  return (
+    SERVICE_START +
+    (((SIM_OPEN_MIN - SERVICE_START + elapsedSimMinutes) % SERVICE_WINDOW) + SERVICE_WINDOW) %
+      SERVICE_WINDOW
+  );
 }
 
-/** All vehicles including orange line competitor, computed at the real instant.
- *  Runs at 1× real time so buses move at realistic speeds. */
+/** All vehicles including orange line competitor, at the simulated instant. */
 export function getVehiclesNow(now = new Date()): VehiclePosition[] {
-  const nowMin = getBangkokNowMinutes(now);
+  const nowMin = getSimulatedMinutes();
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];

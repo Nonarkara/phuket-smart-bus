@@ -18,7 +18,9 @@ const airportVehicle: VehiclePosition = {
   freshness: "fresh",
   status: "moving",
   distanceToDestinationMeters: 2400,
-  stopsAway: 4
+  stopsAway: 4,
+  polylineMeters: null,
+  polylineFirstStop: null
 };
 
 const patongVehicle: VehiclePosition = {
