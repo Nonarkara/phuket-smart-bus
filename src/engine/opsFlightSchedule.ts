@@ -10,6 +10,7 @@ export type OpsFlight = {
   timeLabel: string;
   type: "arr" | "dep";
   terminal: string;
+  mode: "flight" | "boat";
 };
 
 type PeakDayFlightFixture = {
@@ -47,7 +48,7 @@ function parseMinutes(label: string) {
 
 const peakDay = peakDayFlights as PeakDayFixture;
 
-const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
+export const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
   .map((flight) => ({
     flightNo: flight.flightNumber,
     airline: flight.airline,
@@ -57,7 +58,8 @@ const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
     schedMin: parseMinutes(flight.scheduledTime),
     timeLabel: flight.scheduledTime,
     type: flight.type === "arrival" ? ("arr" as const) : ("dep" as const),
-    terminal: flight.terminal
+    terminal: flight.terminal,
+    mode: "flight" as const
   }))
   .sort((left, right) => left.schedMin - right.schedMin || (left.type === "arr" ? -1 : 1));
 
@@ -80,16 +82,22 @@ function mulberry32(seed: number) {
 
 const DOW_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
 const DOW_VOLUME = [1.10, 0.95, 0.85, 0.85, 1.00, 1.05, 1.18];
-const DOW_CHARTERS: Array<Array<{ flightNo: string; airline: string; city: string; airportCode: string; pax: number }>> = [
+const DOW_CHARTERS: Array<Array<{ flightNo: string; airline: string; city: string; airportCode: string; pax: number; mode?: "flight" | "boat" }>> = [
   [{ flightNo: "SQ732", airline: "Singapore Airlines", city: "Singapore", airportCode: "SIN", pax: 198 }],
-  [],
+  [
+    { flightNo: "Rassada Ferry", airline: "Andaman Wave Master", city: "Phi Phi Island", airportCode: "PP", pax: 250, mode: "boat" },
+    { flightNo: "Bang Rong Speedboat", airline: "Local Speedboat", city: "Koh Yao Noi", airportCode: "KYN", pax: 35, mode: "boat" }
+  ],
   [{ flightNo: "CZ8347", airline: "China Southern", city: "Guangzhou", airportCode: "CAN", pax: 234 }],
   [{ flightNo: "6E1054", airline: "IndiGo", city: "Delhi", airportCode: "DEL", pax: 186 }],
-  [],
+  [
+    { flightNo: "Rassada Ferry", airline: "Phi Phi Cruiser", city: "Phi Phi Island", airportCode: "PP", pax: 320, mode: "boat" }
+  ],
   [{ flightNo: "SU272", airline: "Aeroflot", city: "Moscow", airportCode: "SVO", pax: 312 }],
   [
     { flightNo: "ZF1845", airline: "Azur Air", city: "Yekaterinburg", airportCode: "SVX", pax: 298 },
-    { flightNo: "KE637",  airline: "Korean Air", city: "Seoul", airportCode: "ICN", pax: 224 }
+    { flightNo: "KE637",  airline: "Korean Air", city: "Seoul", airportCode: "ICN", pax: 224 },
+    { flightNo: "Chalong Boat", airline: "Racha Boat", city: "Racha Island", airportCode: "RAC", pax: 45, mode: "boat" }
   ]
 ];
 
@@ -137,7 +145,8 @@ function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
       schedMin,
       timeLabel: fmtTime(schedMin),
       type: "arr",
-      terminal: "T1"
+      terminal: c.mode === "boat" ? "PIER" : "T1",
+      mode: c.mode ?? "flight"
     });
   }
   return out.sort((a, b) => a.schedMin - b.schedMin || (a.type === "arr" ? -1 : 1));

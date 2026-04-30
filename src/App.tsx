@@ -63,12 +63,17 @@ function getInitialView(): AppView | "ops" {
 
 function getStoredLang(): Lang {
   if (typeof window === "undefined") return "en";
-  const stored = window.localStorage.getItem("pksb-lang");
+  let stored: string | null = null;
+  try {
+    stored = window.localStorage?.getItem?.("pksb-lang") ?? null;
+  } catch {
+    // localStorage can throw in privacy-mode / cross-origin / test environments
+  }
   if (stored && ["en", "th", "zh", "de", "fr", "es"].includes(stored)) return stored as Lang;
   // Auto-detect from browser locale
-  const browserLang = navigator.language?.substring(0, 2);
+  const browserLang = typeof navigator !== "undefined" ? navigator.language?.substring(0, 2) : undefined;
   const langMap: Record<string, Lang> = { th: "th", zh: "zh", de: "de", fr: "fr", es: "es" };
-  return langMap[browserLang] ?? "en";
+  return (browserLang ? langMap[browserLang] : null) ?? "en";
 }
 
 function isPrimaryRoute(routeId: RouteId) {
@@ -366,7 +371,11 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
 
   function persistLang(next: Lang) {
     setLang(next);
-    window.localStorage.setItem("pksb-lang", next);
+    try {
+      window.localStorage?.setItem?.("pksb-lang", next);
+    } catch {
+      // best effort — tests / privacy mode / cross-origin don't have storage
+    }
   }
 
   // --- Bootstrap ---

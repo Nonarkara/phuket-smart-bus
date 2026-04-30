@@ -510,7 +510,14 @@ export type HourlyDemandSupply = {
   revenueThb: number;      // servedPax × fare
 };
 
+// Memoized — depends only on FLIGHTS and AIRPORT_DEPARTURES, both immutable
+// for the session. Multiple consumers poll this every second; recomputing
+// 24 buckets every call wastes work. Compute once on first call.
+let cachedHourlyDemandSupply: HourlyDemandSupply[] | null = null;
+
 export function getHourlyDemandSupply(): HourlyDemandSupply[] {
+  if (cachedHourlyDemandSupply) return cachedHourlyDemandSupply;
+
   // 1) Bucket flight arrivals into hours, accounting for ~30 min customs lag.
   const arrivalByHour: number[] = Array.from({ length: 24 }, () => 0);
   for (const f of FLIGHTS) {
@@ -529,7 +536,7 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
   }
 
   // 3) Combine — per-hour demand vs supply.
-  return arrivalByHour.map((pax, hour) => {
+  cachedHourlyDemandSupply = arrivalByHour.map((pax, hour) => {
     const busDemandPax = Math.round(pax * BUS_CAPTURE_RATE);
     const busSeatsAvailable = seatsByHour[hour];
     const servedPax = Math.min(busDemandPax, busSeatsAvailable);
@@ -545,4 +552,6 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
       revenueThb
     };
   });
+
+  return cachedHourlyDemandSupply;
 }

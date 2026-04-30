@@ -24,6 +24,16 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+
+      # Hard gate — failing tests block deploy. The regression suite covers
+      # the four bug classes that have repeatedly broken the live demo:
+      # buses flying off the polyline, dead-zone right bar, time drift between
+      # the map clock and the metrics clock, and broken day-of-week fuzz.
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Test
+        run: npm test
+
       - run: GITHUB_PAGES=true npx vite build
       - name: Copy 404.html for SPA routing
         run: cp dist/client/index.html dist/client/404.html

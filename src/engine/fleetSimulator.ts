@@ -6,7 +6,7 @@ import type {
 } from "@shared/types";
 import { haversineDistanceMeters } from "./geo";
 import { routeDestinationLabel } from "./i18n";
-import { getBangkokNowMinutes, parseScheduleEntries } from "./time";
+import { parseScheduleEntries } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG } from "./config";
@@ -462,7 +462,10 @@ function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now:
 // ---------------------------------------------------------------------------
 
 export function buildScheduleMockFleet(now = new Date()) {
-  const nowMin = getBangkokNowMinutes(now);
+  // Use the same sim clock the map uses — otherwise the map shows buses at
+  // sim time but every dataProvider-consuming surface (ops console, decision
+  // panels, summaries) gets a wall-clock snapshot and the two disagree.
+  const nowMin = getSimulatedMinutes();
   return routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
 }
 
