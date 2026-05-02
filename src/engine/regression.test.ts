@@ -211,3 +211,66 @@ describe("day-of-week fuzz", () => {
     expect(a).toBe(b);
   });
 });
+
+// ---------------------------------------------------------------------------
+// New for the contract demo: clock override + driver tablet helper.
+// ---------------------------------------------------------------------------
+
+import { setClockOverride, getVehicleDetail } from "./fleetSimulator";
+
+describe("setClockOverride", () => {
+  it("when set, getSimulatedMinutes returns the override value", () => {
+    setClockOverride(() => 700);
+    expect(getSimulatedMinutes()).toBe(700);
+    setClockOverride(() => 1200);
+    expect(getSimulatedMinutes()).toBe(1200);
+    setClockOverride(null);
+  });
+
+  it("when cleared, getSimulatedMinutes returns the wall-clock value", () => {
+    setClockOverride(null);
+    setSimMinute(SIM_OPEN_MIN);
+    expect(getSimulatedMinutes()).toBeCloseTo(SIM_OPEN_MIN, 1);
+  });
+});
+
+describe("getVehicleDetail (driver tablet helper)", () => {
+  beforeEach(() => {
+    setClockOverride(null);
+  });
+
+  it("returns null for an unknown plate", () => {
+    setSimMinute(720);
+    expect(getVehicleDetail("NOT-A-REAL-PLATE")).toBeNull();
+  });
+
+  it("returns trip detail for an active bus, with stops + ETA", () => {
+    setSimMinute(720); // 12:00 — peak, multiple buses active
+    const vehicles = getVehiclesNow(new Date());
+    const bus = vehicles.find(
+      (v) => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-") && v.polylineMeters != null
+    );
+    expect(bus, "expected at least one active bus").toBeDefined();
+    if (!bus) return;
+
+    const detail = getVehicleDetail(bus.licensePlate);
+    expect(detail).not.toBeNull();
+    if (!detail) return;
+
+    expect(detail.vehicle.licensePlate).toBe(bus.licensePlate);
+    expect(detail.stops.length).toBeGreaterThan(0);
+    expect(detail.directionLabel).toBeTruthy();
+    expect(detail.paxCount).toBeGreaterThanOrEqual(0);
+    expect(detail.paxCount).toBeLessThanOrEqual(detail.paxCapacity);
+
+    // The driver should always know which stop is next (or be at the terminal)
+    expect(detail.nextStopIdx).toBeGreaterThanOrEqual(-1);
+  });
+
+  it("paxCount is deterministic per plate per simHour", () => {
+    setSimMinute(720);
+    const a = getVehicleDetail("กข 1001");
+    const b = getVehicleDetail("กข 1001");
+    if (a && b) expect(a.paxCount).toBe(b.paxCount);
+  });
+});

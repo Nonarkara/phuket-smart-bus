@@ -5125,6 +5125,33 @@ a { color: var(--tint); }
 .v2-header__day { font-family: "SF Mono", "Fira Code", monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: rgba(255,255,255,0.62); padding: 4px 8px; border: 1px solid rgba(255,255,255,0.12); }
 .v2-header__time { font-family: "SF Mono", "Fira Code", monospace; font-size: 16px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
 .v2-header__speed { font-size: 10px; color: rgba(255,255,255,0.42); background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 999px; }
+
+/* Mode Toggle */
+.v2-mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px;
+  border-radius: 8px;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.v2-mode-btn {
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.v2-mode-btn.is-active {
+  background: rgba(103, 239, 230, 0.15);
+  color: #67efe6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
 .v2-header__meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.54); }
 .v2-header__meta span { padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.04); }
 
@@ -5141,18 +5168,29 @@ a { color: var(--tint); }
 
 /* Panels */
 .v2-panel {
-  padding: 18px;
+  padding: 22px;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  border-radius: 28px;
-  border: 1px solid rgba(255,255,255,0.07);
+  gap: 16px;
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.08);
   background:
-    linear-gradient(180deg, rgba(13, 22, 31, 0.96), rgba(10, 17, 25, 0.86)),
-    rgba(10, 17, 25, 0.84);
-  box-shadow: 0 24px 56px rgba(0, 8, 18, 0.34);
+    linear-gradient(180deg, rgba(16, 26, 36, 0.94), rgba(10, 17, 25, 0.88)),
+    rgba(10, 17, 25, 0.8);
+  backdrop-filter: blur(24px);
+  box-shadow: 
+    0 24px 56px rgba(0, 8, 18, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.v2-panel.is-alert {
+  border-color: rgba(255, 59, 48, 0.4);
+  box-shadow: 
+    0 24px 56px rgba(255, 59, 48, 0.1),
+    inset 0 0 20px rgba(255, 59, 48, 0.05);
 }
 .v2-panel__title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(255,255,255,0.36); margin: 0; }
 
@@ -5773,4 +5811,975 @@ a { color: var(--tint); }
 @media (max-width: 720px) {
   .analytics-summary { grid-template-columns: repeat(3, 1fr); }
   .analytics-chart__grid { gap: 2px; height: 140px; }
+}
+
+.v2-coordination-banner {
+  background: rgba(255, 138, 61, 0.15);
+  border: 1px solid rgba(255, 138, 61, 0.3);
+  color: #ff8a3d;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.v2-panel.is-alert {
+  box-shadow: 0 0 0 1px rgba(255, 138, 61, 0.4) inset, 0 8px 32px rgba(255, 138, 61, 0.05);
+  animation: pulse-alert 4s ease-in-out infinite;
+  border-color: rgba(255, 59, 48, 0.4);
+}
+
+@keyframes pulse-alert {
+  0% { box-shadow: 0 0 0 1px rgba(255, 138, 61, 0.4) inset, 0 8px 32px rgba(255, 138, 61, 0.05); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 138, 61, 0.8) inset, 0 8px 32px rgba(255, 138, 61, 0.15); }
+  100% { box-shadow: 0 0 0 1px rgba(255, 138, 61, 0.4) inset, 0 8px 32px rgba(255, 138, 61, 0.05); }
+}
+
+/* Alert Banner */
+.v2-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(90deg, #ff3b30, #ff9500);
+  color: #fff;
+  font-size: 14px;
+  position: relative;
+  z-index: 2000;
+  box-shadow: 0 4px 20px rgba(255, 59, 48, 0.3);
+}
+.v2-alert-banner__icon {
+  font-size: 20px;
+  font-weight: 900;
+  animation: bounce-alert 0.6s ease-in-out infinite alternate;
+}
+@keyframes bounce-alert {
+  from { transform: scale(1); }
+  to { transform: scale(1.2); }
+}
+.v2-alert-banner__content {
+  display: flex;
+  flex-direction: column;
+}
+.v2-alert-banner__content strong {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.v2-alert-banner__content span {
+  opacity: 0.9;
+  font-size: 12px;
+}
+
+/* ============================================================================
+ * /driver/[plate] — DriverTablet
+ *
+ * Full-screen tablet view for a single bus's driver. Dark theme, mono numerics,
+ * geometric shapes, no rounded corners — the "this is operations equipment"
+ * feel, not "this is a marketing dashboard."
+ * ========================================================================== */
+
+.driver-tablet {
+  position: fixed;
+  inset: 0;
+  background: #0b0d12;
+  color: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  font-family: "Inter", "SF Pro Display", sans-serif;
+  overflow: hidden;
+  z-index: 5000;
+}
+
+.driver-tablet__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 18px 28px;
+  gap: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-tablet__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.driver-tablet__brand-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__brand-plate {
+  font-size: 22px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #fff;
+}
+
+.driver-tablet__route {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.driver-tablet__route-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.42);
+  font-weight: 700;
+}
+
+.driver-tablet__route-name {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.driver-tablet__clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.driver-tablet__clock-time {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.driver-tablet__clock-zone {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.driver-tablet__hero {
+  padding: 42px 28px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.driver-tablet__hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 12px;
+}
+
+.driver-tablet__hero-stop {
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+
+.driver-tablet__hero-stop-th {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 18px;
+  font-family: "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+}
+
+.driver-tablet__hero-eta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 22px;
+  border: 1px solid rgba(52, 199, 89, 0.6);
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.driver-tablet__eta-num {
+  font-size: 56px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #34c759;
+  line-height: 1;
+}
+
+.driver-tablet__eta-unit {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.04em;
+}
+
+.driver-tablet__indicators {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-tablet__indicator {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-tablet__indicator:last-child {
+  border-right: none;
+}
+
+.driver-tablet__indicator-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__indicator-value {
+  font-size: 28px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__indicator-cap {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 18px;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.driver-tablet__indicator-status {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.06em;
+}
+
+.driver-tablet__indicator--on-time .driver-tablet__indicator-value { color: #34c759; }
+.driver-tablet__indicator--on-time .driver-tablet__indicator-status { color: #34c759; }
+.driver-tablet__indicator--ahead .driver-tablet__indicator-value { color: #ffd60a; }
+.driver-tablet__indicator--ahead .driver-tablet__indicator-status { color: #ffd60a; }
+.driver-tablet__indicator--behind .driver-tablet__indicator-value { color: #ff453a; }
+.driver-tablet__indicator--behind .driver-tablet__indicator-status { color: #ff453a; }
+
+.driver-tablet__stops {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 0;
+}
+
+.driver-tablet__stops-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 28px 12px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.42);
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__stops-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.driver-tablet__stop {
+  display: grid;
+  grid-template-columns: 48px 1fr 80px;
+  align-items: center;
+  padding: 12px 28px;
+  gap: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 200ms ease;
+}
+
+.driver-tablet__stop--passed {
+  opacity: 0.36;
+}
+
+.driver-tablet__stop--next {
+  background: rgba(52, 199, 89, 0.08);
+  border-left: 3px solid #34c759;
+  padding-left: 25px;
+}
+
+.driver-tablet__stop-marker {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 14px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 4px 0;
+}
+
+.driver-tablet__stop--passed .driver-tablet__stop-marker {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.driver-tablet__stop--next .driver-tablet__stop-marker {
+  border-color: #34c759;
+  color: #34c759;
+  font-weight: 600;
+}
+
+.driver-tablet__stop-name-en {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.driver-tablet__stop-name-th {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
+  margin-top: 2px;
+}
+
+.driver-tablet__stop-eta {
+  text-align: right;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.driver-tablet__stop-passed-mark {
+  color: #34c759;
+}
+
+.driver-tablet__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet--missing {
+  align-items: center;
+  justify-content: center;
+}
+
+.driver-tablet__missing-card {
+  max-width: 480px;
+  padding: 36px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.driver-tablet__missing-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__missing-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.driver-tablet__missing-body {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.driver-tablet__missing-clock {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.driver-tablet__missing-back {
+  color: #34c759;
+  text-decoration: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+/* ============================================================================
+ * /roi — RoiCalculator
+ *
+ * Light page on a dark background — finance feel. Mono numerics. Hairline
+ * borders. The CFO leans forward and pokes at this.
+ * ========================================================================== */
+
+.roi-page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  color: #1a1f2e;
+  font-family: "Inter", "SF Pro Display", sans-serif;
+  padding: 48px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.roi-header {
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.roi-header__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 8px;
+}
+
+.roi-header__title {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+}
+
+.roi-header__subtitle {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0;
+  max-width: 600px;
+}
+
+.roi-source-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.06);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.roi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 900px) {
+  .roi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.roi-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roi-input__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.roi-input__value {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.roi-input__slider {
+  width: 100%;
+  appearance: none;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  outline: none;
+}
+
+.roi-input__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #1a1f2e;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.roi-input__slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #1a1f2e;
+  border-radius: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.roi-input__scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  letter-spacing: 0.04em;
+}
+
+.roi-headline {
+  background: #1a1f2e;
+  color: #fff;
+  padding: 32px;
+}
+
+.roi-headline__row {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.roi-headline__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roi-headline__cell--profit .roi-headline__value {
+  color: #34c759;
+}
+
+.roi-headline__label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.roi-headline__value {
+  font-size: 36px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  letter-spacing: -0.02em;
+}
+
+.roi-headline__sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.roi-detail {
+  margin-bottom: 48px;
+}
+
+.roi-detail__title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 18px;
+}
+
+.roi-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roi-table tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.roi-table tr:last-child {
+  border-bottom: 0;
+}
+
+.roi-table td {
+  padding: 14px 0;
+  font-size: 15px;
+}
+
+.roi-table__num {
+  text-align: right;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-weight: 500;
+}
+
+.roi-table__src {
+  text-align: right;
+  width: 60px;
+  padding-left: 16px;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: help;
+}
+
+.roi-table__strong td {
+  font-weight: 600;
+  background: rgba(52, 199, 89, 0.04);
+  padding-left: 8px;
+  padding-right: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+  border-top: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.roi-footnote {
+  margin-top: 32px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.roi-footnote h3 {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.6);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.roi-footnote ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.roi-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+}
+
+.roi-back {
+  color: #1a1f2e;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.roi-foot__legal {
+  color: rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* ============================================================================
+ * ?demo=tuesday — DemoCaption overlay
+ *
+ * Fixed bottom-left. Mono. Hairline white border. Caption fades in at
+ * scripted moments and disappears on its own. The presenter doesn't drive.
+ * ========================================================================== */
+
+.demo-caption {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 4000;
+  display: flex;
+  align-items: stretch;
+  max-width: 720px;
+  background: rgba(11, 13, 18, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: demo-caption-in 400ms ease-out;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  pointer-events: none;
+}
+
+@keyframes demo-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demo-caption__bar {
+  width: 4px;
+  background: #34c759;
+}
+
+.demo-caption__text {
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 480px) {
+  .demo-caption {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+  .demo-caption__text {
+    font-size: 12px;
+    padding: 12px 14px;
+  }
+}
+
+/* ============================================================================
+ * Demo mode persistent banner — buyer always knows they're watching the loop.
+ * ========================================================================== */
+
+.demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4100;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 18px;
+  background: rgba(11, 13, 18, 0.92);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  pointer-events: none;
+}
+
+.demo-banner__dot {
+  width: 8px;
+  height: 8px;
+  background: #ff453a;
+  border-radius: 50%;
+  animation: demo-banner-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes demo-banner-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+.demo-banner__label {
+  font-weight: 700;
+  color: #ff453a;
+}
+
+.demo-banner__sub {
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+/* Move the bottom caption up slightly on tall screens so it's not in
+   the very bottom corner. */
+.demo-caption {
+  bottom: 32px;
+}
+
+/* ============================================================================
+ * Desktop landing — secondary navigation links.
+ * ========================================================================== */
+
+.desktop-shell__more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.desktop-shell__link {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  transition: color 200ms ease;
+}
+
+.desktop-shell__link:hover {
+  color: #34c759;
+}
+
+/* ============================================================================
+ * Driver tablet — missing-plate card now lists active plates.
+ * ========================================================================== */
+
+.driver-tablet__missing-plates {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.driver-tablet__missing-plates-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 10px;
+}
+
+.driver-tablet__missing-plates ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+}
+
+.driver-tablet__missing-plates li {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.driver-tablet__missing-plates a {
+  color: #34c759;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.driver-tablet__missing-plates a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================================
+ * /roi pilot CTA + print styles.
+ * ========================================================================== */
+
+.roi-cta {
+  margin-top: 36px;
+  padding: 28px;
+  background: #1a1f2e;
+  color: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .roi-cta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-cta__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: #34c759;
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 8px;
+}
+
+.roi-cta__title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.roi-cta__body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.roi-cta__contact {
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  padding-left: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (max-width: 720px) {
+  .roi-cta__contact {
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    padding-left: 0;
+    padding-top: 18px;
+  }
+}
+
+.roi-cta__contact-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 4px;
+}
+
+.roi-cta__contact-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.roi-cta__contact-line {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.roi-cta__contact-mail {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #34c759;
+  text-decoration: none;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.roi-cta__contact-mail:hover {
+  text-decoration: underline;
+}
+
+/* Print stylesheet — when the CFO prints the ROI page to PDF, hide
+   navigation/footer cruft and let the headline + tables breathe. */
+@media print {
+  body { background: #fff !important; }
+  .demo-banner, .demo-caption { display: none !important; }
+  .roi-foot, .roi-back { display: none !important; }
+  .roi-page {
+    padding: 16px !important;
+    max-width: none !important;
+  }
+  .roi-headline {
+    page-break-inside: avoid;
+  }
+  .roi-cta {
+    page-break-inside: avoid;
+  }
+  .roi-table__src {
+    display: none !important;
+  }
 }

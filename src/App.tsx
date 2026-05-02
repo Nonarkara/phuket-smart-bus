@@ -38,6 +38,10 @@ import { PassPanel } from "./components/PassPanel";
 import { HeroSection } from "./components/HeroSection";
 import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
+import { DriverTablet } from "./components/DriverTablet";
+import { RoiCalculator } from "./components/RoiCalculator";
+import { DemoCaption, buildTuesdayDemoClock } from "./components/DemoCaption";
+import { setClockOverride } from "./engine/fleetSimulator";
 import { haversineDistanceMeters } from "./lib/geo";
 
 const LIVE_POLL_MS = 12_000;
@@ -46,6 +50,19 @@ const PRIMARY_ROUTE_IDS: RouteId[] = [
   "rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"
 ];
 const NEARBY_STOP_RADIUS_METERS = 700;
+
+// `?demo=tuesday` — install a scripted sim clock that loops through a full
+// day in 5 real minutes. The caption overlay reads the same clock and
+// surfaces narrative captions at scripted moments. Done at module-load
+// time so the engine is on the demo clock before anything renders.
+const DEMO_MODE: boolean = (typeof window !== "undefined") && (() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("demo") === "tuesday") {
+    setClockOverride(buildTuesdayDemoClock());
+    return true;
+  }
+  return false;
+})();
 
 type AppView = "map" | "more";
 type MorePanel = "stops" | "pass" | null;
@@ -72,7 +89,14 @@ function getStoredLang(): Lang {
   if (stored && ["en", "th", "zh", "de", "fr", "es"].includes(stored)) return stored as Lang;
   // Auto-detect from browser locale
   const browserLang = typeof navigator !== "undefined" ? navigator.language?.substring(0, 2) : undefined;
-  const langMap: Record<string, Lang> = { th: "th", zh: "zh", de: "de", fr: "fr", es: "es" };
+  // Russian and Korean visitors are a major Phuket cohort; the i18n
+  // catalog doesn't (yet) carry them, so they fall back to English
+  // explicitly rather than getting accidentally bucketed via partial
+  // browser-locale matches.
+  const langMap: Record<string, Lang> = {
+    th: "th", zh: "zh", de: "de", fr: "fr", es: "es",
+    ru: "en", ko: "en", ja: "en"
+  };
   return (browserLang ? langMap[browserLang] : null) ?? "en";
 }
 
@@ -156,14 +180,40 @@ export default function App() {
     window.history.pushState({}, "", "/");
   }
 
+  // /driver/[plate] tablet view (single-bus driver perspective)
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/driver/")) {
+    const plate = decodeURIComponent(window.location.pathname.slice("/driver/".length));
+    return <DriverTablet plate={plate} />;
+  }
+
+  // /roi page (financial model for buyers)
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/roi")) {
+    return <RoiCalculator />;
+  }
+
   // v2 dashboard at /v2 path
-  if (typeof window !== "undefined" && window.location.pathname.includes("/v2")) return <DashboardV2 />;
+  if (typeof window !== "undefined" && window.location.pathname.includes("/v2")) {
+    return <>
+      <DashboardV2 />
+      {DEMO_MODE && <DemoCaption />}
+    </>;
+  }
 
   // Full-screen ops dashboard
-  if (isOps) return <OpsConsole onToggle={goTourist} />;
+  if (isOps) {
+    return <>
+      <OpsConsole onToggle={goTourist} />
+      {DEMO_MODE && <DemoCaption />}
+    </>;
+  }
 
   // Mobile: render tourist app directly
-  if (isMobile) return <TouristApp onToggle={goOps} />;
+  if (isMobile) {
+    return <>
+      <TouristApp onToggle={goOps} />
+      {DEMO_MODE && <DemoCaption />}
+    </>;
+  }
 
   // Desktop: smartphone frame + side panel + background carousel
   return (
@@ -187,8 +237,14 @@ export default function App() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
           Operator Console
         </button>
+        <div className="desktop-shell__more">
+          <a className="desktop-shell__link" href="/roi">Financial model →</a>
+          <a className="desktop-shell__link" href="/driver/กข 1001 ภูเก็ต">Driver tablet →</a>
+          <a className="desktop-shell__link" href="/?demo=tuesday">Auto-play demo →</a>
+        </div>
         <p className="desktop-shell__hint">Open in your phone for the best experience</p>
       </div>
+      {DEMO_MODE && <DemoCaption />}
     </div>
   );
 }

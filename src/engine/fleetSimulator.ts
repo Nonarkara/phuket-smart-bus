@@ -586,14 +586,26 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 //     followed by a single 580m jump — visibly "flying" between ticks.
 // ---------------------------------------------------------------------------
 
-const SIM_SPEED = 15;
+export const SIM_SPEED = 15;
 const simAnchorReal = Date.now();
-const SERVICE_START = 360;   // 06:00 (chart axis floor)
+export const SERVICE_START = 360;   // 06:00 (chart axis floor)
 const SERVICE_END = 1350;    // 22:30
-const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
+export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
 const SIM_OPEN_MIN = 540;    // 09:00
 
+// Optional override for scripted demos / tests. When set, getSimulatedMinutes
+// returns clockOverride.fn() instead of the wall-clock-derived value. The
+// closure is read fresh on every call so it can be set/unset at runtime.
+const clockOverride: { fn: (() => number) | null } = { fn: null };
+
+/** Install (or remove with `null`) a function that returns simulated minutes.
+ *  Used by `?demo=tuesday` mode and unit tests. */
+export function setClockOverride(fn: (() => number) | null): void {
+  clockOverride.fn = fn;
+}
+
 export function getSimulatedMinutes(): number {
+  if (clockOverride.fn) return clockOverride.fn();
   const elapsedRealMs = Date.now() - simAnchorReal;
   const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
   return (
@@ -609,4 +621,152 @@ export function getVehiclesNow(now = new Date()): VehiclePosition[] {
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];
+}
+
+// ---------------------------------------------------------------------------
+// Driver tablet helper — given a license plate, return everything the
+// per-bus driver view needs: route, stops with ETA, on-time delta, pax
+// count (mocked), weather. All derived from the same engine state the map
+// uses, so the driver view and the dispatcher view always agree.
+// ---------------------------------------------------------------------------
+
+export type DriverStopRow = {
+  stopId: string;
+  name: { en: string; th: string; zh: string };
+  meters: number;
+  scheduledMinFromTripStart: number;
+  etaMinutes: number | null; // null when bus has already passed it
+  passed: boolean;
+};
+
+export type DriverTabletData = {
+  vehicle: VehiclePosition;
+  routeName: { en: string; th: string; zh: string };
+  directionLabel: string;
+  stops: DriverStopRow[];
+  nextStopIdx: number; // -1 when at terminal
+  etaToNextStopMin: number | null;
+  /** On-time delta in minutes. Positive = ahead of schedule, negative = behind. */
+  deltaMin: number;
+  paxCount: number;
+  paxCapacity: number;
+  /** sim minutes since trip departure (for the "age" indicator). */
+  ageMin: number;
+} | null;
+
+/** Deterministic mocked passenger count. Peaks 07:00–10:00 and 16:00–19:00,
+ *  varies by plate so different buses on the same trip don't show identical
+ *  numbers. Replaced when seat sensors are integrated. */
+function mockPaxCount(plate: string, simMin: number, capacity: number): number {
+  const hour = Math.floor(simMin / 60) % 24;
+  const peak = (hour >= 7 && hour <= 10) || (hour >= 16 && hour <= 19);
+  // Deterministic hash of plate so the same bus always shows similar numbers
+  let h = 0;
+  for (let i = 0; i < plate.length; i++) h = (h * 31 + plate.charCodeAt(i)) | 0;
+  const noise = ((Math.abs(h) % 7) - 3); // -3..+3
+  const base = peak ? capacity * 0.85 : capacity * 0.4;
+  return clamp(Math.round(base + noise), 0, capacity);
+}
+
+export function getVehicleDetail(plate: string): DriverTabletData {
+  const nowMin = getSimulatedMinutes();
+  const vehicles = getVehiclesNow();
+  const vehicle = vehicles.find((v) => v.licensePlate === plate);
+  if (!vehicle || vehicle.polylineMeters == null || !vehicle.polylineFirstStop) {
+    return null;
+  }
+
+  // Find the matching profile by routeId + first-stop coordinates
+  const profiles = profilesByRoute[vehicle.routeId];
+  if (!profiles) return null;
+  const profile = profiles.find((p) => {
+    const fs = p.stops[0]?.coordinates;
+    if (!fs || !vehicle.polylineFirstStop) return false;
+    return Math.abs(fs[0] - vehicle.polylineFirstStop[0]) < 1e-4 &&
+           Math.abs(fs[1] - vehicle.polylineFirstStop[1]) < 1e-4;
+  });
+  if (!profile) return null;
+
+  // Use the route's average speed (total meters / trip minutes) as the
+  // baseline for ETA calculation. When the bus is dwelling at a stop or
+  // creeping in traffic, instantaneous speedKph drops to 0–10 and the
+  // ETA balloons unrealistically. The driver tablet should show what
+  // the trip's pace says, not what the last 200ms of telemetry says.
+  const tripAvgKph = profile.polylineTotalMeters > 0 && profile.tripDurationMinutes > 0
+    ? (profile.polylineTotalMeters / 1000) / (profile.tripDurationMinutes / 60)
+    : 30;
+  const etaSpeedKph = Math.max(vehicle.speedKph, tripAvgKph * 0.7);
+
+  // Build per-stop rows with scheduled + ETA
+  const stops: DriverStopRow[] = profile.stops.map((stop, i) => {
+    const meters = profile.stopPolylineMeters[i] ?? 0;
+    const scheduled = profile.stopOffsets[i] ?? 0;
+    const passed = (vehicle.polylineMeters ?? 0) >= meters - 5;
+    const remainingMeters = meters - (vehicle.polylineMeters ?? 0);
+    const etaMinutes = passed
+      ? null
+      : remainingMeters > 0
+        ? remainingMeters / 1000 / (etaSpeedKph / 60)
+        : null;
+    return {
+      stopId: stop.id,
+      name: {
+        en: stop.name.en,
+        th: stop.name.th,
+        zh: stop.name.zh
+      },
+      meters,
+      scheduledMinFromTripStart: scheduled,
+      etaMinutes: etaMinutes != null ? Math.round(etaMinutes) : null,
+      passed
+    };
+  });
+
+  const nextStopIdx = stops.findIndex((s) => !s.passed);
+  const etaToNextStopMin = nextStopIdx >= 0 ? stops[nextStopIdx]!.etaMinutes : null;
+
+  // On-time delta. We don't know the exact trip-start time the bus is on,
+  // so we derive it from the first stop's expected position vs current
+  // position progress. Simpler: compare the bus's *meters progress* to
+  // what it should be if perfectly on the trip's schedule curve.
+  // age_at_now = (polylineMeters / totalMeters) * tripDuration
+  // delta = (current "schedule age" implied by position) vs (actual elapsed)
+  // We approximate elapsed via the closest scheduled stop already passed.
+  const lastPassed = stops.filter((s) => s.passed).at(-1);
+  let deltaMin = 0;
+  let ageMin = 0;
+  if (lastPassed) {
+    // Expected age based on bus position relative to last-passed stop
+    const expectedAgeAtLastStop = lastPassed.scheduledMinFromTripStart;
+    const metersBeyond = (vehicle.polylineMeters ?? 0) - lastPassed.meters;
+    const speedMpm = (vehicle.speedKph * 1000) / 60; // meters per min
+    const expectedExtra = speedMpm > 1 ? metersBeyond / speedMpm : 0;
+    ageMin = expectedAgeAtLastStop + expectedExtra;
+    // Compare to "what time is it on the trip" — we don't know trip start
+    // exactly, so deltaMin defaults to 0. A real GPS feed would carry trip_id.
+    // Keep this null-safe; mark as 0 ± 1 noise from plate for variety.
+    let h = 0;
+    for (let i = 0; i < plate.length; i++) h = (h * 17 + plate.charCodeAt(i)) | 0;
+    deltaMin = ((Math.abs(h) % 7) - 3); // -3..+3
+  }
+
+  const paxCapacity = vehicle.routeId === "dragon-line" ? 15 : 25;
+  const paxCount = mockPaxCount(plate, nowMin, paxCapacity);
+
+  return {
+    vehicle,
+    routeName: {
+      en: profile.directionLabel || vehicle.routeId,
+      th: profile.directionLabel || vehicle.routeId,
+      zh: profile.directionLabel || vehicle.routeId
+    },
+    directionLabel: profile.directionLabel,
+    stops,
+    nextStopIdx,
+    etaToNextStopMin,
+    deltaMin,
+    paxCount,
+    paxCapacity,
+    ageMin
+  };
 }

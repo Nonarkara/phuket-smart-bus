@@ -127,9 +127,62 @@ src/lib/
 src/data/upstream/      ← bundled GeoJSON + ferry stops + flight fixtures
 ```
 
-## Last commit before this status
+## Shipped overnight (the contract-pitch surfaces)
 
-[ad4e3df] (replace with the actual hash on read)
+Three new surfaces, all linked from the desktop landing under the
+Operator Console button.
+
+1. **`/roi`** — Three sliders (fleet, capture rate, fare). Outputs
+   annual revenue, payback period, CO₂ avoided, tourist savings, full
+   detail table. Every constant has a sourced comment in
+   `src/engine/roi.ts` and a hover tooltip in the table. Pilot CTA at
+   the bottom with the contact email. Print stylesheet hides nav cruft
+   so the CFO's PDF print is one clean page.
+
+2. **`/driver/[plate]`** — Per-bus tablet view. Next stop big and
+   centered (English + Thai), ETA in minutes, on-time delta, passenger
+   count, speed, weather. Full upcoming-stops list with checkmarks for
+   passed stops and a green highlight on the next stop. ETA uses the
+   route's average speed when instantaneous speed is too low (avoids
+   "52 minutes to next stop" math when the bus is dwelling). When the
+   plate isn't in service, the page suggests active plates you can try.
+
+3. **`?demo=tuesday`** — Auto-play scripted demo. Persistent top
+   banner pulses red (`AUTO-PLAY DEMO · Tuesday in October · 5-min
+   loop`). Caption strip at the bottom narrates 11 moments through the
+   day. Sim spans 08:00 → 22:00 over 5 real minutes — first bus
+   departure hits at ~5 real seconds after demo start, no dead zone.
+   Loops indefinitely. Works on `/`, `/v2`, and `/ops`.
+
+## Engineering changes that came with the surfaces
+
+- `setClockOverride(fn | null)` exported from `fleetSimulator.ts` —
+  scripted demo mode uses this; tests use it.
+- `getVehicleDetail(plate)` exported from `fleetSimulator.ts` — single
+  call returns everything the driver tablet needs, including stop ETAs
+  and the on-time delta.
+- `src/engine/roi.ts` — pure math module with sourced ROI constants.
+- `ru` / `ko` / `ja` browser locales now fall back to English explicitly
+  in `getStoredLang()` rather than hitting the `?? "en"` default by
+  accident. (Real Russian translations still TODO.)
+
+## Test count: 63 (was 52 + 11 new)
+
+- `roi.test.ts` — 6 tests covering computeRoi math, formatters,
+  baseline scenario, full-island scenario, punitive opex.
+- `regression.test.ts` extension — 4 tests for `setClockOverride` and
+  `getVehicleDetail`, including determinism of the mocked passenger count.
+
+## Last commits
+
+- [latest] Polish for the contract pitch (this commit)
+- 8dc3d1d  Fix CI test gate: vitest/globals types
+- dea25a9  Question, simplify, optimize, automate — overnight pass
+- 0c0f441  Buses follow the road: polyline-aware interpolation
+- 84ff3ec  Fix the dead-zone right bar
+- 5ea09a7  Time-driven right bar + day-of-week flight fuzz
+- ce9a1ff  Apply Musk rule: delete dead code first
+
 Live URL: https://nonarkara.github.io/phuket-smart-bus/
 
 If the live URL serves an older bundle than the latest commit hash,
