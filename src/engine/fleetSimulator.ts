@@ -130,7 +130,7 @@ function buildTimetableStop(
     scheduleText: "",
     nextBus: { label: "", minutesUntil: null, basis: "fallback", notes: { en: "", th: "", zh: "", de: "", fr: "", es: "" } },
     timetable: { firstDepartureLabel: null, lastDepartureLabel: null, nextDepartures: [], serviceWindowLabel: null, sourceLabel: { en: "", th: "", zh: "", de: "", fr: "", es: "" }, sourceUrl: "", sourceUpdatedAt: null, notes: { en: "", th: "", zh: "", de: "", fr: "", es: "" } },
-    nearbyPlace: { name: { en: "", th: "", zh: "", de: "", fr: "", es: "" }, link: "", image: 0, openClose: "", distanceMeters: 0, timeMinutes: 0 },
+    nearbyPlace: { name: "", mapUrl: "", openingHours: "", distanceMeters: 0, walkMinutes: 0 },
   };
 }
 
@@ -332,8 +332,8 @@ function generateLandBusRoster(profiles: Record<OperationalRouteId, DirectionPro
 
 const fleetRoster: FleetVehicle[] = [];
 const fleetByRoute: Record<OperationalRouteId, FleetVehicle[]> = Object.fromEntries(
-  routeIds.map((id) => [id, []])
-) as Record<OperationalRouteId, FleetVehicle[]>;
+  routeIds.map((id) => [id, [] as FleetVehicle[]])
+) as unknown as Record<OperationalRouteId, FleetVehicle[]>;
 
 /** Late-initialise the fleet roster once profiles are built.
  *  Called automatically on first use. */
