@@ -9,7 +9,41 @@ import { routeDestinationLabel } from "./i18n";
 import { parseScheduleEntries } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
-import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG } from "./config";
+import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG, ROUTE_DEFINITIONS } from "./config";
+
+// Detailed timetables — imported from src/data/timetables (copied from server/)
+import airportToRawaiTimetable from "../data/timetables/airport-to-rawai.json";
+import rawaiToAirportTimetable from "../data/timetables/rawai-to-airport.json";
+import ferrySchedules from "../data/timetables/ferry-schedules.json";
+import orangeLineTimetable from "../data/timetables/orange-line-8411.json";
+
+// ---------------------------------------------------------------------------
+// Detailed timetable types
+// ---------------------------------------------------------------------------
+
+type DetailedTimetableStop = { id: string; name: string; name_th: string; lat: number; lng: number };
+type DetailedTimetable = {
+  route: string;
+  direction: string;
+  label: string;
+  stops: DetailedTimetableStop[];
+  departures: { trip: number; times: (string | null)[] }[];
+};
+
+type FerryService = {
+  operator?: string;
+  durationMinutes: number;
+  fare?: Record<string, unknown>;
+  departures: string[];
+  notes?: string;
+};
+type FerryRouteSchedule = {
+  id: string;
+  label: string;
+  pier: { name: string; lat: number; lng: number };
+  destination: { name: string; lat: number; lng: number };
+  services: Record<string, FerryService>;
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,6 +104,133 @@ function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
+/** Parse "HH:MM" to minutes from midnight. */
+function parseTimeToMinutes(t: string | null): number | null {
+  if (!t) return null;
+  const [h, m] = t.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+/** Build a lightweight Stop object from timetable data. */
+function buildTimetableStop(
+  tStop: DetailedTimetableStop,
+  seq: number,
+  routeId: OperationalRouteId,
+  directionLabel: string
+): Stop {
+  return {
+    id: tStop.id,
+    routeId,
+    sequence: seq,
+    name: { en: tStop.name, th: tStop.name_th, zh: tStop.name, de: tStop.name, fr: tStop.name, es: tStop.name },
+    direction: { en: directionLabel, th: directionLabel, zh: directionLabel, de: directionLabel, fr: directionLabel, es: directionLabel },
+    routeDirection: { en: directionLabel, th: directionLabel, zh: directionLabel, de: directionLabel, fr: directionLabel, es: directionLabel },
+    coordinates: [tStop.lat, tStop.lng] as LatLngTuple,
+    scheduleText: "",
+    nextBus: { label: "", minutesUntil: null, basis: "fallback", notes: { en: "", th: "", zh: "", de: "", fr: "", es: "" } },
+    timetable: { firstDepartureLabel: null, lastDepartureLabel: null, nextDepartures: [], serviceWindowLabel: null, sourceLabel: { en: "", th: "", zh: "", de: "", fr: "", es: "" }, sourceUrl: "", sourceUpdatedAt: null, notes: { en: "", th: "", zh: "", de: "", fr: "", es: "" } },
+    nearbyPlace: { name: { en: "", th: "", zh: "", de: "", fr: "", es: "" }, link: "", image: 0, openClose: "", distanceMeters: 0, timeMinutes: 0 },
+  };
+}
+
+/** Build airport-line DirectionProfile from the detailed timetable JSON.
+ *  This gives us exact per-stop arrival times instead of the 450 m/min estimate. */
+function buildAirportLineProfile(timetable: DetailedTimetable, directionLabel: string): DirectionProfile | null {
+  const stops = timetable.stops.map((s, i) => buildTimetableStop(s, i + 1, "rawai-airport", directionLabel));
+  if (stops.length < 2) return null;
+
+  // Calculate average segment times across all trips
+  const segmentTimes: number[][] = Array.from({ length: stops.length - 1 }, () => []);
+  for (const dep of timetable.departures) {
+    const times = dep.times.map(parseTimeToMinutes);
+    for (let i = 0; i < times.length - 1; i++) {
+      const a = times[i];
+      const b = times[i + 1];
+      if (a !== null && b !== null) {
+        const diff = forwardDiff(a, b);
+        if (diff > 0 && diff < 120) segmentTimes[i]!.push(diff);
+      }
+    }
+  }
+
+  // Build stop offsets from averaged segment times
+  const stopOffsets: number[] = [0];
+  for (const segArray of segmentTimes) {
+    const avg = segArray.length > 0
+      ? Math.round(segArray.reduce((a, b) => a + b, 0) / segArray.length)
+      : 5; // fallback 5 min
+    stopOffsets.push(stopOffsets[stopOffsets.length - 1]! + avg);
+  }
+
+  // Trip duration = offset of last stop
+  const tripDurationMinutes = stopOffsets[stopOffsets.length - 1]!;
+
+  // Departures = first-stop times from all trips
+  const departures = timetable.departures
+    .map(d => parseTimeToMinutes(d.times[0]))
+    .filter((t): t is number => t !== null)
+    .sort((a, b) => a - b);
+
+  if (departures.length === 0) return null;
+
+  // Headway = median gap between departures
+  const headwayMinutes = deriveHeadway(departures, null);
+
+  // Polyline matching
+  const firstStopCoords = stops[0]!.coordinates;
+  const polyline = getDirectionPolyline("rawai-airport", firstStopCoords);
+  const usePolyline = polyline.length >= 2 && polylineMatchesStops(polyline, stops, "rawai-airport");
+
+  if (usePolyline) {
+    const polylineCumMeters = buildPolylineCumMeters(polyline);
+    const polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1]!;
+
+    // Snap each stop to polyline
+    const MIN_SEGMENT_METERS = 50;
+    const stopPolylineMeters: number[] = [];
+    let prevMeters = 0;
+    for (let i = 0; i < stops.length; i++) {
+      const floor = i === 0 ? 0 : prevMeters + MIN_SEGMENT_METERS;
+      const m = snapToPolylineForward(stops[i]!.coordinates, polyline, polylineCumMeters, floor);
+      stopPolylineMeters.push(Math.min(polylineTotalMeters, m));
+      prevMeters = stopPolylineMeters[i]!;
+    }
+
+    return {
+      routeId: "rawai-airport",
+      directionLabel,
+      stops,
+      departures,
+      headwayMinutes,
+      tripDurationMinutes,
+      stopOffsets,
+      polyline,
+      polylineCumMeters,
+      polylineTotalMeters,
+      stopPolylineMeters,
+    };
+  }
+
+  // Fallback: straight-line polyline from stops
+  const pts = stops.map(s => s.coordinates);
+  const polylineCumMeters = buildPolylineCumMeters(pts);
+  const polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1]!;
+  return {
+    routeId: "rawai-airport",
+    directionLabel,
+    stops,
+    departures,
+    headwayMinutes,
+    tripDurationMinutes,
+    stopOffsets,
+    polyline: pts,
+    polylineCumMeters,
+    polylineTotalMeters,
+    stopPolylineMeters: polylineCumMeters.slice(),
+  };
+}
+
 function bearingDeg(from: LatLngTuple, to: LatLngTuple): number {
   const lat1 = (from[0] * Math.PI) / 180;
   const lat2 = (to[0] * Math.PI) / 180;
@@ -109,36 +270,10 @@ function snapToPolylineForward(
 const posOnPolyline = sharedPosOn;
 
 // ---------------------------------------------------------------------------
-// Fleet roster — 20 realistic land buses + 13 ferries
+// Fleet roster — dynamically generated from schedule-derived fleet sizes
 // ---------------------------------------------------------------------------
 
-const landBuses: FleetVehicle[] = [
-  // Airport Line (Rawai–Airport): 10 buses
-  { vehicleId: "pksb-01", licensePlate: "กข 1001 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-02", licensePlate: "กข 1002 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-03", licensePlate: "กข 1003 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-04", licensePlate: "กข 1004 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-05", licensePlate: "กข 1005 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-06", licensePlate: "กข 1006 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-07", licensePlate: "กข 1007 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-08", licensePlate: "กข 1008 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-09", licensePlate: "กข 1009 ภูเก็ต", routeId: "rawai-airport" },
-  { vehicleId: "pksb-10", licensePlate: "กข 1010 ภูเก็ต", routeId: "rawai-airport" },
-  // Patong Line: 7 buses
-  { vehicleId: "pksb-11", licensePlate: "กค 2001 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-12", licensePlate: "กค 2002 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-13", licensePlate: "กค 2003 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-14", licensePlate: "กค 2004 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-15", licensePlate: "กค 2005 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-16", licensePlate: "กค 2006 ภูเก็ต", routeId: "patong-old-bus-station" },
-  { vehicleId: "pksb-17", licensePlate: "กค 2007 ภูเก็ต", routeId: "patong-old-bus-station" },
-  // Dragon Line: 3 buses
-  { vehicleId: "pksb-18", licensePlate: "กง 3001 ภูเก็ต", routeId: "dragon-line" },
-  { vehicleId: "pksb-19", licensePlate: "กง 3002 ภูเก็ต", routeId: "dragon-line" },
-  { vehicleId: "pksb-20", licensePlate: "กง 3003 ภูเก็ต", routeId: "dragon-line" },
-];
-
-const ferryVessels: FleetVehicle[] = [
+const FERRY_VESSELS: FleetVehicle[] = [
   { vehicleId: "ferry-aw-01", licensePlate: "AW Master I", routeId: "rassada-phi-phi" },
   { vehicleId: "ferry-aw-02", licensePlate: "AW Master II", routeId: "rassada-phi-phi" },
   { vehicleId: "ferry-pc-01", licensePlate: "PP Cruiser", routeId: "rassada-phi-phi" },
@@ -154,10 +289,148 @@ const ferryVessels: FleetVehicle[] = [
   { vehicleId: "ferry-rc-03", licensePlate: "Racha Bay", routeId: "chalong-racha" },
 ];
 
-const fleetRoster = [...landBuses, ...ferryVessels];
-const fleetByRoute = Object.fromEntries(
-  routeIds.map((id) => [id, fleetRoster.filter((v) => v.routeId === id)])
+/** Minimum fleet required to maintain a single direction's schedule. */
+function computeMinimumFleet(profile: DirectionProfile): number {
+  const layover = 10; // minutes
+  const roundTrip = profile.tripDurationMinutes * 2 + layover;
+  return Math.max(1, Math.ceil(roundTrip / profile.headwayMinutes));
+}
+
+/** Generate a land-bus fleet roster sized to the published schedule.
+ *  License plates follow Thai prefix conventions by route. */
+function generateLandBusRoster(profiles: Record<OperationalRouteId, DirectionProfile[]>): FleetVehicle[] {
+  const prefixByRoute: Record<OperationalRouteId, string> = {
+    "rawai-airport": "กข",
+    "patong-old-bus-station": "กค",
+    "dragon-line": "กง",
+    "rassada-phi-phi": "",
+    "rassada-ao-nang": "",
+    "bang-rong-koh-yao": "",
+    "chalong-racha": "",
+  };
+
+  const roster: FleetVehicle[] = [];
+  let globalCounter = 1;
+
+  for (const routeId of landRouteIds) {
+    const routeProfiles = profiles[routeId] ?? [];
+    // Sum minimum fleet across all direction profiles
+    const required = routeProfiles.reduce((n, p) => n + computeMinimumFleet(p), 0);
+    const prefix = prefixByRoute[routeId] ?? "กจ";
+    for (let i = 0; i < required; i++) {
+      roster.push({
+        vehicleId: `pksb-${globalCounter}`,
+        licensePlate: `${prefix} ${1000 + i + 1} ภูเก็ต`,
+        routeId,
+      });
+      globalCounter++;
+    }
+  }
+
+  return roster;
+}
+
+const fleetRoster: FleetVehicle[] = [];
+const fleetByRoute: Record<OperationalRouteId, FleetVehicle[]> = Object.fromEntries(
+  routeIds.map((id) => [id, []])
 ) as Record<OperationalRouteId, FleetVehicle[]>;
+
+/** Late-initialise the fleet roster once profiles are built.
+ *  Called automatically on first use. */
+let _fleetInit = false;
+function ensureFleetRoster() {
+  if (_fleetInit) return;
+  _fleetInit = true;
+
+  const landBuses = generateLandBusRoster(profilesByRoute);
+  const all = [...landBuses, ...FERRY_VESSELS];
+
+  fleetRoster.length = 0;
+  fleetRoster.push(...all);
+
+  for (const id of routeIds) {
+    fleetByRoute[id] = all.filter((v) => v.routeId === id);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fleet analysis — exposed to UI for the right-panel "Buses Required" metric
+// ---------------------------------------------------------------------------
+
+export type FleetAnalysis = {
+  routeId: OperationalRouteId;
+  routeName: string;
+  requiredBuses: number;
+  headwayMinutes: number;
+  tripDurationMinutes: number;
+  directionProfiles: {
+    directionLabel: string;
+    requiredBuses: number;
+    headwayMinutes: number;
+    tripDurationMinutes: number;
+    departuresCount: number;
+  }[];
+};
+
+/** Get all scheduled departures and hourly seat capacity across ALL routes.
+ *  Used by the demand-supply engine in simulation.ts. */
+export function getScheduleSupply(): {
+  allDepartures: number[];
+  capacityByHour: { hour: number; seats: number }[];
+} {
+  const capacityMap = new Map<number, number>();
+  const allDeps: number[] = [];
+
+  for (const routeId of routeIds) {
+    const profiles = profilesByRoute[routeId];
+    const capacity = routeId === "dragon-line" ? 15 : routeId.includes("ferry") ? 100 : 25;
+    for (const profile of profiles) {
+      for (const dep of profile.departures) {
+        allDeps.push(dep);
+        const hour = Math.floor(dep / 60);
+        capacityMap.set(hour, (capacityMap.get(hour) ?? 0) + capacity);
+      }
+    }
+  }
+
+  return {
+    allDepartures: allDeps.sort((a, b) => a - b),
+    capacityByHour: Array.from(capacityMap.entries())
+      .map(([hour, seats]) => ({ hour, seats }))
+      .sort((a, b) => a.hour - b.hour),
+  };
+}
+
+/** Get departures from the Airport → Rawai direction only.
+ *  Used by the demand-supply engine for airport passenger boarding. */
+export function getAirportDepartures(): number[] {
+  const profiles = profilesByRoute["rawai-airport"];
+  if (!profiles) return [];
+  const airportProfile = profiles.find((p) => p.directionLabel === "Bus to Rawai");
+  return airportProfile?.departures ?? [];
+}
+
+export function getFleetAnalysis(): FleetAnalysis[] {
+  ensureFleetRoster();
+  return routeIds.map((routeId) => {
+    const profiles = profilesByRoute[routeId];
+    const routeDef = ROUTE_DEFINITIONS[routeId];
+    return {
+      routeId,
+      routeName: routeDef?.shortName?.en ?? routeId,
+      requiredBuses: profiles.reduce((n, p) => n + computeMinimumFleet(p), 0),
+      headwayMinutes: profiles[0]?.headwayMinutes ?? 0,
+      tripDurationMinutes: profiles[0]?.tripDurationMinutes ?? 0,
+      directionProfiles: profiles.map((p) => ({
+        directionLabel: p.directionLabel,
+        requiredBuses: computeMinimumFleet(p),
+        headwayMinutes: p.headwayMinutes,
+        tripDurationMinutes: p.tripDurationMinutes,
+        departuresCount: p.departures.length,
+      })),
+    };
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Schedule derivation
@@ -208,7 +481,10 @@ function deriveTripDuration(stops: Stop[], departures: number[], offsets: number
 function splitDirectionGroups(stops: Stop[], routeId: OperationalRouteId): Stop[][] {
   if (stops.length === 0) return [];
   const isFerry = FERRY_ROUTE_IDS.includes(routeId as never);
-  const threshold = isFerry ? Infinity : 2500;
+  // Airport line is a long-distance corridor — stops can be 8 km apart.
+  // Patong/Dragon are local routes where >2.5 km usually means a merged
+  // unrelated route (the original bug this function was written for).
+  const threshold = isFerry ? Infinity : routeId === "rawai-airport" ? 10000 : 2500;
   const groups: Stop[][] = [[stops[0]!]];
   for (let i = 1; i < stops.length; i++) {
     const prev = stops[i - 1]!;
@@ -231,7 +507,11 @@ function splitDirectionGroups(stops: Stop[], routeId: OperationalRouteId): Stop[
 function polylineMatchesStops(poly: LatLngTuple[], stops: Stop[], routeId: OperationalRouteId): boolean {
   if (poly.length < 2 || stops.length < 2) return false;
   const isFerry = FERRY_ROUTE_IDS.includes(routeId as never);
-  const threshold = isFerry ? 5000 : 250;
+  // Airport line GeoJSON stops don't include terminals (Rawai Beach / Phuket Airport)
+  // because the stop dataset is incomplete. Use a larger threshold so the
+  // full road polyline is still matched; the missing terminal is harmless
+  // because the bus simply stops at the last available stop.
+  const threshold = isFerry ? 5000 : routeId === "rawai-airport" ? 12000 : 250;
   const first = stops[0].coordinates;
   const last = stops[stops.length - 1].coordinates;
   const startDist = Math.min(
@@ -338,6 +618,123 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
 const profilesByRoute = Object.fromEntries(
   routeIds.map((id) => [id, buildDirectionProfiles(id)])
 ) as Record<OperationalRouteId, DirectionProfile[]>;
+
+// Patch airport-line profiles with detailed timetable data.
+// The GeoJSON stop times are corrupted for many stops; the JSON timetables
+// have exact per-stop arrival times from the official PKSB schedule.
+profilesByRoute["rawai-airport"] = patchAirportProfiles(profilesByRoute["rawai-airport"]);
+
+function patchAirportProfiles(profiles: DirectionProfile[]): DirectionProfile[] {
+  return profiles.map((profile) => {
+    const timetable =
+      profile.directionLabel === "Bus to Rawai" ? airportToRawaiTimetable
+      : profile.directionLabel === "Bus to Airport" ? rawaiToAirportTimetable
+      : null;
+    if (!timetable) return profile;
+
+    // 1. Calculate timetable segment times (average across all trips)
+    const segmentTimes: number[][] = Array.from({ length: timetable.stops.length - 1 }, () => []);
+    for (const dep of timetable.departures) {
+      const times = dep.times.map(parseTimeToMinutes);
+      for (let i = 0; i < times.length - 1; i++) {
+        const a = times[i];
+        const b = times[i + 1];
+        if (a !== null && b !== null) {
+          const diff = forwardDiff(a, b);
+          if (diff > 0 && diff < 120) segmentTimes[i]!.push(diff);
+        }
+      }
+    }
+    const avgSegmentTimes = segmentTimes.map((arr) =>
+      arr && arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 5
+    );
+
+    // 2. Build timetable stop offsets
+    const timetableOffsets: number[] = [0];
+    for (const seg of avgSegmentTimes) {
+      timetableOffsets.push(timetableOffsets[timetableOffsets.length - 1]! + seg);
+    }
+
+    // 3. Map timetable stops to profile (GeoJSON) stops by coordinates
+    const offsetMap = new Map<number, number>();
+    for (let ti = 0; ti < timetable.stops.length; ti++) {
+      const tStop = timetable.stops[ti];
+      let bestIdx = -1;
+      let bestDist = Infinity;
+      for (let pi = 0; pi < profile.stops.length; pi++) {
+        const d = haversineDistanceMeters([tStop.lat, tStop.lng], profile.stops[pi].coordinates);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = pi;
+        }
+      }
+      if (bestIdx >= 0 && bestDist < 2000) {
+        // If multiple timetable stops map to the same profile stop, use the earlier offset
+        if (!offsetMap.has(bestIdx) || timetableOffsets[ti]! < offsetMap.get(bestIdx)!) {
+          offsetMap.set(bestIdx, timetableOffsets[ti]!);
+        }
+      }
+    }
+
+    // 4. Ensure monotonic mapped offsets
+    const mappedIdx = Array.from(offsetMap.keys()).sort((a, b) => a - b);
+    const monotonicMap = new Map<number, number>();
+    let prevO = 0;
+    for (const idx of mappedIdx) {
+      const o = Math.max(prevO, offsetMap.get(idx)!);
+      monotonicMap.set(idx, o);
+      prevO = o;
+    }
+
+    // 5. Interpolate for all profile stops using polyline distance
+    const firstIdx = mappedIdx[0] ?? 0;
+    const lastIdx = mappedIdx[mappedIdx.length - 1] ?? profile.stops.length - 1;
+    const firstOffset = monotonicMap.get(firstIdx) ?? 0;
+    const lastOffset = monotonicMap.get(lastIdx) ?? timetableOffsets[timetableOffsets.length - 1]!;
+    const firstMeters = profile.stopPolylineMeters[firstIdx] ?? 0;
+    const lastMeters = profile.stopPolylineMeters[lastIdx] ?? profile.polylineTotalMeters;
+
+    const newOffsets = profile.stops.map((_, i) => {
+      if (monotonicMap.has(i)) return monotonicMap.get(i)!;
+      if (i <= firstIdx) return 0;
+      if (i >= lastIdx) {
+        const m = profile.stopPolylineMeters[i] ?? profile.polylineTotalMeters;
+        if (lastMeters <= firstMeters) return lastOffset;
+        const ratio = (m - firstMeters) / (lastMeters - firstMeters);
+        return Math.round(firstOffset + (lastOffset - firstOffset) * ratio);
+      }
+      const prev = mappedIdx.filter((idx) => idx < i).pop()!;
+      const next = mappedIdx.find((idx) => idx > i)!;
+      const prevM = profile.stopPolylineMeters[prev]!;
+      const nextM = profile.stopPolylineMeters[next]!;
+      const prevO = monotonicMap.get(prev)!;
+      const nextO = monotonicMap.get(next)!;
+      const m = profile.stopPolylineMeters[i]!;
+      const ratio = (m - prevM) / (nextM - prevM);
+      return Math.round(prevO + (nextO - prevO) * ratio);
+    });
+
+    // 6. Final monotonic pass
+    const finalOffsets: number[] = [];
+    for (const v of newOffsets) {
+      finalOffsets.push(finalOffsets.length === 0 ? 0 : Math.max(finalOffsets[finalOffsets.length - 1]!, v));
+    }
+
+    // 7. Update departures from timetable
+    const departures = timetable.departures
+      .map((d) => parseTimeToMinutes(d.times[0]))
+      .filter((t): t is number => t !== null)
+      .sort((a, b) => a - b);
+
+    return {
+      ...profile,
+      departures,
+      headwayMinutes: deriveHeadway(departures, null),
+      tripDurationMinutes: timetableOffsets[timetableOffsets.length - 1]!,
+      stopOffsets: finalOffsets,
+    };
+  });
+}
 
 function estimateRequiredFleet(routeId: OperationalRouteId) {
   return profilesByRoute[routeId].reduce((n, p) => {
@@ -483,8 +880,9 @@ function buildVehiclePosition(
 // ---------------------------------------------------------------------------
 
 function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now: Date) {
+  ensureFleetRoster();
   const pool = fleetByRoute[routeId];
-  if (pool.length === 0) return [];
+  if (!pool || pool.length === 0) return [];
 
   const occs = profilesByRoute[routeId].flatMap((p) => buildTripOccurrences(p, nowMin));
   if (occs.length === 0) return [];
@@ -639,15 +1037,33 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 // ---------------------------------------------------------------------------
 
 export const SIM_SPEED = 15;
-const simAnchorReal = Date.now();
-export const SERVICE_START = 360;   // 06:00 (chart axis floor)
-const SERVICE_END = 1350;    // 22:30
+export const SERVICE_START = 330;   // 05:30 — first northbound trip
+export const SERVICE_END = 1440;    // 24:00 (00:00 next day)
 export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
-const SIM_OPEN_MIN = 540;    // 09:00
+const SIM_OPEN_MIN = 540;    // 09:00 — default start time
+
+// ---------------------------------------------------------------------------
+// Controllable simulation clock — replaces the old wall-clock-only anchor.
+// The clock can be scrubbed, paused, and played at variable speeds.
+// All consumers (map, panels, analytics) read from the same source.
+// ---------------------------------------------------------------------------
+
+type SimClockState = {
+  mode: 'playing' | 'paused';
+  currentMinutes: number;
+  speed: number;
+  lastRealTime: number;
+};
+
+const simClock: SimClockState = {
+  mode: 'playing',
+  currentMinutes: SIM_OPEN_MIN,
+  speed: SIM_SPEED,
+  lastRealTime: Date.now(),
+};
 
 // Optional override for scripted demos / tests. When set, getSimulatedMinutes
-// returns clockOverride.fn() instead of the wall-clock-derived value. The
-// closure is read fresh on every call so it can be set/unset at runtime.
+// returns clockOverride.fn() instead of the state-derived value.
 const clockOverride: { fn: (() => number) | null } = { fn: null };
 
 /** Install (or remove with `null`) a function that returns simulated minutes.
@@ -658,13 +1074,55 @@ export function setClockOverride(fn: (() => number) | null): void {
 
 export function getSimulatedMinutes(): number {
   if (clockOverride.fn) return clockOverride.fn();
-  const elapsedRealMs = Date.now() - simAnchorReal;
-  const elapsedSimMinutes = (elapsedRealMs / 60_000) * SIM_SPEED;
-  return (
-    SERVICE_START +
-    (((SIM_OPEN_MIN - SERVICE_START + elapsedSimMinutes) % SERVICE_WINDOW) + SERVICE_WINDOW) %
-      SERVICE_WINDOW
-  );
+
+  if (simClock.mode === 'playing') {
+    const now = Date.now();
+    const elapsedRealMs = now - simClock.lastRealTime;
+    const elapsedSimMinutes = (elapsedRealMs / 60_000) * simClock.speed;
+    simClock.currentMinutes += elapsedSimMinutes;
+    simClock.lastRealTime = now;
+
+    // Wrap around at service end
+    if (simClock.currentMinutes >= SERVICE_END) {
+      simClock.currentMinutes = SERVICE_START + (simClock.currentMinutes - SERVICE_END) % SERVICE_WINDOW;
+    }
+  }
+
+  return simClock.currentMinutes;
+}
+
+/** Set the simulated time directly (e.g. when user scrubs the time bar). */
+export function setSimulatedMinutes(min: number): void {
+  simClock.currentMinutes = Math.max(SERVICE_START, Math.min(SERVICE_END, min));
+  simClock.lastRealTime = Date.now();
+}
+
+/** Pause the simulation clock. */
+export function pause(): void {
+  simClock.mode = 'paused';
+  simClock.lastRealTime = Date.now();
+}
+
+/** Resume the simulation clock. */
+export function play(): void {
+  simClock.mode = 'playing';
+  simClock.lastRealTime = Date.now();
+}
+
+/** Toggle between playing and paused. */
+export function togglePlayPause(): void {
+  if (simClock.mode === 'playing') pause();
+  else play();
+}
+
+/** Set playback speed (1× to 60×). */
+export function setSpeed(s: number): void {
+  simClock.speed = Math.max(1, Math.min(60, s));
+  simClock.lastRealTime = Date.now();
+}
+
+export function getClockState(): { mode: SimClockState['mode']; speed: number } {
+  return { mode: simClock.mode, speed: simClock.speed };
 }
 
 /** All vehicles including orange line competitor, at the simulated instant. */

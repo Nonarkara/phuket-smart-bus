@@ -11,8 +11,20 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
-import { computeSimState, getDayInfo, type SimState, type RegionData } from "./engine/simulation";
+import { computeSimState, getDayInfo, getHourlyDemandSupply, type SimState, type RegionData } from "./engine/simulation";
 import { getVehiclesNow } from "./engine/dataProvider";
+import {
+  getSimulatedMinutes,
+  setSimulatedMinutes,
+  play,
+  pause,
+  togglePlayPause,
+  setSpeed,
+  getClockState,
+  SERVICE_START,
+  SERVICE_END,
+  getFleetAnalysis,
+} from "./engine/fleetSimulator";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -417,12 +429,53 @@ function RegionChart({ data, maxPax }: { data: RegionData[]; maxPax: number }) {
 // Main Dashboard
 // ---------------------------------------------------------------------------
 
+function formatSimTime(minutes: number) {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = Math.floor(minutes % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+const SPEED_OPTIONS = [1, 5, 15, 30];
+
 export default function DashboardV2() {
   const [viewMode, setViewMode] = useState<"sim" | "live">("sim");
   const [state, setState] = useState(() => computeSimState());
   const [dailyFlights] = useState(() => getOpsFlightSchedule());
   const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));
-  
+  const [sliderValue, setSliderValue] = useState(getSimulatedMinutes());
+  const [clockState, setClockState] = useState(getClockState());
+  const [fleetAnalysis] = useState(() => getFleetAnalysis());
+  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() =>
+    getVehiclesNow().map(v => ({
+      id: v.vehicleId,
+      lat: v.coordinates[0],
+      lng: v.coordinates[1],
+      heading: v.heading,
+      status: v.status as "moving" | "dwelling",
+      route: v.routeId,
+      pax: 0,
+      plate: v.licensePlate
+    }))
+  );
+
+  // Poll map vehicles independently (all routes, all modes)
+  useEffect(() => {
+    const id = setInterval(() => {
+      const live = getVehiclesNow();
+      setMapVehicles(live.map(v => ({
+        id: v.vehicleId,
+        lat: v.coordinates[0],
+        lng: v.coordinates[1],
+        heading: v.heading,
+        status: v.status as "moving" | "dwelling",
+        route: v.routeId,
+        pax: 0,
+        plate: v.licensePlate
+      })));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
   const currentHourBucket = hourlyFlights[Math.floor(state.simMinutes / 60) % 24] ?? hourlyFlights[0];
@@ -437,32 +490,30 @@ export default function DashboardV2() {
   const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
   const avgSavingsPerRider = state.paxDelivered > 0 ? Math.round(state.savingsThb / state.paxDelivered) : 0;
 
+  // Schedule-derived fleet metrics
+  const totalBusesRequired = fleetAnalysis.reduce((s, r) => s + r.requiredBuses, 0);
+  const currentHourly = getHourlyDemandSupply()[Math.floor(state.simMinutes / 60) % 24];
+  const currentSupplySeats = currentHourly?.busSeatsAvailable ?? 0;
+  const currentBusDemand = currentHourly?.busDemandPax ?? 0;
+  const currentGap = Math.max(0, currentBusDemand - currentSupplySeats);
+  const gapStatus = currentGap > 20 ? "shortfall" : currentGap > 0 ? "tight" : "surplus";
+
+  // Poll simulation state every second
   useEffect(() => {
     const id = setInterval(() => {
-      if (viewMode === "sim") {
-        setState(computeSimState());
-      } else {
-        // Sync simulation metrics but override vehicles with live data
-        const sim = computeSimState();
-        const live = getVehiclesNow();
-        
-        // Map live vehicles to sim state format
-        const mappedLive: SimState["vehicles"] = live.map(v => ({
-          id: v.vehicleId,
-          lat: v.coordinates[0],
-          lng: v.coordinates[1],
-          heading: v.heading,
-          status: v.status as any,
-          route: v.routeId,
-          pax: 0, // pax data only available in simulation mode
-          plate: v.licensePlate
-        }));
-
-        setState({ ...sim, vehicles: mappedLive });
-      }
+      setState(computeSimState());
     }, 1000);
     return () => clearInterval(id);
-  }, [viewMode]);
+  }, []);
+
+  // Animate slider thumb while playing
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSliderValue(getSimulatedMinutes());
+      setClockState(getClockState());
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="v2">
@@ -503,7 +554,51 @@ export default function DashboardV2() {
           <span className="v2-header__live">●</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
           <span className="v2-header__time">{state.clockLabel} BKK</span>
-          <span className="v2-header__speed">{viewMode === 'sim' ? '30× simulation' : '1× real-time'}</span>
+          <span className="v2-header__speed">{viewMode === 'sim' ? `${clockState.speed}×` : '1×'} {clockState.mode === 'playing' ? '▶' : '⏸'}</span>
+        </div>
+
+        {/* Time Bar */}
+        <div className="v2-timebar">
+          <button
+            className="v2-timebar__play"
+            onClick={() => {
+              togglePlayPause();
+              setClockState(getClockState());
+            }}
+            title={clockState.mode === 'playing' ? 'Pause' : 'Play'}
+          >
+            {clockState.mode === 'playing' ? '⏸' : '▶'}
+          </button>
+          <input
+            type="range"
+            className="v2-timebar__slider"
+            min={SERVICE_START}
+            max={SERVICE_END}
+            step={1}
+            value={sliderValue}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setSliderValue(val);
+              setSimulatedMinutes(val);
+              pause();
+              setClockState(getClockState());
+            }}
+          />
+          <span className="v2-timebar__label">{formatSimTime(sliderValue)}</span>
+          <div className="v2-timebar__speeds">
+            {SPEED_OPTIONS.map((s) => (
+              <button
+                key={s}
+                className={`v2-timebar__speed ${clockState.speed === s ? 'is-active' : ''}`}
+                onClick={() => {
+                  setSpeed(s);
+                  setClockState(getClockState());
+                }}
+              >
+                {s}×
+              </button>
+            ))}
+          </div>
         </div>
         <div className="v2-header__meta">
           <span>{arrivalsToday.length} arrivals</span>
@@ -587,7 +682,7 @@ export default function DashboardV2() {
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
             />
             <RoutePolylines />
-            <VehicleLayer vehicles={state.vehicles} />
+            <VehicleLayer vehicles={mapVehicles} />
           </MapContainer>
           <div className="v2-map__overlay">
             <span className="v2-map__stat"><Counter value={state.activeBuses} /> buses · <Counter value={state.busesMoving} /> moving</span>
@@ -603,13 +698,28 @@ export default function DashboardV2() {
           <h2 className="v2-panel__title">Supply & Impact</h2>
 
           <InsightCard
-            eyebrow="Service Response"
-            headline={`${responsePct}% of bus demand has boarding capacity`}
-            detail={`Delivered riders are at ${liveCapture}% of live demand so far. ${state.activeBuses} buses are active, next dispatch in ${state.nextDeparture ?? 0} minutes.`}
+            eyebrow="Fleet Capacity"
+            headline={`${totalBusesRequired} buses required · ${mapVehicles.length} in service`}
+            detail={`Schedule-derived fleet size across ${fleetAnalysis.length} routes. Headway varies by demand pattern.`}
             tone="supply"
           />
 
           <div className="v2-kpi-stack">
+            <div className={`v2-kpi ${gapStatus === "shortfall" ? "v2-kpi--alert" : gapStatus === "tight" ? "v2-kpi--warn" : "v2-kpi--green"}`}>
+              <div className="v2-kpi__val">
+                <span className="counter">{currentSupplySeats}</span>
+                <span className="v2-kpi__sub">/{currentBusDemand}</span>
+              </div>
+              <div className="v2-kpi__label">Seats vs Demand this hour</div>
+            </div>
+            <div className={`v2-kpi ${currentGap > 0 ? "v2-kpi--alert" : ""}`}>
+              <div className="v2-kpi__val"><Counter value={currentGap} /></div>
+              <div className="v2-kpi__label">Unmet demand (pax)</div>
+            </div>
+            <div className="v2-kpi">
+              <div className="v2-kpi__val"><Counter value={totalBusesRequired} /></div>
+              <div className="v2-kpi__label">Buses required (all routes)</div>
+            </div>
             <div className="v2-kpi v2-kpi--green">
               <div className="v2-kpi__val"><Counter value={state.paxDelivered} /></div>
               <div className="v2-kpi__label">Passengers delivered</div>
@@ -621,18 +731,6 @@ export default function DashboardV2() {
             <div className="v2-kpi">
               <div className="v2-kpi__val"><span className="counter">฿{formatCurrencyCompact(state.savingsThb)}</span></div>
               <div className="v2-kpi__label">Saved vs Grab/taxi</div>
-            </div>
-            <div className="v2-kpi">
-              <div className="v2-kpi__val"><span className="counter">{Math.round(state.avgOccupancy * 100)}%</span></div>
-              <div className="v2-kpi__label">Average occupancy</div>
-            </div>
-            <div className="v2-kpi">
-              <div className="v2-kpi__val"><span className="counter">฿{avgSavingsPerRider}</span></div>
-              <div className="v2-kpi__label">Saved per rider</div>
-            </div>
-            <div className="v2-kpi">
-              <div className="v2-kpi__val"><span className="counter">{state.nextDeparture ?? 0} min</span></div>
-              <div className="v2-kpi__label">Next airport dispatch</div>
             </div>
           </div>
 

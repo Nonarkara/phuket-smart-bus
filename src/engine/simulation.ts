@@ -19,7 +19,7 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlig
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes } from "./fleetSimulator";
+import { getSimulatedMinutes, getScheduleSupply, getAirportDepartures } from "./fleetSimulator";
 
 const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
 const SVC_END = 1320;  // 22:00
@@ -97,14 +97,21 @@ export const DESTINATIONS: Destination[] = [
   { name: "Laguna/Bang Tao", pct: 0.07, travelMin: 40, grabThb: 450, busThb: 100 },
 ];
 
-// Bus timetable: departures from airport (minutes from midnight)
-// From the official PKSB timetable (Airport→Rawai direction)
-const AIRPORT_DEPARTURES = [
-  495, 540, 600, 660, 720, 780, 840, 870, 900, 930, 960, 990, 1020, 1080, 1140, 1200, 1260, 1320, 1360, 1410
-];
-
+// Bus capacity per vehicle (simplified — all land buses seat 25, dragon seats 15)
 const BUS_CAPACITY = 25;
-const NUM_BUSES = 20;
+
+/** Memoized schedule data — schedules are static for the session. */
+let _cachedAirportDepartures: number[] | null = null;
+function airportDepartures(): number[] {
+  if (!_cachedAirportDepartures) _cachedAirportDepartures = getAirportDepartures().sort((a, b) => a - b);
+  return _cachedAirportDepartures;
+}
+
+let _cachedScheduleSupply: ReturnType<typeof getScheduleSupply> | null = null;
+function scheduleSupply(): ReturnType<typeof getScheduleSupply> {
+  if (!_cachedScheduleSupply) _cachedScheduleSupply = getScheduleSupply();
+  return _cachedScheduleSupply;
+}
 
 // ---------------------------------------------------------------------------
 // Regional origin mapping
@@ -257,8 +264,9 @@ export function computeSimState(): SimState {
   // 4. How many want the bus?
   const paxWantBus = Math.round(paxReady * BUS_CAPTURE_RATE);
 
-  // 5. Bus departures that have happened
-  const departedBuses = AIRPORT_DEPARTURES.filter(d => d <= now);
+  // 5. Bus departures that have happened (airport line only)
+  const deps = airportDepartures();
+  const departedBuses = deps.filter(d => d <= now);
   const totalBusCapacity = departedBuses.length * BUS_CAPACITY;
 
   // 6. How many actually boarded? (min of demand and capacity)
@@ -285,7 +293,7 @@ export function computeSimState(): SimState {
   const paxAtAirport = Math.max(0, paxWantBus - paxBoarded);
 
   // 9. Next departure
-  const nextDep = AIRPORT_DEPARTURES.find(d => d > now);
+  const nextDep = deps.find(d => d > now);
   const nextDeparture = nextDep ? Math.round(nextDep - now) : null;
 
   // 10. Impact metrics — DERIVED from actual served passengers
@@ -385,9 +393,9 @@ export function getLineMetrics(): LineMetrics[] {
 // Vehicle positions — reuse the polyline snapping from v1
 // ---------------------------------------------------------------------------
 
-const PLATES = Array.from({ length: NUM_BUSES }, (_, i) =>
-  `กข ${1001 + i} ภูเก็ต`
-);
+function getPlate(busIdx: number): string {
+  return `กข ${1001 + busIdx} ภูเก็ต`;
+}
 
 // Get the airport→rawai polyline for positioning buses
 let cachedPolyline: LatLngTuple[] | null = null;
@@ -448,7 +456,7 @@ function buildVehiclePositions(
     if (age > tripDuration + 20) continue;
     if (age < -5) continue; // prestart
 
-    const busIdx = i % NUM_BUSES;
+    const busIdx = i;
     const paxOnBus = Math.min(BUS_CAPACITY, Math.max(0, demandPax - cumBoarded));
     cumBoarded += BUS_CAPACITY;
 
@@ -474,7 +482,7 @@ function buildVehiclePositions(
       status,
       route: "Airport → Rawai",
       pax: Math.min(paxOnBus, BUS_CAPACITY),
-      plate: PLATES[busIdx],
+      plate: getPlate(busIdx),
     });
   }
 
@@ -510,7 +518,7 @@ export type HourlyDemandSupply = {
   revenueThb: number;      // servedPax × fare
 };
 
-// Memoized — depends only on FLIGHTS and AIRPORT_DEPARTURES, both immutable
+// Memoized — depends only on FLIGHTS and schedule data, both immutable
 // for the session. Multiple consumers poll this every second; recomputing
 // 24 buckets every call wastes work. Compute once on first call.
 let cachedHourlyDemandSupply: HourlyDemandSupply[] | null = null;
@@ -527,12 +535,12 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
     if (h >= 0 && h < 24) arrivalByHour[h] += f.pax;
   }
 
-  // 2) Bucket scheduled bus departures into hours; each bus leaves with a full
-  //    25-seat capacity. Multiple departures within the same hour stack.
+  // 2) Bucket ALL scheduled departures (all routes) into hours.
+  //    This gives the full supply picture, not just airport line.
   const seatsByHour: number[] = Array.from({ length: 24 }, () => 0);
-  for (const dep of AIRPORT_DEPARTURES) {
-    const h = Math.floor(dep / 60);
-    if (h >= 0 && h < 24) seatsByHour[h] += BUS_CAPACITY;
+  const supply = scheduleSupply();
+  for (const { hour, seats } of supply.capacityByHour) {
+    if (hour >= 0 && hour < 24) seatsByHour[hour] += seats;
   }
 
   // 3) Combine — per-hour demand vs supply.
@@ -554,4 +562,33 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
   });
 
   return cachedHourlyDemandSupply;
+}
+
+// ---------------------------------------------------------------------------
+// Live demand-supply gap — used by the right-panel "Gap" indicator
+// ---------------------------------------------------------------------------
+
+export type SupplyGap = {
+  hour: number;
+  demandPax: number;
+  supplySeats: number;
+  gapPax: number;
+  status: "surplus" | "balanced" | "shortfall";
+};
+
+export function getSupplyGaps(): SupplyGap[] {
+  const hourly = getHourlyDemandSupply();
+  return hourly.map((h) => {
+    const gap = h.busDemandPax - h.busSeatsAvailable;
+    let status: SupplyGap["status"] = "balanced";
+    if (gap > 20) status = "shortfall";
+    else if (gap < -20) status = "surplus";
+    return {
+      hour: h.hour,
+      demandPax: h.busDemandPax,
+      supplySeats: h.busSeatsAvailable,
+      gapPax: Math.max(0, gap),
+      status,
+    };
+  });
 }

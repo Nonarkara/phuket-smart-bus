@@ -1,0 +1,19 @@
+{
+  "route": "rawai-airport",
+  "direction": "promthep-extension",
+  "label": "Promthep Cape Sunset Service",
+  "stops": [
+    { "id": "rawai-beach", "name": "Rawai Beach", "lat": 7.7719, "lng": 98.3217 },
+    { "id": "promthep-cape", "name": "Promthep Cape", "lat": 7.7591, "lng": 98.3037 }
+  ],
+  "toPromthep": [
+    { "trip": 1, "depart": "16:45", "arrive": "16:47" },
+    { "trip": 2, "depart": "17:45", "arrive": "17:47" },
+    { "trip": 3, "depart": "18:45", "arrive": "18:47" }
+  ],
+  "fromPromthep": [
+    { "trip": 1, "depart": "16:47", "destinations": "Kata/Karon/Patong/Airport" },
+    { "trip": 2, "depart": "17:47", "destinations": "Kata/Karon/Patong/Airport" },
+    { "trip": 3, "depart": "18:47", "destinations": "Kata/Karon/Patong/Airport" }
+  ]
+}

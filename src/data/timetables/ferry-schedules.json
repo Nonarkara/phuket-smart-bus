@@ -1,0 +1,109 @@
+{
+  "routes": [
+    {
+      "id": "rassada-phi-phi",
+      "label": "Rassada Pier → Phi Phi (Tonsai)",
+      "pier": { "name": "Rassada Pier", "lat": 7.8574, "lng": 98.3947 },
+      "destination": { "name": "Phi Phi Tonsai Pier", "lat": 7.7394, "lng": 98.7682 },
+      "services": {
+        "standardFerry": {
+          "operator": "Andaman Wave Master / Phi Phi Cruiser",
+          "durationMinutes": 120,
+          "fare": { "standard": 700, "first": 1000, "premium": 1300, "child": 600, "currency": "THB" },
+          "departures": ["08:30", "12:30", "13:45"]
+        },
+        "speedboat": {
+          "operator": "Multiple operators",
+          "durationMinutes": 60,
+          "fare": { "adult": 950, "child": 700, "currency": "THB" },
+          "departures": ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "12:00", "12:30", "13:30", "14:00", "15:30"]
+        }
+      }
+    },
+    {
+      "id": "phi-phi-rassada",
+      "label": "Phi Phi (Tonsai) → Rassada Pier",
+      "pier": { "name": "Phi Phi Tonsai Pier", "lat": 7.7394, "lng": 98.7682 },
+      "destination": { "name": "Rassada Pier", "lat": 7.8574, "lng": 98.3947 },
+      "services": {
+        "standardFerry": {
+          "operator": "Andaman Wave Master / Phi Phi Cruiser",
+          "durationMinutes": 120,
+          "departures": ["09:00", "11:00", "14:00", "14:30"]
+        },
+        "speedboat": {
+          "operator": "Multiple operators",
+          "durationMinutes": 60,
+          "departures": ["08:30", "09:00", "09:30", "11:00", "13:00", "13:30", "14:30", "15:00", "15:45", "16:00", "17:00"]
+        }
+      }
+    },
+    {
+      "id": "rassada-ao-nang",
+      "label": "Rassada Pier → Ao Nang / Railay",
+      "pier": { "name": "Rassada Pier", "lat": 7.8574, "lng": 98.3947 },
+      "destination": { "name": "Ao Nang Pier", "lat": 8.0367, "lng": 98.8208 },
+      "services": {
+        "ferry": {
+          "operator": "Andaman Wave Master",
+          "durationMinutes": 120,
+          "fare": { "adult": 900, "currency": "THB" },
+          "departures": ["08:30"]
+        }
+      }
+    },
+    {
+      "id": "ao-nang-rassada",
+      "label": "Ao Nang → Rassada Pier",
+      "pier": { "name": "Ao Nang Pier", "lat": 8.0367, "lng": 98.8208 },
+      "destination": { "name": "Rassada Pier", "lat": 7.8574, "lng": 98.3947 },
+      "services": {
+        "ferry": {
+          "durationMinutes": 135,
+          "departures": ["15:00"]
+        }
+      }
+    },
+    {
+      "id": "rassada-koh-lanta",
+      "label": "Rassada Pier → Koh Lanta (Saladan)",
+      "pier": { "name": "Rassada Pier", "lat": 7.8574, "lng": 98.3947 },
+      "destination": { "name": "Saladan Pier, Koh Lanta", "lat": 7.6483, "lng": 99.0405 },
+      "services": {
+        "speedboat": {
+          "durationMinutes": 90,
+          "fare": { "adult": 1500, "currency": "THB" },
+          "departures": ["10:00", "14:30"],
+          "notes": "Includes minivan pickup"
+        }
+      }
+    },
+    {
+      "id": "bang-rong-koh-yao",
+      "label": "Bang Rong Pier → Koh Yao",
+      "pier": { "name": "Bang Rong Pier", "lat": 8.0407, "lng": 98.4250 },
+      "destination": { "name": "Koh Yao Noi", "lat": 8.1069, "lng": 98.5836 },
+      "services": {
+        "longtail": {
+          "durationMinutes": 30,
+          "fare": { "adult": 150, "currency": "THB" },
+          "departures": ["07:30", "09:00", "11:00", "13:00", "15:00", "17:00"]
+        }
+      }
+    },
+    {
+      "id": "chalong-racha",
+      "label": "Chalong Pier → Racha Islands",
+      "pier": { "name": "Chalong Pier", "lat": 7.8177, "lng": 98.3591 },
+      "destination": { "name": "Racha Yai", "lat": 7.6120, "lng": 98.3650 },
+      "services": {
+        "speedboat": {
+          "durationMinutes": 35,
+          "fare": { "adult": 800, "currency": "THB" },
+          "departures": ["08:30", "09:30", "10:30"],
+          "return": ["13:30", "14:30", "15:30"]
+        }
+      }
+    }
+  ]
+}
