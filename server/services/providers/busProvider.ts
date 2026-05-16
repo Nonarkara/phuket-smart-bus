@@ -102,7 +102,9 @@ export function normalizeRecord(record: RawBusRecord): VehiclePosition | null {
     status:
       record.data.spd > 4 ? "moving" : record.data.spd === 0 ? "dwelling" : "unknown",
     distanceToDestinationMeters: Number.isFinite(extraDistance) ? extraDistance : null,
-    stopsAway: Number.isFinite(stopsAway) ? stopsAway : null
+    stopsAway: Number.isFinite(stopsAway) ? stopsAway : null,
+    polylineMeters: null,
+    polylineFirstStop: null
   };
 }
 

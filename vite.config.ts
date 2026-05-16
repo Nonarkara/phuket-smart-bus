@@ -11,7 +11,7 @@ export default defineConfig({
   json: {
     stringify: false
   },
-  base: process.env.GITHUB_PAGES ? "/phuket-smart-bus/" : "/",
+  base: "/",
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },
@@ -26,7 +26,8 @@ export default defineConfig({
     port: 4173
   },
   build: {
-    outDir: "dist/client"
+    outDir: "dist/client",
+    chunkSizeWarningLimit: 1300
   },
   test: {
     globals: true,

@@ -5,41 +5,67 @@
       "type": "Feature",
       "properties": {
         "no": 1,
-        "stop_name_th": "ท่าเรือรัษฎา",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e23\u0e31\u0e29\u0e0e\u0e32",
         "stop_name_eng": "Rassada Pier",
         "lat": 7.8557,
         "lon": 98.4013,
-        "time": "8:30AM,11:00AM,1:30PM,1:45PM,3:00PM",
+        "time": "8:30AM,9:00AM,9:30AM,10:30AM,11:00AM,12:30PM,1:30PM,2:00PM,3:30PM",
         "route": "rassada_phi_phi",
         "direction": "Ferry to Phi Phi",
         "route_direction": "Rassada Pier --> Phi Phi Tonsai",
         "icon": "",
-        "near_place": { "place_name": "Rassada Pier Terminal", "place_link": "https://maps.google.com/?q=7.8557,98.4013", "place_img": 0, "open_close": "7:30AM - 6:30PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Rassada Pier Terminal",
+          "place_link": "https://maps.google.com/?q=7.8557,98.4013",
+          "place_img": 0,
+          "open_close": "7:30AM - 6:30PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4013, 7.8557] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4013,
+          7.8557
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 2,
-        "stop_name_th": "ท่าเรือตันไซ เกาะพีพี",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e15\u0e31\u0e19\u0e44\u0e0b \u0e40\u0e01\u0e32\u0e30\u0e1e\u0e35\u0e1e\u0e35",
         "stop_name_eng": "Phi Phi Tonsai Pier",
         "lat": 7.7407,
         "lon": 98.7684,
-        "time": "10:30AM,1:00PM,3:30PM,3:45PM,5:00PM",
+        "time": "10:30AM,11:00AM,11:30AM,12:30PM,1:00PM,2:30PM,3:30PM,4:00PM,5:30PM",
         "route": "rassada_phi_phi",
         "direction": "Ferry to Phi Phi",
         "route_direction": "Rassada Pier --> Phi Phi Tonsai",
         "icon": "",
-        "near_place": { "place_name": "Tonsai Bay", "place_link": "https://maps.google.com/?q=7.7407,98.7684", "place_img": 0, "open_close": "All day", "distance_from_place": 50, "time_from_place": 1 }
+        "near_place": {
+          "place_name": "Tonsai Bay",
+          "place_link": "https://maps.google.com/?q=7.7407,98.7684",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 50,
+          "time_from_place": 1
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.7684, 7.7407] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.7684,
+          7.7407
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 3,
-        "stop_name_th": "ท่าเรือตันไซ เกาะพีพี",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e15\u0e31\u0e19\u0e44\u0e0b \u0e40\u0e01\u0e32\u0e30\u0e1e\u0e35\u0e1e\u0e35",
         "stop_name_eng": "Phi Phi Tonsai Pier",
         "lat": 7.7407,
         "lon": 98.7684,
@@ -48,15 +74,28 @@
         "direction": "Ferry to Rassada",
         "route_direction": "Phi Phi Tonsai --> Rassada Pier",
         "icon": "",
-        "near_place": { "place_name": "Tonsai Bay", "place_link": "https://maps.google.com/?q=7.7407,98.7684", "place_img": 0, "open_close": "All day", "distance_from_place": 50, "time_from_place": 1 }
+        "near_place": {
+          "place_name": "Tonsai Bay",
+          "place_link": "https://maps.google.com/?q=7.7407,98.7684",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 50,
+          "time_from_place": 1
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.7684, 7.7407] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.7684,
+          7.7407
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 4,
-        "stop_name_th": "ท่าเรือรัษฎา",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e23\u0e31\u0e29\u0e0e\u0e32",
         "stop_name_eng": "Rassada Pier",
         "lat": 7.8557,
         "lon": 98.4013,
@@ -65,15 +104,28 @@
         "direction": "Ferry to Rassada",
         "route_direction": "Phi Phi Tonsai --> Rassada Pier",
         "icon": "",
-        "near_place": { "place_name": "Rassada Pier Terminal", "place_link": "https://maps.google.com/?q=7.8557,98.4013", "place_img": 0, "open_close": "7:30AM - 6:30PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Rassada Pier Terminal",
+          "place_link": "https://maps.google.com/?q=7.8557,98.4013",
+          "place_img": 0,
+          "open_close": "7:30AM - 6:30PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4013, 7.8557] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4013,
+          7.8557
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 1,
-        "stop_name_th": "ท่าเรือรัษฎา",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e23\u0e31\u0e29\u0e0e\u0e32",
         "stop_name_eng": "Rassada Pier",
         "lat": 7.8557,
         "lon": 98.4013,
@@ -82,15 +134,28 @@
         "direction": "Ferry to Ao Nang",
         "route_direction": "Rassada Pier --> Noppharat Thara Pier",
         "icon": "",
-        "near_place": { "place_name": "Rassada Pier Terminal", "place_link": "https://maps.google.com/?q=7.8557,98.4013", "place_img": 0, "open_close": "7:30AM - 6:30PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Rassada Pier Terminal",
+          "place_link": "https://maps.google.com/?q=7.8557,98.4013",
+          "place_img": 0,
+          "open_close": "7:30AM - 6:30PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4013, 7.8557] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4013,
+          7.8557
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 2,
-        "stop_name_th": "ท่าเรือนพรัตน์ธารา อ่าวนาง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e19\u0e1e\u0e23\u0e31\u0e15\u0e19\u0e4c\u0e18\u0e32\u0e23\u0e32 \u0e2d\u0e48\u0e32\u0e27\u0e19\u0e32\u0e07",
         "stop_name_eng": "Noppharat Thara Pier (Ao Nang)",
         "lat": 8.0437,
         "lon": 98.818,
@@ -99,15 +164,28 @@
         "direction": "Ferry to Ao Nang",
         "route_direction": "Rassada Pier --> Noppharat Thara Pier",
         "icon": "",
-        "near_place": { "place_name": "Ao Nang Beach", "place_link": "https://maps.google.com/?q=8.0437,98.818", "place_img": 0, "open_close": "All day", "distance_from_place": 200, "time_from_place": 3 }
+        "near_place": {
+          "place_name": "Ao Nang Beach",
+          "place_link": "https://maps.google.com/?q=8.0437,98.818",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 200,
+          "time_from_place": 3
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.818, 8.0437] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.818,
+          8.0437
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 3,
-        "stop_name_th": "ท่าเรือนพรัตน์ธารา อ่าวนาง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e19\u0e1e\u0e23\u0e31\u0e15\u0e19\u0e4c\u0e18\u0e32\u0e23\u0e32 \u0e2d\u0e48\u0e32\u0e27\u0e19\u0e32\u0e07",
         "stop_name_eng": "Noppharat Thara Pier (Ao Nang)",
         "lat": 8.0437,
         "lon": 98.818,
@@ -116,15 +194,28 @@
         "direction": "Ferry to Rassada",
         "route_direction": "Noppharat Thara Pier --> Rassada Pier",
         "icon": "",
-        "near_place": { "place_name": "Ao Nang Beach", "place_link": "https://maps.google.com/?q=8.0437,98.818", "place_img": 0, "open_close": "All day", "distance_from_place": 200, "time_from_place": 3 }
+        "near_place": {
+          "place_name": "Ao Nang Beach",
+          "place_link": "https://maps.google.com/?q=8.0437,98.818",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 200,
+          "time_from_place": 3
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.818, 8.0437] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.818,
+          8.0437
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 4,
-        "stop_name_th": "ท่าเรือรัษฎา",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e23\u0e31\u0e29\u0e0e\u0e32",
         "stop_name_eng": "Rassada Pier",
         "lat": 7.8557,
         "lon": 98.4013,
@@ -133,49 +224,88 @@
         "direction": "Ferry to Rassada",
         "route_direction": "Noppharat Thara Pier --> Rassada Pier",
         "icon": "",
-        "near_place": { "place_name": "Rassada Pier Terminal", "place_link": "https://maps.google.com/?q=7.8557,98.4013", "place_img": 0, "open_close": "7:30AM - 6:30PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Rassada Pier Terminal",
+          "place_link": "https://maps.google.com/?q=7.8557,98.4013",
+          "place_img": 0,
+          "open_close": "7:30AM - 6:30PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4013, 7.8557] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4013,
+          7.8557
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 1,
-        "stop_name_th": "ท่าเรือบางโรง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e1a\u0e32\u0e07\u0e42\u0e23\u0e07",
         "stop_name_eng": "Bang Rong Pier",
         "lat": 8.0133,
         "lon": 98.4186,
-        "time": "9:30AM,11:00AM,1:30PM,5:00PM",
+        "time": "7:30AM,8:30AM,9:30AM,11:30AM,12:30PM,1:30PM,3:00PM,4:00PM,5:00PM",
         "route": "bang_rong_koh_yao",
         "direction": "Ferry to Koh Yao",
         "route_direction": "Bang Rong Pier --> Koh Yao Noi",
         "icon": "",
-        "near_place": { "place_name": "Bang Rong Pier", "place_link": "https://maps.google.com/?q=8.0133,98.4186", "place_img": 0, "open_close": "7:00AM - 6:00PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Bang Rong Pier",
+          "place_link": "https://maps.google.com/?q=8.0133,98.4186",
+          "place_img": 0,
+          "open_close": "7:00AM - 6:00PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4186, 8.0133] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4186,
+          8.0133
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 2,
-        "stop_name_th": "ท่าเรือเกาะยาวน้อย",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e40\u0e01\u0e32\u0e30\u0e22\u0e32\u0e27\u0e19\u0e49\u0e2d\u0e22",
         "stop_name_eng": "Koh Yao Noi Pier",
         "lat": 8.1122,
         "lon": 98.6,
-        "time": "10:10AM,11:40AM,2:10PM,5:40PM",
+        "time": "8:10AM,9:10AM,10:10AM,12:10PM,1:10PM,2:10PM,3:40PM,4:40PM,5:40PM",
         "route": "bang_rong_koh_yao",
         "direction": "Ferry to Koh Yao",
         "route_direction": "Bang Rong Pier --> Koh Yao Noi",
         "icon": "",
-        "near_place": { "place_name": "Koh Yao Noi Village", "place_link": "https://maps.google.com/?q=8.1122,98.6", "place_img": 0, "open_close": "All day", "distance_from_place": 100, "time_from_place": 2 }
+        "near_place": {
+          "place_name": "Koh Yao Noi Village",
+          "place_link": "https://maps.google.com/?q=8.1122,98.6",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 100,
+          "time_from_place": 2
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.6, 8.1122] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.6,
+          8.1122
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 3,
-        "stop_name_th": "ท่าเรือเกาะยาวน้อย",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e40\u0e01\u0e32\u0e30\u0e22\u0e32\u0e27\u0e19\u0e49\u0e2d\u0e22",
         "stop_name_eng": "Koh Yao Noi Pier",
         "lat": 8.1122,
         "lon": 98.6,
@@ -184,15 +314,28 @@
         "direction": "Ferry to Bang Rong",
         "route_direction": "Koh Yao Noi --> Bang Rong Pier",
         "icon": "",
-        "near_place": { "place_name": "Koh Yao Noi Village", "place_link": "https://maps.google.com/?q=8.1122,98.6", "place_img": 0, "open_close": "All day", "distance_from_place": 100, "time_from_place": 2 }
+        "near_place": {
+          "place_name": "Koh Yao Noi Village",
+          "place_link": "https://maps.google.com/?q=8.1122,98.6",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 100,
+          "time_from_place": 2
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.6, 8.1122] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.6,
+          8.1122
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 4,
-        "stop_name_th": "ท่าเรือบางโรง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e1a\u0e32\u0e07\u0e42\u0e23\u0e07",
         "stop_name_eng": "Bang Rong Pier",
         "lat": 8.0133,
         "lon": 98.4186,
@@ -201,15 +344,28 @@
         "direction": "Ferry to Bang Rong",
         "route_direction": "Koh Yao Noi --> Bang Rong Pier",
         "icon": "",
-        "near_place": { "place_name": "Bang Rong Pier", "place_link": "https://maps.google.com/?q=8.0133,98.4186", "place_img": 0, "open_close": "7:00AM - 6:00PM", "distance_from_place": 0, "time_from_place": 0 }
+        "near_place": {
+          "place_name": "Bang Rong Pier",
+          "place_link": "https://maps.google.com/?q=8.0133,98.4186",
+          "place_img": 0,
+          "open_close": "7:00AM - 6:00PM",
+          "distance_from_place": 0,
+          "time_from_place": 0
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.4186, 8.0133] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.4186,
+          8.0133
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 1,
-        "stop_name_th": "ท่าเรือฉลอง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e09\u0e25\u0e2d\u0e07",
         "stop_name_eng": "Chalong Pier",
         "lat": 7.8281,
         "lon": 98.3613,
@@ -218,15 +374,28 @@
         "direction": "Ferry to Racha",
         "route_direction": "Chalong Pier --> Racha Yai",
         "icon": "",
-        "near_place": { "place_name": "Chalong Bay", "place_link": "https://maps.google.com/?q=7.8281,98.3613", "place_img": 0, "open_close": "All day", "distance_from_place": 50, "time_from_place": 1 }
+        "near_place": {
+          "place_name": "Chalong Bay",
+          "place_link": "https://maps.google.com/?q=7.8281,98.3613",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 50,
+          "time_from_place": 1
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.3613, 7.8281] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.3613,
+          7.8281
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 2,
-        "stop_name_th": "เกาะราชาใหญ่",
+        "stop_name_th": "\u0e40\u0e01\u0e32\u0e30\u0e23\u0e32\u0e0a\u0e32\u0e43\u0e2b\u0e0d\u0e48",
         "stop_name_eng": "Racha Yai Island",
         "lat": 7.6061,
         "lon": 98.3647,
@@ -235,15 +404,28 @@
         "direction": "Ferry to Racha",
         "route_direction": "Chalong Pier --> Racha Yai",
         "icon": "",
-        "near_place": { "place_name": "Batok Bay Beach", "place_link": "https://maps.google.com/?q=7.6061,98.3647", "place_img": 0, "open_close": "All day", "distance_from_place": 100, "time_from_place": 2 }
+        "near_place": {
+          "place_name": "Batok Bay Beach",
+          "place_link": "https://maps.google.com/?q=7.6061,98.3647",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 100,
+          "time_from_place": 2
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.3647, 7.6061] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.3647,
+          7.6061
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 3,
-        "stop_name_th": "เกาะราชาใหญ่",
+        "stop_name_th": "\u0e40\u0e01\u0e32\u0e30\u0e23\u0e32\u0e0a\u0e32\u0e43\u0e2b\u0e0d\u0e48",
         "stop_name_eng": "Racha Yai Island",
         "lat": 7.6061,
         "lon": 98.3647,
@@ -252,15 +434,28 @@
         "direction": "Ferry to Chalong",
         "route_direction": "Racha Yai --> Chalong Pier",
         "icon": "",
-        "near_place": { "place_name": "Batok Bay Beach", "place_link": "https://maps.google.com/?q=7.6061,98.3647", "place_img": 0, "open_close": "All day", "distance_from_place": 100, "time_from_place": 2 }
+        "near_place": {
+          "place_name": "Batok Bay Beach",
+          "place_link": "https://maps.google.com/?q=7.6061,98.3647",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 100,
+          "time_from_place": 2
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.3647, 7.6061] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.3647,
+          7.6061
+        ]
+      }
     },
     {
       "type": "Feature",
       "properties": {
         "no": 4,
-        "stop_name_th": "ท่าเรือฉลอง",
+        "stop_name_th": "\u0e17\u0e48\u0e32\u0e40\u0e23\u0e37\u0e2d\u0e09\u0e25\u0e2d\u0e07",
         "stop_name_eng": "Chalong Pier",
         "lat": 7.8281,
         "lon": 98.3613,
@@ -269,9 +464,22 @@
         "direction": "Ferry to Chalong",
         "route_direction": "Racha Yai --> Chalong Pier",
         "icon": "",
-        "near_place": { "place_name": "Chalong Bay", "place_link": "https://maps.google.com/?q=7.8281,98.3613", "place_img": 0, "open_close": "All day", "distance_from_place": 50, "time_from_place": 1 }
+        "near_place": {
+          "place_name": "Chalong Bay",
+          "place_link": "https://maps.google.com/?q=7.8281,98.3613",
+          "place_img": 0,
+          "open_close": "All day",
+          "distance_from_place": 50,
+          "time_from_place": 1
+        }
       },
-      "geometry": { "type": "Point", "coordinates": [98.3613, 7.8281] }
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          98.3613,
+          7.8281
+        ]
+      }
     }
   ]
 }

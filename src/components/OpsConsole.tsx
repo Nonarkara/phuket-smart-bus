@@ -1287,7 +1287,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                   <div key={v.id} className="fleet-row">
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
-                      <strong>{v.label}</strong> · {v.driver} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
+                      <strong>{v.label}</strong> · {v.licensePlate} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
                       <span className="fleet-row__sub">
                         {routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h
                         {eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}

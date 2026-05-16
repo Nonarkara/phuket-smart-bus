@@ -508,7 +508,9 @@ function buildVehiclePosition(
     freshness: "fresh",
     status,
     distanceToDestinationMeters: Math.round(distanceToDestinationMeters),
-    stopsAway
+    stopsAway,
+    polylineMeters: null,
+    polylineFirstStop: null
   };
 }
 

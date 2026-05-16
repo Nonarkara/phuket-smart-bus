@@ -63,7 +63,9 @@ function buildTelemetryVehicle(sample: VehicleTelemetrySample): VehiclePosition 
     status:
       sample.speedKph > 4 ? "moving" : sample.speedKph === 0 ? "dwelling" : "unknown",
     distanceToDestinationMeters: null,
-    stopsAway: null
+    stopsAway: null,
+    polylineMeters: null,
+    polylineFirstStop: null
   };
 }
 

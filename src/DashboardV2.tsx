@@ -12,6 +12,7 @@ import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
 import { computeSimState, getDayInfo, type SimState, type RegionData } from "./engine/simulation";
+import { getVehiclesNow } from "./engine/dataProvider";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -20,6 +21,7 @@ import {
 } from "./engine/opsFlightSchedule";
 import { getDirectionPolyline } from "./engine/routes";
 import { interpolateCoordinate, interpolateHeading } from "./lib/vehicleAnimation";
+import { haversineDistanceMeters } from "./lib/geo";
 import { AnalyticsPanel } from "./components/AnalyticsPanel";
 
 // ---------------------------------------------------------------------------
@@ -93,6 +95,12 @@ function interpolateBusVehicle(
   to: SimState["vehicles"][number],
   progress: number
 ) {
+  // Prevent gliding across the entire map when a trip resets
+  const dist = haversineDistanceMeters([from.lat, from.lng], [to.lat, to.lng]);
+  if (dist > 500) {
+    return to;
+  }
+
   const [lat, lng] = interpolateCoordinate([from.lat, from.lng], [to.lat, to.lng], progress);
 
   return {
@@ -210,23 +218,52 @@ function VehicleLayer({ vehicles }: { vehicles: SimState["vehicles"] }) {
 // Route polyline
 // ---------------------------------------------------------------------------
 
+const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string }[] = [
+  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#16b8b0" },
+  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#ffcc33" },
+  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#db0000" },
+];
+
 function RoutePolylines() {
-  // Get the airport line polyline
-  let airportPoly: LatLngTuple[] = [];
-  try {
-    airportPoly = getDirectionPolyline("rawai-airport", [8.108, 98.317]);
-  } catch { /* */ }
+  const polylines: { poly: LatLngTuple[]; color: string }[] = [];
+  for (const cfg of ROUTE_POLYLINES) {
+    try {
+      const poly = getDirectionPolyline(cfg.routeId as never, cfg.firstStop);
+      if (poly.length >= 2) polylines.push({ poly, color: cfg.color });
+    } catch { /* */ }
+  }
 
   return (
     <>
-      {airportPoly.length > 0 && (
-        <>
-          <Polyline positions={airportPoly} pathOptions={{ color: "rgba(22,184,176,0.18)", weight: 12, opacity: 1 }} />
-          <Polyline positions={airportPoly} pathOptions={{ color: "#16b8b0", weight: 4, opacity: 0.9 }} />
-        </>
-      )}
+      {polylines.map(({ poly, color }, i) => (
+        <Polyline
+          key={i}
+          positions={poly}
+          pathOptions={{ color, weight: 4, opacity: 0.85 }}
+        />
+      ))}
     </>
   );
+}
+
+/** Force Leaflet to size itself and zoom to Phuket.
+ *  CSS grid + min-height often leaves Leaflet thinking the container is 0×0
+ *  on first paint, so it defaults to a world view. */
+function SyncMapView() {
+  const map = useMap();
+  useEffect(() => {
+    let raf = 0;
+    const fix = () => {
+      map.invalidateSize();
+      map.setView([7.88, 98.37], 11);
+    };
+    // Two rAFs guarantees the browser has finished layout + paint
+    raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(fix);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [map]);
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -381,9 +418,11 @@ function RegionChart({ data, maxPax }: { data: RegionData[]; maxPax: number }) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardV2() {
+  const [viewMode, setViewMode] = useState<"sim" | "live">("sim");
   const [state, setState] = useState(() => computeSimState());
   const [dailyFlights] = useState(() => getOpsFlightSchedule());
   const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));
+  
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
   const currentHourBucket = hourlyFlights[Math.floor(state.simMinutes / 60) % 24] ?? hourlyFlights[0];
@@ -400,14 +439,45 @@ export default function DashboardV2() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setState(computeSimState());
+      if (viewMode === "sim") {
+        setState(computeSimState());
+      } else {
+        // Sync simulation metrics but override vehicles with live data
+        const sim = computeSimState();
+        const live = getVehiclesNow();
+        
+        // Map live vehicles to sim state format
+        const mappedLive: SimState["vehicles"] = live.map(v => ({
+          id: v.vehicleId,
+          lat: v.coordinates[0],
+          lng: v.coordinates[1],
+          heading: v.heading,
+          status: v.status as any,
+          route: v.routeId,
+          pax: 0, // pax data only available in simulation mode
+          plate: v.licensePlate
+        }));
+
+        setState({ ...sim, vehicles: mappedLive });
+      }
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [viewMode]);
 
   return (
     <div className="v2">
       {/* Header */}
+      {/* Actionable Intelligence Banner */}
+      {serviceGap > 25 && (
+        <div className="v2-alert-banner">
+          <span className="v2-alert-banner__icon">⚠</span>
+          <div className="v2-alert-banner__content">
+            <strong>Critical Service Gap: {serviceGap} pax waiting.</strong>
+            <span>Recommended action: Dispatch 2 standby buses to Phuket Airport immediately.</span>
+          </div>
+        </div>
+      )}
+
       <header className="v2-header">
         <div className="v2-header__brand">
           <span className="v2-header__eyebrow">Airport Ops Console</span>
@@ -420,10 +490,20 @@ export default function DashboardV2() {
           <span className="v2-header__story-detail">{state.paxAtAirport} waiting for buses · {responsePct}% boarding capture</span>
         </div>
         <div className="v2-header__clock">
+          <div className="v2-mode-toggle">
+            <button 
+              className={`v2-mode-btn ${viewMode === 'sim' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('sim')}
+            >SIM</button>
+            <button 
+              className={`v2-mode-btn ${viewMode === 'live' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('live')}
+            >LIVE</button>
+          </div>
           <span className="v2-header__live">●</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
           <span className="v2-header__time">{state.clockLabel} BKK</span>
-          <span className="v2-header__speed">30× simulation</span>
+          <span className="v2-header__speed">{viewMode === 'sim' ? '30× simulation' : '1× real-time'}</span>
         </div>
         <div className="v2-header__meta">
           <span>{arrivalsToday.length} arrivals</span>
@@ -433,9 +513,14 @@ export default function DashboardV2() {
       </header>
 
       {/* Main grid: left panel + map + right panel */}
+      {serviceGap > 25 && (
+        <div className="v2-coordination-banner">
+          ⚠️ <strong>Demand Exceeds Supply:</strong> {serviceGap} passengers are waiting at the airport without sufficient bus capacity. Consider dispatching {Math.ceil(serviceGap / 25)} additional buses to capture ฿{serviceGap * 100} in potential revenue.
+        </div>
+      )}
       <main className="v2-body">
         {/* Left: Demand side (flights → passengers) */}
-        <aside className="v2-panel v2-panel--demand">
+        <aside className={`v2-panel v2-panel--demand ${serviceGap > 25 ? 'is-alert' : ''}`}>
           <h2 className="v2-panel__title">Demand · HKT Airport</h2>
 
           <InsightCard
@@ -490,7 +575,13 @@ export default function DashboardV2() {
               <span className="v2-map__hero-detail">still not boarded</span>
             </div>
           </div>
-          <MapContainer center={[7.95, 98.35]} zoom={11} className="v2-map__canvas" zoomControl={false} scrollWheelZoom={true}>
+          <MapContainer
+            center={[7.88, 98.37]}
+            zoom={11}
+            className="v2-map__canvas"
+            zoomControl={false}
+            scrollWheelZoom={true}
+          >
             <TileLayer
               attribution="&copy; OSM"
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -508,7 +599,7 @@ export default function DashboardV2() {
         </section>
 
         {/* Right: Supply side (buses → revenue → impact) */}
-        <aside className="v2-panel v2-panel--supply">
+        <aside className={`v2-panel v2-panel--supply ${serviceGap > 25 ? 'is-alert' : ''}`}>
           <h2 className="v2-panel__title">Supply & Impact</h2>
 
           <InsightCard

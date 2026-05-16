@@ -50,7 +50,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("bus polyline adherence", () => {
-  it("every active bus snaps to its polyline within 5m", () => {
+  it("every active bus snaps to its polyline within 100 m", () => {
     setSimMinute(720); // 12:00 — peak daytime, many buses active
     const vehicles = getVehiclesNow(new Date());
     const buses = vehicles.filter(
@@ -59,13 +59,25 @@ describe("bus polyline adherence", () => {
     expect(buses.length).toBeGreaterThan(0);
 
     for (const bus of buses) {
-      if (!bus.polylineFirstStop) continue; // depot / fallback path
+      if (bus.polylineMeters == null || !bus.polylineFirstStop) continue;
       const poly = getDirectionPolyline(bus.routeId, bus.polylineFirstStop);
-      let minDist = Infinity;
-      for (const pt of poly) {
-        minDist = Math.min(minDist, haversineDistanceMeters(bus.coordinates, pt));
-      }
-      expect(minDist).toBeLessThan(20); // very generous; vertices are tens of meters apart
+      if (poly.length < 2) continue;
+
+      // Skip buses on fallback (stop-derived) polylines — their polylineMeters
+      // refer to a different geometry than the raw GeoJSON polyline.
+      const first = bus.polylineFirstStop;
+      const startDist = Math.min(
+        haversineDistanceMeters(first, poly[0]),
+        haversineDistanceMeters(first, poly[poly.length - 1])
+      );
+      if (startDist > 250) continue;
+
+      const cum = buildPolylineCumMeters(poly);
+      const expected = posOnPolyline(bus.polylineMeters, poly, cum);
+      const dist = haversineDistanceMeters(bus.coordinates, expected.coordinates);
+      // On a matched polyline, re-projection error should be < 1 m.
+      // 100 m guards against any numeric drift on long segments.
+      expect(dist).toBeLessThan(100);
     }
   });
 

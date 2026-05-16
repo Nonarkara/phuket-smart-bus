@@ -201,6 +201,50 @@ function deriveTripDuration(stops: Stop[], departures: number[], offsets: number
 // Build direction profiles with polyline geometry
 // ---------------------------------------------------------------------------
 
+/** Some route datasets reuse the same direction label for multiple
+ *  disconnected routes (e.g. Patong line has two separate "Bus to Terminal 1"
+ *  routes). Detect gaps > 2.5 km between consecutive stops and split.
+ *  Ferries are never split — their stops are naturally far apart (sea crossings). */
+function splitDirectionGroups(stops: Stop[], routeId: OperationalRouteId): Stop[][] {
+  if (stops.length === 0) return [];
+  const isFerry = FERRY_ROUTE_IDS.includes(routeId as never);
+  const threshold = isFerry ? Infinity : 2500;
+  const groups: Stop[][] = [[stops[0]!]];
+  for (let i = 1; i < stops.length; i++) {
+    const prev = stops[i - 1]!;
+    const curr = stops[i]!;
+    const gap = haversineDistanceMeters(prev.coordinates, curr.coordinates);
+    if (gap > threshold) {
+      groups.push([curr]);
+    } else {
+      groups[groups.length - 1]!.push(curr);
+    }
+  }
+  return groups.filter((g) => g.length >= 2);
+}
+
+/** If the polyline endpoints are far from the first/last stops, the polyline
+ *  doesn't match the route (corrupt/incomplete GeoJSON). Fall back to
+ *  straight-line stop-to-stop geometry so buses still move sensibly.
+ *  Ferries use a much larger threshold because pier coordinates may not align
+ *  exactly with the sea-crossing polyline endpoints. */
+function polylineMatchesStops(poly: LatLngTuple[], stops: Stop[], routeId: OperationalRouteId): boolean {
+  if (poly.length < 2 || stops.length < 2) return false;
+  const isFerry = FERRY_ROUTE_IDS.includes(routeId as never);
+  const threshold = isFerry ? 5000 : 250;
+  const first = stops[0].coordinates;
+  const last = stops[stops.length - 1].coordinates;
+  const startDist = Math.min(
+    haversineDistanceMeters(first, poly[0]),
+    haversineDistanceMeters(first, poly[poly.length - 1])
+  );
+  const endDist = Math.min(
+    haversineDistanceMeters(last, poly[0]),
+    haversineDistanceMeters(last, poly[poly.length - 1])
+  );
+  return startDist <= threshold && endDist <= threshold;
+}
+
 function buildDirectionProfiles(routeId: OperationalRouteId) {
   const grouped = new Map<string, Stop[]>();
   for (const stop of getStopsForRoute(routeId)) {
@@ -209,8 +253,16 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
     if (arr) arr.push(stop); else grouped.set(key, [stop]);
   }
 
-  return Array.from(grouped.entries())
-    .map<DirectionProfile | null>(([dirLabel, stops]) => {
+  // Flatten to individual direction groups, splitting on large gaps
+  const allGroups: { dirLabel: string; stops: Stop[] }[] = [];
+  for (const [dirLabel, stops] of grouped.entries()) {
+    for (const split of splitDirectionGroups(stops, routeId)) {
+      allGroups.push({ dirLabel, stops: split });
+    }
+  }
+
+  return allGroups
+    .map<DirectionProfile | null>(({ dirLabel, stops }) => {
       const { departures, interval } = parseScheduleEntries(stops[0]?.scheduleText ?? "");
       if (stops.length < 2 || departures.length === 0) return null;
 
@@ -219,12 +271,13 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
 
       // Get polyline for this direction
       const polyline = getDirectionPolyline(routeId, stops[0].coordinates);
+      const usePolyline = polyline.length >= 2 && polylineMatchesStops(polyline, stops, routeId);
 
       let polylineCumMeters: number[];
       let polylineTotalMeters: number;
       let stopPolylineMeters: number[];
 
-      if (polyline.length >= 2) {
+      if (usePolyline) {
         polylineCumMeters = buildPolylineCumMeters(polyline);
         polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];
 
@@ -236,7 +289,6 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
         if (tripDurationMinutes < estMins) {
           tripDurationMinutes = estMins;
         }
-
 
         // Snap each stop to the polyline using a forward-constrained search:
         // each stop can only match polyline vertices ahead of the previous
@@ -259,7 +311,7 @@ function buildDirectionProfiles(routeId: OperationalRouteId) {
           Math.round((m / polylineTotalMeters) * tripDurationMinutes)
         );
       } else {
-        // Ferries with no/tiny polyline — build straight-line polyline from stops
+        // Polyline missing or doesn't match stops — build straight-line polyline from stops
         const pts: LatLngTuple[] = stops.map((s) => s.coordinates);
         polylineCumMeters = buildPolylineCumMeters(pts);
         polylineTotalMeters = polylineCumMeters[polylineCumMeters.length - 1];

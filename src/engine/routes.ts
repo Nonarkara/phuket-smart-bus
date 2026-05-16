@@ -163,6 +163,85 @@ export function getStopById(routeId: OperationalRouteId, stopId: string) {
   return getStopsForRoute(routeId).find((stop) => stop.id === stopId) ?? null;
 }
 
+/** Return the geometric length of a segment in meters. */
+function segmentLengthMeters(seg: LatLngTuple[]): number {
+  let len = 0;
+  for (let i = 1; i < seg.length; i++) {
+    len += haversineDistanceMeters(seg[i - 1]!, seg[i]!);
+  }
+  return len;
+}
+
+/**
+ * Stitch multiple segments together, reversing them if necessary to minimize jumping.
+ * Filters out degenerate (zero-length) segments first — these appear in some GeoJSON
+ * exports as artifacts and create polyline spikes that make buses fly off-route.
+ */
+function stitchSegments(segments: LatLngTuple[][]): LatLngTuple[] {
+  const valid = segments.filter((seg) => segmentLengthMeters(seg) > 1);
+  if (valid.length === 0) return [];
+  const remaining = [...valid];
+  const stitched: LatLngTuple[] = remaining.shift()!.slice();
+
+  while (remaining.length > 0) {
+    const startPt = stitched[0]!;
+    const endPt = stitched[stitched.length - 1]!;
+    
+    let bestDist = Infinity;
+    let bestIdx = -1;
+    let reverse = false;
+    let prepend = false;
+    
+    for (let i = 0; i < remaining.length; i++) {
+      const seg = remaining[i]!;
+      const segStart = seg[0]!;
+      const segEnd = seg[seg.length - 1]!;
+      
+      const distEndToStart = haversineDistanceMeters(endPt, segStart);
+      const distEndToEnd = haversineDistanceMeters(endPt, segEnd);
+      const distStartToStart = haversineDistanceMeters(startPt, segStart);
+      const distStartToEnd = haversineDistanceMeters(startPt, segEnd);
+      
+      if (distEndToStart < bestDist) {
+        bestDist = distEndToStart;
+        bestIdx = i;
+        reverse = false;
+        prepend = false;
+      }
+      if (distEndToEnd < bestDist) {
+        bestDist = distEndToEnd;
+        bestIdx = i;
+        reverse = true;
+        prepend = false;
+      }
+      if (distStartToStart < bestDist) {
+        bestDist = distStartToStart;
+        bestIdx = i;
+        reverse = true;
+        prepend = true;
+      }
+      if (distStartToEnd < bestDist) {
+        bestDist = distStartToEnd;
+        bestIdx = i;
+        reverse = false;
+        prepend = true;
+      }
+    }
+    
+    const bestSeg = remaining[bestIdx]!;
+    if (reverse) bestSeg.reverse();
+    
+    if (prepend) {
+      stitched.unshift(...bestSeg);
+    } else {
+      stitched.push(...bestSeg);
+    }
+    remaining.splice(bestIdx, 1);
+  }
+  
+  return stitched;
+}
+
 /**
  * Extract individual polyline features as LatLngTuple[] arrays.
  * Each GeoJSON feature is one direction of a route.
@@ -174,9 +253,8 @@ function extractPolylineFeatures(routeId: OperationalRouteId): LatLngTuple[][] {
   for (const feature of collection.features) {
     const geo = feature.geometry;
     if (geo.type === "MultiLineString") {
-      for (const segment of geo.coordinates) {
-        result.push(segment.map(toLatLng));
-      }
+      const segments = geo.coordinates.map(segment => segment.map(toLatLng));
+      result.push(stitchSegments(segments));
     } else if (geo.type === "LineString") {
       result.push(geo.coordinates.map(toLatLng));
     }
@@ -189,7 +267,7 @@ const polylineCache = new Map<string, LatLngTuple[]>();
 
 /**
  * Get the polyline for a specific route + direction.
- * Matches by finding the polyline whose start is closest to the first stop.
+ * Matches by finding the polyline whose start or end is closest to the first stop.
  */
 export function getDirectionPolyline(routeId: OperationalRouteId, firstStopCoords: LatLngTuple): LatLngTuple[] {
   const key = `${routeId}:${firstStopCoords[0].toFixed(4)},${firstStopCoords[1].toFixed(4)}`;
@@ -200,24 +278,40 @@ export function getDirectionPolyline(routeId: OperationalRouteId, firstStopCoord
 
   if (features.length === 0) return [];
   if (features.length === 1) {
-    polylineCache.set(key, features[0]);
-    return features[0];
+    const polyline = features[0];
+    const startDist = haversineDistanceMeters(polyline[0], firstStopCoords);
+    const endDist = haversineDistanceMeters(polyline[polyline.length - 1], firstStopCoords);
+    if (endDist < startDist) {
+      polyline.reverse();
+    }
+    polylineCache.set(key, polyline);
+    return polyline;
   }
 
-  // Match the polyline whose start point is closest to the first stop
+  // Match the polyline whose start or end point is closest to the first stop
   let bestFeature = features[0];
   let bestDistance = Infinity;
+  let reverseBest = false;
 
   for (const polyline of features) {
     const startDist = haversineDistanceMeters(polyline[0], firstStopCoords);
+    const endDist = haversineDistanceMeters(polyline[polyline.length - 1], firstStopCoords);
+    
     if (startDist < bestDistance) {
       bestDistance = startDist;
       bestFeature = polyline;
+      reverseBest = false;
+    }
+    if (endDist < bestDistance) {
+      bestDistance = endDist;
+      bestFeature = polyline;
+      reverseBest = true;
     }
   }
 
-  polylineCache.set(key, bestFeature);
-  return bestFeature;
+  const result = reverseBest ? [...bestFeature].reverse() : bestFeature;
+  polylineCache.set(key, result);
+  return result;
 }
 
 export function getRoutes(
