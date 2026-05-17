@@ -5988,7 +5988,7 @@ a { color: var(--tint); }
   color: #f5f7fa;
   display: flex;
   flex-direction: column;
-  font-family: "Inter", "SF Pro Display", sans-serif;
+  font-family: "Josefin Sans", "Source Sans 3", sans-serif;
   overflow: hidden;
   z-index: 5000;
 }
@@ -6009,7 +6009,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__brand-eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.5);
@@ -6017,7 +6017,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__brand-plate {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
   font-family: "SF Mono", "JetBrains Mono", monospace;
   color: #fff;
@@ -6031,14 +6031,14 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__route-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.42);
   font-weight: 700;
 }
 
 .driver-tablet__route-name {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -6051,12 +6051,12 @@ a { color: var(--tint); }
 
 .driver-tablet__clock-time {
   font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
 }
 
 .driver-tablet__clock-zone {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   color: rgba(255, 255, 255, 0.42);
 }
@@ -6077,7 +6077,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__hero-stop {
-  font-size: 44px;
+  font-size: 32px;
   font-weight: 600;
   letter-spacing: -0.01em;
   margin-bottom: 4px;
@@ -6085,7 +6085,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__hero-stop-th {
-  font-size: 18px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 18px;
   font-family: "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
@@ -6109,7 +6109,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__eta-unit {
-  font-size: 16px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.04em;
 }
@@ -6133,7 +6133,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__indicator-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.42);
@@ -6148,7 +6148,7 @@ a { color: var(--tint); }
 
 .driver-tablet__indicator-cap {
   color: rgba(255, 255, 255, 0.45);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 400;
   margin-left: 2px;
 }
@@ -6177,7 +6177,7 @@ a { color: var(--tint); }
   justify-content: space-between;
   padding: 0 28px 12px;
   font-size: 11px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.42);
   font-weight: 700;
   font-family: "SF Mono", "JetBrains Mono", monospace;
@@ -6229,12 +6229,12 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__stop-name-en {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .driver-tablet__stop-name-th {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   font-family: "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
   margin-top: 2px;
@@ -6243,7 +6243,7 @@ a { color: var(--tint); }
 .driver-tablet__stop-eta {
   text-align: right;
   font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 16px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -6257,7 +6257,7 @@ a { color: var(--tint); }
   gap: 12px;
   padding: 12px 28px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.45);
   font-family: "SF Mono", "JetBrains Mono", monospace;
@@ -6292,7 +6292,7 @@ a { color: var(--tint); }
 }
 
 .driver-tablet__missing-body {
-  font-size: 15px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
   margin: 0;
@@ -6324,7 +6324,7 @@ a { color: var(--tint); }
   min-height: 100vh;
   background: #f7f8fa;
   color: #1a1f2e;
-  font-family: "Inter", "SF Pro Display", sans-serif;
+  font-family: "Josefin Sans", "Source Sans 3", sans-serif;
   padding: 48px 32px;
   max-width: 1200px;
   margin: 0 auto;
@@ -6353,7 +6353,7 @@ a { color: var(--tint); }
 }
 
 .roi-header__subtitle {
-  font-size: 16px;
+  font-size: 14px;
   color: rgba(0, 0, 0, 0.6);
   margin: 0;
   max-width: 600px;
@@ -6364,7 +6364,7 @@ a { color: var(--tint); }
   padding: 1px 6px;
   background: rgba(0, 0, 0, 0.06);
   font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: rgba(0, 0, 0, 0.7);
 }
@@ -6403,22 +6403,34 @@ a { color: var(--tint); }
 
 .roi-input__value {
   font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .roi-input__slider {
   width: 100%;
   appearance: none;
+  height: 44px; /* tap target ≥ 44px per §11.8.2 */
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+}
+
+.roi-input__slider::-webkit-slider-runnable-track {
   height: 4px;
   background: rgba(0, 0, 0, 0.12);
-  outline: none;
+}
+
+.roi-input__slider::-moz-range-track {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .roi-input__slider::-webkit-slider-thumb {
   appearance: none;
   width: 18px;
   height: 18px;
+  margin-top: -7px; /* centre thumb on 4px track */
   background: #1a1f2e;
   border-radius: 0;
   cursor: pointer;
@@ -6480,7 +6492,7 @@ a { color: var(--tint); }
 }
 
 .roi-headline__sub {
-  font-size: 13px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -6489,8 +6501,10 @@ a { color: var(--tint); }
 }
 
 .roi-detail__title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   margin: 0 0 18px;
 }
 
@@ -6509,7 +6523,7 @@ a { color: var(--tint); }
 
 .roi-table td {
   padding: 14px 0;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .roi-table__num {
@@ -6557,7 +6571,7 @@ a { color: var(--tint); }
 .roi-footnote ul {
   margin: 0;
   padding-left: 20px;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.8;
   color: rgba(0, 0, 0, 0.7);
 }
@@ -6568,7 +6582,7 @@ a { color: var(--tint); }
   align-items: baseline;
   padding-top: 24px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .roi-back {
@@ -6718,7 +6732,7 @@ a { color: var(--tint); }
 .desktop-shell__link {
   color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   font-family: "SF Mono", "JetBrains Mono", monospace;
   transition: color 200ms ease;
@@ -6763,7 +6777,7 @@ a { color: var(--tint); }
 .driver-tablet__missing-plates a {
   color: #34c759;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .driver-tablet__missing-plates a:hover {
@@ -6801,9 +6815,10 @@ a { color: var(--tint); }
 }
 
 .roi-cta__title {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   margin-bottom: 12px;
 }
 
@@ -6840,12 +6855,12 @@ a { color: var(--tint); }
 }
 
 .roi-cta__contact-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .roi-cta__contact-line {
-  font-size: 13px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.65);
 }
 
@@ -6853,7 +6868,7 @@ a { color: var(--tint); }
   font-family: "SF Mono", "JetBrains Mono", monospace;
   color: #34c759;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 11px;
   margin-top: 6px;
 }
 

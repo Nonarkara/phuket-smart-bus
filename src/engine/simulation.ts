@@ -22,7 +22,7 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlig
 import { getSimulatedMinutes, getScheduleSupply, getAirportDepartures } from "./fleetSimulator";
 
 const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
-const SVC_END = 1320;  // 22:00
+const SVC_END = 1350;  // 22:30 — matches fleetSimulator SERVICE_END (PKSB last departure 23:30, last arrival ~22:30)
 
 export function simNow(): number {
   return getSimulatedMinutes();
@@ -86,15 +86,16 @@ const FLIGHTS = FULL_DAY_FLIGHTS.filter(
 );
 
 // Destination split (where bus passengers want to go)
-export type Destination = { name: string; pct: number; travelMin: number; grabThb: number; busThb: number };
+// routeId declares which Smart Bus line carries them — all airport arrivals ride the rawai-airport line
+export type Destination = { name: string; pct: number; travelMin: number; grabThb: number; busThb: number; routeId: string };
 
 export const DESTINATIONS: Destination[] = [
-  { name: "Patong Beach", pct: 0.35, travelMin: 100, grabThb: 800, busThb: 100 },
-  { name: "Karon/Kata", pct: 0.20, travelMin: 75, grabThb: 700, busThb: 100 },
-  { name: "Phuket Town", pct: 0.18, travelMin: 56, grabThb: 500, busThb: 100 },
-  { name: "Kamala/Surin", pct: 0.12, travelMin: 80, grabThb: 750, busThb: 100 },
-  { name: "Rawai/Nai Harn", pct: 0.08, travelMin: 95, grabThb: 900, busThb: 100 },
-  { name: "Laguna/Bang Tao", pct: 0.07, travelMin: 40, grabThb: 450, busThb: 100 },
+  { name: "Patong Beach",   pct: 0.35, travelMin: 100, grabThb: 800, busThb: 100, routeId: "rawai-airport" },
+  { name: "Karon/Kata",     pct: 0.20, travelMin:  75, grabThb: 700, busThb: 100, routeId: "rawai-airport" },
+  { name: "Phuket Town",    pct: 0.18, travelMin:  56, grabThb: 500, busThb: 100, routeId: "rawai-airport" },
+  { name: "Kamala/Surin",   pct: 0.12, travelMin:  80, grabThb: 750, busThb: 100, routeId: "rawai-airport" },
+  { name: "Rawai/Nai Harn", pct: 0.08, travelMin:  95, grabThb: 900, busThb: 100, routeId: "rawai-airport" },
+  { name: "Laguna/Bang Tao",pct: 0.07, travelMin:  40, grabThb: 450, busThb: 100, routeId: "rawai-airport" },
 ];
 
 // Bus capacity per vehicle (simplified — all land buses seat 25, dragon seats 15)
@@ -153,10 +154,10 @@ export type LineMetrics = {
   kmDriven: number;
 };
 
-const LINE_CONFIG: Record<string, { name: string; kmDaily: number; fare: number; capacity: number }> = {
-  "rawai-airport": { name: "Airport → Patong", kmDaily: 600, fare: 100, capacity: 25 },
-  "patong-old-bus-station": { name: "Patong → Old Town", kmDaily: 200, fare: 100, capacity: 25 },
-  "dragon-line": { name: "Dragon Loop", kmDaily: 50, fare: 100, capacity: 15 },
+const LINE_CONFIG: Record<string, { name: string; kmDaily: number; fare: number; capacity: number; tripDurationMinutes: number }> = {
+  "rawai-airport":         { name: "Airport → Patong", kmDaily: 600, fare: 100, capacity: 25, tripDurationMinutes: 95 },  // official PKSB timetable
+  "patong-old-bus-station":{ name: "Patong → Old Town", kmDaily: 200, fare: 100, capacity: 25, tripDurationMinutes: 35 }, // Patong → Bus Terminal 1
+  "dragon-line":           { name: "Dragon Loop",       kmDaily:  50, fare: 100, capacity: 15, tripDurationMinutes: 50 }, // estimated loop time
 };
 
 const FUEL_COST_PER_KM = 0.15; // 0.15 THB/km
@@ -348,9 +349,12 @@ export function getLineMetrics(): LineMetrics[] {
   const state = computeSimState();
   const now = simNow();
 
-  // Allocate passengers proportionally across lines by activity
-  // Airport line gets most (60% of passengers), Patong gets 25%, Dragon gets 15%
-  const allocationPct = { "rawai-airport": 0.60, "patong-old-bus-station": 0.25, "dragon-line": 0.15 };
+  // Derive allocation from DESTINATIONS: each destination declares which line carries it
+  // All airport arrivals ride the rawai-airport line (sums to 1.0)
+  const allocationPct = DESTINATIONS.reduce((acc, d) => {
+    acc[d.routeId] = (acc[d.routeId] ?? 0) + d.pct;
+    return acc;
+  }, {} as Record<string, number>);
 
   return Object.entries(LINE_CONFIG).map(([lineId, config]) => {
     const pct = allocationPct[lineId as keyof typeof allocationPct] ?? 0;
@@ -361,7 +365,7 @@ export function getLineMetrics(): LineMetrics[] {
 
     // Operating cost (hourly)
     const hoursOperating = now >= 360 ? (now - 360) / 60 : 0; // 06:00 start
-    const trips = Math.ceil(hoursOperating * 60 / 90); // Approx trips per line per day
+    const trips = Math.ceil(hoursOperating * 60 / config.tripDurationMinutes);
     const fuelCost = config.kmDaily * FUEL_COST_PER_KM;
     const driverCost = DRIVER_COST_PER_DAY * (hoursOperating / 16); // Spread across 16h day
     const maintenanceCost = trips * MAINTENANCE_PER_TRIP;
