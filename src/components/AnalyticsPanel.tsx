@@ -4,6 +4,8 @@ import { getHourlyDemandSupply, simNow, type HourlyDemandSupply } from "../engin
 
 interface AnalyticsPanelProps {
   lang: Lang;
+  /** When set (ops console replay), use this instead of the live sim clock. */
+  simMinutes?: number | null;
 }
 
 const HOURS = Array.from({ length: 17 }, (_, i) => 6 + i); // 06:00 → 22:00
@@ -13,17 +15,23 @@ function fmtThb(n: number): string {
   return `฿${n}`;
 }
 
-export function AnalyticsPanel({ lang: _lang }: AnalyticsPanelProps) {
+export function AnalyticsPanel({ lang: _lang, simMinutes: propSimMinutes }: AnalyticsPanelProps) {
   const [data, setData] = useState<HourlyDemandSupply[]>(() => getHourlyDemandSupply());
-  const [currentHour, setCurrentHour] = useState<number>(() => Math.floor(simNow() / 60));
+  const [engineHour, setEngineHour] = useState<number>(() => Math.floor(simNow() / 60));
 
   useEffect(() => {
     const id = setInterval(() => {
       setData(getHourlyDemandSupply());
-      setCurrentHour(Math.floor(simNow() / 60));
+      setEngineHour(Math.floor(simNow() / 60));
     }, 1000);
     return () => clearInterval(id);
   }, []);
+
+  // When the ops console replay scrubber is active, use its hour.
+  // Otherwise fall back to the live engine clock.
+  const currentHour = propSimMinutes != null
+    ? Math.floor(propSimMinutes / 60)
+    : engineHour;
 
   // Trim to service window
   const rows = HOURS.map((h) => data[h]).filter(Boolean);

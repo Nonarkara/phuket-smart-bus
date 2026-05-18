@@ -345,27 +345,38 @@ export function computeSimState(): SimState {
 // Per-line profitability metrics
 // ---------------------------------------------------------------------------
 
+// Local-route occupancy for lines that don't carry airport arrivals.
+// Patong and Dragon serve independent commuter/tourist demand — modelled as a
+// fixed fraction of their seat capacity per completed trip.
+const LOCAL_OCCUPANCY: Record<string, number> = {
+  "patong-old-bus-station": 0.42, // daytime local commuter average (Phuket survey est.)
+  "dragon-line":            0.31, // tourist loop — lighter, point-to-point riders
+};
+
 export function getLineMetrics(): LineMetrics[] {
   const state = computeSimState();
   const now = simNow();
 
-  // Derive allocation from DESTINATIONS: each destination declares which line carries it
-  // All airport arrivals ride the rawai-airport line (sums to 1.0)
-  const allocationPct = DESTINATIONS.reduce((acc, d) => {
-    acc[d.routeId] = (acc[d.routeId] ?? 0) + d.pct;
-    return acc;
-  }, {} as Record<string, number>);
+  // Airport line gets 100% of airport-arrival pax (all DESTINATIONS → rawai-airport).
+  // Patong and Dragon have independent local ridership computed from completed trips
+  // × average occupancy — not from airport passenger flow.
+  const airportAlloc = DESTINATIONS.reduce((sum, d) => sum + d.pct, 0); // = 1.0
 
   return Object.entries(LINE_CONFIG).map(([lineId, config]) => {
-    const pct = allocationPct[lineId as keyof typeof allocationPct] ?? 0;
-    const passengersServed = Math.round(state.paxDelivered * pct);
+    // Operating hours and trips completed so far
+    const hoursOperating = now >= 360 ? (now - 360) / 60 : 0;
+    const trips = Math.max(1, Math.ceil(hoursOperating * 60 / config.tripDurationMinutes));
+
+    // Passengers: airport line uses the demand-supply chain; local lines use trip × occupancy
+    const localOcc = LOCAL_OCCUPANCY[lineId];
+    const passengersServed = localOcc !== undefined
+      ? Math.round(trips * config.capacity * localOcc * Math.min(1, hoursOperating / 2)) // ramp up first 2h
+      : Math.round(state.paxDelivered * airportAlloc);
 
     // Revenue from fares
     const revenueThb = passengersServed * config.fare;
 
-    // Operating cost (hourly)
-    const hoursOperating = now >= 360 ? (now - 360) / 60 : 0; // 06:00 start
-    const trips = Math.ceil(hoursOperating * 60 / config.tripDurationMinutes);
+    // Operating cost (uses hoursOperating + trips already computed above)
     const fuelCost = config.kmDaily * FUEL_COST_PER_KM;
     const driverCost = DRIVER_COST_PER_DAY * (hoursOperating / 16); // Spread across 16h day
     const maintenanceCost = trips * MAINTENANCE_PER_TRIP;

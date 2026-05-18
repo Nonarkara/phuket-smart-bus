@@ -1384,8 +1384,8 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
           {/* Profitability metrics */}
           <ProfitabilityPanel lang="en" />
 
-          {/* Analytics dashboard */}
-          <AnalyticsPanel lang="en" />
+          {/* Analytics dashboard — pass replay time so the current-hour marker tracks the scrubber */}
+          <AnalyticsPanel lang="en" simMinutes={simMinutes} />
         </div>
       </div>
 
