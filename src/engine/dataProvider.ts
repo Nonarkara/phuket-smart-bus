@@ -49,6 +49,7 @@ import {
 } from "./environmentSimulator";
 import { getImpactMetrics } from "./impactSimulator";
 import { getFlightsAroundNow, getAllFlights, getHourlyArrivalPax } from "./flightData";
+import { getHourlyDemandSupply } from "./simulation";
 import { APP_VERSION, PRICE_COMPARISONS, ROUTE_DEFINITIONS, COMPETITOR_BENCHMARKS, OPERATIONAL_ROUTE_IDS, FERRY_ROUTE_IDS } from "./config";
 import { text } from "./i18n";
 import { haversineDistanceMeters } from "./geo";
@@ -320,16 +321,7 @@ export function getOpsDashboard(): Promise<OpsDashboardPayload> {
       ferryCount: ferryVehicles.length,
       movingCount: vehicles.filter((v) => v.status === "moving").length,
       dwellingCount: vehicles.filter((v) => v.status === "dwelling").length,
-      routePressure: OPERATIONAL_ROUTE_IDS.filter((id) => !FERRY_ROUTE_IDS.includes(id)).map((routeId) => ({
-        routeId,
-        level: "balanced" as const,
-        demand: 100,
-        seatSupply: 125,
-        gap: 0,
-        coverageRatio: 1.25,
-        delayRiskMinutes: 0,
-        provenance: "estimated" as const
-      }))
+      routePressure: buildRoutePressureAtMinute(getBangkokNowMinutes(now))
     },
     routes,
     demandSupply: {
@@ -464,11 +456,58 @@ export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Real route pressure derived from Kimi's demand-supply chain
+// ---------------------------------------------------------------------------
+
+function buildRoutePressureAtMinute(simMinutes: number) {
+  const hourly = getHourlyDemandSupply();
+  const hour = Math.floor(simMinutes / 60);
+  const bucket = hourly.find((h) => h.hour === hour);
+
+  // Airport line carries all airport-arrival demand (sum of DESTINATIONS pct = 1.0)
+  // Patong and Dragon lines carry independent local demand — estimated as fixed
+  // fractions of the airport line's passenger volume for visual realism.
+  const airportDemand  = bucket?.busDemandPax ?? 0;
+  const airportSupply  = bucket?.busSeatsAvailable ?? 0;
+  const localPatong    = Math.round(airportDemand * 0.35); // busiest local corridor
+  const localDragon    = Math.round(airportDemand * 0.12);
+
+  const perRoute: Record<string, { demand: number; supply: number }> = {
+    "rawai-airport":          { demand: airportDemand, supply: airportSupply },
+    "patong-old-bus-station": { demand: localPatong,   supply: Math.round(localPatong * 1.1) },
+    "dragon-line":            { demand: localDragon,   supply: Math.round(localDragon * 1.2) },
+  };
+
+  return OPERATIONAL_ROUTE_IDS
+    .filter((id) => !FERRY_ROUTE_IDS.includes(id))
+    .map((routeId) => {
+      const { demand, supply } = perRoute[routeId] ?? { demand: 50, supply: 75 };
+      const gap = Math.max(0, demand - supply);
+      const coverageRatio = demand > 0 ? supply / demand : 1;
+      const level: "balanced" | "watch" | "strained" =
+        coverageRatio < 0.85 ? "strained" :
+        coverageRatio < 1.05 ? "watch" :
+        "balanced";
+      return {
+        routeId,
+        level,
+        demand,
+        seatSupply: supply,
+        gap,
+        coverageRatio: Math.round(coverageRatio * 100) / 100,
+        delayRiskMinutes: gap > 30 ? 10 : gap > 15 ? 4 : 0,
+        provenance: "estimated" as const,
+      };
+    });
+}
+
 export function getSimulationFrame(simMinutes: number): Promise<SimulationSnapshot> {
   const baseDate = new Date();
   baseDate.setHours(0, 0, 0, 0);
   const simDate = new Date(baseDate.getTime() + simMinutes * 60_000);
-  const vehicles = buildScheduleMockFleet(simDate);
+  // Pass simMinutes so buses are positioned AT the replay time, not at live clock
+  const vehicles = buildScheduleMockFleet(simDate, simMinutes);
   const transferHubs = getTransferHubs(simDate);
 
   return Promise.resolve({
@@ -477,16 +516,7 @@ export function getSimulationFrame(simMinutes: number): Promise<SimulationSnapsh
     dataMode: "demo",
     fallbackReasons: [],
     vehicles,
-    routePressure: OPERATIONAL_ROUTE_IDS.filter((id) => !FERRY_ROUTE_IDS.includes(id)).map((routeId) => ({
-      routeId,
-      level: "balanced" as const,
-      demand: 100,
-      seatSupply: 125,
-      gap: 0,
-      coverageRatio: 1.25,
-      delayRiskMinutes: 0,
-      provenance: "estimated" as const
-    })),
+    routePressure: buildRoutePressureAtMinute(simMinutes),
     transferHubs,
     competitorBenchmarks: Object.values(COMPETITOR_BENCHMARKS).map((b) => ({
       ...b,

@@ -911,11 +911,11 @@ function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now:
 // Public API
 // ---------------------------------------------------------------------------
 
-export function buildScheduleMockFleet(now = new Date()) {
-  // Use the same sim clock the map uses — otherwise the map shows buses at
-  // sim time but every dataProvider-consuming surface (ops console, decision
-  // panels, summaries) gets a wall-clock snapshot and the two disagree.
-  const nowMin = getSimulatedMinutes();
+export function buildScheduleMockFleet(now = new Date(), overrideMinutes?: number) {
+  // overrideMinutes: use when replaying a specific sim-time (ops console scrubber,
+  // getSimulationFrame). When absent, use the live sim clock so the map and
+  // the live-ops panel always agree.
+  const nowMin = overrideMinutes !== undefined ? overrideMinutes : getSimulatedMinutes();
   return routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
 }
 
