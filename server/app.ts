@@ -38,6 +38,7 @@ import {
   recordDemandRequest
 } from "./services/demandRequestStore.js";
 import {
+  buildRunReport,
   getInvestorSimulationPayload,
   getOpsDashboardPayload,
   getSimulationSnapshot
@@ -600,10 +601,24 @@ export function createApp() {
     })
   );
 
-  app.get("/api/ops/investor-sim", (_request, response) => {
+  app.get("/api/ops/investor-sim", (request, response) => {
     response.set("Cache-Control", "public, max-age=60");
-    response.json(getInvestorSimulationPayload());
+    const fleetSizeRaw = typeof request.query.fleetSize === "string" ? Number(request.query.fleetSize) : Number.NaN;
+    const fleetSize = Number.isFinite(fleetSizeRaw) && fleetSizeRaw > 0 ? fleetSizeRaw : undefined;
+    response.json(getInvestorSimulationPayload(undefined, fleetSize));
   });
+
+  app.get(
+    "/api/ops/report",
+    asyncRoute(async (request, response) => {
+      const from = typeof request.query.from === "string" ? request.query.from : null;
+      const to = typeof request.query.to === "string" ? request.query.to : null;
+      if (!from || !to) {
+        throw new HttpError(400, "validation_error", "from and to query params are required");
+      }
+      response.json(buildRunReport(from, to));
+    })
+  );
 
   app.post("/api/integrations/vehicle-telemetry", (request, response, next) => {
     try {

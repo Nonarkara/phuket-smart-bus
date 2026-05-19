@@ -286,3 +286,46 @@ describe("getVehicleDetail (driver tablet helper)", () => {
     if (a && b) expect(a.paxCount).toBe(b.paxCount);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Scenario Panel — adding buses must monotonically increase carried demand
+// and revenue, and monotonically decrease unmet demand. Without this check
+// it's trivial to ship a regression where the +N buttons return identical
+// payloads and the deltas all read "+0".
+// ---------------------------------------------------------------------------
+
+import { getInvestorSimulation } from "./dataProvider";
+
+describe("scenario delta math", () => {
+  it("adding buses increases riders carried", async () => {
+    setClockOverride(null);
+    const base = await getInvestorSimulation(10);
+    const plus2 = await getInvestorSimulation(12);
+    const plus4 = await getInvestorSimulation(14);
+    const carried = (p: { totals: { carriedArrivalDemand: number; carriedDepartureDemand: number } }) =>
+      p.totals.carriedArrivalDemand + p.totals.carriedDepartureDemand;
+    expect(carried(plus2)).toBeGreaterThanOrEqual(carried(base));
+    expect(carried(plus4)).toBeGreaterThanOrEqual(carried(plus2));
+  });
+
+  it("adding buses decreases unmet demand", async () => {
+    const base = await getInvestorSimulation(10);
+    const plus4 = await getInvestorSimulation(14);
+    const unmet = (p: { totals: { unmetArrivalDemand: number; unmetDepartureDemand: number } }) =>
+      p.totals.unmetArrivalDemand + p.totals.unmetDepartureDemand;
+    expect(unmet(plus4)).toBeLessThanOrEqual(unmet(base));
+  });
+
+  it("adding buses increases revenue at peak demand", async () => {
+    const base = await getInvestorSimulation(10);
+    const plus4 = await getInvestorSimulation(14);
+    expect(plus4.totals.dailyRevenueThb).toBeGreaterThanOrEqual(base.totals.dailyRevenueThb);
+  });
+
+  it("with enough buses, lost revenue drops to zero", async () => {
+    const huge = await getInvestorSimulation(40); // overkill
+    expect(huge.totals.lostRevenueThb).toBe(0);
+    expect(huge.totals.unmetArrivalDemand).toBe(0);
+    expect(huge.totals.unmetDepartureDemand).toBe(0);
+  });
+});

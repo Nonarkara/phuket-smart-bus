@@ -32,7 +32,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    exclude: [...configDefaults.exclude, "e2e/**", ".claude/**"],
     setupFiles: ["./src/test/setup.ts"]
   }
 });

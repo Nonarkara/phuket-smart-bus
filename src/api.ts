@@ -105,8 +105,9 @@ export function getOpsDashboard() {
   return fetchJson<OpsDashboardPayload>("/api/ops/dashboard");
 }
 
-export function getInvestorSimulation() {
-  return fetchJson<InvestorSimulationPayload>("/api/ops/investor-sim");
+export function getInvestorSimulation(fleetSize?: number) {
+  const query = fleetSize != null ? `?fleetSize=${fleetSize}` : "";
+  return fetchJson<InvestorSimulationPayload>("/api/ops/investor-sim" + query);
 }
 
 export function getSimulationFrame(simMinutes: number) {

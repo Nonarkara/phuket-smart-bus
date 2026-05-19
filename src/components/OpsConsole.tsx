@@ -141,6 +141,8 @@ const DRIVER_NAMES = [
 ];
 function driverName(vid: string) { return DRIVER_NAMES[stableHash(vid) % DRIVER_NAMES.length]; }
 function driverRating(vid: string) { return Math.round((38 + stableHash(vid + "r") % 13) * 10) / 100; }
+const DRIVER_AVATARS = ["/drivers/beaver-1.webp", "/drivers/beaver-2.webp", "/drivers/beaver-3.webp", "/drivers/beaver-4.webp"];
+function driverAvatar(vid: string) { return DRIVER_AVATARS[stableHash(vid + "avatar") % DRIVER_AVATARS.length]; }
 function simSpeed(progress: number, routeId: OperationalRouteId): number {
   const isFerry = FERRY_ROUTE_IDS.has(routeId);
   if (isFerry) return 15 + Math.sin(progress * Math.PI) * 10; // 15-25 knots
@@ -163,7 +165,10 @@ const LAYER_DEFS: { id: OverlayLayerId; label: string; icon: string }[] = [
   { id: "traffic", label: "Traffic", icon: "⚠" },
   { id: "hotspots", label: "Demand", icon: "◎" },
   { id: "transfer_hubs", label: "Hubs", icon: "⇄" },
-  { id: "route_pressure", label: "Pressure", icon: "▲" }
+  { id: "route_pressure", label: "Pressure", icon: "▲" },
+  { id: "satellite", label: "Satellite", icon: "🛰" },
+  { id: "terrain", label: "Topo", icon: "⛰" },
+  { id: "precipitation", label: "Rain", icon: "🌧" }
 ];
 
 function colorForPressure(level: RoutePressure["level"]) {
@@ -1044,6 +1049,12 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const [opsError, setOpsError] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSimSummary, setShowSimSummary] = useState(false);
+  const [scenario, setScenario] = useState<InvestorSimulationPayload | null>(null);
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+  const [scenarioBase, setScenarioBase] = useState<InvestorSimulationPayload | null>(null);
+  /** Which button is currently selected: 0 = "Current", 1/2/4 = "+N buses".
+   *  -1 means no scenario has been requested yet. */
+  const [scenarioExtra, setScenarioExtra] = useState<number>(-1);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
   const replayAbortRef = useRef(false);
@@ -1142,6 +1153,34 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
       nextReplayMinuteRef.current = null;
       setOpsError("Simulation unavailable. Check backend data mode or replay endpoint health.");
     } finally { setSimLoading(false); }
+  }
+
+  async function runScenario(extraBuses: number) {
+    if (!dashboard) return;
+    setScenarioLoading(true);
+    setScenarioExtra(extraBuses);
+    try {
+      const currentAirportBuses = dashboard.fleet.vehicles.filter((v) => v.routeId === "rawai-airport").length;
+      const baseSize = Math.max(1, currentAirportBuses);
+      const fleetSize = Math.max(1, currentAirportBuses + extraBuses);
+      // Always anchor the base to the current live fleet count — otherwise
+      // "+1 bus" can show negative deltas when current < default 10.
+      const [base, result] = await Promise.all([
+        getInvestorSimulation(baseSize),
+        extraBuses === 0 ? Promise.resolve(null) : getInvestorSimulation(fleetSize)
+      ]);
+      if (extraBuses === 0) {
+        setScenarioBase(base);
+        setScenario(null);
+      } else {
+        setScenarioBase(base);
+        setScenario(result);
+      }
+    } catch {
+      // silently fail — scenario is advisory only
+    } finally {
+      setScenarioLoading(false);
+    }
   }
 
   if (!dashboard) return (
@@ -1283,11 +1322,13 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                 const adhDelay = adhHash < 6 ? 0 : adhHash < 8 ? (stableHash(v.vehicleId + "d") % 4 + 1) : (stableHash(v.vehicleId + "d") % 8 + 5);
                 const adhLabel = adhDelay === 0 ? "ON TIME" : adhDelay <= 4 ? `+${adhDelay} MIN` : `+${adhDelay} MIN`;
                 const adhClass = adhDelay === 0 ? "ontime" : adhDelay <= 4 ? "late" : "very-late";
+                const avatarUrl = driverAvatar(v.vehicleId);
                 return (
                   <div key={v.id} className="fleet-row">
+                    <span className="fleet-row__avatar" style={{ backgroundImage: `url(${avatarUrl})` }} />
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
-                      <strong>{v.label}</strong> · {v.licensePlate} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
+                      <strong>{v.label}</strong> · {v.driver} · {v.licensePlate} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
                       <span className="fleet-row__sub">
                         {routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h
                         {eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}
@@ -1311,6 +1352,97 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               })}
             </div>
           </section>
+
+          {/* Fleet scenario — what if we add more buses? */}
+          {!simRunning && dashboard ? (
+            <section className="ops-card ops-card--tight">
+              <h2 className="ops-card__title">
+                Airport Fleet Scenario
+                <span className="ops-card__subtitle">
+                  {dashboard.fleet.vehicles.filter((v) => v.routeId === "rawai-airport").length} buses online now
+                </span>
+              </h2>
+              <div className="scenario-buttons">
+                {[
+                  { label: "Current", extra: 0 },
+                  { label: "+1 bus", extra: 1 },
+                  { label: "+2 buses", extra: 2 },
+                  { label: "+4 buses", extra: 4 }
+                ].map((s) => (
+                  <button
+                    key={s.extra}
+                    type="button"
+                    className={`scenario-btn ${scenarioExtra === s.extra ? "is-active" : ""}`}
+                    onClick={() => void runScenario(s.extra)}
+                    disabled={scenarioLoading}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              {scenarioLoading ? (
+                <div className="scenario-loading">Calculating…</div>
+              ) : scenario && scenarioBase ? (
+                <div className="scenario-comparison">
+                  <div className="scenario-row">
+                    <span className="scenario-label">Riders carried</span>
+                    <span className="scenario-val">
+                      {(scenario.totals.carriedArrivalDemand + scenario.totals.carriedDepartureDemand).toLocaleString()}
+                      <span className="scenario-delta scenario-delta--up">
+                        +{((scenario.totals.carriedArrivalDemand + scenario.totals.carriedDepartureDemand) - (scenarioBase.totals.carriedArrivalDemand + scenarioBase.totals.carriedDepartureDemand)).toLocaleString()}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Revenue</span>
+                    <span className="scenario-val">
+                      ฿{(scenario.totals.dailyRevenueThb).toLocaleString()}
+                      <span className="scenario-delta scenario-delta--up">
+                        +฿{(scenario.totals.dailyRevenueThb - scenarioBase.totals.dailyRevenueThb).toLocaleString()}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Unmet demand</span>
+                    <span className="scenario-val">
+                      {(scenario.totals.unmetArrivalDemand + scenario.totals.unmetDepartureDemand).toLocaleString()}
+                      <span className="scenario-delta scenario-delta--down">
+                        {((scenario.totals.unmetArrivalDemand + scenario.totals.unmetDepartureDemand) - (scenarioBase.totals.unmetArrivalDemand + scenarioBase.totals.unmetDepartureDemand)).toLocaleString()}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Capture rate</span>
+                    <span className="scenario-val">
+                      {scenario.totals.addressableAirportCapturePct}%
+                      <span className="scenario-delta scenario-delta--up">
+                        +{(scenario.totals.addressableAirportCapturePct - scenarioBase.totals.addressableAirportCapturePct).toFixed(1)}%
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              ) : scenarioBase && !scenario ? (
+                <div className="scenario-comparison">
+                  <div className="scenario-row">
+                    <span className="scenario-label">Riders carried</span>
+                    <span className="scenario-val">{(scenarioBase.totals.carriedArrivalDemand + scenarioBase.totals.carriedDepartureDemand).toLocaleString()}</span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Revenue</span>
+                    <span className="scenario-val">฿{scenarioBase.totals.dailyRevenueThb.toLocaleString()}</span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Unmet demand</span>
+                    <span className="scenario-val">{(scenarioBase.totals.unmetArrivalDemand + scenarioBase.totals.unmetDepartureDemand).toLocaleString()}</span>
+                  </div>
+                  <div className="scenario-row">
+                    <span className="scenario-label">Capture rate</span>
+                    <span className="scenario-val">{scenarioBase.totals.addressableAirportCapturePct}%</span>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           {/* Barcode requests per stop */}
           {simMinutes !== null ? (

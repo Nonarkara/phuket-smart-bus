@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { Lang, LatLngTuple, Route, Stop, VehiclePosition } from "@shared/types";
 import { pick, ui } from "@/lib/i18n";
-import { getVehiclesNow } from "@/engine/dataProvider";
+import { getVehiclesNow } from "@/dataProvider";
 import { interpolateCoordinate, interpolateHeading } from "@/lib/vehicleAnimation";
 import { haversineDistanceMeters } from "@/lib/geo";
 import { getDirectionPolyline } from "@/engine/routes";

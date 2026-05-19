@@ -482,7 +482,10 @@ export type OverlayLayerId =
   | "aqi"
   | "hotspots"
   | "transfer_hubs"
-  | "route_pressure";
+  | "route_pressure"
+  | "satellite"
+  | "terrain"
+  | "precipitation";
 
 export interface OpsMapTileLayer {
   id: string;

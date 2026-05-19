@@ -2947,6 +2947,99 @@ a { color: var(--tint); }
   gap: 8px;
 }
 
+.ops-card__subtitle {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* ── Scenario panel ── */
+.scenario-buttons {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.scenario-btn {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.scenario-btn:hover {
+  border-color: #16b8b0;
+  color: #16b8b0;
+}
+
+.scenario-btn.is-active {
+  background: #16b8b0;
+  border-color: #16b8b0;
+  color: #fff;
+}
+
+.scenario-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.scenario-loading {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.scenario-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scenario-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.scenario-label {
+  color: #666;
+}
+
+.scenario-val {
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scenario-delta {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.scenario-delta--up {
+  color: #16b8b0;
+  background: rgba(22, 184, 176, 0.08);
+}
+
+.scenario-delta--down {
+  color: #dc322f;
+  background: rgba(220, 50, 47, 0.08);
+}
+
 /* ── Metric cells ── */
 .ops-metric {
   display: flex;
@@ -3767,6 +3860,16 @@ a { color: var(--tint); }
 }
 
 .fleet-row:last-child { border-bottom: 0; }
+
+.fleet-row__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
 
 .fleet-row__dot {
   width: 7px;

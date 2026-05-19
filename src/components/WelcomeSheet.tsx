@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Lang, PriceComparison, Stop, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
-import { getVehiclesNow } from "../engine/dataProvider";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
 
 type SheetStep = "ask" | "result" | "booked" | "pass";
@@ -135,13 +134,8 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   const [passActivated, setPassActivated] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Live vehicles from the 30x simulation engine (updates every 1s)
-  const [liveVehicles, setLiveVehicles] = useState(() => getVehiclesNow());
-  useEffect(() => {
-    const id = setInterval(() => setLiveVehicles(getVehiclesNow()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const vehicles = liveVehicles;
+  // Vehicles come from the parent (live API when available, simulation fallback)
+  const vehicles = _vehiclesProp;
 
   // Compute real bus data for matched stop's route
   const routeVehicles = matchedStop

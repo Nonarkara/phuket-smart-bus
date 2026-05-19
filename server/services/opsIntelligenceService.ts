@@ -11,10 +11,12 @@ import type {
   MetricProvenance,
   OpsDashboardPayload,
   OpsMapOverlayMarker,
+  OpsMapTileLayer,
   OperationalRouteId,
   RoutePressure,
   ServiceRevenueBreakdown,
   SimulationSnapshot,
+  VehiclePosition,
   WeatherIntelligence
 } from "../../shared/types.js";
 import {
@@ -29,7 +31,7 @@ import { COMPETITOR_BENCHMARKS, FERRY_ROUTE_IDS, ROUTE_DEFINITIONS } from "../co
 import { text } from "../lib/i18n.js";
 import { resolveOpsDataMode, sourceStatusesToFallbackReasons } from "../lib/sourceStatus.js";
 import { parseClockMinutes, formatClockLabel, getBangkokNowMinutes } from "../lib/time.js";
-import { readRecentHistory } from "../lib/db.js";
+import { readRecentHistory, readVehicleHistoryRange } from "../lib/db.js";
 import { getOperationsOverview } from "./operationsService.js";
 import { getBusSnapshot } from "./providers/busProvider.js";
 import { getTrafficSnapshot } from "./providers/trafficProvider.js";
@@ -159,7 +161,7 @@ function classifyAirportServiceDirection(
     : "arrival_to_city";
 }
 
-function buildAirportHourlyGaps(date = new Date()): HourlyCapacityGap[] {
+function buildAirportHourlyGaps(date = new Date(), overrideFleetSize?: number): HourlyCapacityGap[] {
   const flights = toFlightsWithMinutes(date);
   const airportServices = getBusScheduledServices().filter((service) => service.routeId === "rawai-airport");
   const arrivalService = airportServices.find(
@@ -191,12 +193,18 @@ function buildAirportHourlyGaps(date = new Date()): HourlyCapacityGap[] {
         .reduce((sum, flight) => sum + flight.estimatedPax, 0);
       const addressableArrivalDemand = Math.ceil(rawArrivalPax * ADDRESSABLE_DEMAND_SHARE);
       const addressableDepartureDemand = Math.ceil(rawDeparturePax * ADDRESSABLE_DEMAND_SHARE);
-      const arrivalSeatSupply =
+      const scheduledArrivalSupply =
         countDeparturesWithinWindow(arrivalService?.departures ?? [], hour * 60, hour * 60 + 60) *
         BUS_SEAT_CAPACITY;
-      const departureSeatSupply =
+      const scheduledDepartureSupply =
         countDeparturesWithinWindow(departureService?.departures ?? [], hour * 60, hour * 60 + 60) *
         BUS_SEAT_CAPACITY;
+      const arrivalSeatSupply = overrideFleetSize != null
+        ? Math.ceil(overrideFleetSize * 0.5) * BUS_SEAT_CAPACITY
+        : scheduledArrivalSupply;
+      const departureSeatSupply = overrideFleetSize != null
+        ? Math.floor(overrideFleetSize * 0.5) * BUS_SEAT_CAPACITY
+        : scheduledDepartureSupply;
       const carriedArrivalDemand = Math.min(addressableArrivalDemand, arrivalSeatSupply);
       const carriedDepartureDemand = Math.min(addressableDepartureDemand, departureSeatSupply);
       const unmetArrivalDemand = Math.max(0, addressableArrivalDemand - arrivalSeatSupply);
@@ -224,7 +232,10 @@ function buildAirportHourlyGaps(date = new Date()): HourlyCapacityGap[] {
   );
 }
 
-function buildCurrentDemandSupply(date = new Date()): CurrentDemandSupply {
+function buildCurrentDemandSupply(
+  date = new Date(),
+  liveVehicles: VehiclePosition[] = []
+): CurrentDemandSupply {
   const flights = toFlightsWithMinutes(date);
   const nowMinutes = getBangkokNowMinutes(date);
   const airportServices = getBusScheduledServices().filter((service) => service.routeId === "rawai-airport");
@@ -257,12 +268,27 @@ function buildCurrentDemandSupply(date = new Date()): CurrentDemandSupply {
   const addressableDepartureDemandNext2h = Math.ceil(
     rawAirportDeparturePaxNext2h * ADDRESSABLE_DEMAND_SHARE
   );
-  const arrivalSeatSupplyNext2h =
-    countDeparturesWithinWindow(arrivalService?.departures ?? [], nowMinutes, nowMinutes + 120) *
-    BUS_SEAT_CAPACITY;
-  const departureSeatSupplyNext2h =
-    countDeparturesWithinWindow(departureService?.departures ?? [], nowMinutes, nowMinutes + 120) *
-    BUS_SEAT_CAPACITY;
+
+  // When live vehicles are available, use actual bus counts for airport supply.
+  // Split by direction when destination hints are present; otherwise fall back
+  // to scheduled departures.
+  const liveAirportBuses = liveVehicles.filter((v) => v.routeId === "rawai-airport");
+  const liveArrivalBuses = liveAirportBuses.filter((v) =>
+    v.destination?.en?.includes("Rawai") || v.destination?.th?.includes("ราไวย์")
+  ).length;
+  const liveDepartureBuses = liveAirportBuses.filter((v) =>
+    v.destination?.en?.includes("Airport") || v.destination?.th?.includes("สนามบิน")
+  ).length;
+  const hasLiveDirection = liveArrivalBuses > 0 || liveDepartureBuses > 0;
+
+  const arrivalSeatSupplyNext2h = hasLiveDirection
+    ? liveArrivalBuses * BUS_SEAT_CAPACITY
+    : countDeparturesWithinWindow(arrivalService?.departures ?? [], nowMinutes, nowMinutes + 120) *
+      BUS_SEAT_CAPACITY;
+  const departureSeatSupplyNext2h = hasLiveDirection
+    ? liveDepartureBuses * BUS_SEAT_CAPACITY
+    : countDeparturesWithinWindow(departureService?.departures ?? [], nowMinutes, nowMinutes + 120) *
+      BUS_SEAT_CAPACITY;
   const carriedArrivalDemandNext2h = Math.min(
     addressableArrivalDemandNext2h,
     arrivalSeatSupplyNext2h
@@ -513,6 +539,11 @@ function buildRoutePressure(
     currentDemandSupply.addressableDepartureDemandNext2h;
   const airportRouteSupply =
     currentDemandSupply.arrivalSeatSupplyNext2h + currentDemandSupply.departureSeatSupplyNext2h;
+  const hasLiveAirportVehicles = vehicles.some(
+    (v) =>
+      v.routeId === "rawai-airport" &&
+      (v.telemetrySource === "public_tracker" || v.telemetrySource === "direct_gps")
+  );
   const hotspotDemandByRoute: Record<OperationalRouteId, number> = {
     "rawai-airport": airportRouteDemand,
     "patong-old-bus-station": hotspots
@@ -548,7 +579,12 @@ function buildRoutePressure(
       gap,
       coverageRatio,
       delayRiskMinutes: severityPenalty,
-      provenance: routeId === "rawai-airport" ? "estimated" : "fallback"
+      provenance:
+        routeId === "rawai-airport"
+          ? hasLiveAirportVehicles
+            ? "live"
+            : "estimated"
+          : "fallback"
     };
   });
 }
@@ -653,6 +689,66 @@ function buildOverlayMarkers(
   return markers;
 }
 
+let rainViewerTimestamp: number | null = null;
+let rainViewerTimestampAt = 0;
+
+async function getRainViewerTimestamp(): Promise<number | null> {
+  if (rainViewerTimestamp && Date.now() - rainViewerTimestampAt < 5 * 60_000) {
+    return rainViewerTimestamp;
+  }
+  try {
+    const response = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+    const data = (await response.json()) as { radar?: { past?: Array<{ time: number }> } };
+    const latest = data.radar?.past?.at(-1);
+    if (latest) {
+      rainViewerTimestamp = latest.time;
+      rainViewerTimestampAt = Date.now();
+      return rainViewerTimestamp;
+    }
+  } catch {
+    // RainViewer unavailable — precipitation layer won't render
+  }
+  return null;
+}
+
+function buildTileLayers(): OpsMapTileLayer[] {
+  const layers: OpsMapTileLayer[] = [
+    {
+      id: "satellite",
+      layerId: "satellite",
+      label: "Satellite",
+      description: "Esri World Imagery — verify bus stop locations and terrain",
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      attribution: "Esri",
+      opacity: 1.0
+    },
+    {
+      id: "terrain",
+      layerId: "terrain",
+      label: "Topography",
+      description: "OpenTopoMap — steep hills and elevation for accident risk assessment",
+      url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+      attribution: "OpenTopoMap",
+      opacity: 0.75
+    }
+  ];
+
+  const rainTs = rainViewerTimestamp;
+  if (rainTs) {
+    layers.push({
+      id: "precipitation",
+      layerId: "precipitation",
+      label: "Precipitation",
+      description: "RainViewer live radar — rain intensity over Phuket",
+      url: `https://tilecache.rainviewer.com/v2/radar/${rainTs}/{z}/{x}/{y}/2/1_1.png`,
+      attribution: "RainViewer",
+      opacity: 0.6
+    });
+  }
+
+  return layers;
+}
+
 export async function getSimulationSnapshot(
   simMinutes: number,
   referenceDate = new Date()
@@ -707,8 +803,10 @@ export async function getOpsDashboardPayload(now = new Date()): Promise<OpsDashb
     buildWeatherIntelligence(now),
     buildTrafficPanel()
   ]);
+  // Warm RainViewer timestamp so precipitation layer is available
+  await getRainViewerTimestamp();
   const hotspotState = getDemandHotspots(now);
-  const currentDemandSupply = buildCurrentDemandSupply(now);
+  const currentDemandSupply = buildCurrentDemandSupply(now, snapshot.vehicles);
   const routePressure = buildRoutePressure(
     snapshot.vehicles,
     hotspotState.hotspots,
@@ -761,7 +859,7 @@ export async function getOpsDashboardPayload(now = new Date()): Promise<OpsDashb
       vehicleHistoryCount: history.length
     },
     mapOverlays: {
-      tileLayers: [],
+      tileLayers: buildTileLayers(),
       markers: buildOverlayMarkers(
         hotspotState.hotspots,
         transferHubs,
@@ -778,8 +876,8 @@ export async function getOpsDashboardPayload(now = new Date()): Promise<OpsDashb
   };
 }
 
-export function getInvestorSimulationPayload(date = new Date()): InvestorSimulationPayload {
-  const hourly = buildAirportHourlyGaps(date);
+export function getInvestorSimulationPayload(date = new Date(), overrideFleetSize?: number): InvestorSimulationPayload {
+  const hourly = buildAirportHourlyGaps(date, overrideFleetSize);
   const services = buildServiceRevenueBreakdown(hourly);
   const competitorBenchmarks = buildCompetitorBenchmarks(
     hourly.reduce(
@@ -853,5 +951,182 @@ export function getInvestorSimulationPayload(date = new Date()): InvestorSimulat
       strongestRevenueServiceRouteId: strongestService?.routeId ?? null
     },
     touchpoints: getTransferHubs(buildBangkokDateAtMinutes(REPLAY_START_MINUTES, date), "estimated")
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+// Post-run report — reads historical snapshots and compares actual fleet
+// size to flight demand hour-by-hour.
+// ---------------------------------------------------------------------------
+
+export interface HourlyFleetObservation {
+  hour: string;
+  rawArrivalPax: number;
+  rawDeparturePax: number;
+  addressableArrivalDemand: number;
+  addressableDepartureDemand: number;
+  observedAirportBuses: number;
+  observedBusRoutes: Record<string, number>;
+  seatSupply: number;
+  carriedArrivalDemand: number;
+  carriedDepartureDemand: number;
+  unmetArrivalDemand: number;
+  unmetDepartureDemand: number;
+  additionalBusesNeeded: number;
+  lostRevenueThb: number;
+}
+
+export interface OpsRunReport {
+  from: string;
+  to: string;
+  hoursCovered: number;
+  totalObservations: number;
+  hourly: HourlyFleetObservation[];
+  summary: {
+    rawAirportArrivalPax: number;
+    rawAirportDeparturePax: number;
+    addressableArrivalDemand: number;
+    addressableDepartureDemand: number;
+    totalSeatSupply: number;
+    carriedArrivalDemand: number;
+    carriedDepartureDemand: number;
+    unmetArrivalDemand: number;
+    unmetDepartureDemand: number;
+    totalRevenueThb: number;
+    lostRevenueThb: number;
+    peakAdditionalBusesNeeded: number;
+    averageAirportBusesOnline: number;
+    capturePct: number;
+  };
+}
+
+export function buildRunReport(fromIso: string, toIso: string): OpsRunReport {
+  const history = readVehicleHistoryRange(fromIso, toIso);
+  const fromDate = new Date(fromIso);
+  const toDate = new Date(toIso);
+  const hoursCovered = Math.max(1, Math.ceil((toDate.getTime() - fromDate.getTime()) / (60 * 60_000)));
+
+  // Group history entries by hour
+  type HistoryRow = {
+    vehicle_id: string;
+    route_id: string;
+    lat: number;
+    lng: number;
+    speed_kph: number;
+    status: string;
+    captured_at: string;
+  };
+
+  const rows = history as unknown as HistoryRow[];
+
+  // Build hourly buckets
+  const buckets = new Map<number, HistoryRow[]>();
+  for (const row of rows) {
+    const d = new Date(row.captured_at);
+    const hourKey = Math.floor(d.getTime() / (60 * 60_000));
+    const existing = buckets.get(hourKey) ?? [];
+    existing.push(row);
+    buckets.set(hourKey, existing);
+  }
+
+  // Get flight demand for the date range (use midpoint date for flight schedule)
+  const midDate = new Date(fromDate.getTime() + (toDate.getTime() - fromDate.getTime()) / 2);
+  const flights = toFlightsWithMinutes(midDate);
+
+  const hourly: HourlyFleetObservation[] = [];
+  let totalObservations = 0;
+
+  for (let h = 0; h < hoursCovered; h++) {
+    const hourStart = new Date(fromDate.getTime() + h * 60 * 60_000);
+    const hourKey = Math.floor(hourStart.getTime() / (60 * 60_000));
+    const bucketRows = buckets.get(hourKey) ?? [];
+    totalObservations += bucketRows.length;
+
+    // Count unique vehicles per route in this hour
+    const vehiclesByRoute: Record<string, Set<string>> = {};
+    for (const row of bucketRows) {
+      const set = vehiclesByRoute[row.route_id] ?? new Set<string>();
+      set.add(row.vehicle_id);
+      vehiclesByRoute[row.route_id] = set;
+    }
+
+    const observedBusRoutes: Record<string, number> = {};
+    for (const [routeId, set] of Object.entries(vehiclesByRoute)) {
+      observedBusRoutes[routeId] = set.size;
+    }
+
+    const observedAirportBuses = observedBusRoutes["rawai-airport"] ?? 0;
+    const seatSupply = observedAirportBuses * BUS_SEAT_CAPACITY;
+
+    // Flight demand for this hour ( Bangkok time )
+    const bangkokHour = (hourStart.getUTCHours() + 7) % 24;
+    const rawArrivalPax = flights
+      .filter((f) => f.type === "arrival" && Math.floor(f.minutes / 60) === bangkokHour)
+      .reduce((s, f) => s + f.estimatedPax, 0);
+    const rawDeparturePax = flights
+      .filter((f) => f.type === "departure" && Math.floor(f.minutes / 60) === bangkokHour)
+      .reduce((s, f) => s + f.estimatedPax, 0);
+    const addressableArrivalDemand = Math.ceil(rawArrivalPax * ADDRESSABLE_DEMAND_SHARE);
+    const addressableDepartureDemand = Math.ceil(rawDeparturePax * ADDRESSABLE_DEMAND_SHARE);
+    const totalAddressable = addressableArrivalDemand + addressableDepartureDemand;
+
+    const carriedArrivalDemand = Math.min(addressableArrivalDemand, seatSupply);
+    const carriedDepartureDemand = Math.min(addressableDepartureDemand, Math.max(0, seatSupply - carriedArrivalDemand));
+    const unmetArrivalDemand = Math.max(0, addressableArrivalDemand - carriedArrivalDemand);
+    const unmetDepartureDemand = Math.max(0, addressableDepartureDemand - carriedDepartureDemand);
+    const additionalBusesNeeded = Math.ceil((unmetArrivalDemand + unmetDepartureDemand) / BUS_SEAT_CAPACITY);
+    const lostRevenueThb = (unmetArrivalDemand + unmetDepartureDemand) * INVESTOR_FLAT_FARE_THB;
+
+    hourly.push({
+      hour: `${String(bangkokHour).padStart(2, "0")}:00`,
+      rawArrivalPax,
+      rawDeparturePax,
+      addressableArrivalDemand,
+      addressableDepartureDemand,
+      observedAirportBuses,
+      observedBusRoutes,
+      seatSupply,
+      carriedArrivalDemand,
+      carriedDepartureDemand,
+      unmetArrivalDemand,
+      unmetDepartureDemand,
+      additionalBusesNeeded,
+      lostRevenueThb
+    });
+  }
+
+  const summary = {
+    rawAirportArrivalPax: hourly.reduce((s, h) => s + h.rawArrivalPax, 0),
+    rawAirportDeparturePax: hourly.reduce((s, h) => s + h.rawDeparturePax, 0),
+    addressableArrivalDemand: hourly.reduce((s, h) => s + h.addressableArrivalDemand, 0),
+    addressableDepartureDemand: hourly.reduce((s, h) => s + h.addressableDepartureDemand, 0),
+    totalSeatSupply: hourly.reduce((s, h) => s + h.seatSupply, 0),
+    carriedArrivalDemand: hourly.reduce((s, h) => s + h.carriedArrivalDemand, 0),
+    carriedDepartureDemand: hourly.reduce((s, h) => s + h.carriedDepartureDemand, 0),
+    unmetArrivalDemand: hourly.reduce((s, h) => s + h.unmetArrivalDemand, 0),
+    unmetDepartureDemand: hourly.reduce((s, h) => s + h.unmetDepartureDemand, 0),
+    totalRevenueThb:
+      (hourly.reduce((s, h) => s + h.carriedArrivalDemand + h.carriedDepartureDemand, 0)) *
+      INVESTOR_FLAT_FARE_THB,
+    lostRevenueThb: hourly.reduce((s, h) => s + h.lostRevenueThb, 0),
+    peakAdditionalBusesNeeded: hourly.reduce((max, h) => Math.max(max, h.additionalBusesNeeded), 0),
+    averageAirportBusesOnline:
+      hourly.length > 0
+        ? Math.round((hourly.reduce((s, h) => s + h.observedAirportBuses, 0) / hourly.length) * 10) / 10
+        : 0,
+    capturePct: roundPct(
+      hourly.reduce((s, h) => s + h.carriedArrivalDemand + h.carriedDepartureDemand, 0),
+      hourly.reduce((s, h) => s + h.addressableArrivalDemand + h.addressableDepartureDemand, 0)
+    )
+  };
+
+  return {
+    from: fromIso,
+    to: toIso,
+    hoursCovered,
+    totalObservations,
+    hourly,
+    summary
   };
 }

@@ -20,9 +20,9 @@ import {
   getHealth,
   getRoutes,
   getStops,
-  getVehicles,
-  getVehiclesNow
-} from "./engine/dataProvider";
+  getVehicles
+} from "./dataProvider";
+import { getVehiclesNow } from "./engine/fleetSimulator";
 import { getImpactMetrics } from "./engine/impactSimulator";
 import { getSimulatedMinutes } from "./engine/fleetSimulator";
 import { getDayInfo } from "./engine/simulation";
@@ -250,12 +250,12 @@ export default function App() {
 }
 
 /* ── Map badge with simulated Bangkok clock ── */
-function MapBadge() {
-  const [info, setInfo] = useState(() => computeBadge());
+function MapBadge({ vehicles }: { vehicles: VehiclePosition[] }) {
+  const [info, setInfo] = useState(() => computeBadge(vehicles));
   useEffect(() => {
-    const id = setInterval(() => setInfo(computeBadge()), 1000);
+    const id = setInterval(() => setInfo(computeBadge(vehicles)), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [vehicles]);
   return (
     <div className="map-badge" role="status" aria-live="polite">
       <span className="map-badge__pulse" aria-hidden="true" />
@@ -264,13 +264,12 @@ function MapBadge() {
   );
 }
 
-function computeBadge(): string {
+function computeBadge(allV: VehiclePosition[]): string {
   const simMin = getSimulatedMinutes();
   const h = Math.floor(simMin / 60) % 24;
   const m = Math.floor(simMin % 60);
   const clock = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   const day = getDayInfo().label;
-  const allV = getVehiclesNow();
   const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
   const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
   const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
@@ -708,6 +707,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
               stops={stops}
               lang={lang}
               comparisons={comparisons}
+              vehicles={allVehicles}
             />
             <div className="map-container">
               <LiveMap
@@ -734,7 +734,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 </div>
               ) : null}
               {/* Next bus badge — the single most useful piece of info */}
-              <MapBadge />
+              <MapBadge vehicles={allVehicles} />
               {/* Floating route pills */}
               <div className="map-pills">
                 <button

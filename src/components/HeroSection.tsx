@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import type { Lang, RouteId, Stop, PriceComparison } from "@shared/types";
+import type { Lang, RouteId, Stop, PriceComparison, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
-import { getVehiclesNow } from "../engine/dataProvider";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
 import { getScheduledServices } from "../engine/scheduleService";
@@ -11,12 +10,17 @@ interface HeroSectionProps {
   stops: Stop[];
   lang: Lang;
   comparisons: PriceComparison[];
+  vehicles: VehiclePosition[];
 }
 
-function getNextBusEta(routeId: RouteId | null, stops: Stop[]): { minutes: number; destination: string } | null {
+function getNextBusEta(
+  routeId: RouteId | null,
+  stops: Stop[],
+  vehicles: VehiclePosition[]
+): { minutes: number; destination: string } | null {
   if (!routeId || stops.length === 0) return null;
-  const vehicles = getVehiclesNow().filter((v) => v.routeId === routeId && v.status === "moving");
-  if (vehicles.length === 0) {
+  const moving = vehicles.filter((v) => v.routeId === routeId && v.status === "moving");
+  if (moving.length === 0) {
     const services = getScheduledServices(routeId);
     if (services.length > 0) {
       const nowMin = getSimulatedMinutes();
@@ -39,7 +43,7 @@ function getNextBusEta(routeId: RouteId | null, stops: Stop[]): { minutes: numbe
     }
     return null;
   }
-  const nextVehicle = vehicles[0];
+  const nextVehicle = moving[0];
   const estimatedMin = nextVehicle.stopsAway ? Math.ceil(nextVehicle.stopsAway * 2) : 8;
   return {
     minutes: estimatedMin,
@@ -47,13 +51,13 @@ function getNextBusEta(routeId: RouteId | null, stops: Stop[]): { minutes: numbe
   };
 }
 
-export function HeroSection({ routeId, stops, lang, comparisons }: HeroSectionProps) {
+export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: HeroSectionProps) {
   const [countdown, setCountdown] = useState(0);
   const [destination, setDestination] = useState("Patong");
 
   useEffect(() => {
     function updateCountdown() {
-      const eta = getNextBusEta(routeId, stops);
+      const eta = getNextBusEta(routeId, stops, vehicles);
       if (eta) {
         const fracMin = getBangkokNowFractionalMinutes();
         const fracEta = eta.minutes - (fracMin % 1);

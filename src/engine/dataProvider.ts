@@ -19,6 +19,7 @@ import type {
   OperationalRouteId,
   OperationsOverviewPayload,
   OpsDashboardPayload,
+  OpsMapTileLayer,
   PriceComparison,
   Route,
   RouteId,
@@ -54,6 +55,86 @@ import { APP_VERSION, PRICE_COMPARISONS, ROUTE_DEFINITIONS, COMPETITOR_BENCHMARK
 import { text } from "./i18n";
 import { haversineDistanceMeters } from "./geo";
 import { getBangkokNowMinutes } from "./time";
+
+// ---------------------------------------------------------------------------
+// Tile layers for the static (no-server) deploy. The buttons in OpsConsole
+// only render layers the dashboard payload advertises, so the static demo
+// has to ship its own tile-layer config. All three tile providers are
+// directly browser-fetchable — no server proxy needed.
+//
+// RainViewer requires a fresh timestamp. We cache it client-side for 5 min;
+// on first call it returns null and we omit the precipitation entry — the
+// next render after the fetch resolves picks it up.
+// ---------------------------------------------------------------------------
+
+let rainViewerTimestamp: number | null = null;
+let rainViewerFetchedAt = 0;
+let rainViewerFetchInflight: Promise<void> | null = null;
+
+function refreshRainViewerTimestamp(): Promise<void> {
+  if (rainViewerFetchInflight) return rainViewerFetchInflight;
+  if (rainViewerTimestamp && Date.now() - rainViewerFetchedAt < 5 * 60_000) {
+    return Promise.resolve();
+  }
+  rainViewerFetchInflight = (async () => {
+    try {
+      const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+      const data = (await res.json()) as { radar?: { past?: Array<{ time: number }> } };
+      const latest = data.radar?.past?.at(-1);
+      if (latest) {
+        rainViewerTimestamp = latest.time;
+        rainViewerFetchedAt = Date.now();
+      }
+    } catch {
+      // Live radar unavailable — sat + topo still render
+    } finally {
+      rainViewerFetchInflight = null;
+    }
+  })();
+  return rainViewerFetchInflight;
+}
+
+// Kick off the fetch on module load; the second call to getOpsDashboard
+// (1 s later) will have the timestamp and include the precipitation layer.
+if (typeof fetch !== "undefined") {
+  void refreshRainViewerTimestamp();
+}
+
+function buildSimTileLayers(): OpsMapTileLayer[] {
+  const layers: OpsMapTileLayer[] = [
+    {
+      id: "satellite",
+      layerId: "satellite",
+      label: "Satellite",
+      description: "Esri World Imagery — verify bus stop locations and terrain",
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      attribution: "Esri",
+      opacity: 1.0
+    },
+    {
+      id: "terrain",
+      layerId: "terrain",
+      label: "Topography",
+      description: "OpenTopoMap — steep hills and elevation for accident-risk assessment",
+      url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+      attribution: "OpenTopoMap",
+      opacity: 0.75
+    }
+  ];
+  void refreshRainViewerTimestamp(); // keep cache warm
+  if (rainViewerTimestamp) {
+    layers.push({
+      id: "precipitation",
+      layerId: "precipitation",
+      label: "Precipitation",
+      description: "RainViewer live radar — rain intensity over Phuket",
+      url: `https://tilecache.rainviewer.com/v2/radar/${rainViewerTimestamp}/{z}/{x}/{y}/2/1_1.png`,
+      attribution: "RainViewer",
+      opacity: 0.6
+    });
+  }
+  return layers;
+}
 
 function makeBusSourceStatus(now = new Date()): DataSourceStatus {
   return {
@@ -353,19 +434,25 @@ export function getOpsDashboard(): Promise<OpsDashboardPayload> {
     hotspots: { hotspots: [], totalRequests: 0 },
     transferHubs,
     history: { recentEvents: [], vehicleHistoryCount: 0 },
-    mapOverlays: { tileLayers: [], markers: [] },
+    mapOverlays: { tileLayers: buildSimTileLayers(), markers: [] },
     competitorBenchmarks,
     sources: sourceStatuses
   });
 }
 
-function buildHourlyCapacityGaps() {
-  // Realistic hourly demand curve based on airport flight patterns
-  // Index 0 = hour 06:00, index 1 = hour 07:00, ..., index 17 = hour 23:00
-  // (SimTimeline expects hourly[0] = REPLAY_START hour = 06:00)
+function buildHourlyCapacityGaps(busesPerHour = 10) {
+  // Realistic hourly demand curve based on airport flight patterns.
+  // Index 0 = hour 06:00, index 1 = hour 07:00, ..., index 17 = hour 23:00.
+  // (SimTimeline expects hourly[0] = REPLAY_START hour = 06:00.)
   const hourlyArrPax = [280,520,680,720,600,480,420,380,440,520,480,360,240,160,80,40,20,0];
   const hourlyDepPax = [80,180,320,400,480,420,380,340,320,380,440,520,480,360,240,160,80,20];
-  const busesPerHour = 10;
+
+  // A bus on a round trip serves arrivals one way and departures the
+  // other. So the directional capacity per hour is HALF the bus count
+  // (with one full seat each direction). Without this split the model
+  // would double-count capacity and show "+0 deltas" forever once the
+  // baseline fleet exceeded combined demand.
+  const directionalSupplyPerHour = (busesPerHour / 2) * BUS_SEAT_CAPACITY;
 
   return Array.from({ length: 18 }, (_, i) => {
     const h = i + 6; // actual hour of day
@@ -373,16 +460,16 @@ function buildHourlyCapacityGaps() {
     const depPax = hourlyDepPax[i] ?? 0;
     const addrArr = Math.round(arrPax * ADDRESSABLE_DEMAND_SHARE);
     const addrDep = Math.round(depPax * ADDRESSABLE_DEMAND_SHARE);
-    const arrSupply = busesPerHour * BUS_SEAT_CAPACITY;
-    const depSupply = busesPerHour * BUS_SEAT_CAPACITY;
+    const arrSupply = Math.round(directionalSupplyPerHour);
+    const depSupply = Math.round(directionalSupplyPerHour);
     const carriedArr = Math.min(addrArr, arrSupply);
     const carriedDep = Math.min(addrDep, depSupply);
     const unmetArr = Math.max(0, addrArr - arrSupply);
     const unmetDep = Math.max(0, addrDep - depSupply);
     const reqArrDep = Math.ceil(addrArr / BUS_SEAT_CAPACITY);
     const reqDepDep = Math.ceil(addrDep / BUS_SEAT_CAPACITY);
-    const addArr = Math.max(0, reqArrDep - busesPerHour);
-    const addDep = Math.max(0, reqDepDep - busesPerHour);
+    const addArr = Math.max(0, reqArrDep - busesPerHour / 2);
+    const addDep = Math.max(0, reqDepDep - busesPerHour / 2);
 
     return {
       hour: `${String(h).padStart(2, "0")}:00`,
@@ -405,9 +492,40 @@ function buildHourlyCapacityGaps() {
   });
 }
 
-export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
+export function getInvestorSimulation(fleetSize?: number): Promise<InvestorSimulationPayload> {
   const now = new Date();
   const transferHubs = getTransferHubs(now);
+
+  // The Scenario Panel sends a per-direction bus count (e.g. 10 today, 12
+  // with "+2 buses"). The chain splits each bus evenly between arrival
+  // and departure capacity per hour. When fleetSize is absent, fall back
+  // to the baseline 10 used by the static capacity model.
+  const busesPerHour = fleetSize && fleetSize > 0 ? fleetSize : 10;
+  const hourly = buildHourlyCapacityGaps(busesPerHour);
+
+  const rawArr = hourly.reduce((s, h) => s + h.rawArrivalPax, 0);
+  const rawDep = hourly.reduce((s, h) => s + h.rawDeparturePax, 0);
+  const addrArr = hourly.reduce((s, h) => s + h.addressableArrivalDemand, 0);
+  const addrDep = hourly.reduce((s, h) => s + h.addressableDepartureDemand, 0);
+  const carriedArr = hourly.reduce((s, h) => s + h.carriedArrivalDemand, 0);
+  const carriedDep = hourly.reduce((s, h) => s + h.carriedDepartureDemand, 0);
+  const unmetArr = hourly.reduce((s, h) => s + h.unmetArrivalDemand, 0);
+  const unmetDep = hourly.reduce((s, h) => s + h.unmetDepartureDemand, 0);
+  const dailyRev = (carriedArr + carriedDep) * INVESTOR_FLAT_FARE_THB;
+  const lostRev = (unmetArr + unmetDep) * INVESTOR_FLAT_FARE_THB;
+  const peakAdd = hourly.reduce(
+    (m, h) => Math.max(m, h.additionalArrivalBusesNeeded, h.additionalDepartureBusesNeeded),
+    0
+  );
+
+  const peakArrHourIdx = hourly.reduce(
+    (best, h, i) => (h.unmetArrivalDemand > hourly[best]!.unmetArrivalDemand ? i : best),
+    0
+  );
+  const peakDepHourIdx = hourly.reduce(
+    (best, h, i) => (h.unmetDepartureDemand > hourly[best]!.unmetDepartureDemand ? i : best),
+    0
+  );
 
   return Promise.resolve({
     generatedAt: now.toISOString(),
@@ -421,7 +539,7 @@ export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
       replayStartMinutes: REPLAY_START_MINUTES,
       replayEndMinutes: REPLAY_END_MINUTES
     },
-    hourly: buildHourlyCapacityGaps(),
+    hourly,
     services: [],
     competitorBenchmarks: Object.values(COMPETITOR_BENCHMARKS).map((b) => ({
       ...b,
@@ -432,24 +550,30 @@ export function getInvestorSimulation(): Promise<InvestorSimulationPayload> {
       capturePct: 0.15
     })),
     totals: {
-      rawAirportArrivalPax: 4200,
-      rawAirportDeparturePax: 3800,
-      addressableArrivalDemand: 630,
-      addressableDepartureDemand: 570,
-      carriedArrivalDemand: 520,
-      carriedDepartureDemand: 460,
-      unmetArrivalDemand: 110,
-      unmetDepartureDemand: 110,
-      totalAirportCapturePct: 0.12,
-      addressableAirportCapturePct: 0.82,
-      dailyRevenueThb: 98000,
-      lostRevenueThb: 22000,
-      peakAdditionalBusesNeeded: 2
+      rawAirportArrivalPax: rawArr,
+      rawAirportDeparturePax: rawDep,
+      addressableArrivalDemand: addrArr,
+      addressableDepartureDemand: addrDep,
+      carriedArrivalDemand: carriedArr,
+      carriedDepartureDemand: carriedDep,
+      unmetArrivalDemand: unmetArr,
+      unmetDepartureDemand: unmetDep,
+      totalAirportCapturePct: rawArr + rawDep > 0
+        ? Math.round(((carriedArr + carriedDep) / (rawArr + rawDep)) * 1000) / 10
+        : 0,
+      addressableAirportCapturePct: addrArr + addrDep > 0
+        ? Math.round(((carriedArr + carriedDep) / (addrArr + addrDep)) * 1000) / 10
+        : 0,
+      dailyRevenueThb: dailyRev,
+      lostRevenueThb: lostRev,
+      peakAdditionalBusesNeeded: peakAdd
     },
     opportunities: {
-      summary: "Peak hour gap at 10:00-12:00 suggests adding 2 buses could capture 22,000 THB/day in lost revenue.",
-      peakArrivalGapHour: "10:00",
-      peakDepartureGapHour: "16:00",
+      summary: peakAdd > 0
+        ? `Peak hour gap at ${hourly[peakArrHourIdx]!.hour}–${hourly[peakDepHourIdx]!.hour} suggests adding ${peakAdd} bus${peakAdd === 1 ? "" : "es"} could capture ฿${lostRev.toLocaleString()}/day in lost revenue.`
+        : `No capacity gaps at ${busesPerHour} buses/hour — the corridor is served.`,
+      peakArrivalGapHour: hourly[peakArrHourIdx]!.hour,
+      peakDepartureGapHour: hourly[peakDepHourIdx]!.hour,
       strongestRevenueServiceRouteId: "rawai-airport"
     },
     touchpoints: transferHubs

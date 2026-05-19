@@ -559,6 +559,18 @@ export function readRecentHistory() {
     .all() as Array<Record<string, unknown>>;
 }
 
+export function readVehicleHistoryRange(from: string, to: string) {
+  if (!db) {
+    return [];
+  }
+
+  return db
+    .prepare(
+      `SELECT * FROM vehicle_history WHERE captured_at >= ? AND captured_at <= ? ORDER BY captured_at ASC`
+    )
+    .all(from, to) as Array<Record<string, unknown>>;
+}
+
 export function pruneDatabase() {
   if (!db) {
     return;
