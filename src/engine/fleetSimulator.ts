@@ -506,23 +506,29 @@ function splitDirectionGroups(stops: Stop[], routeId: OperationalRouteId): Stop[
  *  exactly with the sea-crossing polyline endpoints. */
 function polylineMatchesStops(poly: LatLngTuple[], stops: Stop[], routeId: OperationalRouteId): boolean {
   if (poly.length < 2 || stops.length < 2) return false;
+
+  // Check that both the first and last stop lie somewhere NEAR the polyline
+  // (not just near the endpoints). Bus stops are sometimes several hundred
+  // metres from a polyline terminus — the Patong outbound first stop is
+  // 760m from the polyline start but still clearly on the route. Checking
+  // only endpoints caused Patong and Dragon to fall back to straight-line.
   const isFerry = FERRY_ROUTE_IDS.includes(routeId as never);
-  // Airport line GeoJSON stops don't include terminals (Rawai Beach / Phuket Airport)
-  // because the stop dataset is incomplete. Use a larger threshold so the
-  // full road polyline is still matched; the missing terminal is harmless
-  // because the bus simply stops at the last available stop.
-  const threshold = isFerry ? 5000 : routeId === "rawai-airport" ? 12000 : 250;
-  const first = stops[0].coordinates;
-  const last = stops[stops.length - 1].coordinates;
-  const startDist = Math.min(
-    haversineDistanceMeters(first, poly[0]),
-    haversineDistanceMeters(first, poly[poly.length - 1])
-  );
-  const endDist = Math.min(
-    haversineDistanceMeters(last, poly[0]),
-    haversineDistanceMeters(last, poly[poly.length - 1])
-  );
-  return startDist <= threshold && endDist <= threshold;
+  const nearestThreshold = isFerry ? 5000 : 500; // max acceptable stop→polyline gap
+
+  function nearestDistToPolyline(pt: LatLngTuple): number {
+    let best = Infinity;
+    // Subsample to avoid O(n) on 4k-point polylines per call
+    const step = Math.max(1, Math.floor(poly.length / 300));
+    for (let i = 0; i < poly.length; i += step) {
+      const d = haversineDistanceMeters(pt, poly[i]!);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  const firstDist = nearestDistToPolyline(stops[0].coordinates);
+  const lastDist  = nearestDistToPolyline(stops[stops.length - 1].coordinates);
+  return firstDist <= nearestThreshold && lastDist <= nearestThreshold;
 }
 
 function buildDirectionProfiles(routeId: OperationalRouteId) {
@@ -871,7 +877,13 @@ function buildVehiclePosition(
     distanceToDestinationMeters: Math.round(distToEnd),
     stopsAway,
     polylineMeters,
-    polylineFirstStop: profile.stops[0]?.coordinates ?? null
+    // Use profile.polyline[0] (the actual polyline start vertex) rather than
+    // stops[0].coordinates. The renderer calls getDirectionPolyline(routeId,
+    // polylineFirstStop) to look up the same polyline the engine used. When
+    // stops[0] is in the middle of the route (e.g., Patong Terminal 1 is
+    // 1462m into the outbound Patong line), the endpoint-distance search
+    // picks the wrong direction and buses appear kilometres off-road.
+    polylineFirstStop: profile.polyline[0] ?? profile.stops[0]?.coordinates ?? null
   };
 }
 
@@ -1186,14 +1198,16 @@ export function getVehicleDetail(plate: string): DriverTabletData {
     return null;
   }
 
-  // Find the matching profile by routeId + first-stop coordinates
+  // Find the matching profile by routeId + polyline start.
+  // polylineFirstStop is now profile.polyline[0] (the actual polyline start
+  // vertex), not stops[0].coordinates, so we match against p.polyline[0].
   const profiles = profilesByRoute[vehicle.routeId];
   if (!profiles) return null;
   const profile = profiles.find((p) => {
-    const fs = p.stops[0]?.coordinates;
-    if (!fs || !vehicle.polylineFirstStop) return false;
-    return Math.abs(fs[0] - vehicle.polylineFirstStop[0]) < 1e-4 &&
-           Math.abs(fs[1] - vehicle.polylineFirstStop[1]) < 1e-4;
+    const pStart = p.polyline[0];
+    if (!pStart || !vehicle.polylineFirstStop) return false;
+    return Math.abs(pStart[0] - vehicle.polylineFirstStop[0]) < 1e-4 &&
+           Math.abs(pStart[1] - vehicle.polylineFirstStop[1]) < 1e-4;
   });
   if (!profile) return null;
 
