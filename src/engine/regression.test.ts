@@ -242,7 +242,11 @@ describe("setClockOverride", () => {
   it("when cleared, getSimulatedMinutes returns the wall-clock value", () => {
     setClockOverride(null);
     setSimMinute(SIM_OPEN_MIN);
-    expect(getSimulatedMinutes()).toBeCloseTo(SIM_OPEN_MIN, 1);
+    // Wide tolerance: CI runners can spend ~200ms between setSimMinute and
+    // the read, which at SIM_SPEED=15 is ~0.05 sim min. ±1 sim minute is
+    // plenty to confirm the clock is wall-clock-anchored (not stuck at 0).
+    expect(getSimulatedMinutes()).toBeGreaterThanOrEqual(SIM_OPEN_MIN);
+    expect(getSimulatedMinutes()).toBeLessThan(SIM_OPEN_MIN + 1);
   });
 });
 
