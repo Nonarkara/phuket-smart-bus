@@ -3864,9 +3864,11 @@ a { color: var(--tint); }
 .fleet-row__avatar {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 6px;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;   /* prevent tile on portrait images */
+  background-color: #e8e8e8;      /* fallback while loading */
   flex-shrink: 0;
   margin-right: 2px;
 }
@@ -3880,12 +3882,32 @@ a { color: var(--tint); }
 
 .fleet-row__info {
   flex: 1;
-  min-width: 0;
+  min-width: 0;        /* allow truncation inside flex */
   color: #1a1a1a;
+  overflow: hidden;    /* clip anything that overflows the column */
+}
+
+.fleet-row__info > .fleet-row__header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  overflow: hidden;
 }
 
 .fleet-row__info strong {
   font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Driver name + plate: truncate, never wrap */
+.fleet-row__info .fleet-row__meta {
+  font-size: 10px;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .fleet-row__sub {
@@ -3893,6 +3915,9 @@ a { color: var(--tint); }
   font-size: 9px;
   color: #999;
   margin-top: 1px;
+  white-space: nowrap;    /* keep sub-line on one row */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fleet-row__status {

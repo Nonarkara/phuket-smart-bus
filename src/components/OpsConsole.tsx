@@ -1328,13 +1328,17 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
                     <span className="fleet-row__avatar" style={{ backgroundImage: `url(${avatarUrl})` }} />
                     <span className="fleet-row__dot" style={{ background: routeColorById[v.routeId] ?? "#999" }} />
                     <span className="fleet-row__info">
-                      <strong>{v.label}</strong> · {v.driver} · {v.licensePlate} <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`}>{adhLabel}</span>
+                      {/* Line 1: label + adherence badge — stays on one row */}
+                      <span style={{ display: "flex", alignItems: "baseline", gap: 4, overflow: "hidden" }}>
+                        <strong style={{ whiteSpace: "nowrap" }}>{v.label}</strong>
+                        <span className="fleet-row__meta">{v.driver} · {v.licensePlate}</span>
+                        <span className={`fleet-row__adherence fleet-row__adherence--${adhClass}`} style={{ flexShrink: 0 }}>{adhLabel}</span>
+                      </span>
+                      {/* Line 2: route · speed · ETA — single truncated line */}
                       <span className="fleet-row__sub">
                         {routeNameById[v.routeId]} · {Math.round(v.speedKph)} km/h
-                        {eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong>{etaAdjusted ? " ⚠" : ""}</> : ""}
-                        {v.trend !== "steady" ? <span style={{ color: v.trend === "boarding" ? "#16b8b0" : "#b58900", fontWeight: 600, marginLeft: 4 }}>{v.trend === "boarding" ? "▲ boarding" : "▼ alighting"}</span> : null}
-                        {v.totalBoarded > 0 ? <span style={{ color: "#999", marginLeft: 4 }}>· ฿{(v.totalBoarded * 100).toLocaleString()} collected</span> : null}
-                        {v.demandPct > 0 ? <span style={{ color: "#16b8b0", marginLeft: 4 }}>· {v.demandPct}% of demand</span> : null}
+                        {eta ? <> · <strong style={{ color: etaAdjusted ? "#b58900" : "#16b8b0" }}>{eta} min</strong></> : ""}
+                        {v.totalBoarded > 0 ? <> · ฿{(v.totalBoarded * 100).toLocaleString()}</> : null}
                       </span>
                     </span>
                     <span className={`fleet-row__load ${isFull ? "fleet-row__load--full" : isLow ? "fleet-row__load--low" : ""}`}>{loadPct}%</span>
