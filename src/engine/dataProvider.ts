@@ -103,13 +103,25 @@ if (typeof fetch !== "undefined") {
 function buildSimTileLayers(): OpsMapTileLayer[] {
   const layers: OpsMapTileLayer[] = [
     {
+      // GISTDA satellite: THEOS-2 imagery, 2-metre resolution, 2025.
+      // Better than Esri for Thailand — more recent, local government data.
       id: "satellite",
       layerId: "satellite",
-      label: "Satellite",
-      description: "Esri World Imagery — verify bus stop locations and terrain",
-      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      attribution: "Esri",
+      label: "Satellite (GISTDA)",
+      description: "THEOS-2 satellite imagery 2m resolution 2025 — GISTDA Thailand",
+      url: `https://api-gateway.gistda.or.th/api/2.0/resources/tiles/gi-basemap_68/{z}/{x}/{y}?api_key=${import.meta.env.VITE_GISTDA_API_KEY ?? ""}`,
+      attribution: "GISTDA Thailand",
       opacity: 1.0
+    },
+    {
+      // GISTDA incident basemap — live disaster overlay (floods, fires, drought).
+      id: "incident",
+      layerId: "route_pressure",  // reuse an existing OverlayLayerId or add "incident"
+      label: "Incidents (GISTDA)",
+      description: "GISTDA disaster situation map — floods, wildfires, active incidents",
+      url: `https://api-gateway.gistda.or.th/api/2.0/resources/tiles/basemap_incident/{z}/{x}/{y}?api_key=${import.meta.env.VITE_GISTDA_API_KEY ?? ""}`,
+      attribution: "GISTDA Thailand",
+      opacity: 0.8
     },
     {
       id: "terrain",
@@ -128,9 +140,6 @@ function buildSimTileLayers(): OpsMapTileLayer[] {
       layerId: "precipitation",
       label: "Precipitation",
       description: "RainViewer live radar — rain intensity over Phuket",
-      // RainViewer v2 path: /radar/{time}/{size}/{z}/{x}/{y}/{color}/{options}.png
-      // The size segment (256) is required between timestamp and z — without it
-      // the server misparses the path and returns "Zoom Level Not Supported" tiles.
       url: `https://tilecache.rainviewer.com/v2/radar/${rainViewerTimestamp}/256/{z}/{x}/{y}/2/1_1.png`,
       attribution: "RainViewer",
       opacity: 0.6

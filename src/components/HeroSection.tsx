@@ -56,6 +56,23 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
   const [countdown, setCountdown] = useState(0);
   const [destination, setDestination] = useState("Patong");
 
+  // Real-time PM2.5 from GISTDA — live air quality at Phuket Airport area
+  const [pm25, setPm25] = useState<{ value: number; level: string; color: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("https://pm25.gistda.or.th/rest/getPm25byLocation?lat=7.88&lng=98.39")
+      .then(r => r.json())
+      .then((d: { status: number; data: { pm25: number } }) => {
+        if (cancelled || d.status !== 200) return;
+        const v = Math.round(d.data.pm25 * 10) / 10;
+        const level = v <= 12 ? "Good" : v <= 25 ? "Moderate" : "Poor";
+        const color = v <= 12 ? "#16b8b0" : v <= 25 ? "#b58900" : "#dc322f";
+        if (!cancelled) setPm25({ value: v, level, color });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     function updateCountdown() {
       const eta = getNextBusEta(routeId, stops, vehicles);
@@ -104,7 +121,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
           </div>
         </div>
       </div>
-      {/* Road-safety nudge strip — shown when we have data for this locale */}
+      {/* Road-safety nudge strip */}
       {safetyInfo.injured > 0 && (
         <div className="hero-section__safety">
           <span className="hero-section__safety-icon">⚠</span>
@@ -112,6 +129,13 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
             {safetyInfo.injured.toLocaleString()} {safetyInfo.nation} tourists injured in Thai traffic this year
             ({motorcyclePct}% on motorcycles) — bus riders: 0.
           </span>
+        </div>
+      )}
+      {/* Live GISTDA PM2.5 — fewer buses = fewer rental scooters = cleaner air */}
+      {pm25 && (
+        <div className="hero-pm25" style={{ background: pm25.color + "18", border: `1px solid ${pm25.color}55` }}>
+          <span style={{ color: pm25.color, fontWeight: 700 }}>PM2.5 {pm25.value} µg/m³</span>
+          <span style={{ color: pm25.color, opacity: 0.85 }}>{pm25.level} · Each bus rider = 1 fewer scooter on Phuket roads</span>
         </div>
       )}
     </div>

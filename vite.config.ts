@@ -15,6 +15,10 @@ export default defineConfig({
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },
+  // Surface VITE_ env vars to the client bundle
+  // VITE_GISTDA_API_KEY is baked at build time so it's available for tile URLs.
+  // Tile URLs expose the key in network requests anyway — this key is for
+  // rate-limiting, not security. Never put private secrets in VITE_ vars.
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

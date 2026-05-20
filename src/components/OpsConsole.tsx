@@ -300,6 +300,23 @@ function generateNews(simMinutes: number | null): NewsItem[] {
 }
 
 function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather: OpsDashboardPayload["weather"] }) {
+  // Real-time PM2.5 from GISTDA (no auth needed, 15-min cached)
+  const [pm25, setPm25] = useState<{ value: number; level: string; color: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("https://pm25.gistda.or.th/rest/getPm25byLocation?lat=7.88&lng=98.39")
+      .then(r => r.json())
+      .then((d: { status: number; data: { pm25: number } }) => {
+        if (cancelled || d.status !== 200) return;
+        const v = Math.round(d.data.pm25 * 10) / 10;
+        const level = v <= 12 ? "GOOD" : v <= 25 ? "MODERATE" : v <= 37 ? "SENSITIVE" : "UNHEALTHY";
+        const color = v <= 12 ? "#16b8b0" : v <= 25 ? "#b58900" : v <= 37 ? "#ff8c00" : "#dc322f";
+        if (!cancelled) setPm25({ value: v, level, color });
+      })
+      .catch(() => {/* silent — PM2.5 is supplemental */});
+    return () => { cancelled = true; };
+  }, []); // fetch once on mount; component remounts if dashboard refreshes
+
   const hour = simMinutes !== null ? Math.floor(simMinutes / 60) : new Date().getHours();
   const minute = simMinutes !== null ? simMinutes % 60 : new Date().getMinutes();
   const nowMin = hour * 60 + minute;
@@ -375,6 +392,12 @@ function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather
           <span>{weather.intelligence.current.tempC}°C</span>
           <span>{weather.intelligence.current.rainProb}% rain</span>
           <span>Wind {weather.intelligence.current.windKph} km/h</span>
+          {pm25 && (
+            <span className="city-pm25" style={{ color: pm25.color }}>
+              PM2.5 {pm25.value} µg/m³ &nbsp;
+              <span className="city-pm25__level" style={{ background: pm25.color }}>{pm25.level}</span>
+            </span>
+          )}
         </div>
         <div className="city-aqi">
           {[
