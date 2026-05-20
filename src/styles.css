@@ -7034,16 +7034,18 @@ a { color: var(--tint); }
   align-items: flex-start;
   gap: 6px;
   padding: 6px 12px 8px;
-  background: rgba(220, 50, 47, 0.08);
-  border-top: 1px solid rgba(220, 50, 47, 0.25);
+  /* Hero background is rgba(255,255,255,0.96) — almost white.
+     Use a dark amber text on a pale amber background for WCAG AA contrast. */
+  background: rgba(255, 149, 0, 0.10);
+  border-top: 1px solid rgba(255, 149, 0, 0.35);
   font-size: 10px;
   line-height: 1.4;
-  color: rgba(255,255,255,0.85);
+  color: #7a3a00;   /* dark amber — contrast ratio >7:1 on the pale bg */
 }
 
 .hero-section__safety-icon {
   flex-shrink: 0;
-  color: #ff9500;
+  color: #c05000;  /* dark orange, readable on white/amber */
   font-size: 12px;
   margin-top: 1px;
 }
