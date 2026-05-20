@@ -316,22 +316,30 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) 
 
 /* ── Live stats for landing page (animated, dynamic, alive) ── */
 function LiveStatsWidget() {
+  // Count smart-buses only — same filter as the map badge — so the two
+  // numbers agree. Ferries + orange-line are different fleets and count
+  // separately if/when we surface them.
+  const isSmartBus = (v: VehiclePosition) =>
+    !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-");
+
   const [stats, setStats] = useState(() => {
     const v = getVehiclesNow();
-    const m = getImpactMetrics(v.length);
-    const moving = v.filter(x => x.status === "moving").length;
-    const total = v.filter(x => x.status !== "unknown").length;
+    const buses = v.filter(isSmartBus);
+    const m = getImpactMetrics(buses.length);
+    const moving = buses.filter(x => x.status === "moving").length;
+    const total = buses.filter(x => x.status !== "unknown").length;
     const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
-    return { riders: m.ridersToday, buses: v.length, co2: m.co2SavedKg, onTime };
+    return { riders: m.ridersToday, buses: buses.length, co2: m.co2SavedKg, onTime };
   });
   useEffect(() => {
     const id = setInterval(() => {
       const v = getVehiclesNow();
-      const m = getImpactMetrics(v.length);
-      const moving = v.filter(x => x.status === "moving").length;
-      const total = v.filter(x => x.status !== "unknown").length;
+      const buses = v.filter(isSmartBus);
+      const m = getImpactMetrics(buses.length);
+      const moving = buses.filter(x => x.status === "moving").length;
+      const total = buses.filter(x => x.status !== "unknown").length;
       const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
-      setStats({ riders: m.ridersToday, buses: v.length, co2: m.co2SavedKg, onTime });
+      setStats({ riders: m.ridersToday, buses: buses.length, co2: m.co2SavedKg, onTime });
     }, 2000);
     return () => clearInterval(id);
   }, []);

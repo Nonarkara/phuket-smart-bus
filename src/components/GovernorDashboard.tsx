@@ -128,12 +128,18 @@ export function GovernorDashboard() {
         </div>
 
         <div className="governor__kpi governor__kpi--red">
-          <div className="governor__kpi-label">ACCIDENTS PREVENTED</div>
+          <div className="governor__kpi-label">INJURY RISK AVOIDED</div>
           <div className="governor__kpi-value">
-            <BigNum value={safety.injuriesPreventedToday} decimals={2} />
+            {safety.injuriesPreventedToday >= 1 ? (
+              <BigNum value={Math.round(safety.injuriesPreventedToday)} />
+            ) : (
+              // Express fractional daily prevention as a frequency the
+              // Governor's office can reason about: "1 injury every N days"
+              <span>1<span style={{ fontSize: "0.5em", fontWeight: 400, color: "rgba(255,255,255,0.6)" }}> per {Math.max(1, Math.round(1 / Math.max(0.001, safety.injuriesPreventedToday)))} days</span></span>
+            )}
           </div>
           <div className="governor__kpi-sub">
-            ≈ ฿<BigNum value={safety.economicValueTodayThb} /> protected
+            ≈ ฿<BigNum value={safety.economicValueTodayThb} /> protected today
           </div>
         </div>
 

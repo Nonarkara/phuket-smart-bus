@@ -7529,20 +7529,25 @@ a { color: var(--tint); }
  * ========================================================================== */
 .city-pm25 {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   font-size: 11px;
   font-family: "SF Mono", "JetBrains Mono", monospace;
   font-weight: 600;
   letter-spacing: 0.02em;
+  margin-top: 4px;
+  width: 100%;
 }
 .city-pm25__level {
   padding: 1px 6px;
   color: #fff;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -7559,4 +7564,62 @@ a { color: var(--tint); }
   font-family: "SF Mono", "JetBrains Mono", monospace;
   border-radius: 3px;
   margin-top: 4px;
+}
+
+/* ============================================================================
+ * Digital Operations Health strip — visible signal that this is a connected
+ * platform, not a paper-clipboard bus company. Sits below the header on /ops.
+ * ========================================================================== */
+.ops__digital-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(22,184,176,0.03) 0%, rgba(22,184,176,0.06) 100%);
+  border-bottom: 1px solid rgba(22,184,176,0.18);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 10px;
+  align-items: center;
+}
+
+.ops__digital-tile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 14px;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+.ops__digital-tile:last-child {
+  border-right: 0;
+}
+
+.ops__digital-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ops__digital-dot--live {
+  background: #16b8b0;
+  box-shadow: 0 0 6px rgba(22,184,176,0.6);
+  animation: digital-pulse 2s ease-in-out infinite;
+}
+.ops__digital-dot--sim {
+  background: #b58900;
+}
+@keyframes digital-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+.ops__digital-label {
+  font-weight: 700;
+  color: #16b8b0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ops__digital-value {
+  color: #555;
+  font-weight: 500;
 }

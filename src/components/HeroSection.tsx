@@ -73,6 +73,20 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
     return () => { cancelled = true; };
   }, []);
 
+  // Shorten verbose destinations so the "NEXT BUS · {dest}" label doesn't
+  // truncate ("Phuket Airport" → "Airport", "Patong Beach" → "Patong", etc.)
+  function shortDest(d: string): string {
+    return d
+      .replace(/^to\s+/i, "")
+      .replace(/\bphuket\s+airport\b/i, "Airport")
+      .replace(/\bphuket\s+town\b/i, "Old Town")
+      .replace(/\bpatong\s+beach\b/i, "Patong")
+      .replace(/\brawai\s+beach\b/i, "Rawai")
+      .replace(/\bkata\s+beach\b/i, "Kata")
+      .replace(/\bkaron\s+beach\b/i, "Karon")
+      .trim() || d;
+  }
+
   useEffect(() => {
     function updateCountdown() {
       const eta = getNextBusEta(routeId, stops, vehicles);
@@ -80,7 +94,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
         const fracMin = getBangkokNowFractionalMinutes();
         const fracEta = eta.minutes - (fracMin % 1);
         setCountdown(Math.max(0, Math.ceil(fracEta * 60)));
-        setDestination(eta.destination);
+        setDestination(shortDest(eta.destination));
       } else {
         setCountdown(0);
       }
