@@ -740,7 +740,7 @@ function buildTileLayers(): OpsMapTileLayer[] {
       layerId: "precipitation",
       label: "Precipitation",
       description: "RainViewer live radar — rain intensity over Phuket",
-      url: `https://tilecache.rainviewer.com/v2/radar/${rainTs}/{z}/{x}/{y}/2/1_1.png`,
+      url: `https://tilecache.rainviewer.com/v2/radar/${rainTs}/256/{z}/{x}/{y}/2/1_1.png`,
       attribution: "RainViewer",
       opacity: 0.6
     });

@@ -128,7 +128,10 @@ function buildSimTileLayers(): OpsMapTileLayer[] {
       layerId: "precipitation",
       label: "Precipitation",
       description: "RainViewer live radar — rain intensity over Phuket",
-      url: `https://tilecache.rainviewer.com/v2/radar/${rainViewerTimestamp}/{z}/{x}/{y}/2/1_1.png`,
+      // RainViewer v2 path: /radar/{time}/{size}/{z}/{x}/{y}/{color}/{options}.png
+      // The size segment (256) is required between timestamp and z — without it
+      // the server misparses the path and returns "Zoom Level Not Supported" tiles.
+      url: `https://tilecache.rainviewer.com/v2/radar/${rainViewerTimestamp}/256/{z}/{x}/{y}/2/1_1.png`,
       attribution: "RainViewer",
       opacity: 0.6
     });
