@@ -142,7 +142,7 @@ const DRIVER_NAMES = [
 ];
 function driverName(vid: string) { return DRIVER_NAMES[stableHash(vid) % DRIVER_NAMES.length]; }
 function driverRating(vid: string) { return Math.round((38 + stableHash(vid + "r") % 13) * 10) / 100; }
-const DRIVER_AVATARS = ["/drivers/beaver-1.webp", "/drivers/beaver-2.webp", "/drivers/beaver-3.webp", "/drivers/beaver-4.webp"];
+const DRIVER_AVATARS = ["/drivers/driver-1.svg", "/drivers/driver-2.svg", "/drivers/driver-3.svg", "/drivers/driver-4.svg"];
 function driverAvatar(vid: string) { return DRIVER_AVATARS[stableHash(vid + "avatar") % DRIVER_AVATARS.length]; }
 function simSpeed(progress: number, routeId: OperationalRouteId): number {
   const isFerry = FERRY_ROUTE_IDS.has(routeId);
