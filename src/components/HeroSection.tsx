@@ -4,6 +4,7 @@ import { ui, pick } from "../lib/i18n";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
 import { getScheduledServices } from "../engine/scheduleService";
+import { getInjuriesForLocale, THAIRSC_2026_FOREIGNERS } from "../engine/safetyData";
 
 interface HeroSectionProps {
   routeId: RouteId | null;
@@ -85,6 +86,10 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
   const grabHigh = comparison?.taxi.maxThb ?? 1000;
   const savings = grabThb > 0 ? Math.round(((grabThb - busThb) / grabThb) * 100) : 85;
 
+  // Safety nudge: localised to the tourist's language
+  const safetyInfo = getInjuriesForLocale(lang);
+  const motorcyclePct = Math.round(THAIRSC_2026_FOREIGNERS.byVehicle.motorcyclePct);
+
   return (
     <div className="hero-section">
       <div className="hero-section__row">
@@ -99,6 +104,16 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
           </div>
         </div>
       </div>
+      {/* Road-safety nudge strip — shown when we have data for this locale */}
+      {safetyInfo.injured > 0 && (
+        <div className="hero-section__safety">
+          <span className="hero-section__safety-icon">⚠</span>
+          <span className="hero-section__safety-text">
+            {safetyInfo.injured.toLocaleString()} {safetyInfo.nation} tourists injured in Thai traffic this year
+            ({motorcyclePct}% on motorcycles) — bus riders: 0.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -40,6 +40,7 @@ import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
 import { DriverTablet } from "./components/DriverTablet";
 import { RoiCalculator } from "./components/RoiCalculator";
+import { GovernorDashboard } from "./components/GovernorDashboard";
 import { DemoCaption, buildTuesdayDemoClock } from "./components/DemoCaption";
 import { setClockOverride } from "./engine/fleetSimulator";
 import { haversineDistanceMeters } from "./lib/geo";
@@ -180,6 +181,11 @@ export default function App() {
     window.history.pushState({}, "", "/");
   }
 
+  // /governor — Governor's impact dashboard
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/governor")) {
+    return <GovernorDashboard />;
+  }
+
   // /driver/[plate] tablet view (single-bus driver perspective)
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/driver/")) {
     const plate = decodeURIComponent(window.location.pathname.slice("/driver/".length));
@@ -241,6 +247,7 @@ export default function App() {
           <a className="desktop-shell__link" href="/roi">Financial model →</a>
           <a className="desktop-shell__link" href="/driver/กข 1001 ภูเก็ต">Driver tablet →</a>
           <a className="desktop-shell__link" href="/?demo=tuesday">Auto-play demo →</a>
+          <a className="desktop-shell__link" href="/governor">Governor's Dashboard →</a>
         </div>
         <p className="desktop-shell__hint">Open in your phone for the best experience</p>
       </div>

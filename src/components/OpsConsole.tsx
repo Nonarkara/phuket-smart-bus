@@ -20,6 +20,7 @@ import { getSimulatedMinutes } from "../engine/fleetSimulator";
 import { ProfitabilityPanel } from "./ProfitabilityPanel";
 import { AnalyticsPanel } from "./AnalyticsPanel";
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
+import { computeSafetyImpact, THAIRSC_2026_FOREIGNERS, ECONOMIC_COST_PER_INJURY_THB } from "../engine/safetyData";
 
 /* ══════════════════════════════════════════════════
    CONSTANTS
@@ -1031,6 +1032,61 @@ function buildFallbackSimFrame(simMinutes: number, fb: OpsDashboardPayload): Sim
   };
 }
 
+/* ── Safety Impact Card ────────────────────────────────────────────────── */
+function SafetyImpactCard({ ridersToday }: { ridersToday: number }) {
+  const safety = computeSafetyImpact(ridersToday);
+  const injuries = THAIRSC_2026_FOREIGNERS.phuket.injured;
+  const prevented = safety.injuriesPreventedToday;
+  return (
+    <section className="ops-card ops-card--tight">
+      <h2 className="ops-card__title">
+        Road Safety Impact
+        <span className="ops-card__subtitle" style={{ fontSize: 9 }}>
+          ThaiRSC · Phuket 2026 YTD
+        </span>
+      </h2>
+      {/* Context: ThaiRSC Phuket figure */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val" style={{ color: "#dc322f" }}>{injuries.toLocaleString()}</div>
+          <div className="ops-impact-mini__lbl">Foreign tourists injured<br/>in Phuket (2026 YTD)</div>
+        </div>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val" style={{ color: "#16b8b0" }}>{THAIRSC_2026_FOREIGNERS.byVehicle.motorcyclePct}%</div>
+          <div className="ops-impact-mini__lbl">Accidents involve<br/>motorcycle/scooter</div>
+        </div>
+      </div>
+      {/* Smart Bus prevention */}
+      <div className="ops-card__divider" />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val">{safety.motorcycleTripsAvoided.toLocaleString()}</div>
+          <div className="ops-impact-mini__lbl">Moto trips<br/>avoided today</div>
+        </div>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val ops-impact-mini__val--green">{prevented.toFixed(2)}</div>
+          <div className="ops-impact-mini__lbl">Injuries<br/>prevented today</div>
+        </div>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val">฿{(safety.economicValueTodayThb / 1000).toFixed(0)}k</div>
+          <div className="ops-impact-mini__lbl">Economic value<br/>protected today</div>
+        </div>
+        <div className="ops-impact-mini">
+          <div className="ops-impact-mini__val">{Math.round(safety.injuriesPreventedAnnual * 10) / 10}</div>
+          <div className="ops-impact-mini__lbl">Projected<br/>prevented/year</div>
+        </div>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 9, color: "#999", lineHeight: 1.4 }}>
+        Per-injury cost: ฿{(ECONOMIC_COST_PER_INJURY_THB / 1000).toFixed(0)}k (hospital + tourism disruption).
+        Modal-shift rate: 60%. Tourist moto rate: 0.143% per trip.
+      </div>
+      <a href="/governor" style={{ display: "block", marginTop: 8, fontSize: 10, color: "#16b8b0", textDecoration: "none" }}>
+        Governor's Dashboard →
+      </a>
+    </section>
+  );
+}
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
    ══════════════════════════════════════════════════ */
@@ -1519,6 +1575,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
 
           {/* Profitability metrics */}
           <ProfitabilityPanel lang="en" />
+
+          {/* Road-safety impact card */}
+          <SafetyImpactCard ridersToday={getImpactMetrics(dashboard.fleet.busCount).ridersToday} />
 
           {/* Analytics dashboard — pass replay time so the current-hour marker tracks the scrubber */}
           <AnalyticsPanel lang="en" simMinutes={simMinutes} />

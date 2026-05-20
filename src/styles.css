@@ -7024,3 +7024,500 @@ a { color: var(--tint); }
     display: none !important;
   }
 }
+
+/* ============================================================================
+ * HeroSection — road-safety nudge strip
+ * ========================================================================== */
+
+.hero-section__safety {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 12px 8px;
+  background: rgba(220, 50, 47, 0.08);
+  border-top: 1px solid rgba(220, 50, 47, 0.25);
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.85);
+}
+
+.hero-section__safety-icon {
+  flex-shrink: 0;
+  color: #ff9500;
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.hero-section__safety-text {
+  flex: 1;
+}
+
+/* ============================================================================
+ * OpsConsole — Safety Impact mini card cells
+ * ========================================================================== */
+
+.ops-impact-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ops-impact-mini__val {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+.ops-impact-mini__val--green { color: #16b8b0; }
+
+.ops-impact-mini__lbl {
+  font-size: 9px;
+  color: #999;
+  line-height: 1.3;
+}
+
+.ops-card__divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 4px 0;
+}
+
+/* ============================================================================
+ * /governor — Governor's Dashboard
+ * Full-screen ops-grade layout, dark palette, designed for wall screens.
+ * ========================================================================== */
+
+.governor {
+  min-height: 100vh;
+  background: #0b0d12;
+  color: #e6edf3;
+  font-family: "Inter", "SF Pro Display", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.governor__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.governor__eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 6px;
+}
+
+.governor__title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.governor__subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+}
+
+.governor__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.governor__live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #34c759;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.governor__live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34c759;
+  animation: live-breathe 2s ease-in-out infinite;
+}
+
+.governor__fleet-badge {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+/* KPI row */
+.governor__kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.governor__kpi {
+  padding: 18px 20px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.governor__kpi:last-child { border-right: 0; }
+
+.governor__kpi-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.42);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.governor__kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.governor__kpi-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+}
+
+.governor__kpi--green .governor__kpi-value  { color: #34c759; }
+.governor__kpi--teal .governor__kpi-value   { color: #16b8b0; }
+.governor__kpi--amber .governor__kpi-value  { color: #ffd60a; }
+.governor__kpi--red .governor__kpi-value    { color: #ff453a; }
+
+/* Main 3-col grid */
+.governor__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 360px;
+  gap: 0;
+  flex: 1;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+@media (max-width: 1100px) {
+  .governor__grid { grid-template-columns: 1fr 1fr; }
+  .governor__kpis { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 720px) {
+  .governor__grid { grid-template-columns: 1fr; }
+  .governor__kpis { grid-template-columns: 1fr 1fr; }
+}
+
+.governor__panel {
+  padding: 20px 22px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.governor__panel:last-child { border-right: 0; }
+.governor__panel--dark { background: rgba(255,255,255,0.02); }
+
+.governor__panel-title {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.governor__panel-source {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.3);
+  font-weight: 500;
+  text-transform: none;
+}
+
+/* Safety headline */
+.governor__safety-headline {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.governor__safety-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.governor__safety-num {
+  font-size: 26px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: rgba(255,255,255,0.9);
+}
+
+.governor__safety-stat--warn .governor__safety-num { color: #ff9500; }
+
+.governor__safety-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.38);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+/* Section title (inside panel) */
+.governor__section-title {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.38);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* Table */
+.governor__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.governor__table th {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.38);
+  font-weight: 700;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  text-transform: uppercase;
+}
+
+.governor__table td {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.8);
+}
+
+.governor__table-num { text-align: right; font-family: "SF Mono", "JetBrains Mono", monospace; }
+.governor__table-num--deaths  { color: #ff453a; }
+.governor__table-num--injured { color: #ff9500; }
+
+/* Nation bars */
+.governor__nation-bars { display: flex; flex-direction: column; gap: 5px; }
+
+.governor__nation-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+}
+
+.governor__nation-name { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+.governor__nation-bar-wrap { height: 6px; background: rgba(255,255,255,0.06); }
+
+.governor__nation-bar { height: 100%; background: #ff9500; transition: width 0.8s ease; }
+
+.governor__nation-count { font-size: 10px; color: rgba(255,255,255,0.5); text-align: right; font-family: "SF Mono", monospace; }
+
+/* Impact panel (dark) */
+.governor__impact-hero {
+  text-align: center;
+  padding: 16px 0 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 12px;
+}
+
+.governor__impact-value {
+  font-size: 52px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #34c759;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.governor__impact-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.38);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+.governor__impact-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 6px;
+}
+
+.governor__impact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.governor__impact-cell {
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.governor__impact-cell--highlight {
+  border-color: rgba(52,199,89,0.3);
+  background: rgba(52,199,89,0.05);
+}
+
+.governor__impact-cell-val {
+  font-size: 20px;
+  font-weight: 600;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.governor__impact-cell-lbl {
+  font-size: 9px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+}
+
+.governor__divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 14px 0;
+}
+
+.governor__footnote {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* ROI panel */
+.governor__roi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+}
+
+.governor__roi-row:last-of-type { border-bottom: 0; }
+
+.governor__roi-row--total {
+  border-top: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  padding: 8px 0;
+}
+
+.governor__roi-profit { color: #34c759; }
+.governor__roi-good   { color: #34c759; }
+
+.governor__cta {
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(52,199,89,0.08);
+  border: 1px solid rgba(52,199,89,0.25);
+}
+
+.governor__cta-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: #34c759;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  margin-bottom: 6px;
+}
+
+.governor__cta-body {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.governor__cta-link {
+  font-size: 11px;
+  color: #34c759;
+  text-decoration: none;
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+}
+
+/* Power BI embed */
+.governor__powerbi {
+  padding: 20px 28px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.governor__powerbi-header { margin-bottom: 12px; }
+
+.governor__powerbi-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: rgba(255,255,255,0.85);
+}
+
+.governor__powerbi-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+}
+
+.governor__powerbi-sub a { color: rgba(255,255,255,0.55); }
+
+.governor__powerbi-frame-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.governor__powerbi-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Footer */
+.governor__footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  flex-wrap: wrap;
+}
+
+.governor__footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+.governor__footer a:hover { color: #16b8b0; }
+
+/* Add to desktop-shell links */
+.desktop-shell__more a:last-child::after {
+  content: " · Governor";
+}
