@@ -760,23 +760,23 @@ export default function DashboardV2() {
         <div className="v2-accum">
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={state.activeBuses} /></span>
-            <span className="v2-accum__label">Buses</span>
+            <span className="v2-accum__label">Buses Now</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={state.tripsCompleted} /></span>
-            <span className="v2-accum__label">Trips</span>
+            <span className="v2-accum__label">Trips Today</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={state.kmDriven} /></span>
-            <span className="v2-accum__label">Km</span>
+            <span className="v2-accum__label">Km Today</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
             <span className="v2-accum__val"><Counter value={state.paxDelivered} /></span>
-            <span className="v2-accum__label">Pax</span>
+            <span className="v2-accum__label">Pax Delivered</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
             <span className="v2-accum__val"><Counter value={state.revenueThb} prefix="฿" /></span>
-            <span className="v2-accum__label">Revenue</span>
+            <span className="v2-accum__label">Revenue Today</span>
           </div>
           <div className="v2-accum__item v2-accum__item--green">
             <span className="v2-accum__val"><Counter value={state.co2SavedKg} suffix=" kg" /></span>
@@ -784,7 +784,7 @@ export default function DashboardV2() {
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val">{Math.round(state.avgOccupancy * 100)}%</span>
-            <span className="v2-accum__label">Occupancy</span>
+            <span className="v2-accum__label">Avg Load</span>
           </div>
         </div>
       </footer>

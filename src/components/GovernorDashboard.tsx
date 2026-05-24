@@ -69,8 +69,12 @@ function BigNum({ value, prefix = "", suffix = "", decimals = 0 }: {
 // ---------------------------------------------------------------------------
 export function GovernorDashboard() {
   const { vehicles, impact, sim, safety, roi } = useLiveState();
-  const busCount = vehicles.filter(v => !v.vehicleId.startsWith("ferry-")).length;
-  const movingCount = vehicles.filter(v => v.status === "moving").length;
+  // Both counts must filter on the same subset (buses only). Counting ALL
+  // vehicles for movingCount included ferries and let "18 moving" exceed
+  // "15 buses" — nonsense to a governor's-office viewer.
+  const busVehicles = vehicles.filter(v => !v.vehicleId.startsWith("ferry-"));
+  const busCount = busVehicles.length;
+  const movingCount = busVehicles.filter(v => v.status === "moving").length;
 
   // Phuket district data for the accident table
   const phuketDistricts = THAIRSC_2026_FOREIGNERS.phuket.districts;

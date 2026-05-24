@@ -325,7 +325,12 @@ export function computeSimState(): SimState {
   const activeBuses = departedBuses.filter(d => d + avgTripMin + 15 > now).length; // still in service
   const busesMoving = departedBuses.filter(d => d <= now && d + avgTripMin > now).length;
   const busesDwelling = activeBuses - busesMoving;
-  const avgOccupancy = activeBuses > 0 ? Math.min(1, paxBoarded / (activeBuses * BUS_CAPACITY)) : 0;
+  // Average occupancy = cumulative pax boarded ÷ cumulative seat capacity dispatched.
+  // Apples-to-apples. The earlier formula divided cumulative pax by CURRENT active
+  // capacity, which inflated as the day progressed and got clamped to 100%.
+  const avgOccupancy = totalBusCapacity > 0
+    ? Math.min(1, paxBoarded / totalBusCapacity)
+    : 0;
 
   // 14. Vehicle positions — use the existing polyline engine
   const vehicles = buildVehiclePositions(departedBuses, now, paxWantBus);

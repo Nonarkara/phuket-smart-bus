@@ -148,8 +148,12 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
       {/* Live GISTDA PM2.5 — fewer buses = fewer rental scooters = cleaner air */}
       {pm25 && (
         <div className="hero-pm25" style={{ background: pm25.color + "18", border: `1px solid ${pm25.color}55` }}>
-          <span style={{ color: pm25.color, fontWeight: 700 }}>PM2.5 {pm25.value} µg/m³</span>
-          <span style={{ color: pm25.color, opacity: 0.85 }}>{pm25.level} · Each bus rider = 1 fewer scooter on Phuket roads</span>
+          <span className="hero-pm25__pill" style={{ background: pm25.color }}>
+            PM2.5 {pm25.value}
+          </span>
+          <span className="hero-pm25__msg" style={{ color: pm25.color }}>
+            {pm25.level} · 1 rider = 1 less scooter
+          </span>
         </div>
       )}
     </div>
