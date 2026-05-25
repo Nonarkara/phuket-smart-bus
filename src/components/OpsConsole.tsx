@@ -19,6 +19,7 @@ import { getImpactMetrics } from "../engine/impactSimulator";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
 import { getHeadlineMetrics } from "../engine/headlineMetrics";
 import { ProfitabilityPanel } from "./ProfitabilityPanel";
+import { CapacityGapTimeline } from "./CapacityGapTimeline";
 import { AnalyticsPanel } from "./AnalyticsPanel";
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
 import { computeSafetyImpact, THAIRSC_2026_FOREIGNERS, ECONOMIC_COST_PER_INJURY_THB } from "../engine/safetyData";
@@ -1645,7 +1646,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             })}
           </section>
 
-          {/* Profitability metrics */}
+          {/* Capacity gap — green/yellow/red hour-by-hour */}
+          <CapacityGapTimeline simMinutes={simMinutes} />
+
+          {/* Per-line profit & loss — sorted profit-first */}
           <ProfitabilityPanel lang="en" />
 
           {/* Road-safety impact card */}

@@ -7641,3 +7641,298 @@ a { color: var(--tint); }
   color: #555;
   font-weight: 500;
 }
+
+/* ============================================================================
+ * Capacity Gap Timeline — green/yellow/red hour cells
+ * Designed so "did we have enough buses at hour X?" reads in 1 second.
+ * ========================================================================== */
+
+.capacity-gap {
+  padding: 16px;
+  background: #1a1f2a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 12px;
+  margin-bottom: 12px;
+  color: #fff;
+  font-family: "Inter", "SF Pro Display", sans-serif;
+}
+
+.capacity-gap__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.capacity-gap__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.capacity-gap__summary {
+  display: flex;
+  gap: 8px;
+}
+
+.capacity-gap__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.capacity-gap__dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+
+.capacity-gap__strip {
+  display: grid;
+  grid-template-columns: repeat(17, 1fr);
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.capacity-gap__cell {
+  position: relative;
+  aspect-ratio: 1 / 1.4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  cursor: help;
+  transition: transform 120ms ease;
+}
+
+.capacity-gap__cell:hover {
+  transform: scale(1.08);
+  outline: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.capacity-gap__cell--current {
+  outline: 2px solid #fff;
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+.capacity-gap__cell--future {
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  opacity: 0.4;
+}
+
+.capacity-gap__hour {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.capacity-gap__cell--future .capacity-gap__hour {
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: none;
+}
+
+.capacity-gap__foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.capacity-gap__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.capacity-gap__metric-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+}
+
+.capacity-gap__metric-value {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.capacity-gap__metric-value--good { color: #16b8b0; }
+.capacity-gap__metric-value--bad  { color: #dc322f; }
+
+/* ============================================================================
+ * Per-Line P&L cards — "which lines make money, which lose money" sheet
+ * ========================================================================== */
+
+.line-pnl {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-family: "Inter", "SF Pro Display", sans-serif;
+}
+
+.line-pnl__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.line-pnl__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.78);
+}
+
+.line-pnl__network {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 10px;
+  letter-spacing: 0.02em;
+}
+
+.line-pnl__network--profit {
+  background: rgba(22, 184, 176, 0.12);
+  color: #0e7a73;
+}
+
+.line-pnl__network--loss {
+  background: rgba(220, 50, 47, 0.12);
+  color: #b8201c;
+}
+
+.line-pnl__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.line-pnl__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-left-width: 4px;
+}
+
+.line-pnl__row--profit { border-left-color: #16b8b0; background: rgba(22, 184, 176, 0.03); }
+.line-pnl__row--loss   { border-left-color: #dc322f; background: rgba(220, 50, 47, 0.03); }
+
+.line-pnl__answer {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.line-pnl__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 2px;
+}
+
+.line-pnl__profit {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.line-pnl__profit--good { color: #16b8b0; }
+.line-pnl__profit--bad  { color: #dc322f; }
+
+.line-pnl__margin {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.line-pnl__detail {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 14px;
+  align-content: center;
+}
+
+.line-pnl__cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.line-pnl__cell-val {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f2a;
+}
+
+.line-pnl__cell-lbl {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+}
+
+.line-pnl__totals {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.line-pnl__totals-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.line-pnl__totals-lbl {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+}
+
+.line-pnl__totals-val {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1f2a;
+}
+
+@media (max-width: 720px) {
+  .line-pnl__row {
+    grid-template-columns: 1fr;
+  }
+  .line-pnl__totals {
+    grid-template-columns: 1fr 1fr;
+  }
+}

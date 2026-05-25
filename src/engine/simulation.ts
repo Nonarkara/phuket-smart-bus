@@ -160,9 +160,21 @@ const LINE_CONFIG: Record<string, { name: string; kmDaily: number; fare: number;
   "dragon-line":           { name: "Dragon Loop",       kmDaily:  50, fare: 100, capacity: 15, tripDurationMinutes: 50 }, // estimated loop time
 };
 
-const FUEL_COST_PER_KM = 0.15; // 0.15 THB/km
-const DRIVER_COST_PER_DAY = 400;
-const MAINTENANCE_PER_TRIP = 50;
+// Realistic per-bus cost from the same financial model the /roi page uses.
+// ROI_CONSTANTS.operatingCostPerBusYear = ฿800,000 (PKSB 2024 statement +
+// BMTA benchmarks: ฿340k fuel + ฿310k driver + ฿80k maintenance + ฿70k
+// insurance). Spread over 365 × 16 service hours = ฿137/hour/bus.
+// The line P&L is now derived from the SAME number that drives the
+// investor-facing payback calculation on /roi — no parallel cost model.
+const HOURLY_OPEX_PER_BUS_THB = 800_000 / 365 / 16;
+
+// Buses assigned per line (matches the fleet roster in fleetSimulator.ts).
+// Used to scale each line's daily opex.
+const BUSES_PER_LINE: Record<string, number> = {
+  "rawai-airport":           10,
+  "patong-old-bus-station":   7,
+  "dragon-line":              3
+};
 
 function getRegion(origin: string): string {
   return REGION_MAP[origin] ?? "Other";
@@ -372,20 +384,23 @@ export function getLineMetrics(): LineMetrics[] {
     const hoursOperating = now >= 360 ? (now - 360) / 60 : 0;
     const trips = Math.max(1, Math.ceil(hoursOperating * 60 / config.tripDurationMinutes));
 
-    // Passengers: airport line uses the demand-supply chain; local lines use trip × occupancy
+    // Passengers: airport line uses BOARDED count (fare collected at entry,
+    // not delivery — a bus that picked up 25 pax has earned ฿2,500 even if
+    // those pax are still 60 minutes from their destination). Local lines
+    // use trip × occupancy with a 2-hour ramp-up.
     const localOcc = LOCAL_OCCUPANCY[lineId];
     const passengersServed = localOcc !== undefined
-      ? Math.round(trips * config.capacity * localOcc * Math.min(1, hoursOperating / 2)) // ramp up first 2h
-      : Math.round(state.paxDelivered * airportAlloc);
+      ? Math.round(trips * config.capacity * localOcc * Math.min(1, hoursOperating / 2))
+      : Math.round(state.paxBoarded * airportAlloc);
 
     // Revenue from fares
     const revenueThb = passengersServed * config.fare;
 
-    // Operating cost (uses hoursOperating + trips already computed above)
-    const fuelCost = config.kmDaily * FUEL_COST_PER_KM;
-    const driverCost = DRIVER_COST_PER_DAY * (hoursOperating / 16); // Spread across 16h day
-    const maintenanceCost = trips * MAINTENANCE_PER_TRIP;
-    const operatingCostThb = Math.round(fuelCost + driverCost + maintenanceCost);
+    // Operating cost — derived from the SAME ฿800k/bus/year benchmark
+    // that drives the /roi payback calculation. Scales linearly with
+    // hours operating and number of buses on this line.
+    const busesOnLine = BUSES_PER_LINE[lineId] ?? 1;
+    const operatingCostThb = Math.round(busesOnLine * HOURLY_OPEX_PER_BUS_THB * hoursOperating);
 
     // Profit
     const profitThb = revenueThb - operatingCostThb;
