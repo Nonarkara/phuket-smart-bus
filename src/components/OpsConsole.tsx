@@ -1390,6 +1390,15 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         </div>
       </div>
 
+      {/* ── HERO ECONOMICS STRIP — the answer first, before anything else.
+          On a 1920+ wall screen these sit side-by-side; on smaller viewports
+          they stack. Both components have their own internal state via
+          getLineMetrics() and getHourlyDemandSupply() so no extra plumbing. */}
+      <div className="ops__hero-economics">
+        <ProfitabilityPanel lang="en" />
+        <CapacityGapTimeline simMinutes={simMinutes} />
+      </div>
+
       {/* ── 3-panel body ── */}
       <div className="ops__body">
         {/* LEFT: City Intelligence */}
@@ -1646,11 +1655,9 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             })}
           </section>
 
-          {/* Capacity gap — green/yellow/red hour-by-hour */}
-          <CapacityGapTimeline simMinutes={simMinutes} />
-
-          {/* Per-line profit & loss — sorted profit-first */}
-          <ProfitabilityPanel lang="en" />
+          {/* Line P&L and Capacity Gap moved to the hero strip above — they
+              now sit at the top of the page where they're impossible to miss.
+              The right column keeps secondary context: safety + analytics. */}
 
           {/* Road-safety impact card */}
           <SafetyImpactCard ridersToday={getImpactMetrics(dashboard.fleet.busCount).ridersToday} />

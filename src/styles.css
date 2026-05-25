@@ -7936,3 +7936,60 @@ a { color: var(--tint); }
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ============================================================================
+ * HERO ECONOMICS STRIP — the answer first
+ * Sits above the 3-panel body. Line P&L on the left (the answer), capacity
+ * gap timeline on the right (the supporting evidence). Both components are
+ * full-width responsive cells.
+ * ========================================================================== */
+
+.ops__hero-economics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 22px 6px;
+  background: #f5f6fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 1280px) {
+  .ops__hero-economics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inside the hero strip, both panels lose their top/bottom margins
+   (the hero strip itself owns the spacing). They also lose their
+   borders since the hero strip is the outer container. */
+.ops__hero-economics .line-pnl,
+.ops__hero-economics .capacity-gap {
+  margin: 0;
+  border-radius: 8px;
+}
+
+/* Make the capacity-gap dark surface stand out against the light hero strip */
+.ops__hero-economics .capacity-gap {
+  background: #1a1f2a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* On wall screens, the line P&L panel gets HORIZONTAL row layout — each
+   line is a wide bar rather than stacked card. More info-dense for ops staff
+   glancing while the simulation runs. */
+@media (min-width: 1600px) {
+  .ops__hero-economics .line-pnl__list {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+  .ops__hero-economics .line-pnl__row {
+    flex: 1;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px;
+  }
+  .ops__hero-economics .line-pnl__detail {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
