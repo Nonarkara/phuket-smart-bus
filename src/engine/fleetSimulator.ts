@@ -1040,23 +1040,24 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 }
 
 // ---------------------------------------------------------------------------
-// Simulated clock — 15× real time, anchored at 09:00 on page load.
+// Simulated clock — 10× real time, anchored at 12:00 (midday peak) on load.
 //
-//   • 15× makes each 95-minute bus trip play in ~6 real minutes — slow
-//     enough to feel like real driving, fast enough that a viewer sees
-//     the day unfold without leaving the page running for hours.
-//   • 09:00 anchor skips the dead pre-08:15 window where no bus has
-//     departed yet — the right bar is alive within seconds of page load.
-//   • Returns FRACTIONAL minutes (not integer) so the bus position
-//     updates smoothly every tick. Integer minutes meant 60s of stillness
-//     followed by a single 580m jump — visibly "flying" between ticks.
+//   • 10× = a 95-minute bus trip plays in ~9.5 real minutes. SLOWER than
+//     the old 15× because the user explicitly asked for slow-motion — the
+//     whole day unfolds visibly rather than rushing past. Full 18.5-hour
+//     day cycles in 111 real minutes.
+//   • 12:00 anchor lands every visitor in the middle of the busy day —
+//     midday flights arriving, all 12+ buses moving, demand high.
+//     Beats first-paint at 05:30 (empty) or 09:00 (just ramping up).
+//   • Returns FRACTIONAL minutes (not integer) so bus position updates
+//     smoothly every tick. Integer minutes caused buses to teleport.
 // ---------------------------------------------------------------------------
 
-export const SIM_SPEED = 15;
+export const SIM_SPEED = 10;
 export const SERVICE_START = 330;   // 05:30 — first northbound trip
 export const SERVICE_END = 1440;    // 24:00 (00:00 next day)
 export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
-const SIM_OPEN_MIN = 540;    // 09:00 — default start time
+const SIM_OPEN_MIN = 720;    // 12:00 — every visit lands in the busy midday
 
 // ---------------------------------------------------------------------------
 // Controllable simulation clock — replaces the old wall-clock-only anchor.

@@ -7993,3 +7993,30 @@ a { color: var(--tint); }
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ============================================================================
+ * Live sim playhead — always visible on the bottom timeline so visitors
+ * see exactly where in the day the live simulation is right now.
+ * Distinguished from the replay playhead by a softer green tint.
+ * ========================================================================== */
+
+.sim-timeline__playhead--live {
+  background: #16b8b0;
+  opacity: 0.7;
+  animation: live-playhead-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-playhead-pulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+.sim-timeline__clock-mode {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: #16b8b0;
+  vertical-align: 2px;
+}

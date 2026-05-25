@@ -22,8 +22,10 @@ import { OPS_FLIGHT_SCHEDULE } from "./opsFlightSchedule";
 // vi.setSystemTime to advance the wall clock so getSimulatedMinutes()
 // returns a controlled simulated minute.
 const MODULE_LOAD_REAL = Date.now();
-const SIM_SPEED = 15;
-const SIM_OPEN_MIN = 540; // 09:00
+// Mirror the actual engine constants. If fleetSimulator changes these,
+// just update them here too — the engine is the source of truth.
+import { SIM_SPEED } from "./fleetSimulator";
+const SIM_OPEN_MIN = 720; // 12:00 — midday peak (matches fleetSimulator)
 
 function setSimMinute(min: number) {
   // Real time required so that (Date.now() - simAnchorReal) * SIM_SPEED / 60 + SIM_OPEN_MIN === min

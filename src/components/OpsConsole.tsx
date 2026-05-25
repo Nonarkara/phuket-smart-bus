@@ -539,23 +539,41 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
 
   const metrics = displayMetrics;
 
+  // When NOT in active replay, the live engine clock still ticks — show
+  // where in the day we are so the playhead is always meaningful.
+  const liveMin = simRunning ? null : getHeadlineMetrics().simMinutes;
+  const playheadMin = simMinutes !== null ? simMinutes : liveMin;
+  const playheadProgress = playheadMin !== null
+    ? Math.max(0, Math.min(1, (playheadMin - 360) / (1440 - 360)))
+    : 0;
+  const displayClock = playheadMin !== null
+    ? `${String(Math.floor(playheadMin / 60)).padStart(2, "0")}:${String(Math.floor(playheadMin % 60)).padStart(2, "0")}`
+    : "—";
+
   return (
     <div className="sim-timeline">
       <div className="sim-timeline__header">
         <button className="sim-timeline__btn" type="button" onClick={onToggle} disabled={simLoading}>
-          {simRunning ? "■ Stop" : simLoading ? "…" : "▶ Simulate"}
+          {simRunning ? "■ Stop" : simLoading ? "…" : "▶ Replay day"}
         </button>
         <div className="sim-timeline__track">
           {hours.map((h) => (
-            <div key={h} className={`sim-timeline__hour ${simMinutes !== null && Math.floor(simMinutes / 60) === h ? "is-current" : ""}`}>
+            <div key={h} className={`sim-timeline__hour ${playheadMin !== null && Math.floor(playheadMin / 60) === h ? "is-current" : ""}`}>
               {String(h).padStart(2, "0")}
             </div>
           ))}
-          {simRunning ? <div className="sim-timeline__playhead" style={{ left: `${progress * 100}%` }} /> : null}
+          {playheadMin !== null ? (
+            <div
+              className={`sim-timeline__playhead ${!simRunning ? "sim-timeline__playhead--live" : ""}`}
+              style={{ left: `${playheadProgress * 100}%` }}
+              title={simRunning ? "Replay playhead" : "Live simulation clock"}
+            />
+          ) : null}
         </div>
-        {simRunning && simMinutes !== null ? (
-          <span className="sim-timeline__clock" role="status" aria-label="Simulation time">{String(Math.floor(simMinutes / 60)).padStart(2, "0")}:{String(simMinutes % 60).padStart(2, "0")}</span>
-        ) : null}
+        <span className="sim-timeline__clock" role="status" aria-label="Simulation time">
+          {displayClock}
+          {!simRunning ? <small className="sim-timeline__clock-mode"> LIVE</small> : null}
+        </span>
       </div>
       <div className="sim-timeline__metrics">
         {metrics.map((m) => (
