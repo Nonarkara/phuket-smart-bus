@@ -1,34 +1,77 @@
-/* ===== iOS 7 Design System — Phuket Smart Bus ===== */
-/* Inter loaded via Google Fonts in index.html */
+/* ============================================================================
+ * Design System — Dr Non
+ *
+ * Lineage: Braun (Dieter Rams) → original iPod (Jony Ive) → Vignelli
+ * subway → nonarkara.org. Form shows function. Geometric. Hairlines.
+ * No rounded corners (true circles only). No gradients (dark-on-photo
+ * overlays only). No drop shadows. One amber accent — the only orange
+ * key on the Braun ET66.
+ *
+ * Forbidden defaults: Inter, Roboto, Poppins, Montserrat, Open Sans,
+ *   Lato — these are the AI-template signal. Canonical pairing is
+ *   Josefin Sans (display) + Source Sans 3 (body) + JetBrains Mono
+ *   (numerics) + IBM Plex Sans Thai (non-looped Thai).
+ *
+ * Three text sizes only per page: display 32px, body 14px, micro 11px.
+ * ========================================================================== */
 
 :root {
-  --bg: #f2f2f7;                       /* iOS grouped table background */
-  --bg-elevated: #ffffff;              /* Raised card/section surface */
-  --text-primary: rgba(0, 0, 0, 1);
-  --text-secondary: rgba(0, 0, 0, 0.55);
-  --text-tertiary: rgba(0, 0, 0, 0.28);
-  --tint: #007AFF;
-  --green: #34C759;
-  --orange: #FF9500;
-  --red: #FF3B30;
-  --separator: rgba(0, 0, 0, 0.12);
-  --separator-light: rgba(0, 0, 0, 0.06);
-  --translucent: rgba(255, 255, 255, 0.78);
+  /* Surfaces */
+  --paper: #fafaf7;                    /* warm white, not flat #fff */
+  --paper-mute: #f3f2ed;
+  --ink: #131312;                      /* near-black with blue undertone */
+  --ink-mute: rgba(19, 19, 18, 0.62);
+  --ink-faint: rgba(19, 19, 18, 0.38);
+  --hairline: rgba(19, 19, 18, 0.12);
+  --hairline-strong: rgba(19, 19, 18, 0.22);
+
+  /* The ONE amber — like the Braun ET66 = key. Use sparingly. */
+  --amber: #f59e0b;
+  --amber-mute: rgba(245, 158, 11, 0.10);
+
+  /* Semantic colour — used only where colour carries meaning */
+  --loss: #c0392b;                     /* loss / shortfall / "in the red" */
+  --gain: #16a574;                     /* surplus / profit (NOT the accent) */
+
+  /* Legacy iOS aliases kept for non-overhauled surfaces. */
+  --bg: var(--paper);
+  --bg-elevated: var(--paper);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-mute);
+  --text-tertiary: var(--ink-faint);
+  --tint: var(--amber);
+  --green: var(--gain);
+  --orange: var(--amber);
+  --red: var(--loss);
+  --separator: var(--hairline);
+  --separator-light: var(--hairline);
+  --translucent: rgba(250, 250, 247, 0.92);
   --blur: blur(20px);
-  --card: #ffffff;
+  --card: var(--paper);
   --card-muted: rgba(0, 0, 0, 0.028);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-interactive: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card: none;
+  --shadow-interactive: none;
+  --shadow-float: none;
   --bottomnav-h: 3.2rem;
-  --success: #34C759;
-  --warn: #FF9500;
-  --danger: #FF3B30;
-  --info: #5AC8FA;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
+  --success: var(--gain);
+  --warn: var(--amber);
+  --danger: var(--loss);
+  --info: var(--amber);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-pill: 0;
+
+  /* Type scale — three sizes per page is the law */
+  --t-display: 32px;
+  --t-body: 14px;
+  --t-micro: 11px;
+
+  /* Typography stack */
+  --font-display: "Josefin Sans", "Helvetica Neue", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --font-thai: "IBM Plex Sans Thai", "Noto Sans Thai", "Source Sans 3", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -46,14 +89,17 @@ html.ops-mode {
 
 body {
   margin: 0;
-  color: var(--text-primary);
-  font-family: "Inter", "Helvetica Neue", -apple-system, "SF Pro Display", sans-serif;
-  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
   font-size: 17px;
-  line-height: 1.41;
-  letter-spacing: -0.01em;
+  line-height: 1.45;
+  letter-spacing: 0;
 }
+
+/* Thai text gets the non-looped face — see CLAUDE.md §0. */
+:lang(th) { font-family: var(--font-thai); }
 
 a { color: var(--tint); }
 
@@ -2393,19 +2439,18 @@ a { color: var(--tint); }
   .pass-panel__header, .pass-switch { grid-column: 1 / -1; }
 }
 
-/* ===== Operator Console — Dieter Rams: "Less, but better" ===== */
-/* Light theme. Typography-first. Monospace data. Spatial hierarchy, not decoration. */
+/* ===== Operator Console — Dr Non / Dieter Rams: "Less, but better" ===== */
+/* Paper surface, ink type, hairlines. Monospace data. No card chrome. */
 .ops {
   height: 100vh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #f7f7f8;
-  color: #1a1a1a;
-  font-family: "Inter", "Helvetica Neue", -apple-system, sans-serif;
-  font-size: 13px;
+  background: var(--paper-mute);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
   line-height: 1.5;
-  color: #1a1a1a;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -2415,138 +2460,147 @@ a { color: var(--tint); }
   justify-content: space-between;
   align-items: center;
   padding: 14px 24px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
   flex: 0 0 auto;
 }
 
 .ops__brand h1 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .ops__subtitle {
-  font-size: 11px;
-  color: #999;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  color: var(--ink-faint);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 400;
+  letter-spacing: 0.14em;
+  font-weight: 500;
 }
 
-/* Flight ticker — data ribbon */
+/* Flight ticker — data ribbon, monospace, all ink, no decoration */
 .ops__flight-ticker {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
   font-variant-numeric: tabular-nums;
-  color: #666;
+  color: var(--ink-mute);
   flex: 1;
   justify-content: center;
   overflow: hidden;
 }
 
 .ops__ticker-label {
-  color: #16b8b0;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
-.ops__ticker-arrivals { color: #1a1a1a; font-weight: 500; }
-.ops__ticker-departures { color: #1a1a1a; font-weight: 500; }
-.ops__ticker-demand { font-weight: 600; }
-.ops__ticker-sep { color: #ddd; }
+.ops__ticker-arrivals { color: var(--ink); font-weight: 500; }
+.ops__ticker-departures { color: var(--ink); font-weight: 500; }
+.ops__ticker-demand { font-weight: 500; color: var(--ink); }
+.ops__ticker-sep { color: var(--hairline-strong); }
 
 .ops__status-bar {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
   flex-shrink: 0;
 }
 
 .ops__clock {
-  font-weight: 600;
-  color: #1a1a1a;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+  font-size: var(--t-body);
+  letter-spacing: -0.01em;
 }
 
 .ops__date {
-  color: #999;
-  font-size: 10px;
+  font-family: var(--font-body);
+  color: var(--ink-faint);
+  font-size: var(--t-micro);
   text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
 .ops__health-dot {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  /* No border-radius — Dr Non rule, squares only. */
   flex-shrink: 0;
 }
 
-/* ── KPI strip ── */
+/* ── KPI strip ── flat hairline ledger, no cards */
 .ops__kpi-strip {
   display: flex;
   align-items: stretch;
-  padding: 0 24px;
-  gap: 12px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 0;
+  gap: 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
   flex: 0 0 auto;
   overflow-x: auto;
-  padding-top: 12px;
-  padding-bottom: 12px;
 }
 
 .ops-kpi {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px 20px;
-  background: #f7f7f8;
-  border-radius: 10px;
-  min-width: 90px;
-  border: 0;
+  padding: 14px 24px;
+  background: transparent;
+  border-right: 1px solid var(--hairline);
+  border-radius: 0;
+  min-width: 110px;
   cursor: default;
 }
 
+.ops-kpi:last-child { border-right: none; }
+
 .ops-kpi__value {
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: #1a1a1a;
+  color: var(--ink);
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .ops-kpi__label {
-  font-size: 10px;
-  color: #999;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  color: var(--ink-faint);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   margin-top: 4px;
   font-weight: 500;
 }
 
 .ops-kpi--highlight {
-  background: rgba(22, 184, 176, 0.06);
+  background: transparent;
 }
 
-.ops-kpi--highlight .ops-kpi__value { color: #16b8b0; }
-.ops-kpi--highlight .ops-kpi__label { color: #16b8b0; }
+.ops-kpi--highlight .ops-kpi__value { color: var(--amber); }
+.ops-kpi--highlight .ops-kpi__label { color: var(--ink); }
 
 .ops-kpi--sim {
   cursor: pointer;
-  background: #f7f7f8;
-  transition: background 0.15s;
+  background: transparent;
 }
 
 .ops-kpi--sim:hover { background: rgba(22, 184, 176, 0.08); }
@@ -3722,35 +3776,54 @@ a { color: var(--tint); }
 }
 
 /* ── Simulation Timeline (bottom bar) ── */
+/* Sim timeline — Dr Non style.
+ *
+ *   - Paper surface, no card chrome, hairline separators.
+ *   - Replay button is ink-on-paper (the one available action). Becomes
+ *     amber-on-ink when actively replaying. No transitions, no rounded
+ *     corners. The button reads as a printed control.
+ *   - Hour ticks are a horizontal ledger of micro-mono labels with hairlines
+ *     between them. No background fill on the track itself.
+ *   - Playhead is a 2px amber vertical rule — the one amber, earned.
+ *   - Metrics row: each metric is a flat cell separated by hairlines.
+ */
 .sim-timeline {
-  background: #fff;
-  border-top: 1px solid #e8e8e8;
-  padding: 10px 20px 12px;
+  background: var(--paper);
+  border-top: 1px solid var(--hairline);
+  padding: 12px 24px 14px;
   flex: 0 0 auto;
+  font-family: var(--font-body);
+  color: var(--ink);
 }
 
 .sim-timeline__header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .sim-timeline__btn {
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
   padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   cursor: pointer;
-  background: #16b8b0;
-  color: #fff;
+  background: var(--paper);
+  color: var(--ink);
   white-space: nowrap;
-  transition: background 0.15s;
   flex-shrink: 0;
 }
 
-.sim-timeline__btn:hover { background: #139e97; }
-.ops--sim-mode .sim-timeline__btn { background: #dc322f; }
+.sim-timeline__btn:hover { background: var(--ink); color: var(--paper); }
+.ops--sim-mode .sim-timeline__btn {
+  background: var(--ink);
+  color: var(--amber);
+  border-color: var(--ink);
+}
 
 .sim-timeline__track {
   flex: 1;
@@ -3758,24 +3831,28 @@ a { color: var(--tint); }
   align-items: center;
   position: relative;
   height: 24px;
-  background: #f7f7f8;
-  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  border-radius: 0;
   overflow: hidden;
 }
 
 .sim-timeline__hour {
   flex: 1;
   text-align: center;
-  font-family: "SF Mono", monospace;
-  font-size: 8px;
-  color: #ccc;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
   line-height: 24px;
+  letter-spacing: 0.04em;
+  border-right: 1px solid var(--hairline);
 }
+.sim-timeline__hour:last-child { border-right: none; }
 
 .sim-timeline__hour.is-current {
-  color: #1a1a1a;
-  font-weight: 700;
-  background: rgba(22, 184, 176, 0.1);
+  color: var(--ink);
+  font-weight: 500;
+  background: transparent;
 }
 
 .sim-timeline__playhead {
@@ -3783,65 +3860,74 @@ a { color: var(--tint); }
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #16b8b0;
+  background: var(--amber);
   transition: left 0.4s ease;
   z-index: 1;
 }
 
 .sim-timeline__clock {
-  font-family: "SF Mono", monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: #16b8b0;
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 500;
+  color: var(--ink);
   flex-shrink: 0;
   min-width: 48px;
+  letter-spacing: -0.01em;
 }
 
 .sim-timeline__metrics {
   display: flex;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--hairline);
   overflow-x: auto;
 }
 
 .sim-metric {
   flex: 1;
   min-width: 90px;
-  padding: 8px 10px;
-  background: #f7f7f8;
-  border-radius: 8px;
-  text-align: center;
+  padding: 10px 14px;
+  background: transparent;
+  border-radius: 0;
+  border-right: 1px solid var(--hairline);
+  text-align: left;
 }
 
+.sim-metric:last-child { border-right: none; }
+
 .sim-metric__value {
-  font-family: "SF Mono", monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 500;
+  color: var(--ink);
   display: block;
+  letter-spacing: -0.01em;
 }
 
 .sim-metric__value small {
-  font-size: 10px;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
   font-weight: 400;
-  color: #999;
+  color: var(--ink-faint);
 }
 
 .sim-metric__label {
-  font-size: 9px;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #999;
-  margin-top: 2px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  margin-top: 4px;
   display: block;
+  font-weight: 500;
 }
 
 .sim-metric--lost {
-  background: rgba(220, 50, 47, 0.04);
+  background: transparent;
 }
 
 .sim-metric--lost .sim-metric__value {
-  color: #dc322f;
+  color: var(--loss);
 }
 
 /* ── Fleet Rows (right sidebar) ── */
@@ -3956,34 +4042,38 @@ a { color: var(--tint); }
   .sim-metric { min-width: 70px; }
 }
 
-/* ── Logos Bar ── */
+/* ── Logos Bar — Dr Non hairline ledger ── */
 .ops__logos {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 24px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 14px;
+  padding: 8px 24px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
   flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
-  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  color: var(--ink-mute);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .ops__logo-text { white-space: nowrap; }
-.ops__logo-text--accent { color: #16b8b0; }
-.ops__logo-sep { width: 1px; height: 14px; background: #e0e0e0; flex-shrink: 0; }
+.ops__logo-text--accent { color: var(--amber); }
+.ops__logo-sep { width: 1px; height: 14px; background: var(--hairline-strong); flex-shrink: 0; }
 .ops__logo-tag {
   margin-left: auto;
-  font-size: 9px;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #999;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(22,184,176,0.06);
-  color: #16b8b0;
+  letter-spacing: 0.18em;
+  padding: 2px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
 }
 
 /* ── City Intel Sections ── */
@@ -4817,21 +4907,19 @@ a { color: var(--tint); }
   animation: sim-pulse 1.5s var(--ease-momentum) infinite;
 }
 
-/* Live stats on landing — glass depth */
+/* Live stats — flat, hairline-only. No glass. (Dr Non rule §11.6.4) */
 .live-stat {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s var(--ease-spring);
+  box-shadow: none;
+  border: 1px solid var(--hairline);
 }
 .live-stat:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--paper-mute);
 }
 
-/* Info panel — premium feel */
+/* Info panel — flat overlay, hairline-only */
 .ops__info-panel {
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  border: 1px solid var(--hairline);
 }
 
 /* ══════════════════════════════════════════════════
@@ -4862,32 +4950,33 @@ a { color: var(--tint); }
   margin-left: 4px;
 }
 
-/* Map — subtle inner shadow for depth against sidebars */
+/* Map — no inset shadow. The hairline border on the sidebars does the work. */
 .ops__map {
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 /* Logos bar — more refined spacing */
 .ops__logos {
   padding: 8px 24px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
 }
 
 /* Header — tighter, cleaner */
 .ops__header {
-  padding: 12px 20px;
+  padding: 14px 24px;
 }
 
-/* Map overlay stats — glass refinement */
+/* Map overlay stats — flat, hairline-only */
 .ops__map-stat {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+  border: 1px solid var(--hairline);
 }
 
-/* Sim timeline — clean separation */
+/* Sim timeline — clean separation, no shadow */
 .sim-timeline {
-  border-top: 1px solid #e8e8e8;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
+  border-top: 1px solid var(--hairline);
+  box-shadow: none;
 }
 
 /* Sim metric boxes — equal width, clean grid */
@@ -4897,9 +4986,10 @@ a { color: var(--tint); }
   gap: 4px;
 }
 
-/* Info button — more refined circle */
+/* Info button — flat, hairline */
 .ops__info-btn {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+  border: 1px solid var(--hairline);
 }
 
 /* News feed — tighter section spacing */
@@ -4954,24 +5044,23 @@ a { color: var(--tint); }
   text-align: center;
 }
 
-/* Phone frame — subtle glow on desktop */
+/* Phone frame — Dr Non: hairline + bezel rings, no decorative glow. */
 .phone-frame {
   box-shadow:
-    0 0 0 2px #333,
-    0 0 0 4px #1a1a1a,
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(22, 184, 176, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 0 0 2px var(--ink),
+    0 0 0 4px #2a2a28;
 }
 
-/* Welcome sheet collapsed — premium feel */
+/* Welcome sheet collapsed — flat, single hairline divider */
 .welcome-sheet--collapsed {
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  border-top: 1px solid var(--hairline);
 }
 
-/* Map badge — glass refinement */
+/* Map badge — flat, hairline-only */
 .map-badge {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+  border: 1px solid var(--hairline);
 }
 
 /* ══════════════════════════════════════════════════
@@ -5009,11 +5098,11 @@ a { color: var(--tint); }
 }
 
 .welcome-sheet__next-time {
-  font-family: "Inter", "Helvetica Neue", sans-serif;
+  font-family: var(--font-mono);
   font-size: 28px;
-  font-weight: 600;
-  color: #16b8b0;
-  letter-spacing: -0.03em;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.02em;
   line-height: 1.1;
 }
 
@@ -5051,25 +5140,29 @@ a { color: var(--tint); }
   /* Buses active — supporting */
 }
 
-/* Revenue metric — larger, hero treatment */
+/* Revenue metric — hero treatment by SIZE only, no tinted background.
+   The answer earns the eye with type weight + scale, not decoration. */
 .sim-timeline__metrics .sim-metric:nth-child(5) {
-  background: rgba(22, 184, 176, 0.06);
-  border: 1px solid rgba(22, 184, 176, 0.15);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--hairline);
 }
 .sim-timeline__metrics .sim-metric:nth-child(5) .sim-metric__value {
   font-size: 20px;
-  color: #16b8b0;
+  color: var(--ink);
+  font-weight: 500;
 }
 
-/* Capture % — second hero */
+/* Capture % — second hero, also size-only */
 .sim-timeline__metrics .sim-metric:nth-child(6) .sim-metric__value {
   font-size: 18px;
 }
 
-/* Lost revenue — danger emphasis */
+/* Lost revenue — danger flag via colour only, no tinted fill */
 .sim-metric--lost {
-  background: rgba(220, 50, 47, 0.06);
-  border: 1px solid rgba(220, 50, 47, 0.12);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--hairline);
 }
 .sim-metric--lost .sim-metric__value {
   font-size: 18px;
@@ -7093,9 +7186,9 @@ a { color: var(--tint); }
 
 .governor {
   min-height: 100vh;
-  background: #0b0d12;
+  background: #0a0e14;            /* near-black with blue undertone (Visual DNA §14 rule 6) */
   color: #e6edf3;
-  font-family: "Inter", "SF Pro Display", sans-serif;
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
 }
@@ -7588,24 +7681,32 @@ a { color: var(--tint); }
  * Digital Operations Health strip — visible signal that this is a connected
  * platform, not a paper-clipboard bus company. Sits below the header on /ops.
  * ========================================================================== */
+/* Digital ops health strip — Dr Non style.
+ *
+ *   - Paper surface, no gradient, no teal glow.
+ *   - Each tile is a flat hairline cell.
+ *   - The live signal IS one amber dot per pipe — the one amber rule
+ *     applied dot-by-dot. Sim/fallback states use ink and loss colours.
+ *   - Labels in Source Sans 3 micro, values in JetBrains Mono.
+ */
 .ops__digital-strip {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  padding: 8px 16px;
-  background: linear-gradient(180deg, rgba(22,184,176,0.03) 0%, rgba(22,184,176,0.06) 100%);
-  border-bottom: 1px solid rgba(22,184,176,0.18);
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 10px;
+  padding: 8px 24px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
   align-items: center;
 }
 
 .ops__digital-tile {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 2px 14px;
-  border-right: 1px solid rgba(0,0,0,0.06);
+  border-right: 1px solid var(--hairline);
   white-space: nowrap;
 }
 .ops__digital-tile:last-child {
@@ -7615,31 +7716,33 @@ a { color: var(--tint); }
 .ops__digital-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  /* Squares only — Dr Non rule (no rounded corners on anything that
+     is not a true circle large enough to read as one). */
   flex-shrink: 0;
 }
 .ops__digital-dot--live {
-  background: #16b8b0;
-  box-shadow: 0 0 6px rgba(22,184,176,0.6);
+  background: var(--amber);
   animation: digital-pulse 2s ease-in-out infinite;
 }
 .ops__digital-dot--sim {
-  background: #b58900;
+  background: var(--ink);
 }
 @keyframes digital-pulse {
   0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
+  50%      { opacity: 0.5; }
 }
 
 .ops__digital-label {
-  font-weight: 700;
-  color: #16b8b0;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .ops__digital-value {
-  color: #555;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--ink-mute);
+  font-weight: 400;
 }
 
 /* ============================================================================
@@ -7647,59 +7750,73 @@ a { color: var(--tint); }
  * Designed so "did we have enough buses at hour X?" reads in 1 second.
  * ========================================================================== */
 
+/* Capacity vs Demand timeline — Dr Non style.
+ *
+ *   - No card chrome, no shadow, no border-radius.
+ *   - Lives on the same paper surface as the line-pnl beside it.
+ *   - Coloured cells ARE the data — they earn their pixels. Everything
+ *     around them is hairline + ink + type. No decoration competes.
+ *   - Three text sizes only: display 32px (current playhead numerics),
+ *     body 14px (collected/lost numerics), micro 11px (labels, hour ticks).
+ *   - No hover scale, no glow, no animation. Static, like a printed chart.
+ */
 .capacity-gap {
-  padding: 16px;
-  background: #1a1f2a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 12px;
-  margin-bottom: 12px;
-  color: #fff;
-  font-family: "Inter", "SF Pro Display", sans-serif;
+  padding: 20px 24px 16px;
+  background: transparent;
+  border: none;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
 }
 
 .capacity-gap__head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .capacity-gap__title {
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--t-body);
+  font-weight: 500;
   margin: 0;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
 }
 
 .capacity-gap__summary {
   display: flex;
-  gap: 8px;
+  gap: 14px;
 }
 
 .capacity-gap__chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink-mute);
 }
 
 .capacity-gap__dot {
   width: 8px;
   height: 8px;
   display: inline-block;
+  /* No border-radius — Dr Non rule. Squares only. */
 }
 
 .capacity-gap__strip {
   display: grid;
   grid-template-columns: repeat(17, 1fr);
   gap: 2px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .capacity-gap__cell {
@@ -7710,80 +7827,90 @@ a { color: var(--tint); }
   justify-content: center;
   padding-bottom: 4px;
   cursor: help;
-  transition: transform 120ms ease;
 }
 
+/* No hover scale. Static. */
 .capacity-gap__cell:hover {
-  transform: scale(1.08);
-  outline: 1px solid rgba(255, 255, 255, 0.4);
+  outline: 1px solid var(--ink);
+  outline-offset: -1px;
 }
 
 .capacity-gap__cell--current {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--ink);
   outline-offset: -1px;
   z-index: 1;
 }
 
 .capacity-gap__cell--future {
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  opacity: 0.4;
+  border: 1px solid var(--hairline);
+  opacity: 0.5;
 }
 
 .capacity-gap__hour {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
 }
 
 .capacity-gap__cell--future .capacity-gap__hour {
-  color: rgba(255, 255, 255, 0.55);
-  text-shadow: none;
+  color: var(--ink-faint);
 }
 
 .capacity-gap__foot {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 18px;
+  border-top: 1px solid var(--hairline);
   padding-top: 12px;
 }
 
 .capacity-gap__metric {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .capacity-gap__metric-label {
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  font-weight: 700;
+  color: var(--ink-faint);
+  font-weight: 500;
 }
 
 .capacity-gap__metric-value {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
-.capacity-gap__metric-value--good { color: #16b8b0; }
-.capacity-gap__metric-value--bad  { color: #dc322f; }
+.capacity-gap__metric-value--good { color: var(--gain); }
+.capacity-gap__metric-value--bad  { color: var(--loss); }
 
 /* ============================================================================
  * Per-Line P&L cards — "which lines make money, which lose money" sheet
  * ========================================================================== */
 
+/* Per-Line P&L — Dr Non style.
+ *
+ *   - No card chrome (no border-radius, no shadow, no tinted fill).
+ *   - Each row separated by a single hairline. That's it.
+ *   - Profit/loss carried by the numeric sign and one amber/red glyph.
+ *     No coloured fills. Type weight does the work.
+ *   - Three sizes only: display 32px for the profit answer, body 14px
+ *     for labels, micro 11px for unit captions. Three. Nothing else.
+ */
 .line-pnl {
-  padding: 16px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  margin-top: 12px;
-  margin-bottom: 12px;
-  font-family: "Inter", "SF Pro Display", sans-serif;
+  padding: 20px 24px 16px;
+  background: transparent;
+  border: none;
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
 }
 
 .line-pnl__head {
@@ -7791,53 +7918,54 @@ a { color: var(--tint); }
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .line-pnl__title {
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
   margin: 0;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.78);
+  color: var(--ink);
 }
 
 .line-pnl__network {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  background: none;
   letter-spacing: 0.02em;
 }
 
-.line-pnl__network--profit {
-  background: rgba(22, 184, 176, 0.12);
-  color: #0e7a73;
-}
-
-.line-pnl__network--loss {
-  background: rgba(220, 50, 47, 0.12);
-  color: #b8201c;
-}
+.line-pnl__network--profit { color: var(--gain); }
+.line-pnl__network--loss   { color: var(--loss); }
 
 .line-pnl__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 0;
+  margin-bottom: 12px;
 }
 
 .line-pnl__row {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
-  gap: 14px;
-  padding: 12px 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-left-width: 4px;
+  gap: 18px;
+  padding: 14px 0;
+  border: none;
+  border-top: 1px solid var(--hairline);
+  background: transparent;
 }
 
-.line-pnl__row--profit { border-left-color: #16b8b0; background: rgba(22, 184, 176, 0.03); }
-.line-pnl__row--loss   { border-left-color: #dc322f; background: rgba(220, 50, 47, 0.03); }
+.line-pnl__row:first-child { border-top: none; padding-top: 6px; }
+
+/* No left coloured border — the SIGN on the number tells the story. */
+.line-pnl__row--profit,
+.line-pnl__row--loss { border-left: none; background: transparent; }
 
 .line-pnl__answer {
   display: flex;
@@ -7846,36 +7974,39 @@ a { color: var(--tint); }
 }
 
 .line-pnl__name {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.7);
-  margin-bottom: 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
 }
 
 .line-pnl__profit {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: var(--font-mono);
+  font-size: var(--t-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
-.line-pnl__profit--good { color: #16b8b0; }
-.line-pnl__profit--bad  { color: #dc322f; }
+.line-pnl__profit--good { color: var(--gain); }
+.line-pnl__profit--bad  { color: var(--loss); }
 
 .line-pnl__margin {
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
-  font-weight: 600;
-  margin-top: 4px;
+  color: var(--ink-faint);
+  font-weight: 500;
+  margin-top: 6px;
 }
 
 .line-pnl__detail {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px 14px;
+  gap: 6px 18px;
   align-content: center;
 }
 
@@ -7885,26 +8016,27 @@ a { color: var(--tint); }
 }
 
 .line-pnl__cell-val {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1f2a;
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .line-pnl__cell-lbl {
-  font-size: 9px;
-  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
-  font-weight: 600;
+  color: var(--ink-faint);
+  font-weight: 500;
 }
 
 .line-pnl__totals {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 18px;
   padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--hairline);
 }
 
 .line-pnl__totals-cell {
@@ -7914,18 +8046,20 @@ a { color: var(--tint); }
 }
 
 .line-pnl__totals-lbl {
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
-  font-weight: 600;
+  color: var(--ink-faint);
+  font-weight: 500;
 }
 
 .line-pnl__totals-val {
-  font-family: "SF Mono", "JetBrains Mono", monospace;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1f2a;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 @media (max-width: 720px) {
@@ -7947,10 +8081,11 @@ a { color: var(--tint); }
 .ops__hero-economics {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 14px;
-  padding: 14px 22px 6px;
-  background: #f5f6fa;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  gap: 0;
+  padding: 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-body);
 }
 
 @media (max-width: 1280px) {
@@ -7959,19 +8094,18 @@ a { color: var(--tint); }
   }
 }
 
-/* Inside the hero strip, both panels lose their top/bottom margins
-   (the hero strip itself owns the spacing). They also lose their
-   borders since the hero strip is the outer container. */
+/* The two panels share the strip edge-to-edge — no inner padding gap,
+   no rounded card containers. A single hairline divides them. */
 .ops__hero-economics .line-pnl,
 .ops__hero-economics .capacity-gap {
   margin: 0;
-  border-radius: 8px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
 }
 
-/* Make the capacity-gap dark surface stand out against the light hero strip */
-.ops__hero-economics .capacity-gap {
-  background: #1a1f2a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.ops__hero-economics .line-pnl {
+  border-right: 1px solid var(--hairline);
 }
 
 /* On wall screens, the line P&L panel gets HORIZONTAL row layout — each
@@ -8000,23 +8134,27 @@ a { color: var(--tint); }
  * Distinguished from the replay playhead by a softer green tint.
  * ========================================================================== */
 
+/* Live playhead is the one amber. Pulses slowly so a static glance
+   shows the page is alive without being decorative. */
 .sim-timeline__playhead--live {
-  background: #16b8b0;
-  opacity: 0.7;
+  background: var(--amber);
+  opacity: 0.85;
   animation: live-playhead-pulse 2s ease-in-out infinite;
 }
 
 @keyframes live-playhead-pulse {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.85; }
   50%      { opacity: 1; }
 }
 
 .sim-timeline__clock-mode {
   display: inline-block;
-  margin-left: 6px;
-  font-size: 9px;
+  margin-left: 8px;
+  font-family: var(--font-body);
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
-  font-weight: 700;
-  color: #16b8b0;
+  font-weight: 500;
+  color: var(--amber);
   vertical-align: 2px;
+  text-transform: uppercase;
 }

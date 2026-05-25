@@ -24,11 +24,14 @@ function classifyHour(row: HourlyDemandSupply): GapStatus {
   return "quiet";
 }
 
+// Colours match the canonical Dr Non tokens (see :root in styles.css).
+// One amber accent is reserved for the "tight" warning — that IS the warning
+// signal. Shortfall = loss red. Surplus = gain green. Quiet = paper-mute.
 const STATUS_META: Record<GapStatus, { color: string; label: string }> = {
-  shortfall: { color: "#dc322f", label: "Shortfall" },
-  tight:     { color: "#b58900", label: "Tight" },
-  surplus:   { color: "#16b8b0", label: "Surplus" },
-  quiet:     { color: "#cfd5db", label: "Quiet" }
+  shortfall: { color: "#c0392b", label: "Shortfall" },  // --loss
+  tight:     { color: "#f59e0b", label: "Tight" },      // --amber (the one amber)
+  surplus:   { color: "#16a574", label: "Surplus" },    // --gain
+  quiet:     { color: "#e8e6e0", label: "Quiet" }       // paper-mute
 };
 
 const HOURS = Array.from({ length: 17 }, (_, i) => 6 + i); // 06–22

@@ -1357,8 +1357,8 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
         </div>
         <div className="ops__status-bar">
           <span className="ops__clock">{clock}</span>
-          <span style={{ color: "#999", fontSize: 10 }}>{dashboard.weather.intelligence.current.tempC}° {dashboard.weather.intelligence.current.rainProb}%</span>
-          {dashboard.sources.map((s) => <span key={s.source} className="ops__health-dot" style={{ background: s.state === "live" ? "#16b8b0" : s.state === "fallback" ? "#b58900" : "#dc322f" }} title={`${s.source}: ${s.state}`} />)}
+          <span style={{ color: "var(--ink-faint)", fontSize: 11, fontFamily: "var(--font-mono)" }}>{dashboard.weather.intelligence.current.tempC}° {dashboard.weather.intelligence.current.rainProb}%</span>
+          {dashboard.sources.map((s) => <span key={s.source} className="ops__health-dot" style={{ background: s.state === "live" ? "var(--gain)" : s.state === "fallback" ? "var(--amber)" : "var(--loss)" }} title={`${s.source}: ${s.state}`} />)}
         </div>
       </header>
 
