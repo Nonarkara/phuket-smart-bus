@@ -439,6 +439,10 @@ const SPEED_OPTIONS = [1, 5, 15, 30];
 
 export default function DashboardV2() {
   const [viewMode, setViewMode] = useState<"sim" | "live">("sim");
+  // The SSOT is computeSimState() — the SAME function /ops, /, /governor read
+  // from via getHeadlineMetrics(). /v2 needs the richer SimState (paxWantBus,
+  // hourly flights) so it consumes it directly, but the fleet/revenue/CO₂
+  // numbers it surfaces are byte-for-byte the same as every other surface.
   const [state, setState] = useState(() => computeSimState());
   const [dailyFlights] = useState(() => getOpsFlightSchedule());
   const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));

@@ -23,9 +23,8 @@ import {
   getVehicles
 } from "./dataProvider";
 import { getVehiclesNow } from "./engine/fleetSimulator";
-import { getImpactMetrics } from "./engine/impactSimulator";
-import { getSimulatedMinutes } from "./engine/fleetSimulator";
 import { getDayInfo } from "./engine/simulation";
+import { getHeadlineMetrics } from "./engine/headlineMetrics";
 import DashboardV2 from "./DashboardV2";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
@@ -272,17 +271,15 @@ function MapBadge({ vehicles }: { vehicles: VehiclePosition[] }) {
 }
 
 function computeBadge(allV: VehiclePosition[]): string {
-  const simMin = getSimulatedMinutes();
-  const h = Math.floor(simMin / 60) % 24;
-  const m = Math.floor(simMin % 60);
-  const clock = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  // Use the single source-of-truth for bus count; only the "nearest to Patong"
+  // calc is local because it needs the per-vehicle stopsAway field.
+  const headline = getHeadlineMetrics();
   const day = getDayInfo().label;
-  const busCount = allV.filter(v => !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-")).length;
   const moving = allV.filter(v => v.status === "moving" && v.stopsAway != null && v.stopsAway > 0);
   const nearest = moving.length > 0 ? Math.min(...moving.map(v => Math.round((v.stopsAway ?? 5) * 2.5))) : null;
   return nearest
-    ? `${day} ${clock} · ${busCount} buses · Next: Patong ${nearest} min`
-    : `${day} ${clock} · ${busCount} buses active`;
+    ? `${day} ${headline.clockLabel} · ${headline.fleet.totalBuses} buses · Next: Patong ${nearest} min`
+    : `${day} ${headline.clockLabel} · ${headline.fleet.totalBuses} buses active`;
 }
 
 /* ── Animated counter: smoothly rolls from old→new value.
@@ -314,37 +311,22 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) 
   return <span>{display.toLocaleString()}{suffix ?? ""}</span>;
 }
 
-/* ── Live stats for landing page (animated, dynamic, alive) ── */
+/* ── Live stats for landing page (animated, dynamic, alive) ──
+ *  All headline numbers come from the single source of truth in
+ *  src/engine/headlineMetrics.ts. /, /ops, /v2, /governor all read
+ *  from the same struct so the bus count on the badge always equals
+ *  the bus count on the right-bar widget. */
 function LiveStatsWidget() {
-  // Count smart-buses only — same filter as the map badge — so the two
-  // numbers agree. Ferries + orange-line are different fleets and count
-  // separately if/when we surface them.
-  const isSmartBus = (v: VehiclePosition) =>
-    !v.vehicleId.startsWith("ferry-") && !v.vehicleId.startsWith("orange-");
-
-  const [stats, setStats] = useState(() => {
-    const v = getVehiclesNow();
-    const buses = v.filter(isSmartBus);
-    const m = getImpactMetrics(buses.length);
-    const moving = buses.filter(x => x.status === "moving").length;
-    const total = buses.filter(x => x.status !== "unknown").length;
-    const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
-    return { riders: m.ridersToday, buses: buses.length, co2: m.co2SavedKg, onTime };
-  });
+  const [headline, setHeadline] = useState(() => getHeadlineMetrics());
   useEffect(() => {
-    const id = setInterval(() => {
-      const v = getVehiclesNow();
-      const buses = v.filter(isSmartBus);
-      const m = getImpactMetrics(buses.length);
-      const moving = buses.filter(x => x.status === "moving").length;
-      const total = buses.filter(x => x.status !== "unknown").length;
-      const onTime = total > 0 ? Math.min(99, Math.max(93, Math.round(moving / total * 100 + 2))) : 97;
-      setStats({ riders: m.ridersToday, buses: buses.length, co2: m.co2SavedKg, onTime });
-    }, 2000);
+    const id = setInterval(() => setHeadline(getHeadlineMetrics()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const co2Label = stats.co2 >= 1000 ? `${(stats.co2 / 1000).toFixed(1)}t` : `${Math.round(stats.co2)} kg`;
+  const riders = headline.today.paxDelivered;
+  const co2 = headline.today.co2SavedKg;
+  const co2Label = co2 >= 1000 ? `${(co2 / 1000).toFixed(1)}t` : `${Math.round(co2)} kg`;
+  const stats = { riders, buses: headline.fleet.totalBuses, co2, onTime: headline.onTimePct };
 
   return (
     <div className="live-stats">

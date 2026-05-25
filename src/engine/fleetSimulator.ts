@@ -851,11 +851,15 @@ function buildVehiclePosition(
     const pos = posOnPolyline(meters, profile.polyline, profile.polylineCumMeters);
     coordinates = pos.coordinates; heading = pos.heading;
 
-    // Per-segment speed: segment distance / moving time (excluding dwell)
+    // Per-segment speed: segment distance / moving time (excluding dwell).
+    // Clamp to 80 km/h max — when a degenerate segment has near-zero
+    // movingTime, the raw division explodes to thousands of km/h and
+    // the operator UI displays "42,747 km/h" for a city bus.
     const segmentDistance = mEnd - mStart;
-    speedKph = movingTime > 0 && !isDwelling
-      ? Math.round((segmentDistance / 1000 / (movingTime / 60)) * 10) / 10
+    const rawKph = movingTime > 0 && !isDwelling
+      ? (segmentDistance / 1000) / (movingTime / 60)
       : 0;
+    speedKph = Math.min(80, Math.round(rawKph * 10) / 10);
 
     status = isDwelling ? "dwelling" : "moving";
     distToEnd = Math.max(0, profile.polylineTotalMeters - meters);

@@ -1,41 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-import { computeSimState } from "../engine/simulation";
-import { getImpactMetrics } from "../engine/impactSimulator";
-import { getVehiclesNow } from "../engine/fleetSimulator";
+import { getHeadlineMetrics, type HeadlineMetrics } from "../engine/headlineMetrics";
 import {
   THAIRSC_2026_FOREIGNERS,
   THAIRSC_POWERBI_URL,
   computeSafetyImpact,
   ECONOMIC_COST_PER_INJURY_THB
 } from "../engine/safetyData";
-import { computeRoi, ROI_CONSTANTS, formatTHB, formatPayback } from "../engine/roi";
+import { computeRoi, formatTHB, formatPayback } from "../engine/roi";
 
 // ---------------------------------------------------------------------------
-// Live stat hook
+// Live stat hook — single source of truth via getHeadlineMetrics()
 // ---------------------------------------------------------------------------
 function useLiveState() {
-  const [state, setState] = useState(() => {
-    const vehicles = getVehiclesNow();
-    const impact = getImpactMetrics(vehicles.length);
-    const sim = computeSimState();
-    const safety = computeSafetyImpact(impact.ridersToday);
-    const roi = computeRoi({ fleetSize: 20, captureRate: 0.12, averageFareTHB: 100 });
-    return { vehicles, impact, sim, safety, roi };
-  });
-
+  const [headline, setHeadline] = useState<HeadlineMetrics>(() => getHeadlineMetrics());
   useEffect(() => {
-    const id = setInterval(() => {
-      const vehicles = getVehiclesNow();
-      const impact = getImpactMetrics(vehicles.length);
-      const sim = computeSimState();
-      const safety = computeSafetyImpact(impact.ridersToday);
-      const roi = computeRoi({ fleetSize: 20, captureRate: 0.12, averageFareTHB: 100 });
-      setState({ vehicles, impact, sim, safety, roi });
-    }, 2000);
+    const id = setInterval(() => setHeadline(getHeadlineMetrics()), 2000);
     return () => clearInterval(id);
   }, []);
 
-  return state;
+  const safety = computeSafetyImpact(headline.today.paxDelivered);
+  const roi = computeRoi({ fleetSize: 20, captureRate: 0.12, averageFareTHB: 100 });
+  return { headline, safety, roi };
 }
 
 // ---------------------------------------------------------------------------
@@ -68,13 +53,12 @@ function BigNum({ value, prefix = "", suffix = "", decimals = 0 }: {
 // Main dashboard
 // ---------------------------------------------------------------------------
 export function GovernorDashboard() {
-  const { vehicles, impact, sim, safety, roi } = useLiveState();
-  // Both counts must filter on the same subset (buses only). Counting ALL
-  // vehicles for movingCount included ferries and let "18 moving" exceed
-  // "15 buses" — nonsense to a governor's-office viewer.
-  const busVehicles = vehicles.filter(v => !v.vehicleId.startsWith("ferry-"));
-  const busCount = busVehicles.length;
-  const movingCount = busVehicles.filter(v => v.status === "moving").length;
+  const { headline, safety, roi } = useLiveState();
+  // Every fleet/revenue number on this page comes from the SSOT in
+  // src/engine/headlineMetrics.ts, so this dashboard ALWAYS matches /ops,
+  // /v2 and the tourist landing at the same simulated moment.
+  const busCount = headline.fleet.totalBuses;
+  const movingCount = headline.fleet.movingBuses;
 
   // Phuket district data for the accident table
   const phuketDistricts = THAIRSC_2026_FOREIGNERS.phuket.districts;
@@ -89,7 +73,7 @@ export function GovernorDashboard() {
           <div className="governor__eyebrow">PHUKET GOVERNOR'S OFFICE · SMART MOBILITY</div>
           <h1 className="governor__title">Phuket Smart Bus — Impact Dashboard</h1>
           <div className="governor__subtitle">
-            Ridership · Road Safety · Environment · Economy · {sim.clockLabel} BKK
+            Ridership · Road Safety · Environment · Economy · {headline.clockLabel} BKK
           </div>
         </div>
         <div className="governor__header-right">
@@ -108,26 +92,26 @@ export function GovernorDashboard() {
         <div className="governor__kpi governor__kpi--green">
           <div className="governor__kpi-label">RIDERS TODAY</div>
           <div className="governor__kpi-value">
-            <BigNum value={impact.ridersToday} />
+            <BigNum value={headline.today.paxDelivered} />
           </div>
-          <div className="governor__kpi-sub">{impact.seasonLabel}</div>
+          <div className="governor__kpi-sub">Live · Phuket Smart Bus</div>
         </div>
 
         <div className="governor__kpi governor__kpi--teal">
           <div className="governor__kpi-label">REVENUE TODAY</div>
           <div className="governor__kpi-value">
-            ฿<BigNum value={impact.revenueThb} />
+            ฿<BigNum value={headline.today.revenueThb} />
           </div>
-          <div className="governor__kpi-sub">฿{impact.revenueFormatted} collected</div>
+          <div className="governor__kpi-sub">฿{Math.round(headline.today.revenueThb / 1000)}k collected</div>
         </div>
 
         <div className="governor__kpi governor__kpi--amber">
           <div className="governor__kpi-label">TOURIST SAVINGS VS GRAB</div>
           <div className="governor__kpi-value">
-            ฿<BigNum value={sim.savingsThb} />
+            ฿<BigNum value={headline.today.savingsThb} />
           </div>
           <div className="governor__kpi-sub">
-            {sim.paxDelivered} pax × avg ฿{Math.round(sim.savingsThb / Math.max(1, sim.paxDelivered))} saved
+            {headline.today.paxDelivered} pax × avg ฿{Math.round(headline.today.savingsThb / Math.max(1, headline.today.paxDelivered))} saved
           </div>
         </div>
 
@@ -150,7 +134,7 @@ export function GovernorDashboard() {
         <div className="governor__kpi">
           <div className="governor__kpi-label">CO₂ AVOIDED</div>
           <div className="governor__kpi-value">
-            <BigNum value={impact.co2SavedKg} suffix=" kg" />
+            <BigNum value={headline.today.co2SavedKg} suffix=" kg" />
           </div>
           <div className="governor__kpi-sub">vs same trips by car</div>
         </div>
@@ -267,7 +251,7 @@ export function GovernorDashboard() {
           <div className="governor__impact-row" style={{ marginTop: 8 }}>
             <div className="governor__impact-cell">
               <div className="governor__impact-cell-val">
-                {Math.round(impact.co2AnnualProjectionTonnes)}t
+                {Math.round(roi.annualCO2AvoidedTons)}t
               </div>
               <div className="governor__impact-cell-lbl">CO₂ avoided / year</div>
             </div>

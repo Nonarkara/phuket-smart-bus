@@ -17,6 +17,7 @@ import type {
 import { getInvestorSimulation, getOpsDashboard, getSimulationFrame, getVehiclesNow } from "../engine/dataProvider";
 import { getImpactMetrics } from "../engine/impactSimulator";
 import { getSimulatedMinutes } from "../engine/fleetSimulator";
+import { getHeadlineMetrics } from "../engine/headlineMetrics";
 import { ProfitabilityPanel } from "./ProfitabilityPanel";
 import { AnalyticsPanel } from "./AnalyticsPanel";
 import { LiveMap, type MapMarkerOverlay, type MapOverlay } from "./LiveMap";
@@ -463,30 +464,32 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
 }) {
   const hours = Array.from({ length: 19 }, (_, i) => i + 6); // 06–24
 
-  // --- LIVE metrics: always accumulating from the 30x simulation engine ---
-  const [liveMetrics, setLiveMetrics] = useState({ pax: 0, rev: 0, trips: 0, km: 0, co2: 0, capture: 0, buses: 0 });
+  // --- LIVE metrics: ALL values come from the single source of truth in
+  //     src/engine/headlineMetrics.ts. /ops, /v2, /, /governor agree exactly.
+  const [liveMetrics, setLiveMetrics] = useState(() => {
+    const h = getHeadlineMetrics();
+    return {
+      pax: h.today.paxDelivered,
+      rev: h.today.revenueThb,
+      trips: h.today.tripsCompleted,
+      km: h.today.kmDriven,
+      co2: Math.round(h.today.co2SavedKg),
+      capture: h.now.captureOfAddressablePct,
+      buses: h.fleet.totalBuses
+    };
+  });
   useEffect(() => {
     const id = setInterval(() => {
-      try {
-        const allV = getVehiclesNow();
-        const impact = getImpactMetrics(allV.length);
-        const moving = allV.filter((v: VehiclePosition) => v.status === "moving").length;
-        const simMin = getSimulatedMinutes() % 1440;
-        const simH = Math.floor(simMin / 60);
-        // Trips: roughly 1 trip per bus per 90 minutes
-        const elapsedHours = Math.max(0, simH - 6);
-        const estTrips = Math.round(allV.length * elapsedHours / 1.5);
-        const estKm = estTrips * 35;
-        setLiveMetrics({
-          pax: impact.ridersToday,
-          rev: impact.revenueThb,
-          trips: estTrips,
-          km: estKm,
-          co2: Math.round(impact.co2SavedKg),
-          capture: Math.min(99, Math.max(75, Math.round(85 + Math.sin(simMin / 30) * 8))),
-          buses: moving
-        });
-      } catch { /* ignore */ }
+      const h = getHeadlineMetrics();
+      setLiveMetrics({
+        pax: h.today.paxDelivered,
+        rev: h.today.revenueThb,
+        trips: h.today.tripsCompleted,
+        km: h.today.kmDriven,
+        co2: Math.round(h.today.co2SavedKg),
+        capture: h.now.captureOfAddressablePct,
+        buses: h.fleet.totalBuses
+      });
     }, 1000);
     return () => clearInterval(id);
   }, []);
