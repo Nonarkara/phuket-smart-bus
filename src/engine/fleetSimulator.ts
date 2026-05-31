@@ -825,7 +825,7 @@ function buildVehiclePosition(
     const t = clamp(ageMinutes, 0, actualTripDuration);
     let seg = profile.stopOffsets.findIndex((o, i) => {
       const next = profile.stopOffsets[i + 1];
-      return next !== undefined && t <= next;
+      return next !== undefined && t <= next * tripVariation;
     });
     if (seg < 0) seg = Math.max(0, profile.stopOffsets.length - 2);
 
@@ -909,6 +909,9 @@ function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now:
     const pb = b.ageMinutes >= 0 && b.ageMinutes <= b.profile.tripDurationMinutes ? 0 : b.ageMinutes < 0 ? 1 : 2;
     return pa - pb || Math.abs(a.ageMinutes) - Math.abs(b.ageMinutes) || a.scheduledDepartureMinutes - b.scheduledDepartureMinutes;
   }).slice(0, pool.length);
+
+  // Re-sort deterministically by departure time to ensure stable linear probing
+  sorted.sort((a, b) => a.scheduledDepartureMinutes - b.scheduledDepartureMinutes);
 
   const nowIso = now.toISOString();
   const used = new Set<number>();

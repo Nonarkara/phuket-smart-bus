@@ -449,36 +449,24 @@ export default function DashboardV2() {
   const [sliderValue, setSliderValue] = useState(getSimulatedMinutes());
   const [clockState, setClockState] = useState(getClockState());
   const [fleetAnalysis] = useState(() => getFleetAnalysis());
-  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() =>
-    getVehiclesNow().map(v => ({
-      id: v.vehicleId,
-      lat: v.coordinates[0],
-      lng: v.coordinates[1],
-      heading: v.heading,
-      status: v.status as "moving" | "dwelling",
-      route: v.routeId,
-      pax: 0,
-      plate: v.licensePlate
-    }))
-  );
-
-  // Poll map vehicles independently (all routes, all modes)
-  useEffect(() => {
-    const id = setInterval(() => {
-      const live = getVehiclesNow();
-      setMapVehicles(live.map(v => ({
+  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() => {
+    const st = computeSimState();
+    return getVehiclesNow().map(v => {
+      const simMatch = st.vehicles.find(sv => sv.plate === v.licensePlate);
+      return {
         id: v.vehicleId,
         lat: v.coordinates[0],
         lng: v.coordinates[1],
         heading: v.heading,
         status: v.status as "moving" | "dwelling",
         route: v.routeId,
-        pax: 0,
+        pax: simMatch ? simMatch.pax : Math.round((v.routeId === "dragon-line" ? 15 : 25) * 0.4),
         plate: v.licensePlate
-      })));
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
+      };
+    });
+  });
+
+  // Remove the old separate setInterval since we will merge it into the simulation loop
 
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
@@ -505,7 +493,23 @@ export default function DashboardV2() {
   // Poll simulation state every second
   useEffect(() => {
     const id = setInterval(() => {
-      setState(computeSimState());
+      const newState = computeSimState();
+      setState(newState);
+      
+      const live = getVehiclesNow();
+      setMapVehicles(live.map(v => {
+        const simMatch = newState.vehicles.find(sv => sv.plate === v.licensePlate);
+        return {
+          id: v.vehicleId,
+          lat: v.coordinates[0],
+          lng: v.coordinates[1],
+          heading: v.heading,
+          status: v.status as "moving" | "dwelling",
+          route: v.routeId,
+          pax: simMatch ? simMatch.pax : Math.round((v.routeId === "dragon-line" ? 15 : 25) * 0.4),
+          plate: v.licensePlate
+        };
+      }));
     }, 1000);
     return () => clearInterval(id);
   }, []);

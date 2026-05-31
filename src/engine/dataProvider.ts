@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Client-side data provider that replaces all server API endpoints.
  * Every function returns Promise<T> to maintain the same interface as api.ts.
