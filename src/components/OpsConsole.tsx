@@ -1212,6 +1212,17 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const displayFS = useMemo(() => fleetSummary(displayVehicles), [displayVehicles]);
   const displayPressure = simRunning && simSnapshot ? simSnapshot.routePressure : dashboard?.fleet.routePressure ?? [];
 
+  // SSOT for the fleet panel header — same numbers as the bottom KPI strip,
+  // /v2, /governor and / read. Polls every second to stay in sync with the
+  // engine clock and live vehicle positions. Prevents the "21/25 in fleet
+  // panel · 18 BUSES in bottom strip" labeling drift that an earlier audit
+  // surfaced (the two were computed from different filters).
+  const [ssotHeadline, setSsotHeadline] = useState(() => getHeadlineMetrics());
+  useEffect(() => {
+    const id = setInterval(() => setSsotHeadline(getHeadlineMetrics()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const currentMarkers = useMemo(() => {
     if (!dashboard) return [];
     return simRunning && simSnapshot ? buildReplayMarkers(dashboard.mapOverlays.markers, simSnapshot.routePressure, simSnapshot.transferHubs) : dashboard.mapOverlays.markers;
@@ -1448,7 +1459,10 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </section>
           ) : null}
 
-          {/* Each bus with load %, seats, ETA */}
+          {/* Each bus with load %, seats, ETA. Headline counts come from the
+              SSOT (getHeadlineMetrics) — same numbers the bottom KPI strip and
+              every other surface report. The pax/util util math uses fleetRows
+              because that's what's actually visible in the rows below. */}
           <section className="ops-card ops-card--tight">
             {(() => {
               const totalPaxOnBuses = fleetRows.reduce((s, v) => s + (v.pax ?? 0), 0);
@@ -1456,7 +1470,7 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
               const utilPct = totalCapacity > 0 ? Math.round((totalPaxOnBuses / totalCapacity) * 100) : 0;
               const onTimeCount = fleetRows.filter((v) => (stableHash(v.vehicleId + "adh") % 10) < 8).length;
               const onTimePct = fleetRows.length > 0 ? Math.round((onTimeCount / fleetRows.length) * 100) : 100;
-              return <h2 className="ops-card__title">Fleet {onTimePct}% on-time · {utilPct}% loaded · {displayFS.movingCount}/{displayFS.totalVehicles}</h2>;
+              return <h2 className="ops-card__title">Fleet {onTimePct}% on-time · {utilPct}% loaded · {ssotHeadline.fleet.movingBuses}/{ssotHeadline.fleet.totalBuses}</h2>;
             })()}
             <div className="ops-fleet-rows">
               {fleetRows.map((v) => {

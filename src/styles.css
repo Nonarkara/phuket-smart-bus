@@ -362,15 +362,15 @@ a { color: var(--tint); }
   font-weight: 400;
 }
 
-/* Next bus card */
+/* Next bus card — flat hairline, no decorative gradient. */
 .welcome-sheet__next-bus {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.06), rgba(52, 199, 89, 0.06));
-  border: 1px solid rgba(0, 122, 255, 0.1);
+  border-radius: 0;
+  background: var(--paper);
+  border: 1px solid var(--hairline);
 }
 
 .welcome-sheet__countdown {
@@ -1955,8 +1955,8 @@ a { color: var(--tint); }
   box-shadow: var(--shadow-card);
 }
 
-.pass-ticket.is-day { background: linear-gradient(180deg, #fff, #f5fbfa); }
-.pass-ticket.is-week { background: linear-gradient(180deg, #fff, #f4f8fc); }
+.pass-ticket.is-day { background: var(--paper); border-top: 2px solid var(--amber); }
+.pass-ticket.is-week { background: var(--paper); border-top: 2px solid var(--ink); }
 
 .pass-ticket__status-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 
@@ -2007,8 +2007,8 @@ a { color: var(--tint); }
   box-shadow: var(--shadow-card);
 }
 
-.pass-qr-card.is-day { background: linear-gradient(180deg, #fbfffe, #f5fbfa); border-color: rgba(22,184,176,.12); }
-.pass-qr-card.is-week { background: linear-gradient(180deg, #fafdff, #f4f8fc); border-color: rgba(30,99,184,.12); }
+.pass-qr-card.is-day  { background: var(--paper); border-color: var(--hairline); }
+.pass-qr-card.is-week { background: var(--paper); border-color: var(--hairline); }
 
 .pass-qr {
   width: min(100%, 10rem);
@@ -2203,16 +2203,18 @@ a { color: var(--tint); }
   padding-top: 4px;
 }
 
-/* Layer 4: Savings banner — STRONGEST visual weight = call to action */
+/* Savings banner — Dr Non: gain-tinted paper with hairline.
+   The 40px monospace ฿ amount earns the eye via SCALE, not gradient. */
 .compare-savings {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(52, 199, 89, 0.05));
-  box-shadow: inset 0 0 0 1px rgba(52, 199, 89, 0.15);
+  gap: 10px;
+  padding: 20px 24px;
+  border-radius: 0;
+  background: rgba(22, 165, 116, 0.08);
+  border: 1px solid var(--gain);
+  box-shadow: none;
 }
 
 .compare-savings__label {
@@ -4891,12 +4893,14 @@ a { color: var(--tint); }
 
 /* ── 5. SIMULATION CINEMATIC ── */
 
-/* Sim mode — subtle atmosphere shift */
+/* Sim mode — subtle atmosphere shift. Paper-mute body, paper header.
+   The replay state reads through TYPE + chrome (the REPLAY DAY button
+   inverts), not through a decorative gradient. */
 .ops--sim-mode {
-  background: #f0faf9;
+  background: var(--paper-mute);
 }
 .ops--sim-mode .ops__header {
-  background: linear-gradient(135deg, #fff 0%, #f0faf9 100%);
+  background: var(--paper);
 }
 
 /* End-of-sim summary — stagger fade in */
@@ -5941,7 +5945,9 @@ a { color: var(--tint); }
 @media (max-width: 720px) {
   .v2-header { padding: 16px; }
   .v2-body { padding: 12px; gap: 12px; }
-  .v2-panel, .v2-map { border-radius: 22px; }
+  /* Squares only — Dr Non rule §11.6.1. The 22px radius was Vercel-template
+     residue from an earlier iteration. */
+  .v2-panel, .v2-map { border-radius: 0; }
   .v2-kpi-row,
   .v2-kpi-stack,
   .v2-accum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
