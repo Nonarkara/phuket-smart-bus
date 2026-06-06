@@ -18,9 +18,9 @@ test("mocked shell keeps the map and info tourist flow intact", async ({ page })
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toBeVisible();
-  await expect(page.getByText(/Next bus to/i)).toBeVisible();
+  await expect(page.getByText(/Next Bus/i)).toBeVisible();
 
-  await page.getByText(/Tap for routes/i).click();
+  await page.getByText(/Plan a trip/i).click();
 
   await expect(page.getByRole("heading", { name: "Welcome to Phuket" })).toBeVisible();
   await expect(page.getByPlaceholder("Beach, hotel, airport...")).toBeVisible();
@@ -43,12 +43,13 @@ test("mocked shell still supports the info and pass flow", async ({ page }) => {
 test("mocked shell updates copy when switching language", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByText(/Tap for routes/i).click();
+  await page.getByText(/Plan a trip/i).click();
   await page.getByRole("button", { name: "TH" }).click();
 
   await expect(page.getByText("ยินดีต้อนรับสู่ภูเก็ต")).toBeVisible();
   await expect(page.getByPlaceholder("ชายหาด, โรงแรม, สนามบิน...")).toBeVisible();
 });
+
 
 test("mocked ops console surfaces backend-declared mode and competitor data", async ({ page }) => {
   await page.goto("/ops");

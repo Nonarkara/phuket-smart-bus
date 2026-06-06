@@ -10,3 +10,11 @@ data/*.sqlite3
 data/*.sqlite3-shm
 data/*.sqlite3-wal
 .vercel
+
+# Local Claude Code state (worktrees, lock files, transcripts)
+.claude/scheduled_tasks.lock
+.claude/worktrees/
+.claude/journal/
+
+# Local editor state
+.vscode/

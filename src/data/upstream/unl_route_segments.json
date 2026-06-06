@@ -1,0 +1,512 @@
+{
+  "outbound": [
+    {
+      "fromStopNo": 16,
+      "toStopNo": 17,
+      "fromName": "Rawai Beach",
+      "toName": "Sai Yuan",
+      "fromGeohash": "w1mujqgex",
+      "toGeohash": "w1mum4zjy",
+      "distanceM": 3219,
+      "durationSec": 447
+    },
+    {
+      "fromStopNo": 17,
+      "toStopNo": 18,
+      "fromName": "Sai Yuan",
+      "toName": "Andaman Cannacia Resort",
+      "fromGeohash": "w1mum4zjy",
+      "toGeohash": "w1mukyhwu",
+      "distanceM": 4602,
+      "durationSec": 496
+    },
+    {
+      "fromStopNo": 18,
+      "toStopNo": 19,
+      "fromName": "Andaman Cannacia Resort",
+      "toName": "Beyond hotel Kata",
+      "fromGeohash": "w1mukyhwu",
+      "toGeohash": "w1mukyuq7",
+      "distanceM": 814,
+      "durationSec": 159
+    },
+    {
+      "fromStopNo": 19,
+      "toStopNo": 20,
+      "fromName": "Beyond hotel Kata",
+      "toName": "Kata Palm",
+      "fromGeohash": "w1mukyuq7",
+      "toGeohash": "w1mukz7gq",
+      "distanceM": 260,
+      "durationSec": 46
+    },
+    {
+      "fromStopNo": 20,
+      "toStopNo": 21,
+      "fromName": "Kata Palm",
+      "toName": "OZO Kata",
+      "fromGeohash": "w1mukz7gq",
+      "toGeohash": "w1musb98q",
+      "distanceM": 785,
+      "durationSec": 149
+    },
+    {
+      "fromStopNo": 21,
+      "toStopNo": 22,
+      "fromName": "OZO Kata",
+      "toName": "Peach Blossom",
+      "fromGeohash": "w1musb98q",
+      "toGeohash": "w1musb9rn",
+      "distanceM": 134,
+      "durationSec": 28
+    },
+    {
+      "fromStopNo": 22,
+      "toStopNo": 23,
+      "fromName": "Peach Blossom",
+      "toName": "Karon Stadium",
+      "fromGeohash": "w1musb9rn",
+      "toGeohash": "w1musc2r0",
+      "distanceM": 504,
+      "durationSec": 72
+    },
+    {
+      "fromStopNo": 23,
+      "toStopNo": 24,
+      "fromName": "Karon Stadium",
+      "toName": "Woraburi Karon",
+      "fromGeohash": "w1musc2r0",
+      "toGeohash": "w1musezwe",
+      "distanceM": 1534,
+      "durationSec": 186
+    },
+    {
+      "fromStopNo": 24,
+      "toStopNo": 25,
+      "fromName": "Woraburi Karon",
+      "toName": "Karon Circle",
+      "fromGeohash": "w1musezwe",
+      "toGeohash": "w1mussxh8",
+      "distanceM": 430,
+      "durationSec": 48
+    },
+    {
+      "fromStopNo": 25,
+      "toStopNo": 26,
+      "fromName": "Karon Circle",
+      "toName": "Secret cliff resort ",
+      "fromGeohash": "w1mussxh8",
+      "toGeohash": "w1musx09h",
+      "distanceM": 2707,
+      "durationSec": 275
+    },
+    {
+      "fromStopNo": 26,
+      "toStopNo": 27,
+      "fromName": "Secret cliff resort ",
+      "toName": "Patong Bus Stop",
+      "fromGeohash": "w1musx09h",
+      "toGeohash": "w1muuevs1",
+      "distanceM": 3487,
+      "durationSec": 398
+    },
+    {
+      "fromStopNo": 27,
+      "toStopNo": 28,
+      "fromName": "Patong Bus Stop",
+      "toName": "Bangla Patong ",
+      "fromGeohash": "w1muuevs1",
+      "toGeohash": "w1muuv066",
+      "distanceM": 845,
+      "durationSec": 196
+    },
+    {
+      "fromStopNo": 28,
+      "toStopNo": 29,
+      "fromName": "Bangla Patong ",
+      "toName": "Four Point Patong",
+      "fromGeohash": "w1muuv066",
+      "toGeohash": "w1muuz1b4",
+      "distanceM": 1232,
+      "durationSec": 232
+    },
+    {
+      "fromStopNo": 29,
+      "toStopNo": 30,
+      "fromName": "Four Point Patong",
+      "toName": "Kalim School",
+      "fromGeohash": "w1muuz1b4",
+      "toGeohash": "w1mvhb0g1",
+      "distanceM": 743,
+      "durationSec": 89
+    },
+    {
+      "fromStopNo": 30,
+      "toStopNo": 31,
+      "fromName": "Kalim School",
+      "toName": "Kalim Bus Stop",
+      "fromGeohash": "w1mvhb0g1",
+      "toGeohash": "w1mvh8yed",
+      "distanceM": 587,
+      "durationSec": 50
+    },
+    {
+      "fromStopNo": 31,
+      "toStopNo": 32,
+      "fromName": "Kalim Bus Stop",
+      "toName": "Big C Kamala",
+      "fromGeohash": "w1mvh8yed",
+      "toGeohash": "w1mvhqv9m",
+      "distanceM": 5442,
+      "durationSec": 473
+    },
+    {
+      "fromStopNo": 32,
+      "toStopNo": 33,
+      "fromName": "Big C Kamala",
+      "toName": "Phuket Fantasea",
+      "fromGeohash": "w1mvhqv9m",
+      "toGeohash": "w1mvk8404",
+      "distanceM": 1203,
+      "durationSec": 131
+    },
+    {
+      "fromStopNo": 33,
+      "toStopNo": 34,
+      "fromName": "Phuket Fantasea",
+      "toName": "Kamala Muslim Cemetery",
+      "fromGeohash": "w1mvk8404",
+      "toGeohash": "w1mvk886v",
+      "distanceM": 561,
+      "durationSec": 65
+    },
+    {
+      "fromStopNo": 34,
+      "toStopNo": 35,
+      "fromName": "Kamala Muslim Cemetery",
+      "toName": "Cafe De Mar",
+      "fromGeohash": "w1mvk886v",
+      "toGeohash": "w1mvk90xt",
+      "distanceM": 412,
+      "durationSec": 44
+    },
+    {
+      "fromStopNo": 35,
+      "toStopNo": 36,
+      "fromName": "Cafe De Mar",
+      "toName": "Surin Beach",
+      "fromGeohash": "w1mvk90xt",
+      "toGeohash": "w1mvk7vsr",
+      "distanceM": 2536,
+      "durationSec": 283
+    },
+    {
+      "fromStopNo": 36,
+      "toStopNo": 37,
+      "fromName": "Surin Beach",
+      "toName": "Lotus Cherngtalay",
+      "fromGeohash": "w1mvk7vsr",
+      "toGeohash": "w1mvkvtrf",
+      "distanceM": 2909,
+      "durationSec": 353
+    },
+    {
+      "fromStopNo": 37,
+      "toStopNo": 38,
+      "fromName": "Lotus Cherngtalay",
+      "toName": "Laguna",
+      "fromGeohash": "w1mvkvtrf",
+      "toGeohash": "w1mvsb3mm",
+      "distanceM": 2196,
+      "durationSec": 316
+    },
+    {
+      "fromStopNo": 38,
+      "toStopNo": 39,
+      "fromName": "Laguna",
+      "toName": "Cherngtalay School",
+      "fromGeohash": "w1mvsb3mm",
+      "toGeohash": "w1mvmp3hj",
+      "distanceM": 1706,
+      "durationSec": 177
+    },
+    {
+      "fromStopNo": 39,
+      "toStopNo": 40,
+      "fromName": "Cherngtalay School",
+      "toName": "Baan Khian",
+      "fromGeohash": "w1mvmp3hj",
+      "toGeohash": "w1mvtt1xj",
+      "distanceM": 4801,
+      "durationSec": 495
+    },
+    {
+      "fromStopNo": 40,
+      "toStopNo": 41,
+      "fromName": "Baan Khian",
+      "toName": "Thalang Public Health Office",
+      "fromGeohash": "w1mvtt1xj",
+      "toGeohash": "w1mvtwshe",
+      "distanceM": 1165,
+      "durationSec": 224
+    },
+    {
+      "fromStopNo": 41,
+      "toStopNo": 42,
+      "fromName": "Thalang Public Health Office",
+      "toName": "Phuket Airport",
+      "fromGeohash": "w1mvtwshe",
+      "toGeohash": "w1myjh0eh",
+      "distanceM": 12427,
+      "durationSec": 865
+    }
+  ],
+  "inbound": [
+    {
+      "fromStopNo": 43,
+      "toStopNo": 44,
+      "fromName": "Thalang Public Health Office",
+      "toName": "Baan Khian",
+      "fromGeohash": "w1mvtws3d",
+      "toGeohash": "w1mvtt1y4",
+      "distanceM": 1103,
+      "durationSec": 107
+    },
+    {
+      "fromStopNo": 44,
+      "toStopNo": 45,
+      "fromName": "Baan Khian",
+      "toName": "Cherngtalay School",
+      "fromGeohash": "w1mvtt1y4",
+      "toGeohash": "w1mvmp379",
+      "distanceM": 4844,
+      "durationSec": 602
+    },
+    {
+      "fromStopNo": 45,
+      "toStopNo": 46,
+      "fromName": "Cherngtalay School",
+      "toName": "Laguna",
+      "fromGeohash": "w1mvmp379",
+      "toGeohash": "w1mvsb3qx",
+      "distanceM": 1677,
+      "durationSec": 246
+    },
+    {
+      "fromStopNo": 46,
+      "toStopNo": 47,
+      "fromName": "Laguna",
+      "toName": "Lotus Cherngtalay",
+      "fromGeohash": "w1mvsb3qx",
+      "toGeohash": "w1mvkvvqx",
+      "distanceM": 2071,
+      "durationSec": 234
+    },
+    {
+      "fromStopNo": 47,
+      "toStopNo": 48,
+      "fromName": "Lotus Cherngtalay",
+      "toName": "Surin Beach",
+      "fromGeohash": "w1mvkvvqx",
+      "toGeohash": "w1mvk7vcu",
+      "distanceM": 3092,
+      "durationSec": 342
+    },
+    {
+      "fromStopNo": 48,
+      "toStopNo": 49,
+      "fromName": "Surin Beach",
+      "toName": "Intercontinental Kamala",
+      "fromGeohash": "w1mvk7vcu",
+      "toGeohash": "w1mvk98b4",
+      "distanceM": 2307,
+      "durationSec": 245
+    },
+    {
+      "fromStopNo": 49,
+      "toStopNo": 50,
+      "fromName": "Intercontinental Kamala",
+      "toName": "Kamala Muslim Cemetery",
+      "fromGeohash": "w1mvk98b4",
+      "toGeohash": "w1mvk88d8",
+      "distanceM": 602,
+      "durationSec": 71
+    },
+    {
+      "fromStopNo": 50,
+      "toStopNo": 51,
+      "fromName": "Kamala Muslim Cemetery",
+      "toName": "Phuket Fantasea",
+      "fromGeohash": "w1mvk88d8",
+      "toGeohash": "w1mvk8422",
+      "distanceM": 550,
+      "durationSec": 67
+    },
+    {
+      "fromStopNo": 51,
+      "toStopNo": 52,
+      "fromName": "Phuket Fantasea",
+      "toName": "Big C Kamala",
+      "fromGeohash": "w1mvk8422",
+      "toGeohash": "w1mvhqth5",
+      "distanceM": 1306,
+      "durationSec": 139
+    },
+    {
+      "fromStopNo": 52,
+      "toStopNo": 53,
+      "fromName": "Big C Kamala",
+      "toName": "Kalim Bus Stop",
+      "fromGeohash": "w1mvhqth5",
+      "toGeohash": "w1mvh8ysk",
+      "distanceM": 5302,
+      "durationSec": 568
+    },
+    {
+      "fromStopNo": 53,
+      "toStopNo": 54,
+      "fromName": "Kalim Bus Stop",
+      "toName": "Kalim School",
+      "fromGeohash": "w1mvh8ysk",
+      "toGeohash": "w1mvhb20k",
+      "distanceM": 446,
+      "durationSec": 42
+    },
+    {
+      "fromStopNo": 54,
+      "toStopNo": 55,
+      "fromName": "Kalim School",
+      "toName": "Diamond Cliff Resort & Spa",
+      "fromGeohash": "w1mvhb20k",
+      "toGeohash": "w1muuz9sy",
+      "distanceM": 457,
+      "durationSec": 46
+    },
+    {
+      "fromStopNo": 55,
+      "toStopNo": 56,
+      "fromName": "Diamond Cliff Resort & Spa",
+      "toName": "Indigo Patong",
+      "fromGeohash": "w1muuz9sy",
+      "toGeohash": "w1muuy5bq",
+      "distanceM": 1327,
+      "durationSec": 209
+    },
+    {
+      "fromStopNo": 56,
+      "toStopNo": 57,
+      "fromName": "Indigo Patong",
+      "toName": "Patong PEA",
+      "fromGeohash": "w1muuy5bq",
+      "toGeohash": "w1muuud0y",
+      "distanceM": 946,
+      "durationSec": 233
+    },
+    {
+      "fromStopNo": 57,
+      "toStopNo": 58,
+      "fromName": "Patong PEA",
+      "toName": "Holiday Inn Resort Patong",
+      "fromGeohash": "w1muuud0y",
+      "toGeohash": "w1muuu08d",
+      "distanceM": 437,
+      "durationSec": 73
+    },
+    {
+      "fromStopNo": 58,
+      "toStopNo": 59,
+      "fromName": "Holiday Inn Resort Patong",
+      "toName": "Secret cliff resort ",
+      "fromGeohash": "w1muuu08d",
+      "toGeohash": "w1musx0bu",
+      "distanceM": 3662,
+      "durationSec": 387
+    },
+    {
+      "fromStopNo": 59,
+      "toStopNo": 60,
+      "fromName": "Secret cliff resort ",
+      "toName": "Karon Circle",
+      "fromGeohash": "w1musx0bu",
+      "toGeohash": "w1mussxjd",
+      "distanceM": 2656,
+      "durationSec": 265
+    },
+    {
+      "fromStopNo": 60,
+      "toStopNo": 61,
+      "fromName": "Karon Circle",
+      "toName": "Woraburi Karon",
+      "fromGeohash": "w1mussxjd",
+      "toGeohash": "w1musezwn",
+      "distanceM": 461,
+      "durationSec": 48
+    },
+    {
+      "fromStopNo": 61,
+      "toStopNo": 62,
+      "fromName": "Woraburi Karon",
+      "toName": "Karon Stadium",
+      "fromGeohash": "w1musezwn",
+      "toGeohash": "w1musc2re",
+      "distanceM": 1511,
+      "durationSec": 176
+    },
+    {
+      "fromStopNo": 62,
+      "toStopNo": 63,
+      "fromName": "Karon Stadium",
+      "toName": "OZO Phuket",
+      "fromGeohash": "w1musc2re",
+      "toGeohash": "w1musb64z",
+      "distanceM": 778,
+      "durationSec": 133
+    },
+    {
+      "fromStopNo": 63,
+      "toStopNo": 64,
+      "fromName": "OZO Phuket",
+      "toName": "Kata Palm",
+      "fromGeohash": "w1musb64z",
+      "toGeohash": "w1mukzk51",
+      "distanceM": 669,
+      "durationSec": 121
+    },
+    {
+      "fromStopNo": 64,
+      "toStopNo": 65,
+      "fromName": "Kata Palm",
+      "toName": "Beyond hotel Kata",
+      "fromGeohash": "w1mukzk51",
+      "toGeohash": "w1mukyurm",
+      "distanceM": 233,
+      "durationSec": 42
+    },
+    {
+      "fromStopNo": 65,
+      "toStopNo": 66,
+      "fromName": "Beyond hotel Kata",
+      "toName": "Andaman Cannacia Resort",
+      "fromGeohash": "w1mukyurm",
+      "toGeohash": "w1mukyhxx",
+      "distanceM": 850,
+      "durationSec": 128
+    },
+    {
+      "fromStopNo": 66,
+      "toStopNo": 67,
+      "fromName": "Andaman Cannacia Resort",
+      "toName": "Sai Yuan",
+      "fromGeohash": "w1mukyhxx",
+      "toGeohash": "w1mum4zmc",
+      "distanceM": 4588,
+      "durationSec": 446
+    }
+  ],
+  "metadata": {
+    "route": "rawai-airport",
+    "generatedAt": "2026-05-20",
+    "source": "UNL Global Routing API v1",
+    "apiBase": "https://api.unl.global/v1"
+  }
+}

@@ -28,7 +28,7 @@ test("live api stays reachable while the tourist shell boots", async ({ page, re
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toBeVisible();
-  await expect(page.getByText(/Next bus to/i)).toBeVisible();
+  await expect(page.getByText(/Next Bus/i)).toBeVisible();
 });
 
 test("live api serves the info tab stop flow end to end", async ({ page }) => {

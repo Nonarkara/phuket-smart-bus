@@ -66,7 +66,8 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
         if (cancelled || d.status !== 200) return;
         const v = Math.round(d.data.pm25 * 10) / 10;
         const level = v <= 12 ? "Good" : v <= 25 ? "Moderate" : "Poor";
-        const color = v <= 12 ? "#16b8b0" : v <= 25 ? "#b58900" : "#dc322f";
+        // Canonical Dr Non semantic palette — Good = gain green, Moderate = amber, Poor = loss red.
+        const color = v <= 12 ? "#16a574" : v <= 25 ? "#f59e0b" : "#c0392b";
         if (!cancelled) setPm25({ value: v, level, color });
       })
       .catch(() => {});

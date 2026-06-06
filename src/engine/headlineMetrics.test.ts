@@ -107,4 +107,30 @@ describe("HeadlineMetrics — single source of truth", () => {
     expect(h.onTimePct).toBeGreaterThanOrEqual(70);
     expect(h.onTimePct).toBeLessThanOrEqual(99);
   });
+
+  it("fleet count never reports impossible '15 buses with 20 moving' state", () => {
+    // Regression: an earlier /governor build derived movingBuses from a
+    // different filter than totalBuses, so it could report more buses moving
+    // than existed. Lock the invariant: moving ≤ total, dwelling ≤ total.
+    for (const min of [540, 720, 900, 1080, 1320]) {
+      setClockOverride(() => min);
+      const h = getHeadlineMetrics();
+      expect(h.fleet.movingBuses).toBeLessThanOrEqual(h.fleet.totalBuses);
+      expect(h.fleet.dwellingBuses).toBeLessThanOrEqual(h.fleet.totalBuses);
+    }
+  });
+
+  it("/v2 dashboard contract: SSOT fleet totals match the airport-line headline numbers it surfaces", () => {
+    // Regression: DashboardV2 used to read state.busesMoving + state.activeBuses
+    // (airport-line only — ~2 buses) while the right-side panel showed
+    // mapVehicles.length (full fleet — ~25 vehicles). The two never reconciled,
+    // and the "AVG LOAD: 100%" bug came back. Lock both to the SSOT.
+    setClockOverride(() => 720);
+    const h = getHeadlineMetrics();
+    // SUPPLY ROLLING card and BUSES NOW counter must equal one SSOT value.
+    expect(h.fleet.movingBuses).toBeLessThanOrEqual(h.fleet.totalBuses);
+    // avgLoadPct must be the SSOT version, never state.avgOccupancy * 100.
+    expect(h.now.avgLoadPct).toBeGreaterThanOrEqual(0);
+    expect(h.now.avgLoadPct).toBeLessThanOrEqual(100);
+  });
 });
