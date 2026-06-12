@@ -241,6 +241,12 @@ export interface VehiclePosition {
    *  routeId this is enough for the renderer to look up the same
    *  polyline the engine used (`getDirectionPolyline(routeId, firstStop)`). */
   polylineFirstStop: LatLngTuple | null;
+  /** Scheduled departure minute of the trip this vehicle is running.
+   *  Joins the vehicle to the demand-supply engine's per-trip boarding
+   *  counts (demandSupplyEngine.getTripLoad). Null for non-trip vehicles. */
+  tripStartMin?: number | null;
+  /** Direction label of the active trip, e.g. "Bus to Rawai". */
+  directionLabel?: string | null;
 }
 
 export interface Advisory {

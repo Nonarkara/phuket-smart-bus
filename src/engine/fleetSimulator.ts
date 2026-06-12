@@ -887,7 +887,9 @@ function buildVehiclePosition(
     // stops[0] is in the middle of the route (e.g., Patong Terminal 1 is
     // 1462m into the outbound Patong line), the endpoint-distance search
     // picks the wrong direction and buses appear kilometres off-road.
-    polylineFirstStop: profile.polyline[0] ?? profile.stops[0]?.coordinates ?? null
+    polylineFirstStop: profile.polyline[0] ?? profile.stops[0]?.coordinates ?? null,
+    tripStartMin: occ.scheduledDepartureMinutes,
+    directionLabel: profile.directionLabel
   };
 }
 

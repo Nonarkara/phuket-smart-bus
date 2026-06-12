@@ -19,7 +19,8 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlig
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getScheduleSupply, getAirportDepartures } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures } from "./fleetSimulator";
+import { atMinute, getDayModel, getHourlyCorridor } from "./demandSupplyEngine";
 
 const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
 const SVC_END = 1350;  // 22:30 — matches fleetSimulator SERVICE_END (PKSB last departure 23:30, last arrival ~22:30)
@@ -108,11 +109,6 @@ function airportDepartures(): number[] {
   return _cachedAirportDepartures;
 }
 
-let _cachedScheduleSupply: ReturnType<typeof getScheduleSupply> | null = null;
-function scheduleSupply(): ReturnType<typeof getScheduleSupply> {
-  if (!_cachedScheduleSupply) _cachedScheduleSupply = getScheduleSupply();
-  return _cachedScheduleSupply;
-}
 
 // ---------------------------------------------------------------------------
 // Regional origin mapping
@@ -203,6 +199,8 @@ export type SimState = {
   paxWantBus: number;   // subset who'd take bus
   paxBoarded: number;   // cumulative boarded today
   paxDelivered: number; // cumulative delivered to destination
+  paxAbandoned: number; // gave up after 60 min in the queue → took Grab
+  lostRevenueThb: number; // paxAbandoned × ฿100 — revenue lost to capacity
 
   // Supply
   activeBuses: number;
@@ -260,50 +258,22 @@ export function computeSimState(): SimState {
   const nextFlight = upcoming[0] ?? null;
   const nextFlightMin = nextFlight ? Math.round(nextFlight.arrMin - now) : null;
 
-  // 3. Passengers who've cleared customs and want transport (20-45 min after landing)
-  const avgCustoms = (CUSTOMS_MIN + CUSTOMS_MAX) / 2;
-  let paxReady = 0;
-  for (const f of landed) {
-    const readyAt = f.arrMin + avgCustoms;
-    if (readyAt <= now) {
-      paxReady += f.pax;
-    } else {
-      // Partial: some fast, some slow
-      const progress = Math.max(0, (now - f.arrMin - CUSTOMS_MIN) / (CUSTOMS_MAX - CUSTOMS_MIN));
-      paxReady += Math.round(f.pax * Math.min(1, progress));
-    }
-  }
+  // 3–8. Demand, boarding, delivery, queue — ALL from the demand-supply
+  // engine (demandSupplyEngine.ts). One FIFO queue model with abandonment,
+  // precomputed for the whole day. This function no longer carries its own
+  // parallel demand math — that parallel math was exactly why /v2 and /ops
+  // could disagree.
+  const eng = atMinute(now);
+  const paxWantBus = eng.demandCum;       // joined the bus queue so far today
+  const paxBoarded = eng.boardedCum;      // boarded a bus
+  const paxDelivered = eng.deliveredCum;  // alighted at destination
+  const paxAtAirport = eng.waiting;       // in the queue right now
+  const paxAbandoned = eng.abandonedCum;  // gave up after 60 min → took Grab
 
-  // 4. How many want the bus?
-  const paxWantBus = Math.round(paxReady * BUS_CAPTURE_RATE);
-
-  // 5. Bus departures that have happened (airport line only)
   const deps = airportDepartures();
   const departedBuses = deps.filter(d => d <= now);
   const totalBusCapacity = departedBuses.length * BUS_CAPACITY;
-
-  // 6. How many actually boarded? (min of demand and capacity)
-  const paxBoarded = Math.min(paxWantBus, totalBusCapacity);
-
-  // 7. How many delivered? (boarded minus those still in transit)
   const avgTripMin = 75; // weighted average across destinations
-  let paxDelivered = 0;
-  let cumCapacity = 0;
-  for (const dep of departedBuses) {
-    const busLoad = Math.min(BUS_CAPACITY, Math.max(0, paxWantBus - cumCapacity));
-    cumCapacity += BUS_CAPACITY;
-    const deliveryTime = dep + avgTripMin;
-    if (deliveryTime <= now) {
-      paxDelivered += busLoad;
-    } else if (dep + 10 <= now) {
-      // Partial delivery: some stops along the way
-      const tripProgress = (now - dep) / avgTripMin;
-      paxDelivered += Math.round(busLoad * tripProgress * 0.5); // early stops deliver fewer
-    }
-  }
-
-  // 8. Waiting at airport
-  const paxAtAirport = Math.max(0, paxWantBus - paxBoarded);
 
   // 9. Next departure
   const nextDep = deps.find(d => d > now);
@@ -344,13 +314,15 @@ export function computeSimState(): SimState {
     ? Math.min(1, paxBoarded / totalBusCapacity)
     : 0;
 
-  // 14. Vehicle positions — use the existing polyline engine
-  const vehicles = buildVehiclePositions(departedBuses, now, paxWantBus);
+  // 14. Vehicle positions — synthetic airport-line markers carrying the
+  // engine's REAL per-trip boarded counts (no more plate-join fallbacks).
+  const vehicles = buildVehiclePositions(now);
 
   return {
     clockLabel, simMinutes: now,
     landedFlights: landed, nextFlight, nextFlightMin, totalArrPax, lastLandedFlight, regionBreakdown,
     paxAtAirport, paxWantBus, paxBoarded, paxDelivered,
+    paxAbandoned, lostRevenueThb: paxAbandoned * 100,
     activeBuses, busesMoving, busesDwelling, nextDeparture, avgOccupancy,
     revenueThb, grabEquivThb, savingsThb, co2SavedKg, co2TaxiKg,
     tripsCompleted, kmDriven,
@@ -471,29 +443,21 @@ function posOnPoly(meters: number, poly: LatLngTuple[], cum: number[]): { lat: n
   return { lat, lng, heading };
 }
 
-function buildVehiclePositions(
-  departedBuses: number[],
-  nowMin: number,
-  demandPax: number
-): SimState["vehicles"] {
+function buildVehiclePositions(nowMin: number): SimState["vehicles"] {
   const { poly, cum } = getPolyline();
   const totalMeters = cum[cum.length - 1];
   const tripDuration = 95; // minutes for full route
 
   const vehicles: SimState["vehicles"] = [];
-  let cumBoarded = 0;
+  const trips = getDayModel().trips;
 
-  for (let i = 0; i < departedBuses.length; i++) {
-    const dep = departedBuses[i];
-    const age = nowMin - dep;
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i];
+    const age = nowMin - trip.depMin;
 
     // Skip buses that finished their trip + layover
     if (age > tripDuration + 20) continue;
     if (age < -5) continue; // prestart
-
-    const busIdx = i;
-    const paxOnBus = Math.min(BUS_CAPACITY, Math.max(0, demandPax - cumBoarded));
-    cumBoarded += BUS_CAPACITY;
 
     let status: "moving" | "dwelling" = "dwelling";
     let meters = 0;
@@ -510,14 +474,16 @@ function buildVehiclePositions(
 
     const pos = posOnPoly(meters, poly, cum);
     vehicles.push({
-      id: `bus-${busIdx}`,
+      id: `bus-${i}`,
       lat: pos.lat,
       lng: pos.lng,
       heading: pos.heading,
       status,
       route: "Airport → Rawai",
-      pax: Math.min(paxOnBus, BUS_CAPACITY),
-      plate: getPlate(busIdx),
+      // The engine's per-trip boarding count — what THIS bus actually
+      // picked up from the queue, not a capacity-division guess.
+      pax: trip.boarded,
+      plate: getPlate(i),
     });
   }
 
@@ -561,40 +527,30 @@ let cachedHourlyDemandSupply: HourlyDemandSupply[] | null = null;
 export function getHourlyDemandSupply(): HourlyDemandSupply[] {
   if (cachedHourlyDemandSupply) return cachedHourlyDemandSupply;
 
-  // 1) Bucket flight arrivals into hours, accounting for ~30 min customs lag.
+  // Airport corridor only — the demand side of this chart is airport
+  // arrivals, so the supply side must be airport-line seats. The old
+  // version counted EVERY route's departures as supply, including 100-seat
+  // ferries. Boats do not pick up the airport queue; that inflation is why
+  // the capture numbers never reconciled.
+  const corridor = getHourlyCorridor();
+
+  // Raw arriving pax per hour (pre-capture) for the chart's context line.
   const arrivalByHour: number[] = Array.from({ length: 24 }, () => 0);
   for (const f of FLIGHTS) {
-    // Bus demand appears ~30 min after touchdown (customs+baggage)
     const bookableMin = f.arrMin + 30;
     const h = Math.floor(bookableMin / 60);
     if (h >= 0 && h < 24) arrivalByHour[h] += f.pax;
   }
 
-  // 2) Bucket ALL scheduled departures (all routes) into hours.
-  //    This gives the full supply picture, not just airport line.
-  const seatsByHour: number[] = Array.from({ length: 24 }, () => 0);
-  const supply = scheduleSupply();
-  for (const { hour, seats } of supply.capacityByHour) {
-    if (hour >= 0 && hour < 24) seatsByHour[hour] += seats;
-  }
-
-  // 3) Combine — per-hour demand vs supply.
-  cachedHourlyDemandSupply = arrivalByHour.map((pax, hour) => {
-    const busDemandPax = Math.round(pax * BUS_CAPTURE_RATE);
-    const busSeatsAvailable = seatsByHour[hour];
-    const servedPax = Math.min(busDemandPax, busSeatsAvailable);
-    const unmetPax = Math.max(0, busDemandPax - busSeatsAvailable);
-    const revenueThb = servedPax * 100; // ฿100 fare flat
-    return {
-      hour,
-      arrivalPax: pax,
-      busDemandPax,
-      busSeatsAvailable,
-      servedPax,
-      unmetPax,
-      revenueThb
-    };
-  });
+  cachedHourlyDemandSupply = corridor.map((c) => ({
+    hour: c.hour,
+    arrivalPax: arrivalByHour[c.hour],
+    busDemandPax: c.demandPax,
+    busSeatsAvailable: c.seats,
+    servedPax: c.boardedPax,
+    unmetPax: c.abandonedPax,
+    revenueThb: c.revenueThb
+  }));
 
   return cachedHourlyDemandSupply;
 }

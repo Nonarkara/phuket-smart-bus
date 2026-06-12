@@ -1,7 +1,15 @@
 import { useEffect, useRef } from "react";
 import { Counter, InsightCard } from "./V2Shared";
+import { pause, setSimulatedMinutes } from "../../engine/fleetSimulator";
 import type { SimState, RegionData } from "../../engine/simulation";
 import type { OpsFlight, FlightHourBucket } from "../../engine/opsFlightSchedule";
+
+/** Click any hour anywhere on this dashboard → jump the simulation clock
+ *  there and pause, so the map shows where every bus would be at that time. */
+export function scrubToHour(hour: number) {
+  setSimulatedMinutes(hour * 60);
+  pause();
+}
 
 // ---------------------------------------------------------------------------
 // Helpers and Sub-components
@@ -34,6 +42,11 @@ function HourlyFlightPulse({ buckets, simMinutes }: HourlyFlightPulseProps) {
           <div
             key={bucket.hour}
             className={`v2-hourly__row ${bucket.hour === currentHour ? "is-current" : ""}`}
+            role="button"
+            tabIndex={0}
+            title={`Jump to ${String(bucket.hour).padStart(2, "0")}:00 — see where every bus is`}
+            onClick={() => scrubToHour(bucket.hour)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") scrubToHour(bucket.hour); }}
           >
             <span className="v2-hourly__time">{String(bucket.hour).padStart(2, "0")}:00</span>
             <div className="v2-hourly__track">
@@ -105,19 +118,31 @@ function FlightScheduleRail({ flights, simMinutes }: FlightScheduleRailProps) {
         {flights.map((flight, index) => {
           const status = classifyFlightRow(flight, simMinutes);
           const rowRef = index === anchoredIndex ? focusRef : undefined;
+          // The demand trace: this flight's contribution to the bus queue.
+          const busDemand = flight.type === "arr" && flight.mode === "flight"
+            ? Math.round(flight.pax * 0.12)
+            : 0;
           return (
             <div
               key={`${flight.flightNo}-${flight.schedMin}-${flight.type}`}
               ref={rowRef}
               className={`v2-schedule__row v2-schedule__row--${status}`}
+              title={`${flight.airline} · ${flight.aircraftName} · ${flight.seats} seats · ${flight.pax} pax (${flight.loadPct}% load)${busDemand > 0 ? ` → ${busDemand} bus pax` : ""}`}
             >
               <span className="v2-schedule__time">{flight.timeLabel}</span>
               <span className={`v2-schedule__type v2-schedule__type--${flight.type}`}>
                 {flight.type === "arr" ? "IN" : "OUT"}
               </span>
-              <span className="v2-schedule__flight">{flight.flightNo}</span>
+              <span className="v2-schedule__main">
+                <span className="v2-schedule__flight">{flight.flightNo}</span>
+                <span className="v2-schedule__craft">{flight.aircraftCode} · {flight.seats} seats</span>
+              </span>
               <span className="v2-schedule__city">{flight.city}</span>
-              <span className="v2-schedule__pax">{flight.pax}</span>
+              <span className="v2-schedule__paxcol">
+                <span className="v2-schedule__pax">{flight.pax}</span>
+                <span className="v2-schedule__load">{flight.loadPct}%</span>
+              </span>
+              {busDemand > 0 && <span className="v2-schedule__busdemand">+{busDemand}</span>}
             </div>
           );
         })}

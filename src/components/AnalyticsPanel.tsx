@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import type { Lang } from "@shared/types";
 import { getHourlyDemandSupply, simNow, type HourlyDemandSupply } from "../engine/simulation";
+import { pause, setSimulatedMinutes } from "../engine/fleetSimulator";
 
 interface AnalyticsPanelProps {
   lang: Lang;
   /** When set (ops console replay), use this instead of the live sim clock. */
   simMinutes?: number | null;
+  /** Clicking an hour column scrubs the sim clock there (default on). */
+  scrubbable?: boolean;
 }
 
 const HOURS = Array.from({ length: 17 }, (_, i) => 6 + i); // 06:00 → 22:00
@@ -15,7 +18,7 @@ function fmtThb(n: number): string {
   return `฿${n}`;
 }
 
-export function AnalyticsPanel({ lang: _lang, simMinutes: propSimMinutes }: AnalyticsPanelProps) {
+export function AnalyticsPanel({ lang: _lang, simMinutes: propSimMinutes, scrubbable = true }: AnalyticsPanelProps) {
   const [data, setData] = useState<HourlyDemandSupply[]>(() => getHourlyDemandSupply());
   const [engineHour, setEngineHour] = useState<number>(() => Math.floor(simNow() / 60));
 
@@ -71,17 +74,25 @@ export function AnalyticsPanel({ lang: _lang, simMinutes: propSimMinutes }: Anal
           {rows.map((r) => {
             const isCurrent = r.hour === currentHour;
             const isFuture = r.hour > currentHour;
-            const demandPct = isFuture ? 0 : (r.busDemandPax / yMax) * 100;
-            const supplyPct = isFuture ? 0 : (r.busSeatsAvailable / yMax) * 100;
-            const revenuePct = isFuture ? 0 : (r.revenueThb / maxRevenue) * 100;
-            const isGap = !isFuture && r.unmetPax > 0;
+            // The whole day is precomputed — future hours show the PLAN at
+            // reduced opacity instead of an empty column. Click any hour to
+            // jump there and watch the buses run it.
+            const demandPct = (r.busDemandPax / yMax) * 100;
+            const supplyPct = (r.busSeatsAvailable / yMax) * 100;
+            const revenuePct = (r.revenueThb / maxRevenue) * 100;
+            const isGap = r.unmetPax > 0;
+            const scrub = scrubbable
+              ? () => { setSimulatedMinutes(r.hour * 60); pause(); }
+              : undefined;
             return (
               <div
                 key={r.hour}
-                className={`analytics-col ${isCurrent ? "analytics-col--current" : ""} ${isFuture ? "analytics-col--future" : ""} ${isGap ? "analytics-col--gap" : ""}`}
-                title={isFuture
-                  ? `${String(r.hour).padStart(2, "0")}:00 · pending`
-                  : `${String(r.hour).padStart(2, "0")}:00 · demand ${r.busDemandPax} pax · seats ${r.busSeatsAvailable} · ${fmtThb(r.revenueThb)}${r.unmetPax > 0 ? ` · ${r.unmetPax} unmet` : ""}`}
+                className={`analytics-col ${isCurrent ? "analytics-col--current" : ""} ${isFuture ? "analytics-col--future" : ""} ${isGap ? "analytics-col--gap" : ""} ${scrubbable ? "analytics-col--scrub" : ""}`}
+                role={scrubbable ? "button" : undefined}
+                tabIndex={scrubbable ? 0 : undefined}
+                onClick={scrub}
+                onKeyDown={scrub ? (e) => { if (e.key === "Enter" || e.key === " ") scrub(); } : undefined}
+                title={`${String(r.hour).padStart(2, "0")}:00 · demand ${r.busDemandPax} pax · seats ${r.busSeatsAvailable} · ${fmtThb(r.revenueThb)}${r.unmetPax > 0 ? ` · ${r.unmetPax} lost to capacity` : ""}${scrubbable ? " — click to jump here" : ""}`}
               >
                 <div className="analytics-col__plot">
                   <div

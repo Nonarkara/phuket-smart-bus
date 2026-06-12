@@ -1,4 +1,5 @@
 import peakDayFlights from "../../server/data/fixtures/peak-day-flights.json";
+import { assignAircraft, loadFactorPct } from "./aircraftData";
 
 export type OpsFlight = {
   flightNo: string;
@@ -11,6 +12,14 @@ export type OpsFlight = {
   type: "arr" | "dep";
   terminal: string;
   mode: "flight" | "boat";
+  /** Aircraft the airline scheduled — ICAO code, e.g. "A333". Boats: "BOAT". */
+  aircraftCode: string;
+  /** Marketing name, e.g. "Airbus A330-300". */
+  aircraftName: string;
+  /** Configured seat count for that aircraft. */
+  seats: number;
+  /** pax / seats as 0–100. */
+  loadPct: number;
 };
 
 type PeakDayFlightFixture = {
@@ -49,18 +58,28 @@ function parseMinutes(label: string) {
 const peakDay = peakDayFlights as PeakDayFixture;
 
 export const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
-  .map((flight) => ({
-    flightNo: flight.flightNumber,
-    airline: flight.airline,
-    city: flight.city,
-    airportCode: flight.origin ?? flight.destination ?? "",
-    pax: flight.estimatedPax,
-    schedMin: parseMinutes(flight.scheduledTime),
-    timeLabel: flight.scheduledTime,
-    type: flight.type === "arrival" ? ("arr" as const) : ("dep" as const),
-    terminal: flight.terminal,
-    mode: "flight" as const
-  }))
+  .map((flight) => {
+    // Aircraft is scheduled by the airline ahead of the day — assign from the
+    // BASE pax estimate (the airline's expectation), so the same flight keeps
+    // the same airframe across days while load factor varies with the fuzz.
+    const aircraft = assignAircraft(flight.airline, flight.estimatedPax);
+    return {
+      flightNo: flight.flightNumber,
+      airline: flight.airline,
+      city: flight.city,
+      airportCode: flight.origin ?? flight.destination ?? "",
+      pax: Math.min(aircraft.seats, flight.estimatedPax),
+      schedMin: parseMinutes(flight.scheduledTime),
+      timeLabel: flight.scheduledTime,
+      type: flight.type === "arrival" ? ("arr" as const) : ("dep" as const),
+      terminal: flight.terminal,
+      mode: "flight" as const,
+      aircraftCode: aircraft.code,
+      aircraftName: aircraft.name,
+      seats: aircraft.seats,
+      loadPct: loadFactorPct(Math.min(aircraft.seats, flight.estimatedPax), aircraft.seats)
+    };
+  })
   .sort((left, right) => left.schedMin - right.schedMin || (left.type === "arr" ? -1 : 1));
 
 // ---------------------------------------------------------------------------
@@ -127,26 +146,37 @@ function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
     const paxJitter = 1 + (rng() - 0.5) * 0.30; // ±15%
     const timeJitter = Math.round((rng() - 0.5) * 20); // ±10 min
     const schedMin = Math.max(0, f.schedMin + timeJitter);
+    // The airframe is fixed; only the load varies. Pax can never exceed seats.
+    const pax = Math.min(f.seats, Math.max(0, Math.round(f.pax * factor * paxJitter)));
     out.push({
       ...f,
-      pax: Math.max(0, Math.round(f.pax * factor * paxJitter)),
+      pax,
+      loadPct: loadFactorPct(pax, f.seats),
       schedMin,
       timeLabel: fmtTime(schedMin)
     });
   }
   for (const c of DOW_CHARTERS[TODAY.dow]) {
     const schedMin = Math.round(420 + rng() * 900); // 07:00–22:00
+    const isBoat = c.mode === "boat";
+    const aircraft = isBoat ? null : assignAircraft(c.airline, c.pax);
+    const seats = isBoat ? Math.max(c.pax, 350) : aircraft!.seats;
+    const pax = Math.min(seats, Math.round(c.pax * (1 + (rng() - 0.5) * 0.20)));
     out.push({
       flightNo: c.flightNo,
       airline: c.airline,
       city: c.city,
       airportCode: c.airportCode,
-      pax: Math.round(c.pax * (1 + (rng() - 0.5) * 0.20)),
+      pax,
       schedMin,
       timeLabel: fmtTime(schedMin),
       type: "arr",
-      terminal: c.mode === "boat" ? "PIER" : "T1",
-      mode: c.mode ?? "flight"
+      terminal: isBoat ? "PIER" : "T1",
+      mode: c.mode ?? "flight",
+      aircraftCode: isBoat ? "BOAT" : aircraft!.code,
+      aircraftName: isBoat ? "Ferry vessel" : aircraft!.name,
+      seats,
+      loadPct: loadFactorPct(pax, seats)
     });
   }
   return out.sort((a, b) => a.schedMin - b.schedMin || (a.type === "arr" ? -1 : 1));

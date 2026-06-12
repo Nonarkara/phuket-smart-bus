@@ -1,4 +1,5 @@
 import { Counter, InsightCard } from "./V2Shared";
+import { getDayModel } from "../../engine/demandSupplyEngine";
 import type { SimState } from "../../engine/simulation";
 
 // ---------------------------------------------------------------------------
@@ -41,6 +42,38 @@ function DestinationResponse({ breakdown }: DestinationResponseProps) {
           <span className="v2-dest-row__rev">฿{destination.revenue.toLocaleString()}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// What-if: the engine re-runs the whole day with extra buses inserted at the
+// worst-queue moments. This is the "how much more could we capture" answer,
+// computed — not guessed.
+// ---------------------------------------------------------------------------
+
+function fmtClock(min: number) {
+  return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+}
+
+function WhatIfCard() {
+  const model = getDayModel();
+  if (model.totals.abandoned === 0) return null;
+  return (
+    <div className="v2-whatif">
+      <h3 className="v2-whatif__title">If we had more buses</h3>
+      {model.whatIf.map((w) => (
+        <div key={w.extraBuses} className="v2-whatif__row" title={`Duty cycles start at ${w.insertedAt.map(fmtClock).join(", ")} — each bus shuttles Airport ↔ Rawai for the rest of the day`}>
+          <span className="v2-whatif__buses">+{w.extraBuses} buses</span>
+          <span className="v2-whatif__gain">+{w.gainedPax.toLocaleString()} pax</span>
+          <span className="v2-whatif__rev">+฿{w.gainedRevenueThb.toLocaleString()}/day</span>
+        </div>
+      ))}
+      <p className="v2-whatif__note">
+        Engine re-runs the whole day with each extra bus shuttling from the
+        worst-queue moment onward (one airport departure every ~3.5 h per bus).
+        Same flights, same 12% capture — only the supply changes.
+      </p>
     </div>
   );
 }
@@ -90,17 +123,17 @@ export function SupplyPanel({
           </div>
           <div className="v2-kpi__label">Seats vs Demand this hour</div>
         </div>
-        <div className={`v2-kpi ${currentGap > 0 ? "v2-kpi--alert" : ""}`}>
-          <div className="v2-kpi__val"><Counter value={currentGap} /></div>
-          <div className="v2-kpi__label">Unmet demand (pax)</div>
-        </div>
-        <div className="v2-kpi">
-          <div className="v2-kpi__val"><Counter value={totalBusesRequired} /></div>
-          <div className="v2-kpi__label">Buses required (all routes)</div>
-        </div>
         <div className="v2-kpi v2-kpi--green">
-          <div className="v2-kpi__val"><Counter value={state.paxDelivered} /></div>
-          <div className="v2-kpi__label">Passengers delivered</div>
+          <div className="v2-kpi__val"><Counter value={state.paxBoarded} /></div>
+          <div className="v2-kpi__label">Captured (boarded)</div>
+        </div>
+        <div className={`v2-kpi ${state.paxAbandoned > 0 ? "v2-kpi--alert" : ""}`}>
+          <div className="v2-kpi__val"><Counter value={state.paxAbandoned} /></div>
+          <div className="v2-kpi__label">Walked away (60 min wait)</div>
+        </div>
+        <div className={`v2-kpi ${state.lostRevenueThb > 0 ? "v2-kpi--alert" : ""}`}>
+          <div className="v2-kpi__val"><Counter value={state.lostRevenueThb} prefix="฿" /></div>
+          <div className="v2-kpi__label">Revenue lost to capacity</div>
         </div>
         <div className="v2-kpi v2-kpi--green">
           <div className="v2-kpi__val"><Counter value={state.revenueThb} prefix="฿" /></div>
@@ -111,6 +144,8 @@ export function SupplyPanel({
           <div className="v2-kpi__label">Saved vs Grab/taxi</div>
         </div>
       </div>
+
+      <WhatIfCard />
 
       <div className="v2-impact">
         <h3 className="v2-impact__title">Environmental Impact</h3>

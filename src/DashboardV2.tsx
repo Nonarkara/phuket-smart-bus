@@ -8,17 +8,51 @@
  */
 
 import { useEffect, useState } from "react";
+import type { VehiclePosition } from "@shared/types";
 import { computeSimState, getDayInfo, getHourlyDemandSupply, type SimState } from "./engine/simulation";
 import { getVehiclesNow } from "./engine/dataProvider";
 import { getClockState, getFleetAnalysis } from "./engine/fleetSimulator";
 import { buildFlightHourBuckets, getOpsFlightSchedule } from "./engine/opsFlightSchedule";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
+import { getDayModel, getTripLoad } from "./engine/demandSupplyEngine";
 import { AnalyticsPanel } from "./components/AnalyticsPanel";
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
 import { DemandPanel } from "./components/v2/DemandPanel";
 import { SupplyPanel } from "./components/v2/SupplyPanel";
+
+/** Join a fleet vehicle to the demand-supply engine's per-trip boarding count.
+ *
+ *  Airport-bound trips ("Bus to Rawai" departs FROM the airport) carry the
+ *  engine's exact FIFO-queue load for that departure. Other directions and
+ *  the local lines carry a deterministic local-ridership estimate (they don't
+ *  serve the airport queue). No more plate-matching fallbacks. */
+function vehiclePax(v: VehiclePosition): number {
+  if (v.routeId === "rawai-airport" && v.directionLabel === "Bus to Rawai" && v.tripStartMin != null) {
+    const load = getTripLoad(v.tripStartMin);
+    if (load !== null) return load;
+  }
+  // Local lines / return direction: deterministic estimate from the trip hash
+  // (stable per trip — no flicker between ticks).
+  const cap = v.routeId === "dragon-line" ? 15 : 25;
+  const occ = v.routeId === "patong-old-bus-station" ? 0.42 : v.routeId === "dragon-line" ? 0.31 : 0.35;
+  const seed = (v.tripStartMin ?? 0) % 7; // -3..+3 pax variation per trip
+  return Math.max(0, Math.round(cap * occ) + (seed - 3));
+}
+
+function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
+  return {
+    id: v.vehicleId,
+    lat: v.coordinates[0],
+    lng: v.coordinates[1],
+    heading: v.heading,
+    status: v.status === "moving" ? "moving" : "dwelling",
+    route: v.routeId,
+    pax: vehiclePax(v),
+    plate: v.licensePlate
+  };
+}
 
 export default function DashboardV2() {
   const [viewMode, setViewMode] = useState<"sim" | "live">("sim");
@@ -28,22 +62,7 @@ export default function DashboardV2() {
   const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));
   const [clockState, setClockState] = useState(getClockState());
   const [fleetAnalysis] = useState(() => getFleetAnalysis());
-  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() => {
-    const st = computeSimState();
-    return getVehiclesNow().map(v => {
-      const simMatch = st.vehicles.find(sv => sv.plate === v.licensePlate);
-      return {
-        id: v.vehicleId,
-        lat: v.coordinates[0],
-        lng: v.coordinates[1],
-        heading: v.heading,
-        status: v.status as "moving" | "dwelling",
-        route: v.routeId,
-        pax: simMatch ? simMatch.pax : Math.round((v.routeId === "dragon-line" ? 15 : 25) * 0.4),
-        plate: v.licensePlate
-      };
-    });
-  });
+  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() => getVehiclesNow().map(toMapVehicle));
 
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
@@ -53,52 +72,50 @@ export default function DashboardV2() {
     .filter((bucket) => bucket.hour >= Math.floor(state.simMinutes / 60) && bucket.arrivalPax > 0)
     .sort((left, right) => right.arrivalPax - left.arrivalPax)[0] ?? currentHourBucket;
   const responsePct = state.paxWantBus > 0 ? Math.round((state.paxBoarded / state.paxWantBus) * 100) : 100;
-  const serviceGap = Math.max(0, state.paxWantBus - state.paxBoarded);
+  // Honest split: "waiting" is the queue RIGHT NOW; "walked away" is
+  // cumulative abandonment. The old serviceGap (demand − boarded) summed
+  // both into one fake "waiting" number.
+  const serviceGap = state.paxAtAirport;
   const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
   const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
 
-  // Schedule-derived fleet metrics
-  const totalBusesRequired = fleetAnalysis.reduce((s, r) => s + r.requiredBuses, 0);
+  // Schedule-derived fleet metrics — LAND routes only. Ferry vessels are
+  // not buses; counting them produced "74 buses required" absurdity.
+  const LAND_ROUTES = new Set(["rawai-airport", "patong-old-bus-station", "dragon-line"]);
+  const totalBusesRequired = fleetAnalysis
+    .filter((r) => LAND_ROUTES.has(r.routeId))
+    .reduce((s, r) => s + r.requiredBuses, 0);
   const currentHourly = getHourlyDemandSupply()[Math.floor(state.simMinutes / 60) % 24];
   const currentSupplySeats = currentHourly?.busSeatsAvailable ?? 0;
   const currentBusDemand = currentHourly?.busDemandPax ?? 0;
   const currentGap = Math.max(0, currentBusDemand - currentSupplySeats);
   const gapStatus = currentGap > 20 ? "shortfall" : currentGap > 0 ? "tight" : "surplus";
 
-  // Poll simulation state every second
+  // Poll simulation state every second. clockState is included so a pause
+  // triggered anywhere (hour-chart click, flight-pulse click) updates the
+  // play/pause button without prop drilling.
   useEffect(() => {
     const id = setInterval(() => {
-      const newState = computeSimState();
-      setState(newState);
+      setState(computeSimState());
       setMetrics(getHeadlineMetrics());
-
-      const live = getVehiclesNow();
-      setMapVehicles(live.map(v => {
-        const simMatch = newState.vehicles.find(sv => sv.plate === v.licensePlate);
-        return {
-          id: v.vehicleId,
-          lat: v.coordinates[0],
-          lng: v.coordinates[1],
-          heading: v.heading,
-          status: v.status as "moving" | "dwelling",
-          route: v.routeId,
-          pax: simMatch ? simMatch.pax : Math.round((v.routeId === "dragon-line" ? 15 : 25) * 0.4),
-          plate: v.licensePlate
-        };
-      }));
+      setMapVehicles(getVehiclesNow().map(toMapVehicle));
+      setClockState(getClockState());
     }, 1000);
     return () => clearInterval(id);
   }, []);
 
   return (
     <div className="v2">
-      {/* Actionable Intelligence Banner */}
+      {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
       {serviceGap > 25 && (
         <div className="v2-alert-banner">
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
-            <strong>Critical Service Gap: {serviceGap} pax waiting.</strong>
-            <span>Recommended action: Dispatch 2 standby buses to Phuket Airport immediately.</span>
+            <strong>
+              {serviceGap.toLocaleString()} pax in the airport queue now
+              {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today (฿${state.lostRevenueThb.toLocaleString()} lost)`}.
+            </strong>
+            <span>Next departure absorbs 25. Dispatching {Math.min(5, Math.ceil(serviceGap / 25))} standby buses clears the current queue.</span>
           </div>
         </div>
       )}
@@ -144,7 +161,9 @@ export default function DashboardV2() {
       {/* Main grid: left panel + map + right panel */}
       {serviceGap > 25 && (
         <div className="v2-coordination-banner">
-          ⚠️ <strong>Demand Exceeds Supply:</strong> {serviceGap} passengers are waiting at the airport without sufficient bus capacity. Consider dispatching {Math.ceil(serviceGap / 25)} additional buses to capture ฿{serviceGap * 100} in potential revenue.
+          ⚠️ <strong>Demand exceeds supply:</strong> {serviceGap.toLocaleString()} pax queueing now ·
+          ฿{(serviceGap * 100).toLocaleString()} on the curb. Engine says +2 well-timed buses
+          recover ฿{(getDayModel().whatIf[0]?.gainedRevenueThb ?? 0).toLocaleString()}/day — see "If we had more buses".
         </div>
       )}
       <main className="v2-body">
@@ -173,9 +192,9 @@ export default function DashboardV2() {
               <span className="v2-map__hero-detail">buses moving now</span>
             </div>
             <div className="v2-map__hero-card">
-              <span className="v2-map__hero-label">Live Gap</span>
-              <strong className="v2-map__hero-value">{serviceGap}</strong>
-              <span className="v2-map__hero-detail">still not boarded</span>
+              <span className="v2-map__hero-label">Walked Away</span>
+              <strong className="v2-map__hero-value">{state.paxAbandoned.toLocaleString()}</strong>
+              <span className="v2-map__hero-detail">gave up after 60 min · ฿{state.lostRevenueThb.toLocaleString()} lost</span>
             </div>
           </div>
           <V2LiveMap vehicles={mapVehicles} />

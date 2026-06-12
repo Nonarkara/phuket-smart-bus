@@ -5587,7 +5587,10 @@ a { color: var(--tint); }
 .v2-schedule__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.4); font-family: var(--font-display); }
 .v2-schedule__meta { font-family: var(--font-mono); font-size: var(--t-micro); color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
 .v2-schedule__rail { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
-.v2-schedule__row { display: grid; grid-template-columns: 42px 36px 58px 1fr 40px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 0; transition: background 0.3s ease, opacity 0.3s ease; scroll-margin-block: 140px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+/* Columns: time | IN/OUT | flight+aircraft | city | pax+load | bus-demand.
+   The aircraft/seats sub-line is the airport-API provenance — what the
+   airline is sending, with how many seats. */
+.v2-schedule__row { display: grid; grid-template-columns: 42px 36px 92px 1fr 44px 32px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 0; transition: background 0.3s ease, opacity 0.3s ease; scroll-margin-block: 140px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
 .v2-schedule__row--past { opacity: 0.34; }
 .v2-schedule__row--future { opacity: 0.72; }
 .v2-schedule__row--active { opacity: 1; background: var(--amber-mute); border: 1px solid var(--amber); }
@@ -5598,8 +5601,31 @@ a { color: var(--tint); }
 .v2-schedule__type--arr { background: rgba(245, 158, 11, 0.15); color: var(--amber); border-color: var(--amber); }
 .v2-schedule__type--dep { background: rgba(22, 165, 116, 0.15); color: var(--gain); border-color: var(--gain); }
 .v2-schedule__flight { font-size: var(--t-micro); font-weight: 600; color: #fff; }
+.v2-schedule__main { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.v2-schedule__craft { font-family: var(--font-mono); font-size: 9px; color: rgba(255, 255, 255, 0.42); letter-spacing: 0.02em; white-space: nowrap; }
 .v2-schedule__city { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.62); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.v2-schedule__pax { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.55); text-align: right; }
+.v2-schedule__paxcol { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+.v2-schedule__pax { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.78); text-align: right; }
+.v2-schedule__load { font-family: var(--font-mono); font-size: 9px; color: rgba(255, 255, 255, 0.38); }
+/* This flight's contribution to the bus queue — the demand trace. */
+.v2-schedule__busdemand { font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 500; color: var(--amber); text-align: right; }
+
+/* What-if: extra buses → extra capture. The engine's re-run, not a guess. */
+.v2-whatif { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--amber); background: rgba(245, 158, 11, 0.06); }
+.v2-whatif__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); margin: 0; font-family: var(--font-display); }
+.v2-whatif__row { display: grid; grid-template-columns: 72px 1fr auto; gap: 8px; align-items: baseline; font-family: var(--font-mono); font-size: var(--t-micro); padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.v2-whatif__row:last-of-type { border-bottom: none; }
+.v2-whatif__buses { color: #fff; font-weight: 600; }
+.v2-whatif__gain { color: rgba(255, 255, 255, 0.62); }
+.v2-whatif__rev { color: var(--gain); font-weight: 600; }
+.v2-whatif__note { margin: 2px 0 0; font-size: 9px; line-height: 1.5; color: rgba(255, 255, 255, 0.38); }
+
+/* Clickable hour rows/columns — affordance without decoration */
+.v2-hourly__row { cursor: pointer; }
+.v2-hourly__row:hover { background: rgba(255, 255, 255, 0.05); }
+.analytics-col--scrub { cursor: pointer; }
+.analytics-col--scrub:hover { outline: 1px solid var(--ink); outline-offset: -1px; }
+.v2 .analytics-col--scrub:hover { outline-color: rgba(255, 255, 255, 0.5); }
 
 /* Flight ticker */
 .v2-ticker { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; }
