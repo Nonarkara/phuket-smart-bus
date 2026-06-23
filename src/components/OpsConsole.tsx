@@ -14,10 +14,12 @@ import type {
   TransferHub,
   VehiclePosition
 } from "@shared/types";
-import { getInvestorSimulation, getOpsDashboard, getSimulationFrame, getVehiclesNow } from "../engine/dataProvider";
+import { getOpsDashboard, getVehiclesNow } from "../engine/dataProvider";
 import { getImpactMetrics } from "../engine/impactSimulator";
-import { getSimulatedMinutes } from "../engine/fleetSimulator";
+import { getSimulatedMinutes, setSimulatedMinutes } from "../engine/fleetSimulator";
 import { getHeadlineMetrics } from "../engine/headlineMetrics";
+import { getTripLoad, getDayModel, atMinute } from "../engine/demandSupplyEngine";
+import { getOpsFlightSchedule } from "../engine/opsFlightSchedule";
 import { ProfitabilityPanel } from "./ProfitabilityPanel";
 import { CapacityGapTimeline } from "./CapacityGapTimeline";
 import { AnalyticsPanel } from "./AnalyticsPanel";
@@ -57,83 +59,16 @@ function stableHash(key: string): number {
   return Math.abs(h);
 }
 
-/* ── Realistic stop-by-stop passenger model ──
-   Passengers board/alight at specific stops along each route.
-   Returns { pax: on board now, totalBoarded: cumulative boardings for fare calc, trend: boarding/alighting } */
-const HOURLY_ARR = [0,0,0,0,0,0,180,320,450,380,520,600,680,750,700,580,500,420,380,300,250,150,80,0];
-
-type PaxState = { pax: number; totalBoarded: number; trend: "boarding" | "alighting" | "steady"; demandPct: number };
-
-function simPaxAtProgress(
-  routeId: OperationalRouteId,
-  progress: number,
-  tripIdx: number,
-  simMinutes: number
-): PaxState {
-  const hour = Math.floor(simMinutes / 60);
-  const hourlyArr = HOURLY_ARR[Math.min(23, Math.max(0, hour))] || 180;
-  const demandScale = Math.max(0.25, hourlyArr / 750); // scale relative to peak (750 at 13:00)
-  const isReturn = tripIdx % 2 === 1;
-
-  if (routeId === "rawai-airport") {
-    // Stops:      Airport  BangTao  Surin  Kamala  PATONG  Karon  Kata  Chalong  Rawai/OldTown
-    const stops = [0,       0.08,    0.15,  0.22,   0.38,   0.52,  0.62, 0.78,    1.0];
-    const brdS  = [25,      0,       0,     0,      2,      0,     0,    0,       0];   // southbound boarding
-    const altS  = [0,       2,       1,     2,      15,     2,     1,    1,       1];   // southbound alighting
-    const brdN  = [0,       1,       0,     1,      15,     2,     1,    2,       3];   // northbound boarding
-    const altN  = [0,       0,       0,     0,      0,      0,     0,    0,       25];  // northbound (all off at airport)
-    const board = isReturn ? brdN : brdS;
-    const alight = isReturn ? altN : altS;
-    let pax = 0, boarded = 0, lastDelta = 0;
-    for (let i = 0; i < stops.length; i++) {
-      if (progress >= stops[i]) {
-        const b = Math.round(board[i] * demandScale);
-        const a = Math.min(pax, Math.round(alight[i] * demandScale));
-        pax = Math.min(BUS_CAPACITY, pax + b - a);
-        boarded += b;
-        lastDelta = b - a;
-      }
-    }
-    const addressable = Math.round(hourlyArr * 0.15);
-    const demandPct = addressable > 0 ? Math.round((Math.round(25 * demandScale) / addressable) * 100) : 0;
-    return { pax: Math.max(0, pax), totalBoarded: boarded, trend: lastDelta > 0 ? "boarding" : lastDelta < 0 ? "alighting" : "steady", demandPct };
+/** Same engine join as /v2 — airport-line buses get FIFO engine load,
+ *  local routes get a stable per-trip estimate. */
+function vehiclePax(v: VehiclePosition): number {
+  if (v.routeId === "rawai-airport" && v.directionLabel === "Bus to Rawai" && v.tripStartMin != null) {
+    const load = getTripLoad(v.tripStartMin);
+    if (load !== null) return load;
   }
-
-  if (routeId === "patong-old-bus-station") {
-    const stops = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
-    const brdOut = [20, 2, 0, 0, 0, 0];  // Patong → Old Town
-    const altOut = [0, 3, 4, 5, 5, 5];
-    const brdIn  = [0, 0, 2, 3, 5, 15];  // Old Town → Patong
-    const altIn  = [25, 0, 0, 0, 0, 0];
-    const board = isReturn ? brdIn : brdOut;
-    const alight = isReturn ? altIn : altOut;
-    let pax = 0, boarded = 0, lastDelta = 0;
-    for (let i = 0; i < stops.length; i++) {
-      if (progress >= stops[i]) {
-        const b = Math.round(board[i] * demandScale);
-        const a = Math.min(pax, Math.round(alight[i] * demandScale));
-        pax = Math.min(BUS_CAPACITY, pax + b - a);
-        boarded += b;
-        lastDelta = b - a;
-      }
-    }
-    return { pax: Math.max(0, pax), totalBoarded: boarded, trend: lastDelta > 0 ? "boarding" : lastDelta < 0 ? "alighting" : "steady", demandPct: 0 };
-  }
-
-  if (routeId === "dragon-line") {
-    // Loop: picks up 12, drops off gradually, picks up again
-    const pax = Math.round(12 * demandScale * Math.sin(progress * Math.PI));
-    return { pax: Math.max(0, Math.min(25, pax)), totalBoarded: Math.round(12 * demandScale), trend: progress < 0.5 ? "boarding" : "alighting", demandPct: 0 };
-  }
-
-  // Ferries: simpler model
-  const pax = Math.round(18 * demandScale * (progress < 0.1 ? progress * 10 : progress > 0.9 ? (1 - progress) * 10 : 1));
-  return { pax: Math.max(0, Math.min(25, pax)), totalBoarded: Math.round(18 * demandScale), trend: progress < 0.5 ? "boarding" : "alighting", demandPct: 0 };
-}
-
-// Backward compat: simple pax count for non-sim mode
-function simPassengers(vid: string, m: number): number {
-  return stableHash(vid + String(Math.floor(m / 10))) % (BUS_CAPACITY + 1);
+  const cap = v.routeId === "dragon-line" ? 15 : 25;
+  const occ = v.routeId === "patong-old-bus-station" ? 0.42 : v.routeId === "dragon-line" ? 0.31 : 0.35;
+  return Math.max(0, Math.round(cap * occ) + ((v.tripStartMin ?? 0) % 7) - 3);
 }
 
 const DRIVER_NAMES = [
@@ -240,25 +175,8 @@ function buildFallbackCompetitorBenchmarks(): CompetitorBenchmark[] {
    ══════════════════════════════════════════════════ */
 type NewsItem = { id: string; time: string; icon: string; title: string; desc: string; severity: "info" | "caution" | "warning"; lat?: number; lng?: number };
 
-const FLIGHT_ORIGINS = [
-  { code: "BKK", city: "Bangkok", pax: 320, time: "06:30", type: "arr" },
-  { code: "SIN", city: "Singapore", pax: 180, time: "07:15", type: "arr" },
-  { code: "ICN", city: "Seoul", pax: 210, time: "08:00", type: "arr" },
-  { code: "PVG", city: "Shanghai", pax: 280, time: "09:30", type: "arr" },
-  { code: "SVO", city: "Moscow", pax: 240, time: "10:00", type: "arr" },
-  { code: "DXB", city: "Dubai", pax: 190, time: "11:30", type: "arr" },
-  { code: "DEL", city: "Delhi", pax: 160, time: "13:00", type: "arr" },
-  { code: "HND", city: "Tokyo", pax: 220, time: "14:00", type: "arr" },
-  { code: "SYD", city: "Sydney", pax: 170, time: "15:30", type: "arr" },
-  { code: "LHR", city: "London", pax: 250, time: "17:00", type: "arr" },
-  { code: "BKK", city: "Bangkok", pax: 290, time: "07:00", type: "dep" },
-  { code: "CNX", city: "Chiang Mai", pax: 150, time: "08:30", type: "dep" },
-  { code: "SIN", city: "Singapore", pax: 200, time: "12:00", type: "dep" },
-  { code: "ICN", city: "Seoul", pax: 190, time: "14:30", type: "dep" },
-  { code: "PVG", city: "Shanghai", pax: 260, time: "16:00", type: "dep" },
-  { code: "DXB", city: "Dubai", pax: 180, time: "19:00", type: "dep" },
-];
-
+// Flight data from real engine (same 26-flight schedule as /v2 DemandPanel)
+// Loaded once — getOpsFlightSchedule() is memoised inside the engine.
 const DEMAND_ZONES = [
   { zone: "Patong Beach", demand: 45, icon: "🏖" },
   { zone: "Old Town", demand: 32, icon: "🏛" },
@@ -317,40 +235,42 @@ function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather
       })
       .catch(() => {/* silent — PM2.5 is supplemental */});
     return () => { cancelled = true; };
-  }, []); // fetch once on mount; component remounts if dashboard refreshes
+  }, []);
 
   const hour = simMinutes !== null ? Math.floor(simMinutes / 60) : new Date().getHours();
   const minute = simMinutes !== null ? simMinutes % 60 : new Date().getMinutes();
   const nowMin = hour * 60 + minute;
   const news = useMemo(() => generateNews(simMinutes), [simMinutes]);
-  const visibleFlights = FLIGHT_ORIGINS.filter((f) => { const [h] = f.time.split(":").map(Number); return h <= hour + 2; });
-  const arrivals = visibleFlights.filter((f) => f.type === "arr");
-  const departures = visibleFlights.filter((f) => f.type === "dep");
-  const dailyPax = FLIGHT_ORIGINS.reduce((s, f) => s + f.pax, 0);
-  // Next arriving flight
-  const nextArr = FLIGHT_ORIGINS.filter((f) => f.type === "arr").find((f) => {
-    const [h, m] = f.time.split(":").map(Number);
-    return h * 60 + m > nowMin;
-  });
-  const nextArrMin = nextArr ? (() => { const [h, m] = nextArr.time.split(":").map(Number); return h * 60 + m - nowMin; })() : null;
+
+  // Real flight schedule — same 26-flight engine that powers /v2
+  const allFlights = useMemo(() => getOpsFlightSchedule().filter(f => f.mode === "flight"), []);
+  const arrivals = allFlights.filter(f => f.type === "arr" && f.schedMin <= nowMin + 120).slice(-6);
+  const departures = allFlights.filter(f => f.type === "dep" && f.schedMin <= nowMin + 120).slice(-4);
+  const dailyPax = allFlights.filter(f => f.type === "arr").reduce((s, f) => s + f.pax, 0);
+  const nextArr = allFlights.find(f => f.type === "arr" && f.schedMin > nowMin);
+  const nextArrMin = nextArr ? nextArr.schedMin - nowMin : null;
 
   return (
     <div className="ops__news">
       <h3 className="ops__news-title">City of Phuket</h3>
 
-      {/* Flights */}
+      {/* Flights — real engine data (26 flights, aircraft + seats) */}
       <div className="city-section">
         <h4 className="city-section__title">Flights — {dailyPax.toLocaleString()} daily pax</h4>
         {nextArr ? (
-          <div className="city-next-flight">Next: <strong>{nextArr.code}</strong> from {nextArr.city} in <strong>{nextArrMin} min</strong> ({nextArr.pax} pax)</div>
+          <div className="city-next-flight">
+            Next: <strong>{nextArr.flightNo}</strong> {nextArr.city} in <strong>{nextArrMin} min</strong>
+            {nextArr.aircraftName ? <> · {nextArr.aircraftName}</> : null}
+            {" "}({nextArr.pax} pax{nextArr.loadPct != null ? ` · ${nextArr.loadPct}% load` : ""})
+          </div>
         ) : null}
         <div className="city-flights">
           <div className="city-flights__col">
             <span className="city-flights__label">Arrivals</span>
-            {arrivals.slice(-4).map((f) => (
-              <div key={f.code + f.time} className="city-flight">
-                <span className="city-flight__time">{f.time}</span>
-                <span className="city-flight__route">{f.code}</span>
+            {arrivals.map((f) => (
+              <div key={f.flightNo + f.schedMin} className="city-flight">
+                <span className="city-flight__time">{String(Math.floor(f.schedMin/60)).padStart(2,"0")}:{String(f.schedMin%60).padStart(2,"0")}</span>
+                <span className="city-flight__route">{f.flightNo}</span>
                 <span className="city-flight__city">{f.city}</span>
                 <span className="city-flight__pax">{f.pax}</span>
               </div>
@@ -358,10 +278,10 @@ function CityIntel({ simMinutes, weather }: { simMinutes: number | null; weather
           </div>
           <div className="city-flights__col">
             <span className="city-flights__label">Departures</span>
-            {departures.slice(-4).map((f) => (
-              <div key={f.code + f.time + "d"} className="city-flight">
-                <span className="city-flight__time">{f.time}</span>
-                <span className="city-flight__route">{f.code}</span>
+            {departures.map((f) => (
+              <div key={f.flightNo + f.schedMin + "d"} className="city-flight">
+                <span className="city-flight__time">{String(Math.floor(f.schedMin/60)).padStart(2,"0")}:{String(f.schedMin%60).padStart(2,"0")}</span>
+                <span className="city-flight__route">{f.flightNo}</span>
                 <span className="city-flight__city">{f.city}</span>
                 <span className="city-flight__pax">{f.pax}</span>
               </div>
@@ -459,9 +379,9 @@ function stopRequests(simMinutes: number): { stop: string; count: number }[] {
 /* ══════════════════════════════════════════════════
    SIMULATION TIMELINE — Bottom bar
    ══════════════════════════════════════════════════ */
-function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, simLoading }: {
-  simMinutes: number | null; investor: InvestorSimulationPayload | null;
-  vehicles: VehiclePosition[]; simRunning: boolean; onToggle: () => void; simLoading: boolean;
+function SimTimeline({ simMinutes, vehicles, simRunning, onToggle }: {
+  simMinutes: number | null;
+  vehicles: VehiclePosition[]; simRunning: boolean; onToggle: () => void;
 }) {
   const hours = Array.from({ length: 19 }, (_, i) => i + 6); // 06–24
 
@@ -502,27 +422,23 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
   let displayMetrics: { label: string; value: string; unit: string }[];
   let totalLost = 0;
 
-  if (useReplay) {
-    const hourIdx = Math.floor(simMinutes / 60) - 6;
-    const accHourly = investor?.hourly.slice(0, Math.max(0, hourIdx + 1)) ?? [];
-    const totalPax = accHourly.reduce((s, h) => s + h.carriedArrivalDemand + h.carriedDepartureDemand, 0);
-    const totalRevenue = totalPax * 100;
-    const totalRounds = accHourly.reduce((s, h) => s + (h.requiredArrivalDepartures ?? 0) + (h.requiredDepartureDepartures ?? 0), 0);
-    const busKm = totalRounds * 35;
-    const avgTripKm = 18;
-    const carbonSaved = Math.round(totalPax * avgTripKm * CO2_SAVING_PER_PAX_KM);
+  if (useReplay && simMinutes !== null) {
+    // Read cumulative metrics directly from the FIFO engine — exact same numbers as /v2
+    const eng = atMinute(simMinutes);
+    const model = getDayModel();
     const activeCount = vehicles.filter((v) => v.status === "moving").length;
-    const totalAddr = accHourly.reduce((s, h) => s + h.addressableArrivalDemand + h.addressableDepartureDemand, 0);
-    const capturePct = totalAddr > 0 ? Math.round((totalPax / totalAddr) * 100) : 100;
-    totalLost = accHourly.reduce((sum, hour) => sum + hour.lostRevenueThb, 0);
+    const tripsRun = model.trips.filter(t => t.depMin <= simMinutes).length;
+    const totalAddr = model.demandCum[Math.min(1440, simMinutes)];
+    const capturePct = totalAddr > 0 ? Math.round((eng.boardedCum / totalAddr) * 100) : 100;
+    totalLost = eng.lostRevenueThb;
     displayMetrics = [
       { label: "Buses", value: String(activeCount), unit: "" },
-      { label: "Trips", value: totalRounds.toLocaleString(), unit: "" },
-      { label: "Km", value: busKm.toLocaleString(), unit: "" },
-      { label: "Pax", value: totalPax.toLocaleString(), unit: "" },
-      { label: "Revenue", value: `฿${totalRevenue.toLocaleString()}`, unit: "" },
+      { label: "Trips", value: tripsRun.toLocaleString(), unit: "" },
+      { label: "Km", value: Math.round(tripsRun * 47).toLocaleString(), unit: "" },
+      { label: "Pax", value: eng.boardedCum.toLocaleString(), unit: "" },
+      { label: "Revenue", value: `฿${eng.revenueThb.toLocaleString()}`, unit: "" },
       { label: "Capture", value: `${capturePct}%`, unit: "" },
-      { label: "CO₂", value: carbonSaved.toLocaleString(), unit: "kg" },
+      { label: "CO₂", value: Math.round(eng.boardedCum * 28 * CO2_SAVING_PER_PAX_KM).toLocaleString(), unit: "kg" },
     ];
   } else {
     // LIVE mode: show accumulating metrics from the 30x engine
@@ -553,8 +469,8 @@ function SimTimeline({ simMinutes, investor, vehicles, simRunning, onToggle, sim
   return (
     <div className="sim-timeline">
       <div className="sim-timeline__header">
-        <button className="sim-timeline__btn" type="button" onClick={onToggle} disabled={simLoading}>
-          {simRunning ? "■ Stop" : simLoading ? "…" : "▶ Replay day"}
+        <button className="sim-timeline__btn" type="button" onClick={onToggle}>
+          {simRunning ? "■ Stop" : "▶ Replay day"}
         </button>
         <div className="sim-timeline__track">
           {hours.map((h) => (
@@ -1143,25 +1059,26 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   }, []);
 
   const [dashboard, setDashboard] = useState<OpsDashboardPayload | null>(null);
-  const [investor, setInvestor] = useState<InvestorSimulationPayload | null>(null);
-  const [simSnapshot, setSimSnapshot] = useState<SimulationSnapshot | null>(null);
   const [simRunning, setSimRunning] = useState(false);
-  const [simLoading, setSimLoading] = useState(false);
   const [opsError, setOpsError] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showSimSummary, setShowSimSummary] = useState(false);
-  const [scenario, setScenario] = useState<InvestorSimulationPayload | null>(null);
-  const [scenarioLoading, setScenarioLoading] = useState(false);
-  const [scenarioBase, setScenarioBase] = useState<InvestorSimulationPayload | null>(null);
-  /** Which button is currently selected: 0 = "Current", 1/2/4 = "+N buses".
-   *  -1 means no scenario has been requested yet. */
-  const [scenarioExtra, setScenarioExtra] = useState<number>(-1);
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" }));
   const [activeLayers, setActiveLayers] = useState<Set<OverlayLayerId>>(new Set(["traffic", "hotspots", "transfer_hubs", "route_pressure"]));
+  const [simMinutes, setSimMinutes] = useState<number | null>(null);
   const replayAbortRef = useRef(false);
   const nextReplayMinuteRef = useRef<number | null>(null);
 
+  // Live vehicles from the real fleet simulator — same road-polyline source as /v2
+  const [displayVehicles, setDisplayVehicles] = useState<VehiclePosition[]>(getVehiclesNow);
+
   useEffect(() => { const id = setInterval(() => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok" })), 1000); return () => clearInterval(id); }, []);
+
+  // Poll vehicles every second — picks up the engine clock (live or replaying)
+  useEffect(() => {
+    const id = setInterval(() => setDisplayVehicles(getVehiclesNow()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -1181,36 +1098,33 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
+  // Replay: advance the engine clock each tick — getVehiclesNow() follows it automatically
   useEffect(() => {
-    if (!simRunning || !investor) return;
-    let cancelled = false; replayAbortRef.current = false;
-    const tick = async () => {
+    if (!simRunning) return;
+    let cancelled = false;
+    replayAbortRef.current = false;
+    const tick = () => {
       const nm = nextReplayMinuteRef.current;
       if (cancelled || replayAbortRef.current || nm === null) return;
-      if (nm > investor.assumptions.replayEndMinutes) { setSimRunning(false); nextReplayMinuteRef.current = null; setShowSimSummary(true); return; }
-      try {
-        const frame = await getSimulationFrame(nm);
-        if (cancelled || replayAbortRef.current) return;
-        setSimSnapshot(frame);
-        setOpsError(null);
-        nextReplayMinuteRef.current = nm + investor.assumptions.replayStepMinutes;
-        setTimeout(() => void tick(), SIM_TICK_MS);
-      } catch {
-        if (cancelled || replayAbortRef.current) return;
+      if (nm > 1440) {
         setSimRunning(false);
         nextReplayMinuteRef.current = null;
-        setOpsError("Simulation feed unavailable. Backend did not return the next replay frame.");
+        setSimMinutes(null);
+        setShowSimSummary(true);
+        return;
       }
+      setSimulatedMinutes(nm);
+      setSimMinutes(nm);
+      nextReplayMinuteRef.current = nm + 3; // 3-minute steps
+      setTimeout(tick, SIM_TICK_MS);
     };
-    setTimeout(() => void tick(), SIM_TICK_MS);
+    setTimeout(tick, SIM_TICK_MS);
     return () => { cancelled = true; };
-  }, [investor, simRunning]);
+  }, [simRunning]);
 
   const routes = dashboard?.routes ?? [];
-  const liveFleet = dashboard?.fleet.vehicles ?? [];
-  const displayVehicles = simRunning && simSnapshot ? simSnapshot.vehicles : liveFleet;
   const displayFS = useMemo(() => fleetSummary(displayVehicles), [displayVehicles]);
-  const displayPressure = simRunning && simSnapshot ? simSnapshot.routePressure : dashboard?.fleet.routePressure ?? [];
+  const displayPressure = dashboard?.fleet.routePressure ?? [];
 
   // SSOT for the fleet panel header — same numbers as the bottom KPI strip,
   // /v2, /governor and / read. Polls every second to stay in sync with the
@@ -1223,76 +1137,32 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
     return () => clearInterval(id);
   }, []);
 
-  const currentMarkers = useMemo(() => {
-    if (!dashboard) return [];
-    return simRunning && simSnapshot ? buildReplayMarkers(dashboard.mapOverlays.markers, simSnapshot.routePressure, simSnapshot.transferHubs) : dashboard.mapOverlays.markers;
-  }, [dashboard, simRunning, simSnapshot]);
-
-  const incidentMarkers = useMemo(() => buildIncidentMarkers(simRunning && simSnapshot ? simSnapshot.simMinutes : null), [simRunning, simSnapshot]);
-
+  const currentMarkers = useMemo(() => dashboard?.mapOverlays.markers ?? [], [dashboard]);
+  const incidentMarkers = useMemo(() => buildIncidentMarkers(simMinutes), [simMinutes]);
   const overlayLayers = useMemo<MapOverlay[]>(() => (dashboard?.mapOverlays.tileLayers ?? []).filter((l) => activeLayers.has(l.layerId)).map((l) => ({ id: l.id, url: l.url, attribution: l.attribution, opacity: l.opacity })), [activeLayers, dashboard]);
-
   const overlayMarkers = useMemo<MapMarkerOverlay[]>(() => {
     const base = currentMarkers.filter((m) => activeLayers.has(m.layerId)).map((m) => ({ id: m.id, lat: m.lat, lng: m.lng, color: m.color, radius: m.radius, label: m.label, fillOpacity: m.fillOpacity }));
     return [...base, ...incidentMarkers];
   }, [activeLayers, currentMarkers, incidentMarkers]);
 
-  const simMinutes = simRunning && simSnapshot ? simSnapshot.simMinutes : null;
-  const activeTransferHubs = simRunning && simSnapshot ? simSnapshot.transferHubs : dashboard?.transferHubs ?? [];
-  const activeCompetitorBenchmarks =
-    simRunning && simSnapshot ? simSnapshot.competitorBenchmarks : dashboard?.competitorBenchmarks ?? [];
-  const activeDataMode = simRunning && simSnapshot ? simSnapshot.dataMode : dashboard?.dataMode ?? "demo";
-  const activeFallbackReasons =
-    simRunning && simSnapshot ? simSnapshot.fallbackReasons : dashboard?.fallbackReasons ?? [];
+  const activeTransferHubs = dashboard?.transferHubs ?? [];
+  const activeCompetitorBenchmarks = dashboard?.competitorBenchmarks ?? [];
+  const activeDataMode = dashboard?.dataMode ?? "demo";
+  const activeFallbackReasons = dashboard?.fallbackReasons ?? [];
 
   function toggleLayer(id: OverlayLayerId) { setActiveLayers((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
-  async function toggleReplay() {
-    if (simRunning) { replayAbortRef.current = true; setSimRunning(false); nextReplayMinuteRef.current = null; return; }
-    if (!dashboard) return;
-    setSimLoading(true); replayAbortRef.current = false;
-    try {
-      const nextInvestor = await getInvestorSimulation();
-      const firstFrame = await getSimulationFrame(nextInvestor.assumptions.replayStartMinutes);
-      setInvestor(nextInvestor);
-      setSimSnapshot(firstFrame);
-      setOpsError(null);
-      const fm = nextInvestor.assumptions.replayStartMinutes;
-      nextReplayMinuteRef.current = fm + nextInvestor.assumptions.replayStepMinutes;
-      setSimRunning(true);
-    } catch {
+  function toggleReplay() {
+    if (simRunning) {
+      replayAbortRef.current = true;
       setSimRunning(false);
       nextReplayMinuteRef.current = null;
-      setOpsError("Simulation unavailable. Check backend data mode or replay endpoint health.");
-    } finally { setSimLoading(false); }
-  }
-
-  async function runScenario(extraBuses: number) {
-    if (!dashboard) return;
-    setScenarioLoading(true);
-    setScenarioExtra(extraBuses);
-    try {
-      const currentAirportBuses = dashboard.fleet.vehicles.filter((v) => v.routeId === "rawai-airport").length;
-      const baseSize = Math.max(1, currentAirportBuses);
-      const fleetSize = Math.max(1, currentAirportBuses + extraBuses);
-      // Always anchor the base to the current live fleet count — otherwise
-      // "+1 bus" can show negative deltas when current < default 10.
-      const [base, result] = await Promise.all([
-        getInvestorSimulation(baseSize),
-        extraBuses === 0 ? Promise.resolve(null) : getInvestorSimulation(fleetSize)
-      ]);
-      if (extraBuses === 0) {
-        setScenarioBase(base);
-        setScenario(null);
-      } else {
-        setScenarioBase(base);
-        setScenario(result);
-      }
-    } catch {
-      // silently fail — scenario is advisory only
-    } finally {
-      setScenarioLoading(false);
+      setSimMinutes(null);
+      return;
     }
+    replayAbortRef.current = false;
+    nextReplayMinuteRef.current = 360;
+    setSimRunning(true);
   }
 
   if (!dashboard) return (
@@ -1306,31 +1176,12 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
   const routeColorById = Object.fromEntries(routes.map((r) => [r.id, r.color]));
   const routeNameById = Object.fromEntries(routes.map((r) => [r.id, r.shortName?.en ?? r.id]));
   const routeCounters: Record<string, number> = {};
-  const TD_MAP: Record<OperationalRouteId, number> = {"rawai-airport":130,"patong-old-bus-station":50,"dragon-line":25,"rassada-phi-phi":90,"rassada-ao-nang":120,"bang-rong-koh-yao":45,"chalong-racha":60};
-  const HW_MAP: Record<OperationalRouteId, number> = {"rawai-airport":60,"patong-old-bus-station":30,"dragon-line":30,"rassada-phi-phi":60,"rassada-ao-nang":120,"bang-rong-koh-yao":90,"chalong-racha":120};
   const fleetRows = displayVehicles.slice(0, 12).map((v) => {
     routeCounters[v.routeId] = (routeCounters[v.routeId] ?? 0) + 1;
     const isFerry = FERRY_ROUTE_IDS.has(v.routeId);
-    const nowMin = simMinutes ?? (new Date().getHours() * 60 + new Date().getMinutes());
-
-    // Extract departure minute from vehicleId (format: sv-{route}-{depMin})
-    const depMin = parseInt(v.vehicleId.split("-").pop() ?? "0", 10);
-    const tripDur = TD_MAP[v.routeId] ?? 60;
-    const headway = HW_MAP[v.routeId] ?? 60;
-    const age = nowMin - depMin;
-    const progress = Math.max(0, Math.min(1, age / tripDur));
-    const tripIdx = Math.floor((depMin - 360) / headway);
-
-    // Use realistic pickup/dropoff model when simulating, fallback for live
-    let paxState: PaxState;
-    if (simMinutes !== null && v.vehicleId.startsWith("sv-")) {
-      paxState = simPaxAtProgress(v.routeId, progress, tripIdx, nowMin);
-    } else {
-      const fallbackPax = simPassengers(v.vehicleId, nowMin);
-      paxState = { pax: fallbackPax, totalBoarded: fallbackPax, trend: "steady" as const, demandPct: 0 };
-    }
-
-    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax: paxState.pax, totalBoarded: paxState.totalBoarded, trend: paxState.trend, demandPct: paxState.demandPct, progress };
+    // Engine-backed pax — airport-line uses FIFO trip load, local lines use stable estimate
+    const pax = vehiclePax(v);
+    return { ...v, label: isFerry ? `Ferry ${routeCounters[v.routeId]}` : `Bus ${routeCounters[v.routeId]}`, driver: driverName(v.vehicleId), rating: driverRating(v.vehicleId), pax, totalBoarded: pax };
   });
   const routeSummary = routes.map((r) => ({ ...r, vehicles: displayVehicles.filter((v) => v.routeId === r.id).length }));
 
@@ -1527,94 +1378,22 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
             </div>
           </section>
 
-          {/* Fleet scenario — what if we add more buses? */}
-          {!simRunning && dashboard ? (
+          {/* Fleet scenario — precomputed what-if from the FIFO engine (same as /v2) */}
+          {!simRunning ? (
             <section className="ops-card ops-card--tight">
-              <h2 className="ops-card__title">
-                Airport Fleet Scenario
-                <span className="ops-card__subtitle">
-                  {dashboard.fleet.vehicles.filter((v) => v.routeId === "rawai-airport").length} buses online now
-                </span>
-              </h2>
-              <div className="scenario-buttons">
-                {[
-                  { label: "Current", extra: 0 },
-                  { label: "+1 bus", extra: 1 },
-                  { label: "+2 buses", extra: 2 },
-                  { label: "+4 buses", extra: 4 }
-                ].map((s) => (
-                  <button
-                    key={s.extra}
-                    type="button"
-                    className={`scenario-btn ${scenarioExtra === s.extra ? "is-active" : ""}`}
-                    onClick={() => void runScenario(s.extra)}
-                    disabled={scenarioLoading}
-                  >
-                    {s.label}
-                  </button>
+              <h2 className="ops-card__title">If we had more buses</h2>
+              <div className="scenario-comparison">
+                {getDayModel().whatIf.map((w) => (
+                  <div key={w.extraBuses} className="scenario-row">
+                    <span className="scenario-label">+{w.extraBuses} buses</span>
+                    <span className="scenario-val">
+                      +{w.gainedPax.toLocaleString()} pax
+                      <span className="scenario-delta scenario-delta--up">+฿{w.gainedRevenueThb.toLocaleString()}/day</span>
+                    </span>
+                  </div>
                 ))}
               </div>
-              {scenarioLoading ? (
-                <div className="scenario-loading">Calculating…</div>
-              ) : scenario && scenarioBase ? (
-                <div className="scenario-comparison">
-                  <div className="scenario-row">
-                    <span className="scenario-label">Riders carried</span>
-                    <span className="scenario-val">
-                      {(scenario.totals.carriedArrivalDemand + scenario.totals.carriedDepartureDemand).toLocaleString()}
-                      <span className="scenario-delta scenario-delta--up">
-                        +{((scenario.totals.carriedArrivalDemand + scenario.totals.carriedDepartureDemand) - (scenarioBase.totals.carriedArrivalDemand + scenarioBase.totals.carriedDepartureDemand)).toLocaleString()}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Revenue</span>
-                    <span className="scenario-val">
-                      ฿{(scenario.totals.dailyRevenueThb).toLocaleString()}
-                      <span className="scenario-delta scenario-delta--up">
-                        +฿{(scenario.totals.dailyRevenueThb - scenarioBase.totals.dailyRevenueThb).toLocaleString()}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Unmet demand</span>
-                    <span className="scenario-val">
-                      {(scenario.totals.unmetArrivalDemand + scenario.totals.unmetDepartureDemand).toLocaleString()}
-                      <span className="scenario-delta scenario-delta--down">
-                        {((scenario.totals.unmetArrivalDemand + scenario.totals.unmetDepartureDemand) - (scenarioBase.totals.unmetArrivalDemand + scenarioBase.totals.unmetDepartureDemand)).toLocaleString()}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Capture rate</span>
-                    <span className="scenario-val">
-                      {scenario.totals.addressableAirportCapturePct}%
-                      <span className="scenario-delta scenario-delta--up">
-                        +{(scenario.totals.addressableAirportCapturePct - scenarioBase.totals.addressableAirportCapturePct).toFixed(1)}%
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              ) : scenarioBase && !scenario ? (
-                <div className="scenario-comparison">
-                  <div className="scenario-row">
-                    <span className="scenario-label">Riders carried</span>
-                    <span className="scenario-val">{(scenarioBase.totals.carriedArrivalDemand + scenarioBase.totals.carriedDepartureDemand).toLocaleString()}</span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Revenue</span>
-                    <span className="scenario-val">฿{scenarioBase.totals.dailyRevenueThb.toLocaleString()}</span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Unmet demand</span>
-                    <span className="scenario-val">{(scenarioBase.totals.unmetArrivalDemand + scenarioBase.totals.unmetDepartureDemand).toLocaleString()}</span>
-                  </div>
-                  <div className="scenario-row">
-                    <span className="scenario-label">Capture rate</span>
-                    <span className="scenario-val">{scenarioBase.totals.addressableAirportCapturePct}%</span>
-                  </div>
-                </div>
-              ) : null}
+              <p className="ops-card__rec">Duty-cycle model: each extra bus shuttles Airport ↔ Rawai every ~3.5 h from the worst-queue moment.</p>
             </section>
           ) : null}
 
@@ -1700,52 +1479,53 @@ export function OpsConsole({ onToggle }: { onToggle?: () => void }) {
       </div>
 
       {/* ── Bottom: Simulation Timeline ── */}
-      <SimTimeline simMinutes={simMinutes} investor={investor} vehicles={displayVehicles} simRunning={simRunning} onToggle={toggleReplay} simLoading={simLoading} />
+      <SimTimeline simMinutes={simMinutes} vehicles={displayVehicles} simRunning={simRunning} onToggle={toggleReplay} />
 
       {/* ── End-of-sim summary ── */}
-      {showSimSummary && investor ? (
+      {showSimSummary ? (
         <div className="sim-summary-overlay" onClick={() => setShowSimSummary(false)}>
           <div className="sim-summary" onClick={(e) => e.stopPropagation()}>
             <h2>Daily Operations Summary</h2>
-            <div className="sim-summary__grid">
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val">{(investor.totals.carriedArrivalDemand + investor.totals.carriedDepartureDemand).toLocaleString()}</span>
-                <span className="sim-summary__stat-label">Riders Carried</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val sim-summary__stat-val--warn">{(investor.totals.unmetArrivalDemand + investor.totals.unmetDepartureDemand).toLocaleString()}</span>
-                <span className="sim-summary__stat-label">Unmet Demand</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val sim-summary__stat-val--accent">฿{investor.totals.dailyRevenueThb.toLocaleString()}</span>
-                <span className="sim-summary__stat-label">Revenue</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val sim-summary__stat-val--warn">฿{investor.totals.lostRevenueThb.toLocaleString()}</span>
-                <span className="sim-summary__stat-label">Lost Revenue</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val">{investor.totals.addressableAirportCapturePct}%</span>
-                <span className="sim-summary__stat-label">Capture Rate</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val">{investor.totals.peakAdditionalBusesNeeded}</span>
-                <span className="sim-summary__stat-label">Extra Buses Needed</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val sim-summary__stat-val--accent">{Math.round((investor.totals.carriedArrivalDemand + investor.totals.carriedDepartureDemand) * 18 * 0.15 / 1000 * 10) / 10}t</span>
-                <span className="sim-summary__stat-label">CO₂ Saved (APTA)</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val">{investor.opportunities.peakArrivalGapHour}</span>
-                <span className="sim-summary__stat-label">Peak Demand Hour</span>
-              </div>
-              <div className="sim-summary__stat">
-                <span className="sim-summary__stat-val">97%</span>
-                <span className="sim-summary__stat-label">On-Time Performance</span>
-              </div>
-            </div>
-            <p style={{ fontSize: 12, color: "#666", margin: "8px 0" }}>{investor.opportunities.summary}</p>
+            {(() => {
+              const t = getDayModel().totals;
+              const capturePct = t.demand > 0 ? Math.round((t.boarded / t.demand) * 100) : 100;
+              return (
+                <div className="sim-summary__grid">
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val">{t.boarded.toLocaleString()}</span>
+                    <span className="sim-summary__stat-label">Riders Carried</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val sim-summary__stat-val--warn">{t.abandoned.toLocaleString()}</span>
+                    <span className="sim-summary__stat-label">Walked Away</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val sim-summary__stat-val--accent">฿{t.revenueThb.toLocaleString()}</span>
+                    <span className="sim-summary__stat-label">Revenue</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val sim-summary__stat-val--warn">฿{t.lostRevenueThb.toLocaleString()}</span>
+                    <span className="sim-summary__stat-label">Lost Revenue</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val">{capturePct}%</span>
+                    <span className="sim-summary__stat-label">Capture Rate</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val">{getDayModel().whatIf[0]?.extraBuses ?? 2}</span>
+                    <span className="sim-summary__stat-label">Extra Buses to Clear</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val sim-summary__stat-val--accent">{Math.round(t.boarded * 28 * 0.15 / 1000 * 10) / 10}t</span>
+                    <span className="sim-summary__stat-label">CO₂ Saved (APTA)</span>
+                  </div>
+                  <div className="sim-summary__stat">
+                    <span className="sim-summary__stat-val">97%</span>
+                    <span className="sim-summary__stat-label">On-Time Performance</span>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="sim-summary__actions">
               <button className="sim-summary__btn sim-summary__btn--primary" type="button" onClick={() => { setShowSimSummary(false); window.print(); }}>Export PDF</button>
               <button className="sim-summary__btn sim-summary__btn--secondary" type="button" onClick={() => setShowSimSummary(false)}>Close</button>
