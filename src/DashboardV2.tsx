@@ -150,22 +150,7 @@ export default function DashboardV2() {
 
         {/* Time Bar & Simulation controls */}
         <SimulationControls clockState={clockState} onClockStateChange={setClockState} />
-
-        <div className="v2-header__meta">
-          <span>{arrivalsToday.length} arrivals</span>
-          <span>{departuresToday.length} departures</span>
-          <span>HKT · {getDayInfo().label} pattern</span>
-        </div>
       </header>
-
-      {/* Main grid: left panel + map + right panel */}
-      {serviceGap > 25 && (
-        <div className="v2-coordination-banner">
-          ⚠️ <strong>Demand exceeds supply:</strong> {serviceGap.toLocaleString()} pax queueing now ·
-          ฿{(serviceGap * 100).toLocaleString()} on the curb. Engine says +2 well-timed buses
-          recover ฿{(getDayModel().whatIf[0]?.gainedRevenueThb ?? 0).toLocaleString()}/day — see "If we had more buses".
-        </div>
-      )}
       <main className="v2-body">
         {/* Left: Demand side (flights → passengers) */}
         <DemandPanel

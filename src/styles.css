@@ -8204,3 +8204,211 @@ a { color: var(--tint); }
   vertical-align: 2px;
   text-transform: uppercase;
 }
+
+/* ============================================================================
+ * AXIOM THEME — .v2 surface (ops + v2 routes)
+ *
+ * Rams × Moggridge × Norman × MoMA × Maeda × Vignelli
+ * Warm-neutral light system. One accent: #1f6e43 (forest green).
+ * Hairline borders #e7e5dd. No shadows, no gradients, no rounded corners.
+ * Helvetica Neue as the sole type voice.
+ * ========================================================================== */
+
+/* ── Root surface ──────────────────────────────────────────────────────────── */
+.v2 {
+  background: #faf9f7;
+  color: #191712;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ── Header — compact single band + timebar row ────────────────────────────── */
+.v2 .v2-header {
+  background: #ffffff;
+  border-bottom: 1px solid #d2cfc5;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 48px auto;
+  padding: 0 22px;
+  gap: 0 24px;
+}
+.v2 .v2-timebar { grid-column: 1 / -1; }
+
+/* Brand: drop h1 and sub, keep only the eyebrow label */
+.v2 .v2-header h1 { display: none; }
+.v2 .v2-header__sub { display: none; }
+.v2 .v2-header__brand { flex-direction: row; align-items: center; gap: 0; }
+.v2 .v2-header__eyebrow {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #1f6e43;
+}
+
+/* Story */
+.v2 .v2-header__story { flex-direction: row; align-items: baseline; gap: 16px; }
+.v2 .v2-header__story-label { color: #a9a59a; }
+.v2 .v2-header__story-value { color: #191712; font-size: 13px; letter-spacing: 0; line-height: 1; }
+.v2 .v2-header__story-detail { color: #6f6c63; }
+
+/* Clock */
+.v2 .v2-header__live { color: #1f6e43; }
+.v2 .v2-header__day {
+  color: #6f6c63;
+  border-color: #e7e5dd;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.v2 .v2-header__time {
+  color: #191712;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.v2 .v2-header__speed { color: #a9a59a; background: #f0eee8; }
+
+/* Mode toggle */
+.v2 .v2-mode-toggle { background: #f0eee8; border: 1px solid #e7e5dd; }
+.v2 .v2-mode-btn { color: #6f6c63; background: transparent; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-mode-btn.is-active { background: #191712; color: #faf9f7; }
+
+/* Timebar */
+.v2 .v2-timebar {
+  border-top: 1px solid #e7e5dd;
+  background: transparent;
+  padding: 8px 0;
+}
+.v2 .v2-timebar__play {
+  color: #191712;
+  background: transparent;
+  border: 1px solid #e7e5dd;
+}
+.v2 .v2-timebar__play:hover { background: rgba(31, 110, 67, 0.08); border-color: #1f6e43; }
+.v2 .v2-timebar__slider { accent-color: #1f6e43; }
+.v2 .v2-timebar__label { color: #6f6c63; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-timebar__speed { color: #6f6c63; }
+.v2 .v2-timebar__speed:hover { background: #f0eee8; color: #191712; }
+.v2 .v2-timebar__speed.is-active { background: #191712; color: #faf9f7; }
+
+/* Alert banner — compact inline strip */
+.v2 .v2-alert-banner {
+  background: #fffbf0;
+  border-bottom: 1px solid #e7cba9;
+  padding: 6px 22px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+}
+.v2 .v2-alert-banner__icon { color: #a23a26; font-size: 11px; }
+.v2 .v2-alert-banner__content { flex-direction: row; align-items: center; gap: 8px; }
+.v2 .v2-alert-banner__content strong { color: #7a3a00; font-size: 12px; font-weight: 600; }
+.v2 .v2-alert-banner__content span { color: #6f6c63; font-size: 11px; }
+
+/* Body */
+.v2 .v2-body { padding: 12px; gap: 12px; }
+
+/* ── Panels ────────────────────────────────────────────────────────────────── */
+.v2 .v2-panel { background: #ffffff; border-color: #e7e5dd; }
+.v2 .v2-panel.is-alert { border-color: #a23a26; }
+.v2 .v2-panel__title {
+  color: #a9a59a;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Insight cards (demand/supply) */
+.v2 .v2-insight { background: #f6f4f0; border-color: #e7e5dd; }
+.v2 .v2-insight--demand { border-left-color: #1f6e43; }
+.v2 .v2-insight--supply { border-left-color: #1f6e43; }
+.v2 .v2-insight__eyebrow { color: #a9a59a; }
+.v2 .v2-insight__headline { color: #191712; }
+.v2 .v2-insight__detail { color: #6f6c63; }
+
+/* KPI cells */
+.v2 .v2-kpi { background: #f6f4f0; border-color: #e7e5dd; }
+.v2 .v2-kpi__val { color: #191712; }
+.v2 .v2-kpi__sub { color: #6f6c63; }
+.v2 .v2-kpi__label { color: #a9a59a; }
+.v2 .v2-kpi--accent .v2-kpi__val { color: #1f6e43; }
+.v2 .v2-kpi--green .v2-kpi__val { color: #1f6e43; }
+.v2 .v2-kpi--alert { background: rgba(162, 58, 38, 0.05); border-color: #a23a26; }
+.v2 .v2-kpi--alert .v2-kpi__val { color: #a23a26; }
+.v2 .v2-kpi--warn { background: rgba(31, 110, 67, 0.05); border-color: #1f6e43; }
+.v2 .v2-kpi--warn .v2-kpi__val { color: #1f6e43; }
+
+/* Region bars (demand panel) */
+.v2 .v2-regions__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-region-bar__label { color: #6f6c63; }
+.v2 .v2-region-bar__track { background: #f0eee8; border-color: #e7e5dd; }
+
+/* What-if block */
+.v2 .v2-whatif { border-color: #e7e5dd; background: #f6f4f0; }
+.v2 .v2-whatif__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-whatif__row { border-bottom-color: #e7e5dd; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-whatif__buses { color: #191712; }
+.v2 .v2-whatif__gain { color: #6f6c63; }
+.v2 .v2-whatif__rev { color: #1f6e43; }
+.v2 .v2-whatif__note { color: #a9a59a; }
+
+/* Environmental impact */
+.v2 .v2-impact { background: #f6f4f0; border-color: #e7e5dd; }
+.v2 .v2-impact__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-impact__row { border-bottom-color: #e7e5dd; }
+.v2 .v2-impact__row--highlight { background: rgba(31, 110, 67, 0.06); border-color: #1f6e43; }
+.v2 .v2-impact__label { color: #6f6c63; }
+.v2 .v2-impact__val { color: #191712; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-impact__val--green { color: #1f6e43; }
+
+/* Destinations */
+.v2 .v2-destinations { background: #f6f4f0; border-color: #e7e5dd; }
+.v2 .v2-destinations__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-dest-card__track { background: #f0eee8; border-color: #e7e5dd; }
+.v2 .v2-dest-card__fill { background: #191712; }
+.v2 .v2-dest-row__name { color: #191712; }
+.v2 .v2-dest-row__served { color: #6f6c63; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-dest-row__rev { color: #1f6e43; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-dest-row__empty { color: #a9a59a; }
+
+/* Accumulator bar */
+.v2 .v2-footer { background: #ffffff; border-top: 1px solid #e7e5dd; padding: 0 12px 12px; }
+.v2 .v2-accum__item { background: #f6f4f0; border-color: #e7e5dd; }
+.v2 .v2-accum__val { color: #191712; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.v2 .v2-accum__label { color: #a9a59a; }
+.v2 .v2-accum__item--accent .v2-accum__val { color: #1f6e43; }
+.v2 .v2-accum__item--green .v2-accum__val { color: #1f6e43; }
+
+/* Map overlays */
+.v2 .v2-map__hero-card {
+  background: #ffffff;
+  border: 1px solid #e7e5dd;
+}
+.v2 .v2-map__hero-label { color: #a9a59a; }
+.v2 .v2-map__hero-value { color: #191712; }
+.v2 .v2-map__hero-detail { color: #6f6c63; }
+.v2 .v2-map__stat,
+.v2 .v2-map__next {
+  background: rgba(250, 249, 247, 0.92);
+  color: #191712;
+  border-color: #d2cfc5;
+  backdrop-filter: none;
+}
+
+/* Analytics footer chart — adapt to light surface */
+.v2 .v2-footer .analytics-panel { color: #191712; }
+
+
+/* Axiom layout fix — map canvas was 620px floor; let it flex within the panel */
+.v2 .v2-map__canvas { min-height: 200px; }
+.v2 .v2-map { flex: 1; display: flex; flex-direction: column; }
+
+/* AnalyticsPanel inside footer — cap height so it doesn't dominate */
+.v2 .v2-footer { max-height: 260px; }
+.v2 .v2-footer .analytics-panel,
+.v2 .v2-footer > div:first-child { max-height: 140px; overflow: hidden; }
+
+
+/* Header story + clock — clear dark backgrounds from the original dark theme */
+.v2 .v2-header__story {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+.v2 .v2-header__brand { background: transparent; }
+.v2 .v2-header__clock { background: transparent; }
+

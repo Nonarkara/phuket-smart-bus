@@ -204,10 +204,10 @@ export default function App() {
     </>;
   }
 
-  // Full-screen ops dashboard
+  // Full-screen ops dashboard — DashboardV2 with Axiom styling
   if (isOps) {
     return <>
-      <OpsConsole onToggle={goTourist} />
+      <DashboardV2 />
       {DEMO_MODE && <DemoCaption />}
     </>;
   }
