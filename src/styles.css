@@ -8736,3 +8736,69 @@ a { color: var(--tint); }
   border-right: 1px solid var(--ax-line) !important;
   color: var(--ax-ink-2) !important;
 }
+
+/* ── Hourly demand chart ─────────────────────────────────────────────────── */
+.v2 .v2-hourly {
+  background: transparent;
+  border: none;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2 .v2-hourly__title { color: var(--ax-ink-3); }
+.v2 .v2-hourly__legend { color: var(--ax-ink-3); }
+.v2 .v2-hourly__time { color: var(--ax-ink-3); }
+.v2 .v2-hourly__meta { color: var(--ax-ink-3); }
+.v2 .v2-hourly__row.is-current {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.v2 .v2-hourly__track { background: var(--ax-line); }
+
+/* ── Flight schedule (DemandPanel) ──────────────────────────────────────── */
+.v2 .v2-schedule {
+  padding: 14px 18px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.v2 .v2-schedule__title { color: var(--ax-ink-3); }
+.v2 .v2-schedule__meta { color: var(--ax-ink-3); }
+.v2 .v2-schedule__row {
+  border-bottom-color: var(--ax-line);
+  background: transparent;
+}
+.v2 .v2-schedule__row--active {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.v2 .v2-schedule__time { color: var(--ax-ink-3); }
+.v2 .v2-schedule__flight { color: var(--ax-ink); }
+.v2 .v2-schedule__craft { color: var(--ax-ink-3); }
+.v2 .v2-schedule__city { color: var(--ax-ink-2); }
+.v2 .v2-schedule__pax { color: var(--ax-ink-2); }
+.v2 .v2-schedule__load { color: var(--ax-ink-3); }
+.v2 .v2-schedule__busdemand { color: var(--ax-accent); }
+.v2 .v2-schedule__type--arr {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.v2 .v2-schedule__type--dep {
+  color: var(--ax-accent);
+  background: rgba(31, 110, 67, 0.08);
+  border-color: rgba(31, 110, 67, 0.3);
+}
+
+/* ── Inbound pressure section ───────────────────────────────────────────── */
+.v2 .v2-inbound__title { color: var(--ax-ink-3) !important; }
+.v2 .v2-inbound__pax { color: var(--ax-ink) !important; }
+.v2 .v2-inbound__text { color: var(--ax-ink-2) !important; }
+.v2 .v2-inbound__surge { color: var(--ax-ink-3) !important; }
+.v2 .v2-inbound { border-bottom-color: var(--ax-line) !important; }
+
+/* ── KPI value display inside panels ────────────────────────────────────── */
+.v2 .v2-kpi-stack { border-color: var(--ax-line); }
+.v2 .v2-kpi .v2-kpi__val { color: var(--ax-ink); }
+.v2 .v2-kpi .v2-kpi__label { color: var(--ax-ink-3); }
+.v2 .v2-kpi .v2-kpi__sub { color: var(--ax-ink-2); }
