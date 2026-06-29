@@ -91,6 +91,13 @@ export default function DashboardV2() {
   const currentGap = Math.max(0, currentBusDemand - currentSupplySeats);
   const gapStatus = currentGap > 20 ? "shortfall" : currentGap > 0 ? "tight" : "surplus";
 
+  // Scale ops console for large screens via the existing html.ops-mode CSS rule.
+  // Must go on html (not .v2) so zoom affects position:fixed children correctly.
+  useEffect(() => {
+    document.documentElement.classList.add('ops-mode');
+    return () => document.documentElement.classList.remove('ops-mode');
+  }, []);
+
   // Poll simulation state every second. clockState is included so a pause
   // triggered anywhere (hour-chart click, flight-pulse click) updates the
   // play/pause button without prop drilling.
@@ -108,8 +115,8 @@ export default function DashboardV2() {
     <div className="v2">
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
       {serviceGap > 25 && (
-        <div className="v2-alert-banner">
-          <span className="v2-alert-banner__icon">⚠</span>
+        <div className="v2-alert-banner" style={{ background: '#fff3cd', color: '#7a5700', borderBottom: '1px solid #e8d49a' }}>
+          <span className="v2-alert-banner__icon" style={{ color: '#c47a0f' }}>⚠</span>
           <div className="v2-alert-banner__content">
             <strong>
               {serviceGap.toLocaleString()} pax in the airport queue now

@@ -8244,10 +8244,8 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Zoom from 1280px CSS-pixel reference — covers HiDPI 2560px@2x and
-     standard 1920–2560px monitors. zoom is the right tool for a
-     full-screen ops console: scales layout, type, and map markers together. */
-  zoom: clamp(1, calc(100vw / 1280), 2);
+  /* zoom lives on html.ops-mode (line 86) — not here. Fixed elements
+     don't respond to zoom on themselves; it must go on the root. */
 }
 
 /* ── Alert strip ─────────────────────────────────────────────────────────── */
