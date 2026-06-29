@@ -206,9 +206,8 @@ export default function DashboardV2() {
         />
       </main>
 
-      {/* Bottom: Live demand–supply chart paired with the accumulator bar */}
       <footer className="v2-footer">
-        <AnalyticsPanel lang="en" />
+        {/* AnalyticsPanel removed — accumulator bar is the ops footer */}
         <div className="v2-accum">
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={metrics.fleet.totalBuses} /></span>

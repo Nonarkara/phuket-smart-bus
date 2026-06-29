@@ -8205,277 +8205,531 @@ a { color: var(--tint); }
   text-transform: uppercase;
 }
 
+
 /* ============================================================================
- * AXIOM THEME — .v2 surface (ops + v2 routes)
+ * AXIOM DESIGN CORE — ops / v2 full redesign
+ * Single source of truth. No fragments, no patches.
  *
- * Rams × Moggridge × Norman × MoMA × Maeda × Vignelli
- * Warm-neutral light system. One accent: #1f6e43 (forest green).
- * Hairline borders #e7e5dd. No shadows, no gradients, no rounded corners.
- * Helvetica Neue as the sole type voice.
- * ========================================================================== */
+ * Paper #faf9f7  Panel #fff  Ink #191712  Ink-2 #6f6c63  Ink-3 #a9a59a
+ * Line #e7e5dd   Line-2 #d2cfc5          Accent #1f6e43  Neg #a23a26
+ * Type: fluid clamp() — scales from 1440px desk to 2560px wall
+ * Grid: hairline (gap:1px, bg:line) — panel cells white
+ * Laws: zero shadow · zero gradient · zero border-radius · one accent
+ * ============================================================================ */
 
-/* ── Root surface ──────────────────────────────────────────────────────────── */
+/* ── Axiom tokens + root surface ─────────────────────────────────────────── */
 .v2 {
-  background: #faf9f7;
-  color: #191712;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ax-paper:   #faf9f7;
+  --ax-panel:   #ffffff;
+  --ax-ink:     #191712;
+  --ax-ink-2:   #6f6c63;
+  --ax-ink-3:   #a9a59a;
+  --ax-line:    #e7e5dd;
+  --ax-line-2:  #d2cfc5;
+  --ax-accent:  #1f6e43;
+  --ax-neg:     #a23a26;
+  --ax-warn:    #c47a0f;
+
+  /* Fluid type — readable at desk and wall screen */
+  --t-micro:   clamp(11px, 0.78vw, 15px);
+  --t-body:    clamp(13px, 0.90vw, 17px);
+  --t-display: clamp(20px, 1.60vw, 36px);
+
+  background: var(--ax-paper);
+  color: var(--ax-ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: var(--t-body);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  zoom: unset; /* no zoom — fluid type handles all scaling */
 }
 
-/* ── Header — compact single band + timebar row ────────────────────────────── */
-.v2 .v2-header {
-  background: #ffffff;
-  border-bottom: 1px solid #d2cfc5;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: 48px auto;
-  padding: 0 22px;
-  gap: 0 24px;
-}
-.v2 .v2-timebar { grid-column: 1 / -1; }
-
-/* Brand: drop h1 and sub, keep only the eyebrow label */
-.v2 .v2-header h1 { display: none; }
-.v2 .v2-header__sub { display: none; }
-.v2 .v2-header__brand { flex-direction: row; align-items: center; gap: 0; }
-.v2 .v2-header__eyebrow {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #1f6e43;
-}
-
-/* Story */
-.v2 .v2-header__story { flex-direction: row; align-items: baseline; gap: 16px; }
-.v2 .v2-header__story-label { color: #a9a59a; }
-.v2 .v2-header__story-value { color: #191712; font-size: 13px; letter-spacing: 0; line-height: 1; }
-.v2 .v2-header__story-detail { color: #6f6c63; }
-
-/* Clock */
-.v2 .v2-header__live { color: #1f6e43; }
-.v2 .v2-header__day {
-  color: #6f6c63;
-  border-color: #e7e5dd;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-.v2 .v2-header__time {
-  color: #191712;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-.v2 .v2-header__speed { color: #a9a59a; background: #f0eee8; }
-
-/* Mode toggle */
-.v2 .v2-mode-toggle { background: #f0eee8; border: 1px solid #e7e5dd; }
-.v2 .v2-mode-btn { color: #6f6c63; background: transparent; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-mode-btn.is-active { background: #191712; color: #faf9f7; }
-
-/* Timebar */
-.v2 .v2-timebar {
-  border-top: 1px solid #e7e5dd;
-  background: transparent;
-  padding: 8px 0;
-}
-.v2 .v2-timebar__play {
-  color: #191712;
-  background: transparent;
-  border: 1px solid #e7e5dd;
-}
-.v2 .v2-timebar__play:hover { background: rgba(31, 110, 67, 0.08); border-color: #1f6e43; }
-.v2 .v2-timebar__slider { accent-color: #1f6e43; }
-.v2 .v2-timebar__label { color: #6f6c63; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-timebar__speed { color: #6f6c63; }
-.v2 .v2-timebar__speed:hover { background: #f0eee8; color: #191712; }
-.v2 .v2-timebar__speed.is-active { background: #191712; color: #faf9f7; }
-
-/* Alert banner — compact inline strip */
+/* ── Alert strip ─────────────────────────────────────────────────────────── */
 .v2 .v2-alert-banner {
-  background: #fffbf0;
-  border-bottom: 1px solid #e7cba9;
-  padding: 6px 22px;
+  background: #fff8eb;
+  border-bottom: 1px solid #e8d49a;
+  color: #7a5700;
+  font-size: var(--t-micro);
+  padding: 5px 20px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.v2 .v2-alert-banner__icon { color: var(--ax-warn); }
+.v2 .v2-alert-banner strong { color: #5a3d00; font-weight: 700; }
+.v2 .v2-coordination-banner { display: none; } /* redundant with alert strip */
+
+/* ── Header: brand | story | clock on row 1; timebar on row 2 ────────────── */
+.v2 .v2-header {
+  background: var(--ax-panel);
+  border-bottom: 1px solid var(--ax-line-2);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: clamp(44px, 3.2vw, 60px) clamp(36px, 2.6vw, 48px);
+  padding: 0 24px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.v2 .v2-header__brand {
+  background: transparent;
+  display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  min-height: 0;
-}
-.v2 .v2-alert-banner__icon { color: #a23a26; font-size: 11px; }
-.v2 .v2-alert-banner__content { flex-direction: row; align-items: center; gap: 8px; }
-.v2 .v2-alert-banner__content strong { color: #7a3a00; font-size: 12px; font-weight: 600; }
-.v2 .v2-alert-banner__content span { color: #6f6c63; font-size: 11px; }
-
-/* Body */
-.v2 .v2-body { padding: 12px; gap: 12px; }
-
-/* ── Panels ────────────────────────────────────────────────────────────────── */
-.v2 .v2-panel { background: #ffffff; border-color: #e7e5dd; }
-.v2 .v2-panel.is-alert { border-color: #a23a26; }
-.v2 .v2-panel__title {
-  color: #a9a59a;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-/* Insight cards (demand/supply) */
-.v2 .v2-insight { background: #f6f4f0; border-color: #e7e5dd; }
-.v2 .v2-insight--demand { border-left-color: #1f6e43; }
-.v2 .v2-insight--supply { border-left-color: #1f6e43; }
-.v2 .v2-insight__eyebrow { color: #a9a59a; }
-.v2 .v2-insight__headline { color: #191712; }
-.v2 .v2-insight__detail { color: #6f6c63; }
-
-/* KPI cells */
-.v2 .v2-kpi { background: #f6f4f0; border-color: #e7e5dd; }
-.v2 .v2-kpi__val { color: #191712; }
-.v2 .v2-kpi__sub { color: #6f6c63; }
-.v2 .v2-kpi__label { color: #a9a59a; }
-.v2 .v2-kpi--accent .v2-kpi__val { color: #1f6e43; }
-.v2 .v2-kpi--green .v2-kpi__val { color: #1f6e43; }
-.v2 .v2-kpi--alert { background: rgba(162, 58, 38, 0.05); border-color: #a23a26; }
-.v2 .v2-kpi--alert .v2-kpi__val { color: #a23a26; }
-.v2 .v2-kpi--warn { background: rgba(31, 110, 67, 0.05); border-color: #1f6e43; }
-.v2 .v2-kpi--warn .v2-kpi__val { color: #1f6e43; }
-
-/* Region bars (demand panel) */
-.v2 .v2-regions__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-region-bar__label { color: #6f6c63; }
-.v2 .v2-region-bar__track { background: #f0eee8; border-color: #e7e5dd; }
-
-/* What-if block */
-.v2 .v2-whatif { border-color: #e7e5dd; background: #f6f4f0; }
-.v2 .v2-whatif__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-whatif__row { border-bottom-color: #e7e5dd; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-whatif__buses { color: #191712; }
-.v2 .v2-whatif__gain { color: #6f6c63; }
-.v2 .v2-whatif__rev { color: #1f6e43; }
-.v2 .v2-whatif__note { color: #a9a59a; }
-
-/* Environmental impact */
-.v2 .v2-impact { background: #f6f4f0; border-color: #e7e5dd; }
-.v2 .v2-impact__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-impact__row { border-bottom-color: #e7e5dd; }
-.v2 .v2-impact__row--highlight { background: rgba(31, 110, 67, 0.06); border-color: #1f6e43; }
-.v2 .v2-impact__label { color: #6f6c63; }
-.v2 .v2-impact__val { color: #191712; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-impact__val--green { color: #1f6e43; }
-
-/* Destinations */
-.v2 .v2-destinations { background: #f6f4f0; border-color: #e7e5dd; }
-.v2 .v2-destinations__title { color: #a9a59a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-dest-card__track { background: #f0eee8; border-color: #e7e5dd; }
-.v2 .v2-dest-card__fill { background: #191712; }
-.v2 .v2-dest-row__name { color: #191712; }
-.v2 .v2-dest-row__served { color: #6f6c63; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-dest-row__rev { color: #1f6e43; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-dest-row__empty { color: #a9a59a; }
-
-/* Accumulator bar */
-.v2 .v2-footer { background: #ffffff; border-top: 1px solid #e7e5dd; padding: 0 12px 12px; }
-.v2 .v2-accum__item { background: #f6f4f0; border-color: #e7e5dd; }
-.v2 .v2-accum__val { color: #191712; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-.v2 .v2-accum__label { color: #a9a59a; }
-.v2 .v2-accum__item--accent .v2-accum__val { color: #1f6e43; }
-.v2 .v2-accum__item--green .v2-accum__val { color: #1f6e43; }
-
-/* Map overlays */
-.v2 .v2-map__hero-card {
-  background: #ffffff;
-  border: 1px solid #e7e5dd;
-}
-.v2 .v2-map__hero-label { color: #a9a59a; }
-.v2 .v2-map__hero-value { color: #191712; }
-.v2 .v2-map__hero-detail { color: #6f6c63; }
-.v2 .v2-map__stat,
-.v2 .v2-map__next {
-  background: rgba(250, 249, 247, 0.92);
-  color: #191712;
-  border-color: #d2cfc5;
-  backdrop-filter: none;
-}
-
-/* Analytics footer chart — adapt to light surface */
-.v2 .v2-footer .analytics-panel { color: #191712; }
-
-
-/* Axiom layout fix — map canvas was 620px floor; let it flex within the panel */
-.v2 .v2-map__canvas { min-height: 200px; }
-.v2 .v2-map { flex: 1; display: flex; flex-direction: column; }
-
-/* AnalyticsPanel inside footer — cap height so it doesn't dominate */
-.v2 .v2-footer { max-height: 260px; }
-.v2 .v2-footer .analytics-panel,
-.v2 .v2-footer > div:first-child { max-height: 140px; overflow: hidden; }
-
-
-/* Header story + clock — clear dark backgrounds from the original dark theme */
-.v2 .v2-header__story {
-  background: transparent;
-  border-color: transparent;
+  gap: 0;
   padding: 0;
 }
-.v2 .v2-header__brand { background: transparent; }
-.v2 .v2-header__clock { background: transparent; }
-
-
-/* ── READABILITY PASS — scale + font size for ops wall screen ──────────────
- * Reference viewport: 1440px. At 1920px everything scales 33% larger.
- * zoom is non-standard but universally supported in Chromium — the correct
- * tool for a fixed ops dashboard that must read at 3 metres.
- * ────────────────────────────────────────────────────────────────────────── */
-.v2 {
-  zoom: clamp(1, calc(100vw / 1440), 2.2);
-  /* Override the type scale tokens for this surface */
-  --t-micro: 12px;
-  --t-body:  15px;
-  --t-display: 34px;
-}
-
-/* Wider side panels — give content more breathing room */
-.v2 .v2-body {
-  grid-template-columns: 400px minmax(0, 1fr) 380px;
-  padding: 14px;
-  gap: 14px;
-}
-
-/* Panel headings and labels — bump to readable sizes */
-.v2 .v2-panel__title,
-.v2 .v2-destinations__title,
-.v2 .v2-whatif__title,
-.v2 .v2-impact__title,
-.v2 .v2-regions__title,
-.v2 .v2-insight__eyebrow {
-  font-size: 12px;
+.v2 h1 { display: none; }
+.v2 .v2-header__sub { display: none; }
+.v2 .v2-header__eyebrow {
+  font-size: var(--t-micro);
+  font-weight: 700;
   letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-accent);
 }
 
-/* KPI primary values */
-.v2 .v2-kpi__val { font-size: 24px; font-weight: 700; }
-.v2 .v2-kpi__label { font-size: 12px; }
-.v2 .v2-kpi__sub { font-size: 12px; }
+.v2 .v2-header__story {
+  background: transparent;
+  border: none;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 14px;
+  justify-content: center;
+}
+.v2 .v2-header__story-label {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2 .v2-header__story-value {
+  font-size: clamp(14px, 1.05vw, 20px);
+  font-weight: 600;
+  color: var(--ax-ink);
+  letter-spacing: -0.02em;
+}
+.v2 .v2-header__story-detail { font-size: var(--t-micro); color: var(--ax-ink-2); }
 
-/* Insight headlines */
-.v2 .v2-insight__headline { font-size: 22px; line-height: 1.1; }
-.v2 .v2-insight__detail { font-size: 12px; }
+.v2 .v2-header__clock {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 0.7vw, 14px);
+  font-size: var(--t-micro);
+  color: var(--ax-ink-2);
+}
+.v2 .v2-header__live { color: var(--ax-accent); }
+.v2 .v2-header__day { color: var(--ax-ink-3); }
+.v2 .v2-header__time {
+  font-size: clamp(14px, 0.95vw, 18px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+}
+.v2 .v2-header__speed { color: var(--ax-ink-2); font-size: var(--t-micro); }
 
-/* Hero card values on map */
-.v2 .v2-map__hero-value { font-size: 28px; }
-.v2 .v2-map__hero-label { font-size: 12px; }
-.v2 .v2-map__hero-detail { font-size: 12px; }
+.v2 .v2-mode-toggle { display: flex; border: 1px solid var(--ax-line-2); }
+.v2 .v2-mode-btn {
+  background: var(--ax-panel);
+  color: var(--ax-ink-2);
+  border: none;
+  padding: 4px 10px;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.v2 .v2-mode-btn.is-active { background: var(--ax-ink); color: var(--ax-paper); }
 
-/* Accumulator bar */
-.v2 .v2-accum__val { font-size: 16px; }
-.v2 .v2-accum__label { font-size: 12px; }
+/* Timebar — row 2 of header grid */
+.v2 .v2-timebar {
+  grid-column: 1 / -1;
+  background: var(--ax-paper);
+  border-top: 1px solid var(--ax-line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+}
+.v2 .v2-timebar__play {
+  background: none;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink);
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.v2 .v2-timebar__play:hover { background: var(--ax-ink); color: var(--ax-paper); }
+.v2 .v2-timebar__slider {
+  flex: 1;
+  accent-color: var(--ax-accent);
+  cursor: pointer;
+}
+.v2 .v2-timebar__time {
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--ax-ink-2);
+  min-width: 34px;
+}
+.v2 .v2-timebar__speed {
+  background: none;
+  border: 1px solid var(--ax-line);
+  color: var(--ax-ink-2);
+  padding: 3px 8px;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.v2 .v2-timebar__speed.is-active,
+.v2 .v2-timebar__speed:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
 
-/* Header type */
-.v2 .v2-header__eyebrow { font-size: 12px; }
-.v2 .v2-header__story-value { font-size: 15px; }
-.v2 .v2-header__story-detail { font-size: 12px; }
-.v2 .v2-header__time { font-size: 15px; }
-.v2 .v2-header__day { font-size: 12px; }
+/* ── Body: hairline grid — proportional fr columns ───────────────────────── */
+.v2 .v2-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 22fr 54fr 24fr;
+  gap: 1px;
+  background: var(--ax-line);   /* hairlines bleed through gaps */
+  padding: 0;
+  overflow: hidden;
+}
 
-/* What-if + destinations row text */
+.v2 .v2-panel {
+  background: var(--ax-panel);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ax-line-2) transparent;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Panel internal section rows (common spacing) */
+.v2 .v2-panel__section {
+  border-bottom: 1px solid var(--ax-line);
+  padding: 14px 18px;
+}
+.v2 .v2-panel__title {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  margin-bottom: 10px;
+}
+
+/* KPI cards */
+.v2 .v2-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ax-line); }
+.v2 .v2-kpi {
+  background: var(--ax-panel);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.v2 .v2-kpi__val {
+  font-size: clamp(18px, 1.40vw, 28px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.v2 .v2-kpi__label {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2 .v2-kpi__sub { font-size: var(--t-micro); color: var(--ax-ink-2); }
+.v2 .v2-kpi--shortfall .v2-kpi__val,
+.v2 .v2-kpi--neg .v2-kpi__val { color: var(--ax-neg); }
+.v2 .v2-kpi--ok .v2-kpi__val,
+.v2 .v2-kpi--pos .v2-kpi__val,
+.v2 .v2-kpi--green .v2-kpi__val { color: var(--ax-accent); }
+
+/* Insight block */
+.v2 .v2-insight {
+  background: var(--ax-panel);
+  border: none;
+  box-shadow: none;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2 .v2-insight__eyebrow {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2 .v2-insight__headline {
+  font-size: clamp(14px, 1.05vw, 20px);
+  font-weight: 600;
+  color: var(--ax-ink);
+  line-height: 1.2;
+  margin: 4px 0 2px;
+}
+.v2 .v2-insight__detail { font-size: var(--t-micro); color: var(--ax-ink-2); }
+
+/* Demand panel — flight ticker rows */
+.v2 .v2-flights-list { flex: 1; overflow-y: auto; }
+.v2 .v2-flight-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border-bottom: 1px solid var(--ax-line);
+  font-size: var(--t-micro);
+}
+.v2 .v2-flight-row:hover { background: #faf8f5; }
+.v2 .v2-flight-row__dot { width: 6px; height: 6px; flex-shrink: 0; }
+.v2 .v2-flight-row__airline { font-weight: 700; color: var(--ax-ink); }
+.v2 .v2-flight-row__city { color: var(--ax-ink-2); }
+.v2 .v2-flight-row__time { font-variant-numeric: tabular-nums; color: var(--ax-ink-3); margin-left: auto; }
+.v2 .v2-flight-row__pax { font-variant-numeric: tabular-nums; color: var(--ax-ink-2); }
+.v2 .v2-flight-row__action {
+  background: none;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink-2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.v2 .v2-flight-row__action:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
+.v2 .v2-flight-row--next { background: #f4fbf6; }
+.v2 .v2-flight-row--landed { opacity: 0.5; }
+
+/* Hour chart */
+.v2 .v2-hour-chart { padding: 10px 18px 4px; border-bottom: 1px solid var(--ax-line); }
+.v2 .v2-hour-chart__label { font-size: var(--t-micro); color: var(--ax-ink-3); }
+
+/* Arrivals by region */
+.v2 .v2-regions { padding: 10px 18px; border-bottom: 1px solid var(--ax-line); }
+.v2 .v2-regions__title {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  margin-bottom: 8px;
+}
+.v2 .v2-region-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.v2 .v2-region-bar__label { font-size: var(--t-micro); color: var(--ax-ink-2); min-width: 60px; }
+.v2 .v2-region-bar__track { flex: 1; height: 4px; background: var(--ax-line); }
+.v2 .v2-region-bar__fill { height: 100%; background: var(--ax-accent); }
+.v2 .v2-region-bar--se-asia .v2-region-bar__fill { background: var(--ax-accent); }
+.v2 .v2-region-bar--china .v2-region-bar__fill { background: var(--ax-warn); }
+.v2 .v2-region-bar--russia .v2-region-bar__fill { background: #6b8fa3; }
+.v2 .v2-region-bar__val { font-size: var(--t-micro); font-variant-numeric: tabular-nums; color: var(--ax-ink-3); min-width: 28px; text-align: right; }
+
+/* ── Map column ───────────────────────────────────────────────────────────── */
+.v2 .v2-map {
+  background: var(--ax-panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.v2 .v2-map__hero {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--ax-line);
+  gap: 1px;
+  flex-shrink: 0;
+}
+.v2 .v2-map__hero-card {
+  background: var(--ax-panel);
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+}
+.v2 .v2-map__hero-label {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2 .v2-map__hero-value {
+  font-size: clamp(22px, 1.80vw, 38px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.v2 .v2-map__hero-detail { font-size: var(--t-micro); color: var(--ax-ink-2); }
+
+/* Leaflet canvas fills remaining map space */
+.v2 .v2-map__canvas {
+  flex: 1;
+  min-height: 0;
+}
+.v2 .v2-map__canvas .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #eef0eb;
+}
+
+/* Map status chips at bottom */
+.v2 .v2-map__overlay {
+  background: var(--ax-panel);
+  border-top: 1px solid var(--ax-line);
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.v2 .v2-map__stat,
+.v2 .v2-map__next {
+  font-size: var(--t-micro);
+  color: var(--ax-ink-2);
+  padding: 7px 14px;
+  border-right: 1px solid var(--ax-line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Supply panel ─────────────────────────────────────────────────────────── */
+.v2 .v2-gap-status {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+.v2 .v2-gap-status--shortfall { color: var(--ax-neg); }
+.v2 .v2-gap-status--tight     { color: var(--ax-warn); }
+.v2 .v2-gap-status--surplus   { color: var(--ax-accent); }
+
 .v2 .v2-whatif__row,
 .v2 .v2-dest-row,
-.v2 .v2-dest-card__meta,
-.v2 .v2-impact__row { font-size: 12px; }
+.v2 .v2-impact__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--t-micro);
+  color: var(--ax-ink-2);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2 .v2-whatif__label,
+.v2 .v2-dest-row__name { flex: 1; }
+.v2 .v2-whatif__delta,
+.v2 .v2-dest-row__rev {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+}
+.v2 .v2-whatif__delta--pos { color: var(--ax-accent); }
+.v2 .v2-whatif__delta--neg { color: var(--ax-neg); }
 
-/* Map overlay chips */
+.v2 .v2-destinations__title,
+.v2 .v2-whatif__title,
+.v2 .v2-impact__title {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  margin-bottom: 8px;
+}
+
+/* ── Footer: accumulator bar only ────────────────────────────────────────── */
+.v2 .v2-footer {
+  background: var(--ax-line);
+  border-top: 1px solid var(--ax-line-2);
+  flex-shrink: 0;
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+/* Hide any analytics chart that leaks in */
+.v2 .v2-footer > :not(.v2-accum) { display: none; }
+
+.v2 .v2-accum {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--ax-line);
+  gap: 1px;
+}
+.v2 .v2-accum__item {
+  background: var(--ax-panel);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v2 .v2-accum__item--accent .v2-accum__val { color: var(--ax-accent); }
+.v2 .v2-accum__item--green  .v2-accum__val { color: var(--ax-accent); }
+.v2 .v2-accum__val {
+  font-size: clamp(15px, 1.10vw, 22px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+  letter-spacing: -0.02em;
+}
+.v2 .v2-accum__label {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+
+/* Map overlay: pull out of absolute float, render as static bar */
+.v2 .v2-map__overlay {
+  position: static !important;
+  background: var(--ax-panel);
+  border-top: 1px solid var(--ax-line);
+  z-index: auto;
+  backdrop-filter: none;
+}
 .v2 .v2-map__stat,
-.v2 .v2-map__next { font-size: 12px; }
-
+.v2 .v2-map__next {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  border-right: 1px solid var(--ax-line) !important;
+  color: var(--ax-ink-2) !important;
+}
