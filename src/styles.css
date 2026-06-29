@@ -8230,10 +8230,10 @@ a { color: var(--tint); }
   --ax-neg:     #a23a26;
   --ax-warn:    #c47a0f;
 
-  /* Fluid type — readable at desk and wall screen */
-  --t-micro:   clamp(11px, 0.78vw, 15px);
-  --t-body:    clamp(13px, 0.90vw, 17px);
-  --t-display: clamp(20px, 1.60vw, 36px);
+  /* Type scale — fixed sizes, zoom handles scaling for big screens */
+  --t-micro:   13px;
+  --t-body:    15px;
+  --t-display: 28px;
 
   background: var(--ax-paper);
   color: var(--ax-ink);
@@ -8244,21 +8244,26 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  zoom: unset; /* no zoom — fluid type handles all scaling */
+  /* Zoom from 1280px CSS-pixel reference — covers HiDPI 2560px@2x and
+     standard 1920–2560px monitors. zoom is the right tool for a
+     full-screen ops console: scales layout, type, and map markers together. */
+  zoom: clamp(1, calc(100vw / 1280), 2);
 }
 
 /* ── Alert strip ─────────────────────────────────────────────────────────── */
 .v2 .v2-alert-banner {
-  background: #fff8eb;
-  border-bottom: 1px solid #e8d49a;
-  color: #7a5700;
+  background: #fff3cd !important;   /* force over original var(--amber) */
+  border-bottom: 1px solid #e8d49a !important;
+  color: #7a5700 !important;
   font-size: var(--t-micro);
   padding: 5px 20px;
   gap: 10px;
   flex-shrink: 0;
+  backdrop-filter: none !important;
 }
-.v2 .v2-alert-banner__icon { color: var(--ax-warn); }
-.v2 .v2-alert-banner strong { color: #5a3d00; font-weight: 700; }
+.v2 .v2-alert-banner__icon { color: var(--ax-warn) !important; }
+.v2 .v2-alert-banner strong { color: #5a3d00 !important; font-weight: 700; }
+.v2 .v2-alert-banner span { color: #7a5700 !important; }
 .v2 .v2-coordination-banner { display: none; } /* redundant with alert strip */
 
 /* ── Header: brand | story | clock on row 1; timebar on row 2 ────────────── */
