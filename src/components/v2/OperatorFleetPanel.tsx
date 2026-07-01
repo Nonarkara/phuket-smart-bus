@@ -10,17 +10,17 @@ interface OperatorFleetPanelProps {
 type Filter = "all" | "issues" | "moving" | "idle";
 
 const PROBLEM_LABEL: Record<NonNullable<BusProblem>, string> = {
-  OVERLOADED: "OVERLOADED",
   STUCK: "STUCK",
   RUNNING_EMPTY: "EMPTY + WAIT",
-  IDLE_QUEUED: "EMPTY AT HUB"
+  IDLE_QUEUED: "EMPTY AT HUB",
+  FULL: "FULL"
 };
 
 const PROBLEM_DESC: Record<NonNullable<BusProblem>, string> = {
-  OVERLOADED: "At capacity — passengers being turned away",
   STUCK: "Stopped mid-trip while queue keeps building",
   RUNNING_EMPTY: "Bus running empty past waiting passengers",
-  IDLE_QUEUED: "Empty bus at airport, queue building"
+  IDLE_QUEUED: "Empty bus at airport, queue building",
+  FULL: "Bus at ≥92% capacity"
 };
 
 /**
@@ -43,14 +43,16 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
   }, [rows, filter]);
 
   const problemCounts = useMemo(() => {
-    const counts = { OVERLOADED: 0, STUCK: 0, RUNNING_EMPTY: 0, IDLE_QUEUED: 0 };
+    const counts = { STUCK: 0, RUNNING_EMPTY: 0, IDLE_QUEUED: 0, FULL: 0 };
     for (const r of rows) {
       if (r.problem) counts[r.problem] += 1;
+      else if (r.full) counts.FULL += 1;
     }
     return counts;
   }, [rows]);
 
   const headerCount = rows.length;
+  // Alerts: only problem flags, not FULL (which is informational).
   const issueCount = rows.filter((r) => r.problem !== null).length;
 
   return (
@@ -86,12 +88,12 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
       </header>
 
       {/* Aggregate problem summary — visible at a glance */}
-      {issueCount > 0 && (
+      {(issueCount > 0 || problemCounts.FULL > 0) && (
         <div className="v2-fleet__problems">
-          {problemCounts.OVERLOADED > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--overloaded">{problemCounts.OVERLOADED} OVERLOADED</span>}
           {problemCounts.STUCK > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--stuck">{problemCounts.STUCK} STUCK</span>}
           {problemCounts.RUNNING_EMPTY > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--empty">{problemCounts.RUNNING_EMPTY} EMPTY + WAIT</span>}
           {problemCounts.IDLE_QUEUED > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--hub">{problemCounts.IDLE_QUEUED} EMPTY AT HUB</span>}
+          {problemCounts.FULL > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--full">{problemCounts.FULL} FULL</span>}
         </div>
       )}
 
@@ -115,9 +117,9 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
 }
 
 function FleetRow({ row }: { row: OperatorFleetRow }) {
-  const isOverloaded = row.problem === "OVERLOADED";
-  const loadTone = isOverloaded
-    ? "v2-fleet__bar--overloaded"
+  const isFull = row.full;
+  const loadTone = isFull
+    ? "v2-fleet__bar--full"
     : row.loadPct >= 75
       ? "v2-fleet__bar--high"
       : row.loadPct >= 40
@@ -135,7 +137,7 @@ function FleetRow({ row }: { row: OperatorFleetRow }) {
         ? "Dragon"
         : row.routeId;
   return (
-    <div className={`v2-fleet__row ${row.problem ? "has-problem" : ""}`} title={row.summary}>
+    <div className={`v2-fleet__row ${row.problem ? "has-problem" : ""} ${isFull && !row.problem ? "is-full" : ""}`} title={row.summary}>
       <span className="v2-fleet__plate">{row.plate.replace(" ภูเก็ต", "")}</span>
       <span className="v2-fleet__route">
         <span className="v2-fleet__route-tag">{routeShort}</span>
@@ -150,7 +152,10 @@ function FleetRow({ row }: { row: OperatorFleetRow }) {
         <span className={`v2-fleet__bar ${loadTone}`}>
           <span className="v2-fleet__bar-fill" style={{ width: `${Math.min(100, row.loadPct)}%` }} />
         </span>
-        <span className="v2-fleet__load-num">{row.load}/{row.capacity}</span>
+        <span className="v2-fleet__load-num">
+          {row.load}/{row.capacity}
+          {isFull && !row.problem && <span className="v2-fleet__full-tag" title="Bus at capacity">FULL</span>}
+        </span>
       </span>
       <span className={`v2-fleet__status v2-fleet__status--${row.status.toLowerCase()}`}>{row.status.replace("_", " ")}</span>
       <span className="v2-fleet__eta">{eta}</span>

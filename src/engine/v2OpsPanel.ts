@@ -97,7 +97,7 @@ export function getHourlyBalance(): HourlyBalance[] {
 // Per-vehicle operations row — every bus with status, load, problem flag
 // ---------------------------------------------------------------------------
 
-export type BusProblem = "RUNNING_EMPTY" | "OVERLOADED" | "STUCK" | "IDLE_QUEUED" | null;
+export type BusProblem = "RUNNING_EMPTY" | "STUCK" | "IDLE_QUEUED" | "FULL" | null;
 
 export type OperatorFleetRow = {
   vehicleId: string;
@@ -113,7 +113,14 @@ export type OperatorFleetRow = {
   tripProgressPct: number | null; // 0–100 along trip
   etaMin: number | null; // minutes until scheduled terminus
   freshness: "fresh" | "stale";
+  /** Operator-flagged problem (alert level). FULL is informational,
+   *  surfaced separately on the row but NOT counted in the alert
+   *  pill — an over-full bus is exactly what we want during a peak. */
   problem: BusProblem;
+  /** True when the bus is at ≥92% capacity — surfaced as the FULL
+   *  tag so operators see capacity utilisation without it spamming
+   *  the alert total. */
+  full: boolean;
   problemDetail: string;
   // For DevTools-friendly tooltip — keeps the data here, not in JSX
   summary: string;
@@ -124,6 +131,15 @@ const NOMINAL_TRIP_MIN: Record<string, number> = {
   "patong-old-bus-station": 35,
   "dragon-line": 50
 };
+
+/** Bus routes — ferries are not buses. The operator panel must not show
+ *  vessels with their passenger counts; that produced "AW Master I ·
+ *  rassada-phi-phi · 25/25 MOVING" which is a boat, not a bus. */
+const LAND_BUS_ROUTES = new Set<string>(Object.keys(NOMINAL_TRIP_MIN));
+
+function isBusRoute(routeId: string): boolean {
+  return LAND_BUS_ROUTES.has(routeId);
+}
 
 function busCapacity(routeId: string): number {
   if (routeId === "dragon-line") return 15;
@@ -163,7 +179,7 @@ function getVehiclesCached(): VehiclePosition[] {
 export function getOperatorFleet(): OperatorFleetRow[] {
   const nowMin = getSimulatedMinutes();
   const waiting = atMinute(nowMin).waiting;
-  const vehicles = getVehiclesCached();
+  const vehicles = getVehiclesCached().filter((v) => isBusRoute(v.routeId));
 
   return vehicles
     .map((v): OperatorFleetRow => {
@@ -188,12 +204,15 @@ export function getOperatorFleet(): OperatorFleetRow[] {
       else if (ageMin! < 5) status = "PRE_TRIP";
       else status = "IDLE";
 
+      const full = load >= Math.round(cap * 0.92);
       let problem: BusProblem = null;
       let problemDetail = "";
-      if (load >= Math.round(cap * 0.92)) {
-        problem = "OVERLOADED";
-        problemDetail = `At ${load}/${cap} seats — passengers may be turned away`;
-      } else if (status === "IDLE" && ageMin != null && ageMin > 12 && ageMin < tripDuration && load < cap * 0.3 && waiting > 15) {
+      if (full) {
+        // FULL is informational, not an alert — surfaced as a separate tag
+        problem = null;
+        problemDetail = `${load}/${cap} seats filled`;
+      }
+      if (status === "IDLE" && ageMin != null && ageMin > 12 && ageMin < tripDuration && load < cap * 0.3 && waiting > 15) {
         // Dwelling deep into a trip with empty seats while passengers wait → STUCK
         problem = "STUCK";
         problemDetail = `Stopped ${Math.round(ageMin - 12)} min onto trip · ${waiting} waiting at curb`;
@@ -220,6 +239,7 @@ export function getOperatorFleet(): OperatorFleetRow[] {
         etaMin,
         freshness: v.freshness,
         problem,
+        full,
         problemDetail,
         summary: `${v.licensePlate} · ${load}/${cap} pax (${loadPct}%) · ${v.status === "moving" ? "moving" : "dwelling"} · ${v.directionLabel ?? "—"}`
       };
