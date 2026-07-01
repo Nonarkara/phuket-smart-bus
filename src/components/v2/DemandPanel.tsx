@@ -3,6 +3,8 @@ import { Counter, InsightCard } from "./V2Shared";
 import { pause, setSimulatedMinutes } from "../../engine/fleetSimulator";
 import type { SimState, RegionData } from "../../engine/simulation";
 import type { OpsFlight, FlightHourBucket } from "../../engine/opsFlightSchedule";
+import type { HourlyBalance } from "../../engine/v2OpsPanel";
+import { HourlyBalanceChart } from "./HourlyBalanceChart";
 
 /** Click any hour anywhere on this dashboard → jump the simulation clock
  *  there and pause, so the map shows where every bus would be at that time. */
@@ -19,52 +21,6 @@ function classifyFlightRow(flight: OpsFlight, simMinutes: number) {
   if (Math.abs(delta) <= 12) return "active";
   if (delta < -12) return "past";
   return "future";
-}
-
-interface HourlyFlightPulseProps {
-  buckets: FlightHourBucket[];
-  simMinutes: number;
-}
-
-function HourlyFlightPulse({ buckets, simMinutes }: HourlyFlightPulseProps) {
-  const currentHour = Math.floor(simMinutes / 60) % 24;
-  const maxPax = Math.max(...buckets.map((bucket) => Math.max(bucket.arrivalPax, bucket.departurePax)), 1);
-
-  return (
-    <div className="v2-hourly">
-      <div className="v2-hourly__title">Full-Day Flight Pulse</div>
-      <div className="v2-hourly__legend">
-        <span className="v2-hourly__legend-item v2-hourly__legend-item--arr">Arrivals</span>
-        <span className="v2-hourly__legend-item v2-hourly__legend-item--dep">Departures</span>
-      </div>
-      <div className="v2-hourly__rows">
-        {buckets.map((bucket) => (
-          <div
-            key={bucket.hour}
-            className={`v2-hourly__row ${bucket.hour === currentHour ? "is-current" : ""}`}
-            role="button"
-            tabIndex={0}
-            title={`Jump to ${String(bucket.hour).padStart(2, "0")}:00 — see where every bus is`}
-            onClick={() => scrubToHour(bucket.hour)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") scrubToHour(bucket.hour); }}
-          >
-            <span className="v2-hourly__time">{String(bucket.hour).padStart(2, "0")}:00</span>
-            <div className="v2-hourly__track">
-              <div
-                className="v2-hourly__fill v2-hourly__fill--arr"
-                style={{ width: `${(bucket.arrivalPax / maxPax) * 100}%` }}
-              />
-              <div
-                className="v2-hourly__fill v2-hourly__fill--dep"
-                style={{ width: `${(bucket.departurePax / maxPax) * 100}%` }}
-              />
-            </div>
-            <span className="v2-hourly__meta">{bucket.arrivals}/{bucket.departures}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 interface RegionChartProps {
@@ -162,6 +118,10 @@ interface DemandPanelProps {
   nextPeakBucket: FlightHourBucket;
   hourlyFlights: FlightHourBucket[];
   dailyFlights: OpsFlight[];
+  /** Pre-computed 24-hour demand/supply/capture rows for the new
+   *  HourlyBalanceChart. The chart includes seat counts so operators
+   *  see immediately when bus supply falls short of arriving demand. */
+  hourlyBalance?: HourlyBalance[];
 }
 
 export function DemandPanel({
@@ -172,6 +132,7 @@ export function DemandPanel({
   nextPeakBucket,
   hourlyFlights,
   dailyFlights,
+  hourlyBalance,
 }: DemandPanelProps) {
   return (
     <aside className={`v2-panel v2-panel--demand ${serviceGap > 25 ? 'is-alert' : ''}`}>
@@ -203,7 +164,9 @@ export function DemandPanel({
         </div>
       </div>
 
-      <HourlyFlightPulse buckets={hourlyFlights} simMinutes={state.simMinutes} />
+      {hourlyBalance ? (
+        <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} />
+      ) : null}
 
       <RegionChart data={state.regionBreakdown} maxPax={Math.max(...state.regionBreakdown.map((r) => r.pax), 1)} />
 
