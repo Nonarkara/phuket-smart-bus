@@ -31,3 +31,8 @@
 - **What went wrong:** `GITHUB_PAGES=true` build sets base `/phuket-smart-bus/`. Preview of that build has `/phuket-smart-bus/ops` paths; `getInitialView()` checks `p.startsWith("/ops")` and misses. Looks like the tourist app.
 - **Correct behaviour:** Rebuild without `GITHUB_PAGES=true` for local preview, or restart the preview server after a clean build. Production at `bus.nonarkara.org` uses `/ops` paths directly.
 - **How to recognise:** `/ops` URL shows tourist app in preview but works in production.
+
+## 2026-07-02 · Root html zoom silently dead — scale was never tested >1920px
+- **What went wrong:** /ops used `html.ops-mode { zoom: clamp(1, 100vw/1920, 3) }` for wall-screen scaling. Standardized CSS zoom (Chrome 128+) ignores zoom on the root element, so the rule did nothing and the dashboard rendered microscopic on big displays — through THREE "fix" deploys.
+- **Correct behaviour:** compute scale in JS (`innerWidth / designWidth`, clamped) and set inline `zoom` on a normal element (`.v2`). Keep every size inside fixed px — standardized zoom does not scale vw units, so px+vw mixes double-scale.
+- **How to recognise:** any viewport-conditional CSS (zoom, clamp, media queries) verified only at a width where the condition is inert is UNVERIFIED. Test the branch that fires: preview_resize to 2560/3440 before shipping wall-screen code. "Looks fine at my width" is the trap.
