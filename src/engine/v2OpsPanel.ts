@@ -18,7 +18,7 @@
  */
 
 import type { VehiclePosition } from "@shared/types";
-import { getOpsFlightSchedule } from "./opsFlightSchedule";
+import { getOpsFlightSchedule, getSimulationDay } from "./opsFlightSchedule";
 import { getSimulatedMinutes, getVehiclesNow } from "./fleetSimulator";
 import {
   atMinute,
@@ -55,11 +55,13 @@ function classify(gap: number, eligible: number, seats: number): HourlyBalanceSt
   return "balanced";
 }
 
-/** Memoized — flights + departure schedule are static for the session. */
-let cached: HourlyBalance[] | null = null;
+/** Memoized per day-of-week — the /ops day picker switches the active day. */
+const balanceByDow = new Map<number, HourlyBalance[]>();
 
 export function getHourlyBalance(): HourlyBalance[] {
-  if (cached) return cached;
+  const dow = getSimulationDay();
+  const hit = balanceByDow.get(dow);
+  if (hit) return hit;
 
   // Raw arriving pax per hour — what came in on flights, ignoring the
   // customs ramp. Gives the "demand" bar a fixed shape independent of the
@@ -74,7 +76,7 @@ export function getHourlyBalance(): HourlyBalance[] {
   // Bus-eligible & supply come straight from the engine — no parallel math.
   const corridor = getHourlyCorridor();
 
-  cached = corridor.map((c) => {
+  const built = corridor.map((c) => {
     const arrivalPax = arrivalByHour[c.hour];
     const eligible = Math.round(arrivalPax * 0.12);
     const gap = eligible - c.seats;
@@ -89,8 +91,8 @@ export function getHourlyBalance(): HourlyBalance[] {
       status: classify(gap, eligible, c.seats)
     };
   });
-
-  return cached;
+  balanceByDow.set(dow, built);
+  return built;
 }
 
 // ---------------------------------------------------------------------------

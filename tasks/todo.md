@@ -59,3 +59,19 @@
 - Day timeline resolution 5 min (288 snapshots, trivial cost).
 - What-if computes +2 and +5 buses inline now; interactive what-if UI is the
   user's stated "later" phase.
+
+---
+
+# Day selector + weekly economics — 2026-07-02
+
+Goal: pick any day MON–SUN on /ops, watch that day's simulation, and see a
+weekly revenue roll-up (week = Σ 7 deterministic day models).
+
+- [x] opsFlightSchedule: per-dow deterministic schedules + active-day state
+- [x] demandSupplyEngine: dow-keyed model memo + getWeekEconomics()
+- [x] simulation.ts: de-const FULL_DAY_FLIGHTS/FLIGHTS, dow-keyed hourly memo
+- [x] SimulationControls: MON–SUN day picker in timebar
+- [x] SupplyPanel: Weekly Revenue card (7 rows + week total)
+- [x] styles.css: Axiom styles for day buttons + week rows
+- [x] Tests: week = Σ days, per-day conservation, day switch invalidates model
+- [x] Verify preview → build → deploy → commit

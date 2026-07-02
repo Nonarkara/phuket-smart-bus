@@ -18,7 +18,12 @@
  * passengers exactly: demand = boarded + abandoned + still-waiting, always.
  */
 
-import { getOpsFlightSchedule, type OpsFlight } from "./opsFlightSchedule";
+import {
+  getOpsFlightScheduleFor,
+  getSimulationDay,
+  getDayLabel,
+  type OpsFlight
+} from "./opsFlightSchedule";
 import { getAirportDepartures } from "./fleetSimulator";
 
 // ---------------------------------------------------------------------------
@@ -254,12 +259,10 @@ function planExtraBuses(
 // Public API — memoized day model
 // ---------------------------------------------------------------------------
 
-let cached: DayModel | null = null;
+const modelByDow = new Map<number, DayModel>();
 
-export function getDayModel(): DayModel {
-  if (cached) return cached;
-
-  const arrivals = getOpsFlightSchedule().filter((f) => f.type === "arr" && f.mode === "flight");
+function buildDayModel(dow: number): DayModel {
+  const arrivals = getOpsFlightScheduleFor(dow).filter((f) => f.type === "arr" && f.mode === "flight");
   const departures = getAirportDepartures();
   const inflow = buildInflow(arrivals);
 
@@ -301,7 +304,7 @@ export function getDayModel(): DayModel {
     };
   });
 
-  cached = {
+  return {
     trips: base.trips,
     demandCum: base.demandCum,
     boardedCum: base.boardedCum,
@@ -312,12 +315,83 @@ export function getDayModel(): DayModel {
     totals,
     whatIf
   };
-  return cached;
 }
 
-/** Test hook — drop the memo so a test can rebuild with fresh inputs. */
+/** Day model for a specific day of week (0=SUN … 6=SAT). Memoized per dow. */
+export function getDayModelFor(dow: number): DayModel {
+  let m = modelByDow.get(dow);
+  if (!m) {
+    m = buildDayModel(dow);
+    modelByDow.set(dow, m);
+  }
+  return m;
+}
+
+/** Day model for the ACTIVE simulation day (the /ops day picker). */
+export function getDayModel(): DayModel {
+  return getDayModelFor(getSimulationDay());
+}
+
+/** Test hook — drop the memos so a test can rebuild with fresh inputs. */
 export function __resetDayModel(): void {
-  cached = null;
+  modelByDow.clear();
+}
+
+// ---------------------------------------------------------------------------
+// Weekly economics — the week is Σ of the 7 deterministic day models.
+// Same timetable every day (published PKSB schedule); demand varies by day.
+// ---------------------------------------------------------------------------
+
+export type WeekDayEconomics = {
+  dow: number;
+  label: string;
+  demand: number;
+  boarded: number;
+  abandoned: number;
+  revenueThb: number;
+  lostRevenueThb: number;
+};
+
+export type WeekEconomics = {
+  days: WeekDayEconomics[]; // MON..SUN display order
+  week: {
+    demand: number;
+    boarded: number;
+    abandoned: number;
+    revenueThb: number;
+    lostRevenueThb: number;
+  };
+};
+
+let cachedWeek: WeekEconomics | null = null;
+
+export function getWeekEconomics(): WeekEconomics {
+  if (cachedWeek) return cachedWeek;
+  const order = [1, 2, 3, 4, 5, 6, 0]; // MON..SUN
+  const days = order.map((dow) => {
+    const t = getDayModelFor(dow).totals;
+    return {
+      dow,
+      label: getDayLabel(dow),
+      demand: t.demand,
+      boarded: t.boarded,
+      abandoned: t.abandoned,
+      revenueThb: t.revenueThb,
+      lostRevenueThb: t.lostRevenueThb
+    };
+  });
+  const week = days.reduce(
+    (s, d) => ({
+      demand: s.demand + d.demand,
+      boarded: s.boarded + d.boarded,
+      abandoned: s.abandoned + d.abandoned,
+      revenueThb: s.revenueThb + d.revenueThb,
+      lostRevenueThb: s.lostRevenueThb + d.lostRevenueThb
+    }),
+    { demand: 0, boarded: 0, abandoned: 0, revenueThb: 0, lostRevenueThb: 0 }
+  );
+  cachedWeek = { days, week };
+  return cachedWeek;
 }
 
 /** Engine state at one minute of the day. O(1) array reads. */

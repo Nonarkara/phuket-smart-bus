@@ -10,13 +10,20 @@
 import { describe, expect, it } from "vitest";
 import {
   getDayModel,
+  getDayModelFor,
+  getWeekEconomics,
   atMinute,
   getTripLoad,
   getHourlyCorridor,
   BUS_CAPACITY,
   ABANDON_AFTER_MIN
 } from "./demandSupplyEngine";
-import { getOpsFlightSchedule } from "./opsFlightSchedule";
+import {
+  getOpsFlightSchedule,
+  getOpsFlightScheduleFor,
+  getSimulationDay,
+  setSimulationDay
+} from "./opsFlightSchedule";
 
 describe("demandSupplyEngine — conservation and sanity", () => {
   const model = getDayModel();
@@ -132,5 +139,57 @@ describe("demandSupplyEngine — conservation and sanity", () => {
       expect(f.loadPct).toBeLessThanOrEqual(100);
       expect(f.aircraftName.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("weekly economics — the week is Σ of the 7 day models", () => {
+  it("week totals equal the exact sum of MON..SUN day models", () => {
+    const { days, week } = getWeekEconomics();
+    expect(days).toHaveLength(7);
+    expect(days.map((d) => d.label)).toEqual(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]);
+    expect(week.revenueThb).toBe(days.reduce((s, d) => s + d.revenueThb, 0));
+    expect(week.boarded).toBe(days.reduce((s, d) => s + d.boarded, 0));
+    expect(week.abandoned).toBe(days.reduce((s, d) => s + d.abandoned, 0));
+    expect(week.lostRevenueThb).toBe(days.reduce((s, d) => s + d.lostRevenueThb, 0));
+  });
+
+  it("every day of the week conserves passengers at end of day", () => {
+    for (let dow = 0; dow < 7; dow++) {
+      const m = getDayModelFor(dow);
+      const last = 1440;
+      expect(m.boardedCum[last] + m.abandonedCum[last] + m.waiting[last]).toBe(m.demandCum[last]);
+    }
+  });
+
+  it("each day's demand derives from that day's flight schedule", () => {
+    for (let dow = 0; dow < 7; dow++) {
+      const arrivals = getOpsFlightScheduleFor(dow).filter((f) => f.type === "arr" && f.mode === "flight");
+      const expected = arrivals.reduce((s, f) => s + Math.round(f.pax * 0.12), 0);
+      expect(getDayModelFor(dow).totals.demand).toBe(expected);
+    }
+  });
+
+  it("day schedules are deterministic (memoized identity) and vary across the week", () => {
+    expect(getOpsFlightScheduleFor(3)).toBe(getOpsFlightScheduleFor(3));
+    const demands = new Set(Array.from({ length: 7 }, (_, d) => getDayModelFor(d).totals.demand));
+    expect(demands.size).toBeGreaterThan(1);
+  });
+
+  it("setSimulationDay switches which model getDayModel() serves", () => {
+    const original = getSimulationDay();
+    try {
+      setSimulationDay(2);
+      expect(getDayModel().totals.demand).toBe(getDayModelFor(2).totals.demand);
+      setSimulationDay(6);
+      expect(getDayModel().totals.demand).toBe(getDayModelFor(6).totals.demand);
+    } finally {
+      setSimulationDay(original);
+    }
+  });
+
+  it("weekly revenue identities hold: revenue = boarded × ฿100", () => {
+    const { week } = getWeekEconomics();
+    expect(week.revenueThb).toBe(week.boarded * 100);
+    expect(week.lostRevenueThb).toBe(week.abandoned * 100);
   });
 });

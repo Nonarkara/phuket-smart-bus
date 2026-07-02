@@ -83,10 +83,11 @@ export const BASE_OPS_FLIGHTS: OpsFlight[] = peakDay.flights
   .sort((left, right) => left.schedMin - right.schedMin || (left.type === "arr" ? -1 : 1));
 
 // ---------------------------------------------------------------------------
-// Day-of-week fuzz — same calendar day renders the same numbers, different
-// dates shift volume, schedule and origin mix. Tuesday is quiet, Saturday
-// peaks, Sunday returns the weekend traffic. Seed = today's date so the
-// result is deterministic within a calendar day.
+// Day-of-week fuzz — each weekday is a fixed, deterministic variation of the
+// base schedule. Tuesday is quiet, Saturday peaks, Sunday returns the weekend
+// traffic. Seed = day-of-week only, so MON is always the same MON: the weekly
+// roll-up (Σ 7 days) is stable and testable, and any day can be replayed on
+// demand via setSimulationDay().
 // ---------------------------------------------------------------------------
 
 function mulberry32(seed: number) {
@@ -120,28 +121,18 @@ const DOW_CHARTERS: Array<Array<{ flightNo: string; airline: string; city: strin
   ]
 ];
 
-function todaySeed() {
-  const d = new Date();
-  const dow = d.getDay();
-  const startOfYear = new Date(d.getFullYear(), 0, 0).getTime();
-  const dayOfYear = Math.floor((d.getTime() - startOfYear) / 86_400_000);
-  const seed = d.getFullYear() * 1000 + dayOfYear * 7 + dow;
-  return { seed, dow };
-}
-
-const TODAY = todaySeed();
-const rng = mulberry32(TODAY.seed);
-
 function fmtTime(min: number): string {
   const h = Math.floor(min / 60) % 24;
   const m = Math.max(0, Math.floor(min % 60));
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
-  const factor = DOW_VOLUME[TODAY.dow];
+function buildDaySchedule(dow: number): OpsFlight[] {
+  // Seed by day-of-week only — MON is always the same MON.
+  const rng = mulberry32(0x5eed + dow * 9973);
+  const factor = DOW_VOLUME[dow];
   const out: OpsFlight[] = [];
-  for (const f of base) {
+  for (const f of BASE_OPS_FLIGHTS) {
     if (rng() < 0.05) continue; // 5% cancellation
     const paxJitter = 1 + (rng() - 0.5) * 0.30; // ±15%
     const timeJitter = Math.round((rng() - 0.5) * 20); // ±10 min
@@ -156,7 +147,7 @@ function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
       timeLabel: fmtTime(schedMin)
     });
   }
-  for (const c of DOW_CHARTERS[TODAY.dow]) {
+  for (const c of DOW_CHARTERS[dow]) {
     const schedMin = Math.round(420 + rng() * 900); // 07:00–22:00
     const isBoat = c.mode === "boat";
     const aircraft = isBoat ? null : assignAircraft(c.airline, c.pax);
@@ -182,18 +173,44 @@ function applyDailyFuzz(base: OpsFlight[]): OpsFlight[] {
   return out.sort((a, b) => a.schedMin - b.schedMin || (a.type === "arr" ? -1 : 1));
 }
 
-export const OPS_FLIGHT_SCHEDULE: OpsFlight[] = applyDailyFuzz(BASE_OPS_FLIGHTS);
+const scheduleByDow = new Map<number, OpsFlight[]>();
 
-export function getOpsFlightSchedule() {
-  return OPS_FLIGHT_SCHEDULE;
+export function getOpsFlightScheduleFor(dow: number): OpsFlight[] {
+  let s = scheduleByDow.get(dow);
+  if (!s) {
+    s = buildDaySchedule(dow);
+    scheduleByDow.set(dow, s);
+  }
+  return s;
 }
 
-export function getDayLabel(): string {
-  return DOW_LABELS[TODAY.dow];
+// ---------------------------------------------------------------------------
+// Active simulation day — defaults to the real day of week; the /ops day
+// picker switches it. Everything downstream keys its memo on this value.
+// ---------------------------------------------------------------------------
+
+let activeDow = new Date().getDay();
+
+export function getSimulationDay(): number {
+  return activeDow;
+}
+
+export function setSimulationDay(dow: number): void {
+  activeDow = ((dow % 7) + 7) % 7;
+}
+
+export const OPS_FLIGHT_SCHEDULE: OpsFlight[] = getOpsFlightScheduleFor(activeDow);
+
+export function getOpsFlightSchedule() {
+  return getOpsFlightScheduleFor(activeDow);
+}
+
+export function getDayLabel(dow = activeDow): string {
+  return DOW_LABELS[dow];
 }
 
 export function getDayVolumeFactor(): number {
-  return DOW_VOLUME[TODAY.dow];
+  return DOW_VOLUME[activeDow];
 }
 
 export function buildFlightHourBuckets(flights = OPS_FLIGHT_SCHEDULE): FlightHourBucket[] {

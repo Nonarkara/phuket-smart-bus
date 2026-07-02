@@ -10,7 +10,7 @@
 import type { LatLngTuple } from "@shared/types";
 import { getDirectionPolyline } from "./routes";
 import { haversineDistanceMeters } from "./geo";
-import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor } from "./opsFlightSchedule";
+import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay } from "./opsFlightSchedule";
 
 // ---------------------------------------------------------------------------
 // Time — single source of truth lives in fleetSimulator.getSimulatedMinutes.
@@ -50,18 +50,33 @@ export type Flight = {
   terminal?: string;
 };
 
-// FULL_DAY_FLIGHTS comes from getOpsFlightSchedule() which has already
-// applied today's day-of-week fuzz. Single source of truth for both the
-// flight rail (DashboardV2) and the demand-supply chain.
-const FULL_DAY_FLIGHTS: Flight[] = getOpsFlightSchedule().map((flight) => ({
-  flightNo: flight.flightNo,
-  airline: flight.airline,
-  origin: flight.city,
-  pax: flight.pax,
-  arrMin: flight.schedMin,
-  type: flight.type,
-  terminal: flight.terminal
-}));
+// Flights come from getOpsFlightSchedule() — the fuzzed schedule for the
+// ACTIVE simulation day. Memoized per dow so the day picker invalidates
+// this along with everything downstream. Single source of truth for both
+// the flight rail (DashboardV2) and the demand-supply chain.
+const flightsByDow = new Map<number, { all: Flight[]; svc: Flight[] }>();
+
+function dayFlights(): { all: Flight[]; svc: Flight[] } {
+  const dow = getSimulationDay();
+  let f = flightsByDow.get(dow);
+  if (!f) {
+    const all = getOpsFlightSchedule().map((flight) => ({
+      flightNo: flight.flightNo,
+      airline: flight.airline,
+      origin: flight.city,
+      pax: flight.pax,
+      arrMin: flight.schedMin,
+      type: flight.type,
+      terminal: flight.terminal
+    }));
+    const svc = all.filter(
+      (flight) => flight.type === "arr" && flight.arrMin >= SVC_START - CUSTOMS_MAX && flight.arrMin <= SVC_END
+    );
+    f = { all, svc };
+    flightsByDow.set(dow, f);
+  }
+  return f;
+}
 
 export function getDayInfo(): { label: string; volumeFactor: number } {
   return { label: getDayLabel(), volumeFactor: getDayVolumeFactor() };
@@ -82,9 +97,10 @@ const BUS_CAPTURE_RATE = 0.12;
 const CUSTOMS_MIN = 20;
 const CUSTOMS_MAX = 45;
 
-const FLIGHTS = FULL_DAY_FLIGHTS.filter(
-  (flight) => flight.type === "arr" && flight.arrMin >= SVC_START - CUSTOMS_MAX && flight.arrMin <= SVC_END
-);
+/** In-service arrivals for the active day (see dayFlights above). */
+function FLIGHTS(): Flight[] {
+  return dayFlights().svc;
+}
 
 // Destination split (where bus passengers want to go)
 // routeId declares which Smart Bus line carries them — all airport arrivals ride the rawai-airport line
@@ -230,7 +246,7 @@ export function computeSimState(): SimState {
   const clockLabel = simClock();
 
   // 1. Which flights have landed by now?
-  const landed = FLIGHTS.filter(f => f.type === "arr" && f.arrMin <= now);
+  const landed = FLIGHTS().filter(f => f.type === "arr" && f.arrMin <= now);
   const totalArrPax = landed.reduce((s, f) => s + f.pax, 0);
 
   // 1b. Most recently landed flight (for ticker animation)
@@ -254,7 +270,7 @@ export function computeSimState(): SimState {
     .sort((a, b) => b.pax - a.pax);
 
   // 2. Next flight
-  const upcoming = FLIGHTS.filter(f => f.type === "arr" && f.arrMin > now).sort((a, b) => a.arrMin - b.arrMin);
+  const upcoming = FLIGHTS().filter(f => f.type === "arr" && f.arrMin > now).sort((a, b) => a.arrMin - b.arrMin);
   const nextFlight = upcoming[0] ?? null;
   const nextFlightMin = nextFlight ? Math.round(nextFlight.arrMin - now) : null;
 
@@ -496,10 +512,10 @@ function buildVehiclePositions(nowMin: number): SimState["vehicles"] {
 
 export function getFlightFeed(): { recent: Flight[]; upcoming: Flight[] } {
   const now = simNow();
-  const recent = FLIGHTS.filter(f => f.type === "arr" && f.arrMin <= now && f.arrMin > now - 60)
+  const recent = FLIGHTS().filter(f => f.type === "arr" && f.arrMin <= now && f.arrMin > now - 60)
     .sort((a, b) => b.arrMin - a.arrMin)
     .slice(0, 5);
-  const upcoming = FLIGHTS.filter(f => f.type === "arr" && f.arrMin > now)
+  const upcoming = FLIGHTS().filter(f => f.type === "arr" && f.arrMin > now)
     .sort((a, b) => a.arrMin - b.arrMin)
     .slice(0, 5);
   return { recent, upcoming };
@@ -519,13 +535,15 @@ export type HourlyDemandSupply = {
   revenueThb: number;      // servedPax × fare
 };
 
-// Memoized — depends only on FLIGHTS and schedule data, both immutable
-// for the session. Multiple consumers poll this every second; recomputing
-// 24 buckets every call wastes work. Compute once on first call.
-let cachedHourlyDemandSupply: HourlyDemandSupply[] | null = null;
+// Memoized per day-of-week — multiple consumers poll this every second;
+// recomputing 24 buckets every call wastes work. The day picker switches
+// getSimulationDay(), which switches which memo entry is served.
+const hourlyByDow = new Map<number, HourlyDemandSupply[]>();
 
 export function getHourlyDemandSupply(): HourlyDemandSupply[] {
-  if (cachedHourlyDemandSupply) return cachedHourlyDemandSupply;
+  const dow = getSimulationDay();
+  const hit = hourlyByDow.get(dow);
+  if (hit) return hit;
 
   // Airport corridor only — the demand side of this chart is airport
   // arrivals, so the supply side must be airport-line seats. The old
@@ -536,13 +554,13 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
 
   // Raw arriving pax per hour (pre-capture) for the chart's context line.
   const arrivalByHour: number[] = Array.from({ length: 24 }, () => 0);
-  for (const f of FLIGHTS) {
+  for (const f of FLIGHTS()) {
     const bookableMin = f.arrMin + 30;
     const h = Math.floor(bookableMin / 60);
     if (h >= 0 && h < 24) arrivalByHour[h] += f.pax;
   }
 
-  cachedHourlyDemandSupply = corridor.map((c) => ({
+  const built = corridor.map((c) => ({
     hour: c.hour,
     arrivalPax: arrivalByHour[c.hour],
     busDemandPax: c.demandPax,
@@ -551,8 +569,8 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
     unmetPax: c.abandonedPax,
     revenueThb: c.revenueThb
   }));
-
-  return cachedHourlyDemandSupply;
+  hourlyByDow.set(dow, built);
+  return built;
 }
 
 // ---------------------------------------------------------------------------

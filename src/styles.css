@@ -8858,6 +8858,97 @@ a { color: var(--tint); }
   border-color: rgba(31, 110, 67, 0.3);
 }
 
+/* ── Day picker in the timebar ──────────────────────────────────────────── */
+.v2 .v2-timebar__days {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-right: 10px;
+  padding-right: 12px;
+  border-right: 1px solid var(--ax-line);
+}
+
+/* ── Weekly Revenue card (SupplyPanel) ──────────────────────────────────── */
+.v2 .v2-week {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2 .v2-week__title {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  margin: 0 0 8px;
+}
+.v2 .v2-week__row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ax-line);
+  font-family: inherit;
+  font-size: var(--t-micro);
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  text-align: left;
+}
+.v2 .v2-week__row:hover { background: #faf8f5; }
+.v2 .v2-week__row.is-active .v2-week__day { color: var(--ax-ink); font-weight: 700; }
+.v2 .v2-week__row.is-active { box-shadow: inset 2px 0 0 var(--ax-accent); padding-left: 6px; }
+.v2 .v2-week__day { font-weight: 600; letter-spacing: 0.06em; }
+.v2 .v2-week__track { height: 4px; background: var(--ax-line); }
+.v2 .v2-week__fill { display: block; height: 100%; background: var(--ax-accent); }
+.v2 .v2-week__rev {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ax-ink);
+  min-width: 62px;
+  text-align: right;
+}
+.v2 .v2-week__lost {
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-neg);
+  min-width: 44px;
+  text-align: right;
+}
+.v2 .v2-week__total {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0 2px;
+}
+.v2 .v2-week__total-label {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2 .v2-week__total-val {
+  font-size: clamp(18px, 1.40vw, 28px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-accent);
+  letter-spacing: -0.03em;
+}
+.v2 .v2-week__total-lost {
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-neg);
+  margin-left: auto;
+}
+.v2 .v2-week__note {
+  font-size: var(--t-micro);
+  color: var(--ax-ink-3);
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
 /* ── Inbound pressure section ───────────────────────────────────────────── */
 .v2 .v2-inbound__title { color: var(--ax-ink-3) !important; }
 .v2 .v2-inbound__pax { color: var(--ax-ink) !important; }

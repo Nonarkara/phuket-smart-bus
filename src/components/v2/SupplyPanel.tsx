@@ -1,5 +1,6 @@
 import { Counter, InsightCard } from "./V2Shared";
-import { getDayModel } from "../../engine/demandSupplyEngine";
+import { getDayModel, getWeekEconomics } from "../../engine/demandSupplyEngine";
+import { getSimulationDay } from "../../engine/opsFlightSchedule";
 import type { SimState } from "../../engine/simulation";
 
 // ---------------------------------------------------------------------------
@@ -79,6 +80,50 @@ function WhatIfCard() {
 }
 
 // ---------------------------------------------------------------------------
+// Weekly economics: the week is Σ of the 7 deterministic day models — same
+// published timetable every day, demand varies by day-of-week. This is the
+// "how much per week" answer, computed, not annualised guesswork.
+// ---------------------------------------------------------------------------
+
+function WeekCard({ onDayChange }: { onDayChange?: (dow: number) => void }) {
+  const { days, week } = getWeekEconomics();
+  const activeDow = getSimulationDay();
+  const maxRevenue = Math.max(...days.map((d) => d.revenueThb), 1);
+  return (
+    <div className="v2-week">
+      <h3 className="v2-week__title">Weekly Revenue · This Fleet</h3>
+      {days.map((d) => (
+        <button
+          key={d.dow}
+          className={`v2-week__row ${d.dow === activeDow ? "is-active" : ""}`}
+          onClick={() => onDayChange?.(d.dow)}
+          title={`Replay ${d.label} · ${d.boarded.toLocaleString()} boarded · ${d.abandoned.toLocaleString()} walked away`}
+        >
+          <span className="v2-week__day">{d.label}</span>
+          <span className="v2-week__track">
+            <span
+              className="v2-week__fill"
+              style={{ width: `${(d.revenueThb / maxRevenue) * 100}%` }}
+            />
+          </span>
+          <span className="v2-week__rev">฿{d.revenueThb.toLocaleString()}</span>
+          <span className="v2-week__lost">−฿{formatCurrencyCompact(d.lostRevenueThb)}</span>
+        </button>
+      ))}
+      <div className="v2-week__total">
+        <span className="v2-week__total-label">Week</span>
+        <span className="v2-week__total-val">฿{week.revenueThb.toLocaleString()}</span>
+        <span className="v2-week__total-lost">฿{week.lostRevenueThb.toLocaleString()} lost to capacity</span>
+      </div>
+      <p className="v2-week__note">
+        Σ of 7 deterministic day models — same timetable daily, demand varies
+        by day. Click a day to replay it.
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 interface SupplyPanelProps {
@@ -91,6 +136,7 @@ interface SupplyPanelProps {
   currentSupplySeats: number;
   currentBusDemand: number;
   currentGap: number;
+  onDayChange?: (dow: number) => void;
 }
 
 export function SupplyPanel({
@@ -103,6 +149,7 @@ export function SupplyPanel({
   currentSupplySeats,
   currentBusDemand,
   currentGap,
+  onDayChange,
 }: SupplyPanelProps) {
   return (
     <aside className={`v2-panel v2-panel--supply ${serviceGap > 25 ? 'is-alert' : ''}`}>
@@ -146,6 +193,8 @@ export function SupplyPanel({
       </div>
 
       <WhatIfCard />
+
+      <WeekCard onDayChange={onDayChange} />
 
       <div className="v2-impact">
         <h3 className="v2-impact__title">Environmental Impact</h3>

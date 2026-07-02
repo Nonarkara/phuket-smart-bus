@@ -13,7 +13,7 @@
  * Switching views does NOT alter the simulation clock — both views share it.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { VehiclePosition } from "@shared/types";
 import {
   computeSimState,
@@ -22,8 +22,13 @@ import {
   type SimState
 } from "./engine/simulation";
 import { getVehiclesNow } from "./engine/dataProvider";
-import { getClockState, getFleetAnalysis } from "./engine/fleetSimulator";
-import { buildFlightHourBuckets, getOpsFlightSchedule } from "./engine/opsFlightSchedule";
+import { getClockState, getFleetAnalysis, setSimulatedMinutes, SERVICE_START } from "./engine/fleetSimulator";
+import {
+  buildFlightHourBuckets,
+  getOpsFlightSchedule,
+  getSimulationDay,
+  setSimulationDay
+} from "./engine/opsFlightSchedule";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
 import { getDayModel } from "./engine/demandSupplyEngine";
 import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } from "./engine/v2OpsPanel";
@@ -71,12 +76,24 @@ function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
 
 export default function DashboardV2() {
   const [viewMode, setViewMode] = useState<ViewMode>("operations");
+  const [simDay, setSimDayState] = useState(() => getSimulationDay());
   const [state, setState] = useState(() => computeSimState());
   const [metrics, setMetrics] = useState(() => getHeadlineMetrics());
-  const [dailyFlights] = useState(() => getOpsFlightSchedule());
-  const [hourlyFlights] = useState(() => buildFlightHourBuckets(dailyFlights));
+  const dailyFlights = useMemo(() => getOpsFlightSchedule(), [simDay]);
+  const hourlyFlights = useMemo(() => buildFlightHourBuckets(dailyFlights), [dailyFlights]);
   const [clockState, setClockState] = useState(getClockState());
   const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() => getVehiclesNow().map(toMapVehicle));
+
+  // Day picker: switch the engine's active day and replay it from 06:00.
+  // All engine memos are keyed on the day, so every panel re-derives.
+  const handleDayChange = (dow: number) => {
+    setSimulationDay(dow);
+    setSimulatedMinutes(SERVICE_START);
+    setSimDayState(dow);
+    setState(computeSimState());
+    setMapVehicles(getVehiclesNow().map(toMapVehicle));
+    setClockState(getClockState());
+  };
 
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
@@ -195,7 +212,12 @@ export default function DashboardV2() {
         </div>
 
         {/* Time Bar & Simulation controls */}
-        <SimulationControls clockState={clockState} onClockStateChange={setClockState} />
+        <SimulationControls
+          clockState={clockState}
+          onClockStateChange={setClockState}
+          simDay={simDay}
+          onDayChange={handleDayChange}
+        />
       </header>
 
       {viewMode === 'insights' ? (
@@ -273,6 +295,7 @@ export default function DashboardV2() {
             currentSupplySeats={currentSupplySeats}
             currentBusDemand={currentBusDemand}
             currentGap={currentGap}
+            onDayChange={handleDayChange}
           />
         </main>
       )}
