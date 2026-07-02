@@ -8280,7 +8280,7 @@ a { color: var(--tint); }
  *
  * Paper #faf9f7  Panel #fff  Ink #191712  Ink-2 #6f6c63  Ink-3 #a9a59a
  * Line #e7e5dd   Line-2 #d2cfc5          Accent #1f6e43  Neg #a23a26
- * Type: fluid clamp() — scales from 1440px desk to 2560px wall
+ * Type: fixed px — element-level zoom (set by DashboardV2) does all scaling
  * Grid: hairline (gap:1px, bg:line) — panel cells white
  * Laws: zero shadow · zero gradient · zero border-radius · one accent
  * ============================================================================ */
@@ -8312,8 +8312,10 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* zoom lives on html.ops-mode (line 86) — not here. Fixed elements
-     don't respond to zoom on themselves; it must go on the root. */
+  /* Wall-screen scale: DashboardV2 sets inline zoom on this element from
+     window.innerWidth / 1440 (clamped 1–2.5). Every size in this block is
+     fixed px so zoom is the ONLY scale mechanism — vw units would ignore
+     zoom (standardized Chrome) and double-scale. */
 }
 
 /* ── Alert strip ─────────────────────────────────────────────────────────── */
@@ -8338,7 +8340,7 @@ a { color: var(--tint); }
   border-bottom: 1px solid var(--ax-line-2);
   display: grid;
   grid-template-columns: auto 1fr auto;
-  grid-template-rows: clamp(44px, 3.2vw, 60px) clamp(36px, 2.6vw, 48px);
+  grid-template-rows: 52px 40px;
   padding: 0 24px;
   gap: 0;
   flex-shrink: 0;
@@ -8380,7 +8382,7 @@ a { color: var(--tint); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-header__story-value {
-  font-size: clamp(14px, 1.05vw, 20px);
+  font-size: 17px;
   font-weight: 600;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
@@ -8391,14 +8393,14 @@ a { color: var(--tint); }
   background: transparent;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 0.7vw, 14px);
+  gap: 12px;
   font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2 .v2-header__live { color: var(--ax-accent); }
 .v2 .v2-header__day { color: var(--ax-ink-3); }
 .v2 .v2-header__time {
-  font-size: clamp(14px, 0.95vw, 18px);
+  font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -8521,7 +8523,7 @@ a { color: var(--tint); }
   gap: 3px;
 }
 .v2 .v2-kpi__val {
-  font-size: clamp(18px, 1.40vw, 28px);
+  font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -8558,7 +8560,7 @@ a { color: var(--tint); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-insight__headline {
-  font-size: clamp(14px, 1.05vw, 20px);
+  font-size: 17px;
   font-weight: 600;
   color: var(--ax-ink);
   line-height: 1.2;
@@ -8660,7 +8662,7 @@ a { color: var(--tint); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-map__hero-value {
-  font-size: clamp(22px, 1.80vw, 38px);
+  font-size: 30px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -8774,7 +8776,7 @@ a { color: var(--tint); }
 .v2 .v2-accum__item--accent .v2-accum__val { color: var(--ax-accent); }
 .v2 .v2-accum__item--green  .v2-accum__val { color: var(--ax-accent); }
 .v2 .v2-accum__val {
-  font-size: clamp(15px, 1.10vw, 22px);
+  font-size: 19px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -8930,7 +8932,7 @@ a { color: var(--tint); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-week__total-val {
-  font-size: clamp(18px, 1.40vw, 28px);
+  font-size: 24px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-accent);

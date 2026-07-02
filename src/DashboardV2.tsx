@@ -61,6 +61,12 @@ function vehiclePax(v: VehiclePosition): number {
   return Math.max(0, Math.round(cap * occ) + (seed - 3));
 }
 
+/** 1440px is the design reference; wall screens scale up, never down. */
+function computeOpsScale(): number {
+  if (typeof window === "undefined") return 1;
+  return Math.min(2.5, Math.max(1, window.innerWidth / 1440));
+}
+
 function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
   return {
     id: v.vehicleId,
@@ -132,11 +138,16 @@ export default function DashboardV2() {
   // Queue timeline snapshots
   const queueTimeline = getQueueTimeline();
 
-  // Scale ops console for large screens via the existing html.ops-mode CSS rule.
-  // Must go on html (not .v2) so zoom affects position:fixed children correctly.
+  // Wall-screen scaling: zoom the .v2 element itself. `zoom` on the <html>
+  // root is unreliable in current Chrome (standardized zoom ignores it),
+  // which is why /ops rendered microscopic on large displays. A JS-computed
+  // factor on a normal element is honored everywhere. All fonts inside the
+  // Axiom block are fixed px, so zoom is the single scale mechanism.
+  const [opsScale, setOpsScale] = useState(() => computeOpsScale());
   useEffect(() => {
-    document.documentElement.classList.add('ops-mode');
-    return () => document.documentElement.classList.remove('ops-mode');
+    const onResize = () => setOpsScale(computeOpsScale());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // Poll simulation state every second. clockState is included so a pause
@@ -153,7 +164,7 @@ export default function DashboardV2() {
   }, []);
 
   return (
-    <div className={`v2 v2--${viewMode}`}>
+    <div className={`v2 v2--${viewMode}`} style={{ zoom: opsScale }}>
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
       {serviceGap > 25 && (
         <div className="v2-alert-banner" style={{ background: '#fff3cd', color: '#7a5700', borderBottom: '1px solid #e8d49a' }}>
