@@ -5363,7 +5363,7 @@ a { color: var(--tint); }
 .v2-header__live { color: var(--gain); font-size: var(--t-micro); animation: live-breathe 2s ease-in-out infinite; }
 .v2-header__day { font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 0; }
 .v2-header__time { font-family: var(--font-mono); font-size: var(--t-body); font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
-.v2-header__speed { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.42); background: rgba(255, 255, 255, 0.06); padding: 4px 8px; border-radius: 0; }
+.v2-header__speed { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.62); background: rgba(255, 255, 255, 0.06); padding: 4px 8px; border-radius: 0; }
 
 /* Mode Toggle */
 .v2-mode-toggle {

@@ -183,6 +183,34 @@ Operator Console button.
 - 5ea09a7  Time-driven right bar + day-of-week flight fuzz
 - ce9a1ff  Apply Musk rule: delete dead code first
 
+## Work-order sweep — 2026-07-05 (Fable 5 work order executed)
+
+Six surgical changes per `_toolkit/agent-workorders/phuket-smart-bus.md`. No
+behavioural changes. Conservation law still verified holding.
+
+- **S1 [SECURITY]** `npm audit fix` — 15 → 1 vuln (remaining is esbuild
+  Windows-only dev-server, doesn't reach macOS production). All 3 critical
+  (vitest <3.2.6 file-read, shell-quote newline escape, form-data CRLF)
+  and 5 of 6 high cleared without breaking changes. Typecheck / test /
+  build all green after the bump.
+- **F2 [FUNCTION]** Defensive 20s timeout on `server/app.test.ts` rate-limit
+  test (60 sequential awaits against a 60s window is structurally fragile).
+  S1 may have incidentally cleared the original flake (3/3 stable before
+  the bump), but the timeout is still cheap insurance for slow CI.
+- **A1 [AUDIT]** Added `worldCopyJump={false}` to the Leaflet MapContainer
+  (`src/components/LiveMap.tsx`) — closes §11.9 letter-of-the-rule.
+  `minZoom=10` already prevents user-facing world repetition; this just
+  makes the prop set explicit.
+- **A6 [AUDIT]** Raised `.v2-header__speed` opacity 0.42 → 0.62
+  (`src/styles.css`) — crosses the §11.10 4.5:1 AA threshold for body
+  text on `#0d121b`. Still reads as secondary/muted vs the `#fff` heading.
+- **A7 [AUDIT]** Removed stale CLAUDE.md reference to `CompareView.tsx`
+  and `AirportGuidePanel.tsx` (already deleted in a prior pass). Also
+  bumped OpsConsole line count 1,491 → 1,591 to match current reality.
+- **DEFERRED (needs your go-ahead):** A9 / P1 — OpsConsole 1,591-line
+  split. The work order explicitly says "scoping this as its own session
+  with Dr Non's go-ahead, not a mechanical audit fix." Not touched.
+
 Live URL: https://nonarkara.github.io/phuket-smart-bus/
 
 If the live URL serves an older bundle than the latest commit hash,

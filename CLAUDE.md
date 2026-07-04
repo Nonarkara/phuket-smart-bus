@@ -259,11 +259,11 @@ Don't hardcode "1,200 riders today." Instead: 26 flights × avg pax × 12% captu
 ## What Needs Work
 
 1. **DashboardV2** (`/v2`) — the demand-supply intelligence dashboard is built but needs polish. Left sidebar flight ticker, regional bar chart, and accumulating metrics are coded but need testing at desktop width.
-2. **OpsConsole** — 1,491 lines in one file. Should be split into sub-components (FleetPanel, DemandPanel, WeatherPanel, etc.).
+2. **OpsConsole** — 1,591 lines in one file. Should be split into sub-components (FleetPanel, DemandPanel, WeatherPanel, etc.).
 3. **The OpsConsole bottom bar** — needs to show live accumulating metrics from the 30× engine at all times, not just during Simulate replay.
 4. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand.
 5. **i18n** — 919 lines of hardcoded strings. Should eventually be JSON files.
-6. **Dead code** — `CompareView.tsx` (commented out), `AirportGuidePanel.tsx` (unreachable), ~15% of CSS unused.
+6. **Dead code** — ~15% of CSS unused (drift).
 7. **Testing** — <1% test coverage. Needs unit tests for the engine, component tests, and E2E.
 
 ---

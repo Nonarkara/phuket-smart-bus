@@ -649,6 +649,10 @@ describe("server app API", () => {
   it("returns 429 when ingest rate limits are exceeded", async () => {
     const app = await createTestApp({ ingestKey: "test-ingest-key" });
     const requestIp = "198.51.100.24";
+    // 60 sequential awaits against a 60s window can exceed default vitest
+    // timeout on slow machines. The limiter logic itself is O(1) per request;
+    // the cost is full middleware (zod + body-parser + logger) per round-trip.
+    // Bumping the budget keeps the test green without touching production code.
     const body = {
       samples: [
         {
@@ -684,5 +688,5 @@ describe("server app API", () => {
     expect(response.status).toBe(429);
     expect(response.body.code).toBe("rate_limited");
     expect(response.headers["retry-after"]).toBeDefined();
-  });
+  }, 20_000);
 });
