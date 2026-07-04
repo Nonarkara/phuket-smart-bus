@@ -208,9 +208,11 @@ export const V2LiveMap = React.memo(function V2LiveMap({ vehicles }: V2LiveMapPr
     <MapContainer
       center={[7.88, 98.37]}
       zoom={11}
+      minZoom={6}
       className="v2-map__canvas"
       zoomControl={false}
       scrollWheelZoom={true}
+      worldCopyJump={false}
     >
       <TileLayer
         attribution="&copy; OSM"

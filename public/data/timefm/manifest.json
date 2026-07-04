@@ -1,0 +1,10 @@
+[
+  {
+    "id": "forecast-ridership-phuket",
+    "file": "forecast-ridership-phuket.json",
+    "label": "ridership",
+    "aoi": "phuket",
+    "horizon": 14,
+    "model": "google/timesfm-2.5-200m-pytorch"
+  }
+]

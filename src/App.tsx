@@ -35,7 +35,6 @@ import { StopSpotlight } from "./components/StopSpotlight";
 import { AdvisoryStack } from "./components/AdvisoryStack";
 import { PassPanel } from "./components/PassPanel";
 import { HeroSection } from "./components/HeroSection";
-import { OpsConsole } from "./components/OpsConsole";
 import { WelcomeSheet } from "./components/WelcomeSheet";
 import { DriverTablet } from "./components/DriverTablet";
 import { RoiCalculator } from "./components/RoiCalculator";
