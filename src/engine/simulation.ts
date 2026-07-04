@@ -241,6 +241,59 @@ export type SimState = {
   vehicles: { id: string; lat: number; lng: number; heading: number; status: "moving" | "dwelling"; route: string; pax: number; plate: string }[];
 };
 
+// ---------------------------------------------------------------------------
+// Live totals — the streaming money/pax numbers as a PURE function of the
+// minute. This is the single source the per-frame animation loop ref-writes
+// AND the source computeSimState() consumes for the same fields, so the
+// buttery 60fps numbers and the 4Hz panel snapshot can never disagree.
+// Cheap: one O(1) atMinute() read + a couple of small array scans.
+// ---------------------------------------------------------------------------
+export type LiveTotals = {
+  simMinutes: number;
+  waiting: number;
+  paxWantBus: number;
+  paxBoarded: number;
+  paxDelivered: number;
+  paxAbandoned: number;
+  revenueThb: number;      // earned = delivered × ฿100
+  lostRevenueThb: number;  // walked away to capacity = abandoned × ฿100
+  co2TaxiKg: number;
+  co2SavedKg: number;
+  tripsCompleted: number;
+  kmDriven: number;
+  nextDeparture: number | null;
+  departedBusCount: number;
+};
+
+export function getLiveTotals(nowMin: number): LiveTotals {
+  const eng = atMinute(nowMin);
+  const deps = airportDepartures();
+  const departedBuses = deps.filter((d) => d <= nowMin);
+  const avgTripMin = 75;
+  const nextDep = deps.find((d) => d > nowMin);
+  const paxDelivered = eng.deliveredCum;
+  const avgTripKm = 28;
+  const co2TaxiKg = Math.round(paxDelivered * avgTripKm * 0.21);
+  const co2BusKg = Math.round(paxDelivered * avgTripKm * 0.06);
+  const tripsCompleted = departedBuses.filter((d) => d + avgTripMin <= nowMin).length;
+  return {
+    simMinutes: nowMin,
+    waiting: eng.waiting,
+    paxWantBus: eng.demandCum,
+    paxBoarded: eng.boardedCum,
+    paxDelivered,
+    paxAbandoned: eng.abandonedCum,
+    revenueThb: paxDelivered * 100,
+    lostRevenueThb: eng.abandonedCum * 100,
+    co2TaxiKg,
+    co2SavedKg: co2TaxiKg - co2BusKg,
+    tripsCompleted,
+    kmDriven: tripsCompleted * 35 + (departedBuses.length - tripsCompleted) * 17,
+    nextDeparture: nextDep ? Math.round(nextDep - nowMin) : null,
+    departedBusCount: departedBuses.length,
+  };
+}
+
 export function computeSimState(): SimState {
   const now = simNow();
   const clockLabel = simClock();
@@ -286,30 +339,30 @@ export function computeSimState(): SimState {
   const paxAtAirport = eng.waiting;       // in the queue right now
   const paxAbandoned = eng.abandonedCum;  // gave up after 60 min → took Grab
 
+  // Streaming money/pax numbers come from getLiveTotals (the SSOT the 60fps
+  // ref-writer also uses) so the coarse panel snapshot and the buttery live
+  // numbers are computed by ONE function — they can never drift.
+  const live = getLiveTotals(now);
+
   const deps = airportDepartures();
   const departedBuses = deps.filter(d => d <= now);
   const totalBusCapacity = departedBuses.length * BUS_CAPACITY;
   const avgTripMin = 75; // weighted average across destinations
 
   // 9. Next departure
-  const nextDep = deps.find(d => d > now);
-  const nextDeparture = nextDep ? Math.round(nextDep - now) : null;
+  const nextDeparture = live.nextDeparture;
 
   // 10. Impact metrics — DERIVED from actual served passengers
   const avgGrabFare = DESTINATIONS.reduce((s, d) => s + d.grabThb * d.pct, 0); // ~720 THB
-  const revenueThb = paxDelivered * 100;
+  const revenueThb = live.revenueThb;
   const grabEquivThb = Math.round(paxDelivered * avgGrabFare);
   const savingsThb = grabEquivThb - revenueThb;
-  const avgTripKm = 28; // weighted average route distance
-  const co2PerPaxKmCar = 0.21; // kg CO2 per pax-km by car (APTA)
-  const co2PerPaxKmBus = 0.06; // kg CO2 per pax-km by bus (APTA)
-  const co2TaxiKg = Math.round(paxDelivered * avgTripKm * co2PerPaxKmCar);
-  const co2BusKg = Math.round(paxDelivered * avgTripKm * co2PerPaxKmBus);
-  const co2SavedKg = co2TaxiKg - co2BusKg;
+  const co2TaxiKg = live.co2TaxiKg;
+  const co2SavedKg = live.co2SavedKg;
 
   // 11. Trip and km stats
-  const tripsCompleted = departedBuses.filter(d => d + avgTripMin <= now).length;
-  const kmDriven = tripsCompleted * 35 + (departedBuses.length - tripsCompleted) * 17; // partial trips
+  const tripsCompleted = live.tripsCompleted;
+  const kmDriven = live.kmDriven; // partial trips folded in by getLiveTotals
 
   // 12. Destination breakdown
   const destBreakdown = DESTINATIONS.map(d => ({

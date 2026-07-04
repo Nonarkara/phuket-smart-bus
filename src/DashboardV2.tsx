@@ -13,16 +13,25 @@
  * Switching views does NOT alter the simulation clock — both views share it.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { VehiclePosition } from "@shared/types";
 import {
   computeSimState,
   getDayInfo,
   getHourlyDemandSupply,
+  getLiveTotals,
   type SimState
 } from "./engine/simulation";
 import { getVehiclesNow } from "./engine/dataProvider";
-import { getClockState, getFleetAnalysis, setSimulatedMinutes, SERVICE_START } from "./engine/fleetSimulator";
+import {
+  getClockState,
+  getFleetAnalysis,
+  getSimulatedMinutes,
+  setSimulatedMinutes,
+  resetClockAnchor,
+  startDaySweep,
+  SERVICE_START,
+} from "./engine/fleetSimulator";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -33,7 +42,7 @@ import { getHeadlineMetrics } from "./engine/headlineMetrics";
 import { getDayModel } from "./engine/demandSupplyEngine";
 import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } from "./engine/v2OpsPanel";
 import { Counter } from "./components/v2/V2Shared";
-import { V2LiveMap } from "./components/v2/V2LiveMap";
+import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
 import { DemandPanel } from "./components/v2/DemandPanel";
 import { SupplyPanel } from "./components/v2/SupplyPanel";
@@ -67,6 +76,12 @@ function computeOpsScale(): number {
   return Math.min(2.5, Math.max(1, window.innerWidth / 1440));
 }
 
+function formatClockLabel(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = Math.floor(min % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} BKK`;
+}
+
 function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
   return {
     id: v.vehicleId,
@@ -88,16 +103,51 @@ export default function DashboardV2() {
   const dailyFlights = useMemo(() => getOpsFlightSchedule(), [simDay]);
   const hourlyFlights = useMemo(() => buildFlightHourBuckets(dailyFlights), [dailyFlights]);
   const [clockState, setClockState] = useState(getClockState());
-  const [mapVehicles, setMapVehicles] = useState<SimState["vehicles"]>(() => getVehiclesNow().map(toMapVehicle));
 
-  // Day picker: switch the engine's active day and replay it from 06:00.
-  // All engine memos are keyed on the day, so every panel re-derives.
+  // One-time snapshot for the streaming cells' STATIC placeholders — captured
+  // once so they render correct opening values (no 0-flash) yet never change
+  // across re-renders, so the 4Hz coarse setState can't re-bind/clobber the
+  // text the rAF writes into these refs.
+  const [initFrame] = useState(() => {
+    const t = getSimulatedMinutes();
+    return {
+      tot: getLiveTotals(t),
+      moving: getVehiclesNow(undefined, t).filter((v) => v.status === "moving").length,
+      clock: formatClockLabel(t),
+    };
+  });
+
+  // Imperative handle to the map's marker layer (driven per frame) + refs for
+  // the streaming money/pax cells. These cells render STATIC placeholders in
+  // JSX and are written ONLY by the rAF loop below — never bound to React
+  // state, or the 4Hz coarse setState would clobber the live text.
+  const mapRef = useRef<V2MapHandle>(null);
+  const clockRef = useRef<HTMLSpanElement>(null);
+  const revEarnedRef = useRef<HTMLSpanElement>(null);
+  const revLostRef = useRef<HTMLSpanElement>(null);
+  const revMeterRef = useRef<HTMLSpanElement>(null);
+  const paxRef = useRef<HTMLSpanElement>(null);
+  const tripsRef = useRef<HTMLSpanElement>(null);
+  const kmRef = useRef<HTMLSpanElement>(null);
+  const co2Ref = useRef<HTMLSpanElement>(null);
+  const demandQueueRef = useRef<HTMLElement>(null);
+  const supplyRollingRef = useRef<HTMLElement>(null);
+  const walkedRef = useRef<HTMLElement>(null);
+
+  // Day picker: switch the engine's active day and replay it from 05:30.
+  // All engine memos are keyed on the day, so every panel re-derives; the rAF
+  // loop repaints buses/money on the next frame (getSimulatedMinutes changed).
   const handleDayChange = (dow: number) => {
     setSimulationDay(dow);
     setSimulatedMinutes(SERVICE_START);
     setSimDayState(dow);
     setState(computeSimState());
-    setMapVehicles(getVehiclesNow().map(toMapVehicle));
+    setClockState(getClockState());
+  };
+
+  // One-touch cinematic: sweep the whole service day in ~60s, then freeze.
+  const handleStartDaySweep = () => {
+    startDaySweep();
     setClockState(getClockState());
   };
 
@@ -150,17 +200,88 @@ export default function DashboardV2() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Poll simulation state every second. clockState is included so a pause
-  // triggered anywhere (hour-chart click, flight-pulse click) updates the
-  // play/pause button without prop drilling.
+  // ── The heartbeat: rAF loop + failsafe, two cadences ───────────────────
+  // Per frame (~60fps): read the continuous clock ONCE, then drive the two
+  // must-be-smooth surfaces imperatively from that single minute — the map
+  // markers (road-snapped, no teleport) and the money/pax refs (smooth climb,
+  // no 1.2s Counter lag). Buses and money share the one cached minute so they
+  // can never desync. Coarse work (the analytic panels) is gated to ~4Hz
+  // inside the same loop — they only change on hour/flight boundaries.
+  //
+  // A coarse setInterval failsafe runs alongside rAF and only does real work
+  // if rAF hasn't ticked in >150ms — a live wall display must never silently
+  // freeze if rAF is throttled (occluded window, embedded/kiosk browser
+  // quirks). Zero overhead when rAF is healthy (the common case).
   useEffect(() => {
-    const id = setInterval(() => {
-      setState(computeSimState());
-      setMetrics(getHeadlineMetrics());
-      setMapVehicles(getVehiclesNow().map(toMapVehicle));
-      setClockState(getClockState());
-    }, 1000);
-    return () => clearInterval(id);
+    let raf = 0;
+    let lastFrameT = -1;
+    let lastCoarseMs = 0;
+    let lastFrameMs = 0;
+    let stopped = false;
+
+    const writeFrame = (t: number) => {
+      const totals = getLiveTotals(t);
+      const vehicles = getVehiclesNow(undefined, t).map(toMapVehicle);
+      mapRef.current?.syncNow(vehicles);
+      const moving = vehicles.filter((v) => v.status === "moving").length;
+
+      if (clockRef.current) clockRef.current.textContent = formatClockLabel(t);
+
+      if (revEarnedRef.current) revEarnedRef.current.textContent = `฿${totals.revenueThb.toLocaleString()}`;
+      if (revLostRef.current) revLostRef.current.textContent = `−฿${totals.lostRevenueThb.toLocaleString()}`;
+      if (revMeterRef.current) {
+        const denom = totals.revenueThb + totals.lostRevenueThb;
+        revMeterRef.current.style.width = denom > 0 ? `${(totals.revenueThb / denom) * 100}%` : "0%";
+      }
+      if (paxRef.current) paxRef.current.textContent = totals.paxDelivered.toLocaleString();
+      if (tripsRef.current) tripsRef.current.textContent = totals.tripsCompleted.toLocaleString();
+      if (kmRef.current) kmRef.current.textContent = totals.kmDriven.toLocaleString();
+      if (co2Ref.current) co2Ref.current.textContent = totals.co2SavedKg.toLocaleString();
+      if (demandQueueRef.current) demandQueueRef.current.textContent = totals.waiting.toLocaleString();
+      if (supplyRollingRef.current) supplyRollingRef.current.textContent = moving.toLocaleString();
+      if (walkedRef.current) walkedRef.current.textContent = totals.paxAbandoned.toLocaleString();
+    };
+
+    const runFrame = () => {
+      lastFrameMs = performance.now();
+      const t = getSimulatedMinutes(); // the single mutate-and-advance per frame
+      if (t !== lastFrameT) {
+        lastFrameT = t;
+        writeFrame(t);
+        if (lastFrameMs - lastCoarseMs >= 250) {
+          lastCoarseMs = lastFrameMs;
+          setState(computeSimState());
+          setMetrics(getHeadlineMetrics());
+          setClockState(getClockState());
+        }
+      }
+    };
+
+    const tick = () => {
+      if (stopped) return;
+      runFrame();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    const heartbeat = setInterval(() => {
+      if (stopped) return;
+      if (performance.now() - lastFrameMs > 150) runFrame();
+    }, 150);
+
+    // A backgrounded tab pauses rAF; on return, re-anchor the clock so it does
+    // not leap by hidden-duration × speed (which would teleport every bus once).
+    const onVisible = () => {
+      if (document.visibilityState === "visible") resetClockAnchor();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+      clearInterval(heartbeat);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   return (
@@ -218,7 +339,7 @@ export default function DashboardV2() {
           </div>
           <span className="v2-header__live">●</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
-          <span className="v2-header__time">{state.clockLabel} BKK</span>
+          <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
           <span className="v2-header__speed">{clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}</span>
         </div>
 
@@ -228,6 +349,7 @@ export default function DashboardV2() {
           onClockStateChange={setClockState}
           simDay={simDay}
           onDayChange={handleDayChange}
+          onStartDaySweep={handleStartDaySweep}
         />
       </header>
 
@@ -269,21 +391,21 @@ export default function DashboardV2() {
             <div className="v2-map__hero">
               <div className="v2-map__hero-card">
                 <span className="v2-map__hero-label">Demand Queue</span>
-                <strong className="v2-map__hero-value">{state.paxAtAirport}</strong>
+                <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
                 <span className="v2-map__hero-detail">waiting at airport curb</span>
               </div>
               <div className="v2-map__hero-card">
                 <span className="v2-map__hero-label">Supply Rolling</span>
-                <strong className="v2-map__hero-value">{metrics.fleet.movingBuses}</strong>
+                <strong className="v2-map__hero-value" ref={supplyRollingRef}>{initFrame.moving.toLocaleString()}</strong>
                 <span className="v2-map__hero-detail">buses moving now</span>
               </div>
               <div className="v2-map__hero-card">
                 <span className="v2-map__hero-label">Walked Away</span>
-                <strong className="v2-map__hero-value">{state.paxAbandoned.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">gave up after 60 min · ฿{state.lostRevenueThb.toLocaleString()} lost</span>
+                <strong className="v2-map__hero-value" ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail">gave up after 60 min queue</span>
               </div>
             </div>
-            <V2LiveMap vehicles={mapVehicles} />
+            <V2LiveMap ref={mapRef} />
             <div className="v2-map__overlay">
               <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>
               <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
@@ -312,30 +434,41 @@ export default function DashboardV2() {
       )}
 
       <footer className="v2-footer">
-        {/* AnalyticsPanel removed — accumulator bar is the ops footer */}
+        {/* Accumulator bar. The streaming cells (trips/km/pax/money/CO₂) render
+            STATIC opening placeholders and are ref-written by the rAF loop each
+            frame — never re-bound to React state, so the 4Hz coarse re-render
+            can't clobber the buttery live numbers. Buses Now / Avg Load stay
+            React-bound (they change slowly, coarse cadence is imperceptible). */}
         <div className="v2-accum">
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={metrics.fleet.totalBuses} /></span>
             <span className="v2-accum__label">Buses Now</span>
           </div>
           <div className="v2-accum__item">
-            <span className="v2-accum__val"><Counter value={state.tripsCompleted} /></span>
+            <span className="v2-accum__val" ref={tripsRef}>{initFrame.tot.tripsCompleted.toLocaleString()}</span>
             <span className="v2-accum__label">Trips Today</span>
           </div>
           <div className="v2-accum__item">
-            <span className="v2-accum__val"><Counter value={state.kmDriven} /></span>
+            <span className="v2-accum__val" ref={kmRef}>{initFrame.tot.kmDriven.toLocaleString()}</span>
             <span className="v2-accum__label">Km Today</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
-            <span className="v2-accum__val"><Counter value={state.paxDelivered} /></span>
+            <span className="v2-accum__val" ref={paxRef}>{initFrame.tot.paxDelivered.toLocaleString()}</span>
             <span className="v2-accum__label">Pax Delivered</span>
           </div>
-          <div className="v2-accum__item v2-accum__item--accent">
-            <span className="v2-accum__val"><Counter value={state.revenueThb} prefix="฿" /></span>
-            <span className="v2-accum__label">Revenue Today</span>
+          {/* The money on both sides of the bar: earned climbing against
+              walked-away-to-capacity. Two accents only (green / amber), a
+              hairline proportion meter — §11/§14 compliant. */}
+          <div className="v2-accum__item v2-accum__item--twin">
+            <span className="v2-accum__twin">
+              <span className="v2-accum__earned" ref={revEarnedRef}>฿{initFrame.tot.revenueThb.toLocaleString()}</span>
+              <span className="v2-accum__lost"><span ref={revLostRef}>−฿{initFrame.tot.lostRevenueThb.toLocaleString()}</span> walked away</span>
+            </span>
+            <span className="v2-accum__meter"><span className="v2-accum__meter-fill" ref={revMeterRef} /></span>
+            <span className="v2-accum__label">Money on the table</span>
           </div>
           <div className="v2-accum__item v2-accum__item--green">
-            <span className="v2-accum__val"><Counter value={state.co2SavedKg} suffix=" kg" /></span>
+            <span className="v2-accum__val"><span ref={co2Ref}>{initFrame.tot.co2SavedKg.toLocaleString()}</span> kg</span>
             <span className="v2-accum__label">CO₂ Saved</span>
           </div>
           <div className="v2-accum__item">

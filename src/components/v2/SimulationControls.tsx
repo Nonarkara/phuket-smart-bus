@@ -33,9 +33,10 @@ interface SimulationControlsProps {
   onClockStateChange: (state: { mode: "playing" | "paused"; speed: number }) => void;
   simDay: number;
   onDayChange: (dow: number) => void;
+  onStartDaySweep: () => void;
 }
 
-export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange }: SimulationControlsProps) {
+export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange, onStartDaySweep }: SimulationControlsProps) {
   const [sliderValue, setSliderValue] = useState(getSimulatedMinutes());
 
   // Animate slider thumb while playing (polled locally at 100ms)
@@ -87,6 +88,13 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
       />
       <span className="v2-timebar__label">{formatSimTime(sliderValue)}</span>
       <div className="v2-timebar__speeds">
+        <button
+          className="v2-timebar__day-sweep"
+          onClick={onStartDaySweep}
+          title="Replay the whole service day (05:30 → 22:30) in ~60 seconds"
+        >
+          ▶ DAY · 60s
+        </button>
         {SPEED_OPTIONS.map((s) => (
           <button
             key={s}

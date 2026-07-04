@@ -8470,6 +8470,23 @@ a { color: var(--tint); }
 .v2 .v2-timebar__speed.is-active,
 .v2 .v2-timebar__speed:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
 
+/* One-touch "play the whole day in ~60s" — the primary sim action, green */
+.v2 .v2-timebar__day-sweep {
+  background: var(--ax-accent);
+  border: 1px solid var(--ax-accent);
+  color: #fff;
+  padding: 3px 12px;
+  min-height: 26px;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+.v2 .v2-timebar__day-sweep:hover { background: #17583a; border-color: #17583a; }
+
 /* ── Body: hairline grid — proportional fr columns ───────────────────────── */
 .v2 .v2-body {
   flex: 1;
@@ -8788,6 +8805,46 @@ a { color: var(--tint); }
   letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
+}
+
+/* ── Twin money cell — earned vs walked-away, the two sides of the bar ───── */
+.v2 .v2-accum__item--twin {
+  gap: 3px;
+  justify-content: center;
+}
+.v2 .v2-accum__twin {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.v2 .v2-accum__earned {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: var(--ax-accent);      /* the one earned accent — green */
+  line-height: 1;
+}
+.v2 .v2-accum__lost {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  color: #9a6a00;               /* dark amber TEXT on the light surface (§11.10) */
+  font-variant-numeric: tabular-nums;
+}
+.v2 .v2-accum__meter {
+  display: block;
+  height: 4px;
+  width: 100%;
+  max-width: 180px;
+  background: #ead9a8;          /* amber remainder = walked-away share */
+  border: 1px solid var(--ax-line-2);
+}
+.v2 .v2-accum__meter-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--ax-accent); /* green fill = earned share */
 }
 
 /* Map overlay: pull out of absolute float, render as static bar */

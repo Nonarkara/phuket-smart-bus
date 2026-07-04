@@ -14,8 +14,18 @@ import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { haversineDistanceMeters } from "./geo";
 import { posOnPolyline, buildPolylineCumMeters } from "./polyline";
 import { getDirectionPolyline } from "./routes";
-import { getVehiclesNow, getSimulatedMinutes } from "./fleetSimulator";
-import { getHourlyDemandSupply, simNow } from "./simulation";
+import {
+  getVehiclesNow,
+  getSimulatedMinutes,
+  startDaySweep,
+  getClockState,
+  setSpeed,
+  play,
+  DAY_TARGET_END,
+  DAY_SPEED,
+  SERVICE_START,
+} from "./fleetSimulator";
+import { getHourlyDemandSupply, getLiveTotals, simNow } from "./simulation";
 import { OPS_FLIGHT_SCHEDULE } from "./opsFlightSchedule";
 
 // The sim anchors `simAnchorReal` to module-load time. Tests use
@@ -333,5 +343,122 @@ describe("scenario delta math", () => {
     expect(huge.totals.lostRevenueThb).toBe(0);
     expect(huge.totals.unmetArrivalDemand).toBe(0);
     expect(huge.totals.unmetDepartureDemand).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bug class 5: Seamless high-speed playback (24h-in-60s)
+//
+// The per-frame animation loop reads ONE minute and samples both buses and
+// money from it. Two guarantees make that seamless:
+//   (a) getVehiclesNow(overrideMin) is a PURE function of the minute — it must
+//       NOT re-read/advance the clock, or buses and money desync each frame.
+//   (b) getLiveTotals(min) is the single money source; its identities hold and
+//       its cumulative figures never decrease across the day.
+// ---------------------------------------------------------------------------
+
+describe("seamless playback — pure frame sampling + money identities", () => {
+  it("getVehiclesNow(overrideMin) is pure: same minute → identical positions", () => {
+    const a = getVehiclesNow(new Date(), 780);
+    const b = getVehiclesNow(new Date(), 780);
+    expect(a.length).toBe(b.length);
+    for (let i = 0; i < a.length; i++) {
+      expect(a[i].vehicleId).toBe(b[i].vehicleId);
+      expect(a[i].coordinates[0]).toBe(b[i].coordinates[0]);
+      expect(a[i].coordinates[1]).toBe(b[i].coordinates[1]);
+    }
+  });
+
+  it("sampling +1 sim-second moves buses only metres (no teleport at any speed)", () => {
+    const t1 = getVehiclesNow(new Date(), 780);
+    const t2 = getVehiclesNow(new Date(), 780 + 1 / 60);
+    for (const v of t1) {
+      const n = t2.find((x) => x.vehicleId === v.vehicleId);
+      if (!n) continue;
+      expect(haversineDistanceMeters(v.coordinates, n.coordinates)).toBeLessThan(50);
+    }
+  });
+
+  it("getLiveTotals money identities: earned = delivered×100, lost = abandoned×100", () => {
+    for (const min of [400, 600, 780, 1000, 1200, 1350]) {
+      const t = getLiveTotals(min);
+      expect(t.revenueThb).toBe(t.paxDelivered * 100);
+      expect(t.lostRevenueThb).toBe(t.paxAbandoned * 100);
+      expect(t.revenueThb).toBeGreaterThanOrEqual(0);
+      expect(t.lostRevenueThb).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("getLiveTotals cumulative figures never decrease across the service day", () => {
+    let lastDelivered = 0;
+    let lastAbandoned = 0;
+    for (let min = 330; min <= 1350; min += 10) {
+      const t = getLiveTotals(min);
+      expect(t.paxDelivered).toBeGreaterThanOrEqual(lastDelivered);
+      expect(t.paxAbandoned).toBeGreaterThanOrEqual(lastAbandoned);
+      lastDelivered = t.paxDelivered;
+      lastAbandoned = t.paxAbandoned;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bug class 6: DAY·60s one-shot sweep
+//
+// startDaySweep() must reset to SERVICE_START, run at DAY_SPEED, and clamp
+// EXACTLY at DAY_TARGET_END (freezing on the payoff shot) rather than
+// overshooting into the dead post-service tail or looping past it. A manual
+// speed chip afterward must clear the one-shot flag so free exploration
+// resumes normal ambient looping.
+// ---------------------------------------------------------------------------
+
+describe("DAY·60s one-shot sweep — clamps exactly at DAY_TARGET_END", () => {
+  it("startDaySweep resets to SERVICE_START and applies DAY_SPEED", () => {
+    const t0 = Date.now();
+    vi.setSystemTime(t0);
+    startDaySweep();
+    expect(getSimulatedMinutes()).toBe(SERVICE_START);
+    expect(getClockState().speed).toBe(DAY_SPEED);
+    expect(getClockState().mode).toBe("playing");
+  });
+
+  it("advancing real time past the full sweep clamps exactly at DAY_TARGET_END and pauses", () => {
+    const t0 = Date.now();
+    vi.setSystemTime(t0);
+    startDaySweep();
+    // 90s of real time at DAY_SPEED overshoots the ~60s sweep duration —
+    // the clock must clamp, not overshoot into the dead 22:30-24:00 tail.
+    vi.setSystemTime(t0 + 90_000);
+    expect(getSimulatedMinutes()).toBe(DAY_TARGET_END);
+    expect(getClockState().mode).toBe("paused");
+  });
+
+  it("once frozen, further elapsed time does not move the clock (idempotent)", () => {
+    const t0 = Date.now();
+    vi.setSystemTime(t0);
+    startDaySweep();
+    vi.setSystemTime(t0 + 90_000);
+    expect(getSimulatedMinutes()).toBe(DAY_TARGET_END);
+    vi.setSystemTime(t0 + 300_000);
+    expect(getSimulatedMinutes()).toBe(DAY_TARGET_END);
+  });
+
+  it("a manual speed pick after the freeze clears the one-shot flag and resumes ambient looping", () => {
+    const t0 = Date.now();
+    vi.setSystemTime(t0);
+    startDaySweep();
+    vi.setSystemTime(t0 + 90_000);
+    // getClockState() reflects mode as of the last getSimulatedMinutes() read
+    // (advancement + the freeze-on-clamp happen lazily on read) — poke it first.
+    expect(getSimulatedMinutes()).toBe(DAY_TARGET_END);
+    expect(getClockState().mode).toBe("paused");
+
+    setSpeed(30);
+    play();
+    vi.setSystemTime(t0 + 90_000 + 5_000); // +5s real @ 30x = +150 sim-min
+    const min = getSimulatedMinutes();
+    // runOnce is now false, so the clock is free to move past DAY_TARGET_END
+    // via the ambient SERVICE_END wrap instead of staying clamped at 1350.
+    expect(min).toBeGreaterThan(DAY_TARGET_END);
   });
 });

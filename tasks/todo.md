@@ -75,3 +75,42 @@ weekly revenue roll-up (week = Σ 7 deterministic day models).
 - [x] styles.css: Axiom styles for day buttons + week rows
 - [x] Tests: week = Σ days, per-day conservation, day switch invalidates model
 - [x] Verify preview → build → deploy → commit
+
+---
+
+# Seamless 24h-in-60s playback (Fable-5 design panel, imperative-split 42/50)
+
+- [x] fleetSimulator: DAY_SPEED=1020, DAY_TARGET_END=1350; runOnce flag; one-shot wrap; setSpeed cap 1200 + clear runOnce; setSimulatedMinutes clear runOnce; startDaySweep(); resetClockAnchor(); getVehiclesNow(now, overrideMin) purity arg
+- [x] simulation: getLiveTotals(nowMin) SSOT for streaming money; computeSimState consumes it
+- [x] V2LiveMap: forwardRef syncNow handle; delete 950ms glide + 500m snap + lerp (root-cause teleport/corner-cut fix)
+- [x] SimulationControls: DAY-60s one-touch button (44px)
+- [x] DashboardV2: rAF loop + setInterval failsafe heartbeat (buses+money 60fps, panels 4Hz gate), visibility anchor reset, ref-written streaming cells (de-bound from state), twin earned/lost accum cell + hairline meter
+- [x] styles.css: twin cell + proportion meter + DAY button (Axiom laws)
+- [x] tests: getVehiclesNow(min) purity, money identities, DAY-sweep clamp/pause/resume (4 new describe blocks, 107/107 total)
+- [x] verify preview at 1020x (buses hug road, money climbs, freeze EXACTLY at 22:30 confirmed via screenshot + deterministic unit tests) -> tsc+vitest+build all green -> CPD
+
+## Review
+- Shipped: one-touch DAY·60s button resets to 05:30, plays the whole service day at
+  1020× (derived from DAY_TARGET_END−SERVICE_START), and freezes exactly at 22:30 on
+  the payoff shot instead of looping past it. Buses now sample the live clock every
+  frame and paint the engine's already-road-snapped position directly — no more
+  950ms tween + 500m-snap teleport guard, which was the actual cause of the old
+  corner-cutting-over-water bug at speed. Money numbers (earned vs walked-away)
+  stream via refs written straight from getLiveTotals(), bypassing the 1.2s Counter
+  ease that could never keep up with a fast sweep. A twin accumulator cell now shows
+  earned vs lost side by side with a hairline proportion meter — the ฿ story the
+  WeekCard already told is now dramatized live during a single day's sweep.
+- Learned: getSimulatedMinutes() mutates the clock on every call — an unthreaded
+  render loop that calls it twice per frame (once for buses, once for money) would
+  silently desync them. Fixed by reading it ONCE per frame and threading that value
+  through getVehiclesNow(now, overrideMin) and getLiveTotals(nowMin).
+  getClockState() only reflects mode as of the last getSimulatedMinutes() read —
+  advancement is lazy-on-read, so a test (or any caller) checking mode without first
+  reading the clock sees stale state. A pure rAF loop can go fully idle if the
+  browser never fires a callback (confirmed in the Claude Preview harness, which
+  reports visibilityState:"hidden" indefinitely) — added a coarse setInterval
+  failsafe that only does work if rAF hasn't ticked in >150ms, zero overhead when
+  rAF is healthy, guarantees the wall display can never silently freeze.
+- Remaining: none — feature complete, 107/107 tests green, typecheck clean, build
+  clean, verified in preview via screenshot (exact 22:30 freeze) and unit tests
+  (deterministic clamp/pause/resume behavior).

@@ -1,11 +1,15 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useImperativeHandle, useRef, forwardRef } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
 import { getDirectionPolyline } from "../../engine/routes";
-import { interpolateCoordinate, interpolateHeading } from "../../lib/vehicleAnimation";
-import { haversineDistanceMeters } from "../../lib/geo";
 import type { SimState } from "../../engine/simulation";
+
+/** Imperative handle: the parent's per-frame rAF loop calls syncNow() with the
+ *  vehicles it sampled for THIS frame's minute. No prop-driven tweening — the
+ *  engine already snaps every bus to the road polyline, so painting each
+ *  frame's exact position traces the road at any speed with zero interpolation. */
+export type V2MapHandle = { syncNow: (vehicles: SimState["vehicles"]) => void };
 
 // ---------------------------------------------------------------------------
 // Bus Marker Icon Builder
@@ -20,28 +24,6 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
       <div class="v2-bus__body">${vehicle.pax}</div>
     </div>`
   });
-}
-
-const V2_MARKER_GLIDE_MS = 950;
-
-function interpolateBusVehicle(
-  from: SimState["vehicles"][number],
-  to: SimState["vehicles"][number],
-  progress: number
-) {
-  const dist = haversineDistanceMeters([from.lat, from.lng], [to.lat, to.lng]);
-  if (dist > 500) {
-    return to;
-  }
-
-  const [lat, lng] = interpolateCoordinate([from.lat, from.lng], [to.lat, to.lng], progress);
-
-  return {
-    ...to,
-    lat,
-    lng,
-    heading: interpolateHeading(from.heading, to.heading, progress),
-  };
 }
 
 function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number]) {
@@ -63,88 +45,47 @@ function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number]) 
 }
 
 // ---------------------------------------------------------------------------
-// Vehicle Layer — imperative Leaflet markers
+// Vehicle Layer — imperative Leaflet markers, driven per frame via syncNow().
+// No interpolation: the parent samples the continuous clock every frame and
+// each vehicle position is already road-snapped by the engine (posOnPolyline),
+// so setLatLng() straight to it traces the road smoothly at ANY speed — the
+// old 950ms glide + 500m snap guard were what teleported buses (and cut
+// corners across water) at high speed. Gone.
 // ---------------------------------------------------------------------------
-function VehicleLayer({ vehicles }: { vehicles: SimState["vehicles"] }) {
+const VehicleLayer = forwardRef<V2MapHandle>(function VehicleLayer(_props, ref) {
   const map = useMap();
   const markers = useRef<Map<string, L.Marker>>(new Map());
-  const renderedVehicles = useRef<Map<string, SimState["vehicles"][number]>>(new Map());
-  const animationRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const ensureMarker = (vehicle: SimState["vehicles"][number]) => {
-      const existing = markers.current.get(vehicle.id);
-      if (existing) return existing;
-
-      const marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
-      marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/25 pax · ${vehicle.route}`, { direction: "top" });
-      markers.current.set(vehicle.id, marker);
-      return marker;
-    };
-
-    const applyFrame = (frameVehicles: SimState["vehicles"]) => {
-      const nextRendered = new Map<string, SimState["vehicles"][number]>();
-
-      for (const vehicle of frameVehicles) {
-        const marker = ensureMarker(vehicle);
+  useImperativeHandle(ref, () => ({
+    syncNow(vehicles) {
+      // Remove markers for vehicles no longer in service this frame.
+      const seen = new Set(vehicles.map((v) => v.id));
+      for (const [key, marker] of markers.current) {
+        if (!seen.has(key)) {
+          map.removeLayer(marker);
+          markers.current.delete(key);
+        }
+      }
+      // Ensure + move every current vehicle to its exact road position.
+      for (const vehicle of vehicles) {
+        let marker = markers.current.get(vehicle.id);
+        if (!marker) {
+          marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
+          marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/25 pax · ${vehicle.route}`, { direction: "top" });
+          markers.current.set(vehicle.id, marker);
+        }
         syncBusMarker(marker, vehicle);
-        nextRendered.set(vehicle.id, vehicle);
       }
-
-      renderedVehicles.current = nextRendered;
-    };
-
-    const seen = new Set(vehicles.map((vehicle) => vehicle.id));
-    for (const [key, marker] of markers.current) {
-      if (!seen.has(key)) {
-        map.removeLayer(marker);
-        markers.current.delete(key);
-      }
-    }
-
-    if (animationRef.current !== null) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-
-    const previous = renderedVehicles.current;
-    const frameDuration = previous.size > 0 ? V2_MARKER_GLIDE_MS : 0;
-    if (frameDuration === 0) {
-      applyFrame(vehicles);
-      return;
-    }
-
-    const startedAt = performance.now();
-    const step = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / frameDuration);
-      const frame = vehicles.map((vehicle) => {
-        const current = previous.get(vehicle.id);
-        return current ? interpolateBusVehicle(current, vehicle, progress) : vehicle;
-      });
-
-      applyFrame(frame);
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(step);
-      } else {
-        animationRef.current = null;
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(step);
-  }, [map, vehicles]);
+    },
+  }), [map]);
 
   useEffect(() => () => {
-    if (animationRef.current !== null) {
-      cancelAnimationFrame(animationRef.current);
-    }
     markers.current.forEach((marker) => map.removeLayer(marker));
     markers.current.clear();
-    renderedVehicles.current.clear();
   }, [map]);
 
   return null;
-}
+});
 
 // ---------------------------------------------------------------------------
 // Route polyline
@@ -199,11 +140,9 @@ function SyncMapView() {
 // ---------------------------------------------------------------------------
 // V2LiveMap (Memoized)
 // ---------------------------------------------------------------------------
-interface V2LiveMapProps {
-  vehicles: SimState["vehicles"];
-}
-
-export const V2LiveMap = React.memo(function V2LiveMap({ vehicles }: V2LiveMapProps) {
+// Memoized with empty props so 4Hz parent re-renders never rebuild the map;
+// the marker layer is driven imperatively through the forwarded handle.
+export const V2LiveMap = React.memo(forwardRef<V2MapHandle>(function V2LiveMap(_props, ref) {
   return (
     <MapContainer
       center={[7.88, 98.37]}
@@ -219,8 +158,8 @@ export const V2LiveMap = React.memo(function V2LiveMap({ vehicles }: V2LiveMapPr
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <RoutePolylines />
-      <VehicleLayer vehicles={vehicles} />
+      <VehicleLayer ref={ref} />
       <SyncMapView />
     </MapContainer>
   );
-});
+}));

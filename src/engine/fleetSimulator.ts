@@ -1060,9 +1060,19 @@ function buildOrangeLineVehicles(nowMin: number, now: Date): VehiclePosition[] {
 
 export const SIM_SPEED = 10;
 export const SERVICE_START = 330;   // 05:30 — first northbound trip
-export const SERVICE_END = 1440;    // 24:00 (00:00 next day)
+export const SERVICE_END = 1440;    // 24:00 (00:00 next day) — clock-wrap ceiling
 export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
 const SIM_OPEN_MIN = 720;    // 12:00 — every visit lands in the busy midday
+
+// "Watch the whole day in ~60 seconds." The operational day with real
+// flights/departures runs 05:30 → 22:30 (SVC_END in simulation.ts = 1350);
+// 22:30 → 24:00 is a dead post-service tail (no flights, no departures).
+// DAY_SPEED sweeps exactly SERVICE_START→DAY_TARGET_END in 60 real seconds:
+// speed = sim-minutes advanced per real-minute, and (1350−330)=1020 sim-min
+// in 60s = 1020 sim-min per real-minute. So the film opens on the empty
+// pre-dawn curb and lands precisely on the end-of-day earned-vs-lost totals.
+export const DAY_TARGET_END = 1350;   // 22:30 — last delivery of the service day
+export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1020× → 60.0s sweep
 
 // ---------------------------------------------------------------------------
 // Controllable simulation clock — replaces the old wall-clock-only anchor.
@@ -1075,6 +1085,10 @@ type SimClockState = {
   currentMinutes: number;
   speed: number;
   lastRealTime: number;
+  /** One-shot sweep flag. When true, the clock clamps + pauses at
+   *  DAY_TARGET_END instead of wrapping — the DAY·60s cinematic. Cleared by
+   *  any manual speed/scrub/day change so free exploration never freezes. */
+  runOnce: boolean;
 };
 
 const simClock: SimClockState = {
@@ -1082,6 +1096,7 @@ const simClock: SimClockState = {
   currentMinutes: SIM_OPEN_MIN,
   speed: SIM_SPEED,
   lastRealTime: Date.now(),
+  runOnce: false,
 };
 
 // Optional override for scripted demos / tests. When set, getSimulatedMinutes
@@ -1104,8 +1119,17 @@ export function getSimulatedMinutes(): number {
     simClock.currentMinutes += elapsedSimMinutes;
     simClock.lastRealTime = now;
 
-    // Wrap around at service end
-    if (simClock.currentMinutes >= SERVICE_END) {
+    if (simClock.runOnce) {
+      // DAY·60s cinematic: clamp on the final delivery and freeze, so the
+      // sweep ends on the payoff shot (end-of-day earned-vs-lost totals)
+      // instead of looping past into the empty post-service tail.
+      if (simClock.currentMinutes >= DAY_TARGET_END) {
+        simClock.currentMinutes = DAY_TARGET_END;
+        simClock.mode = 'paused';
+        simClock.runOnce = false;
+      }
+    } else if (simClock.currentMinutes >= SERVICE_END) {
+      // Normal chips (1/5/15/30×): loop the service window forever.
       simClock.currentMinutes = SERVICE_START + (simClock.currentMinutes - SERVICE_END) % SERVICE_WINDOW;
     }
   }
@@ -1117,6 +1141,24 @@ export function getSimulatedMinutes(): number {
 export function setSimulatedMinutes(min: number): void {
   simClock.currentMinutes = Math.max(SERVICE_START, Math.min(SERVICE_END, min));
   simClock.lastRealTime = Date.now();
+  simClock.runOnce = false; // scrubbing exits the one-shot sweep
+}
+
+/** Re-anchor the real-time reference WITHOUT advancing sim time. Call after a
+ *  tab was hidden so the clock doesn't leap by hidden-duration × speed (which
+ *  would teleport every bus once on return). */
+export function resetClockAnchor(): void {
+  simClock.lastRealTime = Date.now();
+}
+
+/** One-touch cinematic: replay the whole service day (05:30 → 22:30) in ~60
+ *  real seconds, then freeze on the end-of-day totals. runOnce is set AFTER
+ *  setSpeed/setSimulatedMinutes because both clear it. */
+export function startDaySweep(): void {
+  setSimulatedMinutes(SERVICE_START);
+  setSpeed(DAY_SPEED);
+  simClock.runOnce = true;
+  play();
 }
 
 /** Pause the simulation clock. */
@@ -1137,10 +1179,12 @@ export function togglePlayPause(): void {
   else play();
 }
 
-/** Set playback speed (1× to 60×). */
+/** Set playback speed (1× to 1200×). The 1200 ceiling admits the DAY·60s
+ *  preset (1020×); 60× was the old cap that made a full day take 18.5 min. */
 export function setSpeed(s: number): void {
-  simClock.speed = Math.max(1, Math.min(60, s));
+  simClock.speed = Math.max(1, Math.min(1200, s));
   simClock.lastRealTime = Date.now();
+  simClock.runOnce = false; // picking a manual speed exits the one-shot sweep
 }
 
 export function getClockState(): { mode: SimClockState['mode']; speed: number } {
@@ -1148,8 +1192,13 @@ export function getClockState(): { mode: SimClockState['mode']; speed: number } 
 }
 
 /** All vehicles including orange line competitor, at the simulated instant. */
-export function getVehiclesNow(now = new Date()): VehiclePosition[] {
-  const nowMin = getSimulatedMinutes();
+/** All vehicles at the simulated instant. Pass `overrideMin` to sample a
+ *  SPECIFIC minute without touching the clock — this makes the function a
+ *  PURE function of the minute (the per-frame animation loop passes the one
+ *  minute it already read, so buses and money stay frame-locked; calling
+ *  getSimulatedMinutes() again here would advance the clock and desync them). */
+export function getVehiclesNow(now = new Date(), overrideMin?: number): VehiclePosition[] {
+  const nowMin = overrideMin ?? getSimulatedMinutes();
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
   return [...smart, ...orange];
