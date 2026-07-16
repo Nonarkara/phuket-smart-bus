@@ -3,14 +3,17 @@
  *
  * Two views on top of the same day model:
  *
- *   getHourlyBalance(hour) — three numbers per hour:
- *     arrivalPax    · raw arriving passengers that hour
- *     busEligible   · origin-based 3–7% who join the bus queue
- *     busSeats      · airport-line seats departing that hour
- *     + status pill (SHORTFALL / TIGHT / BALANCED / SURPLUS)
+ *   getHourlyBalance(hour) — per hour, BOTH directions + a direction-aware
+ *     status pill. The busEligible / outEligible numbers are NOT a flat
+ *     percentage — they come from the engine's region-based capture
+ *     (Europeans rent cars, Bangkok budget carriers ride), so the bars
+ *     already answer "who wants a bus" by passenger mix.
  *
  *   getOperatorFleetRow(vehicle) — one row per in-service vehicle:
  *     plate, route, status, load %, position, ETA, problem flag.
+ *     Southbound buses (Bus to Rawai) carry the inbound queue's FIFO load;
+ *     northbound buses (Bus to Airport) carry the return-leg engine's
+ *     load for that same departure.
  *
  * No values are decorative; every field traces to demandSupplyEngine,
  * opsFlightSchedule or fleetSimulator — the same chain that produces the

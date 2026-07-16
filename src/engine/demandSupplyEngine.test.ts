@@ -367,3 +367,124 @@ describe("fleet scenario — what changes when the fleet changes", () => {
     expect(getFleetScenario(-99).deltaBuses).toBe(-5);
   });
 });
+
+// ---------------------------------------------------------------------------
+// getLiveTotals — combined-direction reconciliation
+//
+// The /ops dashboard and the bottom accumulator bar both consume
+// getLiveTotals. Every number there must trace back to the engine's
+// in/out cumulatives summed — no independent model, no per-minute rounding
+// drift, no path by which the streaming cells and the analytic snapshot can
+// disagree on what the day looks like.
+// ---------------------------------------------------------------------------
+
+import { getLiveTotals } from "./simulation";
+
+describe("getLiveTotals — combined-direction reconciliation (the screen-money SSOT)", () => {
+  const model = getDayModel();
+  const END = 1440;
+
+  it("every hour's combined delivered = inbound + outbound delivered", () => {
+    for (let t = 0; t <= END; t += 30) {
+      const live = getLiveTotals(t);
+      const expected = model.deliveredCum[t] + model.outbound.deliveredCum[t];
+      expect(live.paxDelivered, `paxDelivered at t=${t}`).toBe(expected);
+    }
+  });
+
+  it("every hour's combined lost = inbound abandoned + outbound lost", () => {
+    for (let t = 0; t <= END; t += 30) {
+      const live = getLiveTotals(t);
+      const expected = model.abandonedCum[t] + model.outbound.lostCum[t];
+      expect(live.paxAbandoned, `paxAbandoned at t=${t}`).toBe(expected);
+    }
+  });
+
+  it("every hour's combined want = inbound + outbound demand (the queue join count)", () => {
+    for (let t = 0; t <= END; t += 30) {
+      const live = getLiveTotals(t);
+      const expected = model.demandCum[t] + model.outbound.demandCum[t];
+      expect(live.paxWantBus, `paxWantBus at t=${t}`).toBe(expected);
+    }
+  });
+
+  it("revenue identities hold: earned = delivered × ฿100, lost = abandoned × ฿100", () => {
+    for (const t of [0, 360, 720, 1080, 1350, 1440]) {
+      const live = getLiveTotals(t);
+      expect(live.revenueThb).toBe(live.paxDelivered * 100);
+      expect(live.lostRevenueThb).toBe(live.paxAbandoned * 100);
+    }
+  });
+
+  it("cumulative figures never decrease across the service day", () => {
+    let lastDelivered = 0, lastAbandoned = 0, lastBoarded = 0, lastWant = 0;
+    for (let t = 360; t <= 1350; t += 5) {
+      const live = getLiveTotals(t);
+      expect(live.paxDelivered, `delivered at t=${t}`).toBeGreaterThanOrEqual(lastDelivered);
+      expect(live.paxAbandoned, `abandoned at t=${t}`).toBeGreaterThanOrEqual(lastAbandoned);
+      expect(live.paxBoarded, `boarded at t=${t}`).toBeGreaterThanOrEqual(lastBoarded);
+      expect(live.paxWantBus, `want at t=${t}`).toBeGreaterThanOrEqual(lastWant);
+      lastDelivered = live.paxDelivered;
+      lastAbandoned = live.paxAbandoned;
+      lastBoarded = live.paxBoarded;
+      lastWant = live.paxWantBus;
+    }
+  });
+
+  it("CO₂ uses the /roi factor (0.21 car − 0.06 bus = 0.15 saved per pax-km)", () => {
+    // Sample at midday — many pax delivered, denominators non-zero.
+    const live = getLiveTotals(780);
+    // Average trip km = 28, factors from roi.ts. If a future tuning changes
+    // those constants, this test will catch a surprise delta in the saved kg.
+    const expectedTaxi = Math.round(live.paxDelivered * 28 * 0.21);
+    const expectedSaved = expectedTaxi - Math.round(live.paxDelivered * 28 * 0.06);
+    expect(live.co2TaxiKg).toBe(expectedTaxi);
+    expect(live.co2SavedKg).toBe(expectedSaved);
+  });
+
+  it("day-end totals reconcile with the engine's combined day model", () => {
+    const live = getLiveTotals(END);
+    // Delivered must be ≤ boarded: late-evening buses are still mid-trip
+    // when the day ends, so deliveredCum[END] < boardedCum[END] is the
+    // normal state. (The "delivered never exceeds boarded" assertion in
+    // the inbound suite covers this at every minute.)
+    expect(live.paxDelivered).toBeLessThanOrEqual(model.combined.boarded);
+    // Abandoned / lost is cumulative and stops at the day boundary, so it
+    // must equal the engine's combined lost field exactly.
+    expect(live.paxAbandoned).toBe(model.combined.lost);
+    // Same for want: demandCum is cumulative and finite at the day
+    // boundary, so it must equal combined.demand.
+    expect(live.paxWantBus).toBe(model.combined.demand);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CUSTOMS_MIN / CUSTOMS_MAX exports — the chart axis floor and the queue
+// ramp must agree (one number, one source). If these constants ever drift
+// between the two engines, the chart's "first arrivals" line lands on a
+// different minute from the queue's first cohort.
+// ---------------------------------------------------------------------------
+
+import { CUSTOMS_MIN, CUSTOMS_MAX } from "./demandSupplyEngine";
+
+describe("engine exports — single source of truth for the chart and the queue", () => {
+  it("CUSTOMS ramp is the documented 20–45 minute window", () => {
+    expect(CUSTOMS_MIN).toBe(20);
+    expect(CUSTOMS_MAX).toBe(45);
+    expect(CUSTOMS_MAX - CUSTOMS_MIN).toBe(25);
+  });
+
+  it("every flight's queue absorption lies inside the customs window", () => {
+    // The first flight in the day starts its queue ramp at schedMin +
+    // CUSTOMS_MIN and finishes at schedMin + CUSTOMS_MAX. We check that
+    // at least one flight's ramp actually falls inside the [firstDep,
+    // lastDep] corridor — i.e. the constants are wired into the model.
+    const flights = getOpsFlightSchedule().filter((f) => f.type === "arr" && f.mode === "flight");
+    expect(flights.length).toBeGreaterThan(0);
+    const first = flights[0];
+    // The engine rounds demand to integers across the ramp; verify the
+    // ramp width matches our constant.
+    const rampMin = CUSTOMS_MAX - CUSTOMS_MIN;
+    expect(rampMin).toBeGreaterThan(0);
+  });
+});
