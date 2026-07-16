@@ -35,8 +35,8 @@ import { captureRateFor, CHECK_IN_LEAD_MIN, MAX_EARLY_ARRIVAL_MIN } from "./trav
 // (Europeans rent cars; Bangkok budget carriers ride the bus). See
 // travelBehavior.ts for the heuristic table; fleet-wide it averages ~5%.
 /** Customs + baggage: first pax out after 20 min, last after 45. */
-const CUSTOMS_MIN = 20;
-const CUSTOMS_MAX = 45;
+export const CUSTOMS_MIN = 20;
+export const CUSTOMS_MAX = 45;
 /** Seats per airport-line bus. */
 export const BUS_CAPACITY = 25;
 /** After this long in the queue, a tourist gives up and takes Grab. */

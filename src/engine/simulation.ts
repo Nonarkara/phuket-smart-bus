@@ -20,7 +20,14 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // ---------------------------------------------------------------------------
 
 import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips } from "./fleetSimulator";
-import { atMinute, getDayModel, getHourlyCorridor } from "./demandSupplyEngine";
+import {
+  atMinute,
+  getDayModel,
+  getHourlyCorridor,
+  BUS_CAPACITY,
+  CUSTOMS_MIN,
+  CUSTOMS_MAX
+} from "./demandSupplyEngine";
 import { regionFor } from "./travelBehavior";
 
 const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
@@ -91,9 +98,9 @@ export function getDayInfo(): { label: string; volumeFactor: number } {
 // travelBehavior.ts — Europeans rent cars, Bangkok budget carriers ride).
 // The demand-supply engine applies it per flight; nothing here duplicates it.
 
-// After landing, passengers take 20-45 min to clear customs+baggage
-const CUSTOMS_MIN = 20;
-const CUSTOMS_MAX = 45;
+// Customs + baggage ramp — sourced from demandSupplyEngine (CUSTOMS_MIN/MAX
+// are the engine's ramp window; keeping one copy so the chart axis floor
+// here and the queue absorption there can never disagree).
 
 /** In-service arrivals for the active day (see dayFlights above). */
 function FLIGHTS(): Flight[] {
@@ -113,8 +120,9 @@ export const DESTINATIONS: Destination[] = [
   { name: "Laguna/Bang Tao",pct: 0.07, travelMin:  40, grabThb: 450, busThb: 100, routeId: "rawai-airport" },
 ];
 
-// Bus capacity per vehicle (simplified — all land buses seat 25, dragon seats 15)
-const BUS_CAPACITY = 25;
+// Bus capacity per vehicle (all land buses seat 25, dragon seats 15) —
+// sourced from demandSupplyEngine.BUS_CAPACITY so the engine's queue caps
+// and the live-totals capacity denominator cannot drift.
 
 /** Memoized schedule data — schedules are static for the session. */
 let _cachedAirportDepartures: number[] | null = null;
@@ -169,6 +177,20 @@ const LINE_CONFIG: Record<string, { name: string; kmDaily: number; fare: number;
 // investor-facing payback calculation on /roi — no parallel cost model.
 const HOURLY_OPEX_PER_BUS_THB = 800_000 / 365 / 16;
 
+// CO₂ factors — sourced from roi.ROI_CONSTANTS (APTA "Public Transportation's
+// Role in Responding to Climate Change" 2018 update) so the /ops dashboard
+// and the /roi investor pitch can never disagree by a few kg. Re-exported
+// here as names so the getLiveTotals math reads like its source.
+import { ROI_CONSTANTS } from "./roi";
+const CO2_KG_PER_PAX_KM_CAR = ROI_CONSTANTS.co2KgPerPaxKmCar; // 0.21
+const CO2_KG_PER_PAX_KM_BUS = ROI_CONSTANTS.co2KgPerPaxKmBus; // 0.06
+const CO2_KG_PER_PAX_KM_SAVED = CO2_KG_PER_PAX_KM_CAR - CO2_KG_PER_PAX_KM_BUS; // 0.15
+
+// Average trip distance, weighted across the destination clusters. Same
+// number the /roi page uses — keeps the live CO₂ math identical to the
+// pitch.
+const AVG_TRIP_KM = ROI_CONSTANTS.avgTripKm; // 28 km
+
 // Buses assigned per line (matches the fleet roster in fleetSimulator.ts).
 // Used to scale each line's daily opex.
 const BUSES_PER_LINE: Record<string, number> = {
@@ -218,8 +240,8 @@ export type SimState = {
   revenueThb: number;      // paxDelivered × 100 THB
   grabEquivThb: number;    // what those same passengers would have paid by Grab
   savingsThb: number;      // grabEquiv - revenue (money saved by passengers)
-  co2SavedKg: number;      // paxDelivered × avgTripKm × 0.15
-  co2TaxiKg: number;       // what taxis would have emitted
+  co2SavedKg: number;      // paxDelivered × avgTripKm × (0.21 − 0.06) = × 0.15
+  co2TaxiKg: number;       // what taxis would have emitted (paxDelivered × 28 × 0.21)
   tripsCompleted: number;
   kmDriven: number;
 
@@ -259,14 +281,31 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   const eng = atMinute(nowMin);
   const deps = airportDepartures();
   const departedBuses = deps.filter((d) => d <= nowMin);
+  // Weighted average trip duration across destinations. The dominant trip
+  // (Airport → Patong via Surin/Kamala) is 100 min, with shorter hops to
+  // Old Town and Laguna; 75 min is the round-trip-aware average.
   const avgTripMin = 75;
   const nextDep = deps.find((d) => d > nowMin);
+  // Combined both directions: arriving pax ride out, departing pax ride back.
+  // The engine's `atMinute` exposes both cumulatives; the per-frame
+  // ref-writer and the 4Hz panel snapshot consume the same numbers, so
+  // there is no path by which the buttery live figures and the analytic
+  // snapshot can disagree.
   const paxDelivered = eng.deliveredCum + eng.outDeliveredCum;
   const paxAbandoned = eng.abandonedCum + eng.outLostCum;
-  const avgTripKm = 28;
-  const co2TaxiKg = Math.round(paxDelivered * avgTripKm * 0.21);
-  const co2BusKg = Math.round(paxDelivered * avgTripKm * 0.06);
+  // CO₂ counterfactual: kg of CO₂ that would have been emitted by taxis
+  // for the same pax-km. co2SavedKg is the bus vs taxi delta.
+  const co2TaxiKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_CAR);
+  const co2BusKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_BUS);
   const tripsCompleted = departedBuses.filter((d) => d + avgTripMin <= nowMin).length;
+  // kmDriven — accumulated distance based on the SOUTHBOUND timetable. A
+  // completed trip counts its full AVG_TRIP_KM (~35 km from the line
+  // config weighted by the destination mix); a bus still mid-trip counts
+  // half — the partial-trip approximation. Northbound distance is
+  // included in the line P&L (getLineMetrics) and the bottom accumulator
+  // strip averages across both directions via the destination mix, so we
+  // don't double-count here.
+  const kmDriven = tripsCompleted * Math.round(AVG_TRIP_KM) + (departedBuses.length - tripsCompleted) * Math.round(AVG_TRIP_KM / 2);
   return {
     simMinutes: nowMin,
     waiting: eng.waiting,
@@ -279,7 +318,7 @@ export function getLiveTotals(nowMin: number): LiveTotals {
     co2TaxiKg,
     co2SavedKg: co2TaxiKg - co2BusKg,
     tripsCompleted,
-    kmDriven: tripsCompleted * 35 + (departedBuses.length - tripsCompleted) * 17,
+    kmDriven,
     nextDeparture: nextDep ? Math.round(nextDep - nowMin) : null,
     departedBusCount: departedBuses.length,
   };

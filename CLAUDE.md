@@ -44,32 +44,50 @@ When the bus company provides GPS connectivity:
 ```
 src/
 ├── App.tsx                    # Entry: mobile detection, routing (/ops, /v2, /)
-├── DashboardV2.tsx            # v2 demand-supply dashboard (WIP, at /v2)
+├── DashboardV2.tsx            # v2 demand-supply dashboard (now also at /ops)
 ├── engine/                    # Client-side simulation (replaces server)
-│   ├── simulation.ts          # v2: complete demand-supply chain
-│   ├── fleetSimulator.ts      # Vehicle positioning from schedules + polylines
-│   ├── dataProvider.ts        # Drop-in replacement for server API calls
+│   ├── simulation.ts          # SimState, getLiveTotals, line P&L — consumes demandSupplyEngine
+│   ├── demandSupplyEngine.ts  # THE engine: flights → queue → buses → revenue, both directions
+│   ├── travelBehavior.ts      # Region-based bus-capture heuristics (Europeans rent cars, …)
+│   ├── opsFlightSchedule.ts   # Per-dow fuzzed schedule (190+ base flights, 5% cancel, ±15% pax)
+│   ├── aircraftData.ts        # Airline→aircraft assignments, seat counts, load factor
+│   ├── fleetSimulator.ts      # Bus positions, sim clock, DAY·60s sweep, polyline math
+│   ├── v2OpsPanel.ts          # Hourly balance rows, operator fleet panel, peaks
+│   ├── headlineMetrics.ts     # Hero-strip math
+│   ├── dataProvider.ts        # Thin adapter; legacy tourist-app chain (kept for /)
 │   ├── routes.ts              # GeoJSON route/stop loader
 │   ├── config.ts              # Route definitions, pricing, competitor data
-│   ├── decisionEngine.ts      # "Go now" / "Wait" intelligence
-│   ├── impactSimulator.ts     # CO₂, revenue, accident reduction
+│   ├── decisionEngine.ts      # "Go now" / "Wait" (legacy chain)
+│   ├── impactSimulator.ts     # CO₂/revenue/accent (legacy chain)
 │   ├── environmentSimulator.ts # Seasonal weather model
-│   ├── flightData.ts          # 65 peak-day flights (real airlines/origins)
-│   ├── scheduleService.ts     # Timetable lookups
+│   ├── flightData.ts          # 65 peak-day flights fixture (legacy)
+│   ├── scheduleService.ts     # Timetable lookups (legacy)
 │   ├── transferHubs.ts        # Bus-to-ferry connections
 │   ├── time.ts                # Bangkok timezone math
-│   ├── geo.ts                 # Haversine, polyline interpolation
+│   ├── geo.ts, polyline.ts    # Haversine, polyline interpolation + cum meters
+│   ├── gistda.ts, safetyData.ts, roi.ts # Live integrations / investor math
 │   └── i18n.ts                # Text helpers
 ├── components/
-│   ├── LiveMap.tsx             # Leaflet map with imperative VehicleLayer
-│   ├── OpsConsole.tsx          # Operations dashboard (1,491 lines — needs splitting)
-│   ├── WelcomeSheet.tsx        # Tourist bottom sheet with booking flow
+│   ├── LiveMap.tsx             # Leaflet map (tourist view)
+│   ├── v2/                     # The /ops dashboard split
+│   │   ├── DemandPanel.tsx     # Flights + region chart + HourlyBalanceChart
+│   │   ├── SupplyPanel.tsx
+│   │   ├── HourlyBalanceChart.tsx # "Missed Money · Hour by Hour" — both directions
+│   │   ├── OperatorFleetPanel.tsx # One row per in-service bus
+│   │   ├── InsightsTimeline.tsx
+│   │   ├── V2LiveMap.tsx       # Wall-screen map (imperative markers)
+│   │   ├── V2Shared.tsx        # Counter, InsightCard, helpers
+│   │   └── SimulationControls.tsx # Speed, DAY·60s, day picker
+│   ├── WelcomeSheet.tsx        # Tourist bottom sheet
 │   ├── DecisionPanel.tsx       # "Go now" advice card
+│   ├── GovernorDashboard.tsx   # /governor — AI decision picture
+│   ├── RoiCalculator.tsx       # /roi — investor payback
+│   ├── DriverTablet.tsx        # /driver — driver view
 │   └── ... (16 components total)
 ├── data/upstream/              # Bundled GeoJSON routes + stops + fixtures
 ├── lib/
 │   ├── i18n.ts                 # 919 lines of 6-language UI strings
-│   └── vehicleAnimation.ts    # CSS transition helpers
+│   └── vehicleAnimation.ts     # CSS transition helpers
 └── styles.css                  # 5,000+ lines (includes v2 dark theme)
 
 server/                         # Express backend (preserved, not deployed)
@@ -93,23 +111,49 @@ Don't delete it. When GPS data becomes available, we switch from `src/engine/dat
 
 ## How the Simulation Works
 
-### The Demand-Supply Chain
+### The Demand-Supply Chain (BOTH directions)
 
-Every number on screen must trace back to this chain:
+Every number on screen traces back to this chain. The model is **bidirectional** — both legs conserve exactly.
 
 ```
-Flights land at HKT Airport (26 real flights, real airlines, real pax counts)
-  → Passengers clear customs (20-45 min model)
-  → 12% want ground transport by bus (capture rate)
-  → Buses depart on published timetable (18 daily departures from airport)
-  → Each bus carries up to 25 passengers
-  → Passengers delivered to destinations (Patong 35%, Karon 20%, Town 18%...)
+INBOUND (arriving pax ride out):
+  Flights land at HKT Airport (~190 base flights, real airlines + charters, fuzzed per dow)
+  → Passengers clear customs (20-45 min ramp)
+  → Per-flight bus-capture by passenger origin (heuristic table — see travelBehavior.ts)
+        SE Asia 7% (Bangkok/KL/SIN budget carriers)
+        East Asia 5% (Seoul/Tokyo)
+        China 4% (tour coaches dominate)
+        India 5%
+        Russia/CIS 3% (package transfers)
+        Europe 3% (rental cars + private transfers)
+        Middle East 3% (private vans)
+        Other 4%
+  → Fleet-wide weighted average ≈ 5% (operator's planning figure)
+  → Buses depart on PKSB timetable (~25 daily airport departures, capacity 25)
+  → Queue FIFO with 60-min patience; abandoned → Grab (counted as missed ฿100s)
+  → Boarded pax delivered progressively along the route
   → Revenue = delivered × ฿100
-  → CO₂ saved = delivered × 28km × 0.15 kg/pax-km (APTA standard)
-  → Grab equivalent = delivered × ฿720 avg (what they'd have paid)
+
+RETURN LEG (departing pax ride back to the airport):
+  Each departing cohort must be at the airport 1h before takeoff
+  → Bids onto the latest northbound bus that makes the deadline
+  → Cascades to earlier buses if the chosen one is full
+  → Nobody rides a bus that lands them >3h early (not a real alternative)
+  → Whoever can't fit (or has no feasible bus) takes a Grab → missed ฿100
+  → Boarded pax count as delivered when the northbound bus reaches HKT
+
+MONEY (combined both directions):
+  → Revenue = delivered × ฿100
+  → Lost revenue = (abandoned + return-leg-lost) × ฿100
+  → CO₂ saved = paxDelivered × 28 km × 0.15 kg/pax-km (APTA, sourced from roi.ts)
+  → Grab equivalent = delivered × ฿720 avg
 ```
 
 **Nothing decorative.** If a number doesn't trace back to this chain, it shouldn't be on screen.
+
+The hour-by-hour MISSED MONEY diagram (the basic diagram, in `HourlyBalanceChart.tsx`) is the operator's read: per hour, IN demand / OUT demand / scheduled seats both directions / a direction-aware verdict chip (ADD BUS −n when either direction is short, LIGHT when seats outnumber riders) and the ฿ missed that hour. Footer: ฿ earned / ฿ missed / hrs needing buses / hrs light (empty seats).
+
+Conservation: `demand = boarded + lost` at every minute for both directions; `getLiveTotals(t).paxDelivered = inbound.deliveredCum[t] + outbound.deliveredCum[t]` at every minute, asserted by tests.
 
 ### Time Acceleration
 
@@ -135,8 +179,11 @@ Buses follow the **actual road polyline geometry** (3,944 points for the Airport
 
 ### Bus Timetable (Official PKSB, effective 18 Jan 2025)
 
-**Rawai Beach → Phuket Airport**: 20 departures/day, first 05:30, last 19:30, ~95 min trip
-**Phuket Airport → Rawai Beach**: 25 departures/day, first 08:15, last 23:30, ~95 min trip
+**Rawai Beach → Phuket Airport (northbound)**: ~25 departures/day, first 05:30, last 19:30, ~95 min trip. This is the corridor the return-leg engine uses — departing pax who must reach the airport 1h before takeoff bid onto these buses in reverse deadline order.
+
+**Phuket Airport → Rawai Beach (southbound)**: ~25 departures/day, first 08:15, last 23:30, ~95 min trip. This is the corridor the inbound queue uses — arriving pax board FIFO from the curb.
+
+The same 10 vehicles (กข 1001–1010) rotate through both directions; the duty cycle is ~210 min per bus (95 min trip + 95 min layover + 20 min buffer at the airport curb).
 
 Real travel times (from official timetable):
 - Airport → Patong: **100 min** (1h40m via Surin/Kamala)
@@ -161,7 +208,9 @@ Government-operated, Airport → Phuket Town:
 
 ### Peak Day Flight Data (Dec 30)
 
-26 curated arrivals with real airlines: TG, FD, SL, PG, SQ, EK, QR, CA, CX, KE, ZF (Azur Air), 6E, AY, etc. Origins: Bangkok, Singapore, KL, Moscow, Beijing, Shanghai, Hong Kong, Delhi, Dubai, Frankfurt, Milan. Total ~6,500 arriving passengers.
+The `peak-day-flights.json` fixture carries ~190 base flights with real airlines (TG, FD, SL, PG, SQ, EK, QR, CA, CX, KE, ZF (Azur Air), 6E, AY, VJ, etc.) and origins across Bangkok, Singapore, KL, Moscow, Beijing, Shanghai, Hong Kong, Delhi, Dubai, Frankfurt, Milan, Seoul, Tokyo, Doha, and more. `opsFlightSchedule.ts` builds 7 deterministic per-dow variations (seed by dow): 5% cancellation, ±15% pax jitter, ±10 min time jitter, plus 0–2 charter flights per day (TUE adds a Rassada ferry + Bang Rong speedboat; SAT adds an Azur Air Yekaterinburg + Korean Air Seoul; SUN adds an Azur Air + a Chalong speedboat). Day-of-week volume factors: SUN 1.10, MON 0.95, TUE 0.85, WED 0.85, THU 1.00, FRI 1.05, SAT 1.18.
+
+Aircraft assignments come from `aircraftData.ts` — each airline's fleet is keyed (e.g. TG gets 777-200ER / A350-900, EK gets A380-800 / 777-300ER). The same flight keeps the same airframe across days; only the load factor varies with the fuzz. Pax can never exceed seats.
 
 ---
 
@@ -222,7 +271,7 @@ At zoom 11, a bus at 25kph moves 0.02 pixels per 250ms tick. CSS `transition` do
 At 30× speed, simulated time passes midnight after ~33 real minutes. Past midnight = no scheduled departures = all buses vanish. Solution: `getSimulatedMinutes()` wraps within 06:00–22:30 service window.
 
 ### 5. Don't override the working app
-When adding new views (DashboardV2), DON'T replace the default route. Add it at a new path (`/v2`). The existing tourist app and OpsConsole must always work at `/` and `/ops`.
+When adding new views (DashboardV2), DON'T replace the default route. The tourist app must always work at `/`. The /ops path now renders DashboardV2 (was OpsConsole, retired 2025-07 — too many parallel chains). The legacy v1 view is preserved at `/v2` for reference.
 
 ### 6. GeoJSON files must be .json, not .geojson
 Vite doesn't handle `.geojson` imports. Rename to `.json`.
@@ -234,37 +283,43 @@ Vite doesn't handle `.geojson` imports. Rename to `.json`.
 `getInvestorSimulation()` was returning `hourly: []` — the SimTimeline metrics (Trips, Km, Pax, Revenue) compute from this array. Must populate with realistic hourly capacity gap data indexed from hour 6 (06:00), not hour 0 (00:00).
 
 ### 9. Build the simulation engine around observable facts
-Don't hardcode "1,200 riders today." Instead: 26 flights × avg pax × 12% capture rate × customs clearance model × bus capacity × schedule = derived riders. Every number must be traceable.
+Don't hardcode "1,200 riders today." Instead: ~190 base flights × fuzzed pax × REGION-BASED capture (see travelBehavior.ts) × customs clearance model × bus capacity × schedule = derived riders. Every number must be traceable. The OLD flat-12% rate was wrong — origin matters (Europeans rent cars, Bangkok budget carriers ride). The heuristic table is the SSOT; each rate is a single-line knob for the day real ridership data exists.
+
+### 10. Demand is bidirectional, and a combined gap hides every underdemanded hour
+The /ops "Missed Money" diagram tracks BOTH directions independently. A combined gap (IN − OUT netted together) hid every underdemanded hour because inbound shortage masked northbound buses running empty — was "0 hrs light", truth was "3 hrs · 138 seats". Verdict chips must be direction-aware: `classify(inGap, outGap, …)` flags an hour as SHORTFALL when EITHER direction is short (that's where a bus earns ฿100/boarding). The hourly corridor (`getHourlyCorridor`) emits per-direction `demandPax`/`seats`/`boardedPax`/`lostPax` separately — never collapsed.
+
+### 11. Money must be combined, but conservation must be direction-by-direction
+All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH directions from one SSOT (`getLiveTotals ← atMinute ← day model`). Conservation laws: `outDemand = outBoarded + outLost` AND `demand = boarded + abandoned + waiting` at every minute, INDEPENDENTLY for each leg. The combined figure is the sum, never a model of its own.
 
 ---
 
 ## Deployment
 
-- **Platform**: GitHub Pages (free, static only)
-- **Build**: `GITHUB_PAGES=true npx vite build` → `dist/client/`
-- **Base path**: `/phuket-smart-bus/` (set via `vite.config.ts` when `GITHUB_PAGES` env var is set)
+- **Platform**: GitHub Pages (free, static only) via custom domain
+- **Build**: `npx vite build` → `dist/client/`
+- **Custom domain**: `public/CNAME` declares `bus.nonarkara.org`; GitHub Pages serves it
 - **SPA routing**: `404.html` copied from `index.html` in the deploy workflow
 - **Auto-deploy**: `.github/workflows/deploy.yml` triggers on push to `main`
-- **Live URL**: https://nonarkara.github.io/phuket-smart-bus/
-- **Routes**: `/` (tourist), `/ops` (OpsConsole), `/v2` (demand-supply dashboard)
+- **Live URL**: https://bus.nonarkara.org (https://bus.nonarkara.org/ops = DashboardV2)
+- **GitHub Pages mirror**: https://nonarkara.github.io/phuket-smart-bus/
+- **Routes**: `/` (tourist app, v1 chain), `/ops` (DashboardV2), `/v2` (legacy v1 dashboard), `/roi` (investor), `/governor` (God-mode), `/driver` (driver tablet)
 
 ---
 
 ## Fleet Roster
 
-20 land buses with Thai plates (กข 1001–1010 for Airport Line, กค 2001–2007 for Patong, กง 3001–3003 for Dragon Line) + 13 named ferry vessels + 3 Orange Line competitor buses.
+20 land buses with Thai plates (กข 1001–1010 for Airport Line, กค 2001–2007 for Patong, กง 3001–3003 for Dragon Line) + 13 named ferry vessels + 3 Orange Line competitor buses. The northbound and southbound buses are the SAME 10 vehicles (PKSB rotates them through the duty cycle), so the airport line carries both directions of bus demand.
 
 ---
 
 ## What Needs Work
 
-1. **DashboardV2** (`/v2`) — the demand-supply intelligence dashboard is built but needs polish. Left sidebar flight ticker, regional bar chart, and accumulating metrics are coded but need testing at desktop width.
-2. **OpsConsole** — 1,591 lines in one file. Should be split into sub-components (FleetPanel, DemandPanel, WeatherPanel, etc.).
-3. **The OpsConsole bottom bar** — needs to show live accumulating metrics from the 30× engine at all times, not just during Simulate replay.
-4. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand.
-5. **i18n** — 919 lines of hardcoded strings. Should eventually be JSON files.
-6. **Dead code** — ~15% of CSS unused (drift).
-7. **Testing** — <1% test coverage. Needs unit tests for the engine, component tests, and E2E.
+1. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand. Boat mode flights appear in the schedule rail as "BOAT" but contribute 0 to the bus queue.
+2. **i18n** — 919 lines of hardcoded strings. Should eventually be JSON files. The /ops page is English-only today.
+3. **Dead CSS** — ~15% of CSS unused (drift). The legacy v1 `dataProvider.ts` chain is preserved for `/` (tourist app) and `/v2` (reference); not dead, but a candidate for slimming.
+4. **Component tests** — the engine has 130 unit tests (conservation, regression, heuristics, combined reconciliation) but the React components have only 2. A `<HourlyBalanceChart>` snapshot test would catch the next "verdict chip reads the wrong gap" regression.
+5. **Heuristic calibration** — `travelBehavior.ts` is the weakest link in the chain. The day PKSB shares a week of real boarding counts, those 8 numbers become calibrated facts and every ฿ figure sharpens with them.
+6. **`/v2` and `/ops` are now the same view** — the /ops route renders DashboardV2, but the `/v2` URL still exists for reference (legacy v1 dashboard, same engine, different styling). Long-term, retire `/v2` and keep `/ops` as the single operations surface.
 
 ---
 
