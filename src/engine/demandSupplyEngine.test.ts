@@ -14,6 +14,7 @@ import {
   getWeekEconomics,
   atMinute,
   getTripLoad,
+  getReturnTripLoad,
   getHourlyCorridor,
   BUS_CAPACITY,
   ABANDON_AFTER_MIN
@@ -24,6 +25,7 @@ import {
   getSimulationDay,
   setSimulationDay
 } from "./opsFlightSchedule";
+import { captureRateFor, BUS_CAPTURE_BY_REGION, CHECK_IN_LEAD_MIN } from "./travelBehavior";
 
 describe("demandSupplyEngine — conservation and sanity", () => {
   const model = getDayModel();
@@ -62,9 +64,9 @@ describe("demandSupplyEngine — conservation and sanity", () => {
     }
   });
 
-  it("demand total matches the flight schedule (12% of arriving flight pax)", () => {
+  it("demand total matches the flight schedule (region-based capture per flight)", () => {
     const arrivals = getOpsFlightSchedule().filter((f) => f.type === "arr" && f.mode === "flight");
-    const expected = arrivals.reduce((s, f) => s + Math.round(f.pax * 0.12), 0);
+    const expected = arrivals.reduce((s, f) => s + Math.round(f.pax * captureRateFor(f.city)), 0);
     expect(model.totals.demand).toBe(expected);
   });
 
@@ -164,7 +166,7 @@ describe("weekly economics — the week is Σ of the 7 day models", () => {
   it("each day's demand derives from that day's flight schedule", () => {
     for (let dow = 0; dow < 7; dow++) {
       const arrivals = getOpsFlightScheduleFor(dow).filter((f) => f.type === "arr" && f.mode === "flight");
-      const expected = arrivals.reduce((s, f) => s + Math.round(f.pax * 0.12), 0);
+      const expected = arrivals.reduce((s, f) => s + Math.round(f.pax * captureRateFor(f.city)), 0);
       expect(getDayModelFor(dow).totals.demand).toBe(expected);
     }
   });
@@ -191,5 +193,122 @@ describe("weekly economics — the week is Σ of the 7 day models", () => {
     const { week } = getWeekEconomics();
     expect(week.revenueThb).toBe(week.boarded * 100);
     expect(week.lostRevenueThb).toBe(week.abandoned * 100);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Return leg + travel-behavior heuristics
+//
+// Departing flights generate island→airport demand (be at the airport 1h
+// before takeoff, ride the fixed northbound schedule). Same conservation
+// discipline as the inbound queue: every passenger who needed a bus either
+// boarded one or took a Grab — counted exactly once.
+// ---------------------------------------------------------------------------
+
+describe("return leg — departing flights → bus-to-airport demand", () => {
+  const model = getDayModel();
+  const out = model.outbound;
+  const END = 1440;
+
+  it("conserves passengers at every minute: outDemand = outBoarded + outLost", () => {
+    for (let t = 0; t < 1441; t += 7) {
+      expect(out.boardedCum[t] + out.lostCum[t]).toBe(out.demandCum[t]);
+    }
+    expect(out.totals.boarded + out.totals.lost).toBe(out.totals.demand);
+  });
+
+  it("outbound demand derives from the departing-flight schedule (region capture)", () => {
+    const deps = getOpsFlightSchedule().filter((f) => f.type === "dep" && f.mode === "flight");
+    const expected = deps.reduce((s, f) => s + Math.round(f.pax * captureRateFor(f.city)), 0);
+    expect(out.totals.demand).toBe(expected);
+  });
+
+  it("no return trip carries more than the bus holds", () => {
+    for (const trip of out.returnTrips) {
+      expect(trip.boarded).toBeGreaterThanOrEqual(0);
+      expect(trip.boarded).toBeLessThanOrEqual(BUS_CAPACITY);
+    }
+  });
+
+  it("per-trip return loads sum to the outbound boarded total", () => {
+    const sum = out.returnTrips.reduce((s, t) => s + t.boarded, 0);
+    expect(sum).toBe(out.totals.boarded);
+  });
+
+  it("outbound revenue identities hold", () => {
+    expect(out.totals.revenueThb).toBe(out.totals.boarded * 100);
+    expect(out.totals.lostRevenueThb).toBe(out.totals.lost * 100);
+  });
+
+  it("combined = inbound + outbound, exactly", () => {
+    expect(model.combined.demand).toBe(model.totals.demand + out.totals.demand);
+    expect(model.combined.boarded).toBe(model.totals.boarded + out.totals.boarded);
+    expect(model.combined.lost).toBe(model.totals.abandoned + out.totals.lost);
+    expect(model.combined.revenueThb).toBe(model.totals.revenueThb + out.totals.revenueThb);
+    expect(model.combined.lostRevenueThb).toBe(model.totals.lostRevenueThb + out.totals.lostRevenueThb);
+  });
+
+  it("hourly corridor outbound sums reconcile with the day totals", () => {
+    const hours = getHourlyCorridor();
+    expect(hours.reduce((s, h) => s + h.outDemandPax, 0)).toBe(out.demandCum[END]);
+    expect(hours.reduce((s, h) => s + h.outBoardedPax, 0)).toBe(out.boardedCum[END]);
+    expect(hours.reduce((s, h) => s + h.outLostPax, 0)).toBe(out.lostCum[END]);
+  });
+
+  it("atMinute exposes outbound cumulatives and COMBINED money", () => {
+    const probe = atMinute(1200);
+    expect(probe.outBoardedCum).toBe(out.boardedCum[1200]);
+    expect(probe.revenueThb).toBe((model.deliveredCum[1200] + out.deliveredCum[1200]) * 100);
+    expect(probe.lostRevenueThb).toBe((model.abandonedCum[1200] + out.lostCum[1200]) * 100);
+  });
+
+  it("getReturnTripLoad joins a northbound vehicle to its trip's boarding count", () => {
+    const someTrip = out.returnTrips.find((t) => t.boarded > 0);
+    expect(someTrip).toBeDefined();
+    expect(getReturnTripLoad(someTrip!.originDepMin)).toBe(someTrip!.boarded);
+  });
+
+  it("weekly economics now carries both directions (week = Σ combined days)", () => {
+    const { days, week } = getWeekEconomics();
+    for (const d of days) {
+      const c = getDayModelFor(d.dow).combined;
+      expect(d.revenueThb).toBe(c.revenueThb);
+      expect(d.lostRevenueThb).toBe(c.lostRevenueThb);
+    }
+    expect(week.revenueThb).toBe(days.reduce((s, d) => s + d.revenueThb, 0));
+  });
+});
+
+describe("travel-behavior heuristics — stereotypes, stated and bounded", () => {
+  it("every region rate is a sane probability (0 < rate ≤ 0.15)", () => {
+    for (const [region, rate] of Object.entries(BUS_CAPTURE_BY_REGION)) {
+      expect(rate, region).toBeGreaterThan(0);
+      expect(rate, region).toBeLessThanOrEqual(0.15);
+    }
+  });
+
+  it("Europeans rent cars: Europe's rate is below SE Asia's budget-carrier rate", () => {
+    expect(BUS_CAPTURE_BY_REGION["Europe"]).toBeLessThan(BUS_CAPTURE_BY_REGION["SE Asia"]);
+    expect(BUS_CAPTURE_BY_REGION["Russia/CIS"]).toBeLessThan(BUS_CAPTURE_BY_REGION["SE Asia"]);
+  });
+
+  it("fleet-wide weighted average lands near the operator's ~5% planning figure", () => {
+    // Weight by the actual pax mix across the whole week's arrivals.
+    let pax = 0;
+    let riders = 0;
+    for (let dow = 0; dow < 7; dow++) {
+      for (const f of getOpsFlightScheduleFor(dow)) {
+        if (f.type !== "arr" || f.mode !== "flight") continue;
+        pax += f.pax;
+        riders += f.pax * captureRateFor(f.city);
+      }
+    }
+    const avg = riders / pax;
+    expect(avg).toBeGreaterThan(0.03);
+    expect(avg).toBeLessThan(0.08);
+  });
+
+  it("check-in lead time is one hour, as the operator specified", () => {
+    expect(CHECK_IN_LEAD_MIN).toBe(60);
   });
 });

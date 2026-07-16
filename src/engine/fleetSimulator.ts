@@ -410,6 +410,22 @@ export function getAirportDepartures(): number[] {
   return airportProfile?.departures ?? [];
 }
 
+/** Northbound (Rawai → Airport) trips: when each departs its origin and when
+ *  it reaches the airport curb. This is the RETURN-leg supply — the buses a
+ *  departing passenger can ride to make their flight (arrive ≥ 1h before
+ *  takeoff). Derived from the same published PKSB timetable as everything else. */
+export type AirportboundTrip = { originDepMin: number; airportArriveMin: number };
+
+export function getAirportboundTrips(): AirportboundTrip[] {
+  const profiles = profilesByRoute["rawai-airport"];
+  if (!profiles) return [];
+  const p = profiles.find((x) => x.directionLabel === "Bus to Airport");
+  if (!p) return [];
+  return p.departures
+    .map((d) => ({ originDepMin: d, airportArriveMin: d + p.tripDurationMinutes }))
+    .sort((a, b) => a.originDepMin - b.originDepMin);
+}
+
 export function getFleetAnalysis(): FleetAnalysis[] {
   ensureFleetRoster();
   return routeIds.map((routeId) => {

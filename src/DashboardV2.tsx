@@ -39,7 +39,7 @@ import {
   setSimulationDay
 } from "./engine/opsFlightSchedule";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
-import { getDayModel } from "./engine/demandSupplyEngine";
+import { getDayModel, getReturnTripLoad } from "./engine/demandSupplyEngine";
 import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } from "./engine/v2OpsPanel";
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
@@ -59,11 +59,18 @@ type ViewMode = "operations" | "insights" | "live";
  *  the local lines carry a deterministic local-ridership estimate (they don't
  *  serve the airport queue). No more plate-matching fallbacks. */
 function vehiclePax(v: VehiclePosition): number {
-  if (v.routeId === "rawai-airport" && v.directionLabel === "Bus to Rawai" && v.tripStartMin != null) {
-    const fromCache = getDayModel().trips.find((t) => Math.abs(t.depMin - v.tripStartMin!) <= 2);
-    if (fromCache) return fromCache.boarded;
+  if (v.routeId === "rawai-airport" && v.tripStartMin != null) {
+    if (v.directionLabel === "Bus to Rawai") {
+      // Southbound: the engine's exact FIFO-queue load for this departure.
+      const fromCache = getDayModel().trips.find((t) => Math.abs(t.depMin - v.tripStartMin!) <= 2);
+      if (fromCache) return fromCache.boarded;
+    } else if (v.directionLabel === "Bus to Airport") {
+      // Northbound: departing pax the return-leg engine put on this trip.
+      const load = getReturnTripLoad(v.tripStartMin);
+      if (load !== null) return load;
+    }
   }
-  // Local lines / return direction: deterministic estimate from the trip hash
+  // Local lines: deterministic estimate from the trip hash
   const cap = v.routeId === "dragon-line" ? 15 : 25;
   const occ = v.routeId === "patong-old-bus-station" ? 0.42 : v.routeId === "dragon-line" ? 0.31 : 0.35;
   const seed = (v.tripStartMin ?? 0) % 7; // -3..+3 pax variation per trip

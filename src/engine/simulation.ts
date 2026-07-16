@@ -19,8 +19,9 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getAirportDepartures } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips } from "./fleetSimulator";
 import { atMinute, getDayModel, getHourlyCorridor } from "./demandSupplyEngine";
+import { regionFor } from "./travelBehavior";
 
 const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
 const SVC_END = 1350;  // 22:30 — matches fleetSimulator SERVICE_END (PKSB last departure 23:30, last arrival ~22:30)
@@ -86,12 +87,9 @@ export function getDayInfo(): { label: string; volumeFactor: number } {
 // Demand Model: flights → passengers needing buses
 // ---------------------------------------------------------------------------
 
-// What % of arriving passengers would take a bus? Based on surveys:
-// - Budget travelers: 25-35% (backpackers, budget airlines)
-// - Mid-range: 10-15% (prefer Grab but price-sensitive)
-// - Premium: 2-5% (have hotel transfers)
-// Weighted average across airline mix: ~12%
-const BUS_CAPTURE_RATE = 0.12;
+// Bus capture varies by passenger origin (heuristic table in
+// travelBehavior.ts — Europeans rent cars, Bangkok budget carriers ride).
+// The demand-supply engine applies it per flight; nothing here duplicates it.
 
 // After landing, passengers take 20-45 min to clear customs+baggage
 const CUSTOMS_MIN = 20;
@@ -127,18 +125,9 @@ function airportDepartures(): number[] {
 
 
 // ---------------------------------------------------------------------------
-// Regional origin mapping
+// Regional origin mapping — city→region lives in travelBehavior.ts (single
+// source shared with the capture heuristics); colors are display-only here.
 // ---------------------------------------------------------------------------
-
-const REGION_MAP: Record<string, string> = {
-  "Bangkok": "SE Asia", "Singapore": "SE Asia", "Kuala Lumpur": "SE Asia",
-  "Beijing": "China", "Shanghai": "China", "Guangzhou": "China", "Hong Kong": "China",
-  "Seoul": "East Asia", "Tokyo": "East Asia",
-  "Moscow": "Russia/CIS", "Novosibirsk": "Russia/CIS", "Yekaterinburg": "Russia/CIS",
-  "Delhi": "India",
-  "Doha": "Middle East", "Dubai": "Middle East",
-  "Frankfurt": "Europe", "Milan": "Europe", "London": "Europe",
-};
 
 const REGION_COLORS: Record<string, string> = {
   "SE Asia": "#16b8b0",
@@ -189,7 +178,7 @@ const BUSES_PER_LINE: Record<string, number> = {
 };
 
 function getRegion(origin: string): string {
-  return REGION_MAP[origin] ?? "Other";
+  return regionFor(origin);
 }
 
 export type RegionData = { region: string; pax: number; pct: number; color: string };
@@ -251,12 +240,13 @@ export type SimState = {
 export type LiveTotals = {
   simMinutes: number;
   waiting: number;
+  /** Combined both directions (arriving pax riding out + departing pax riding back). */
   paxWantBus: number;
   paxBoarded: number;
   paxDelivered: number;
   paxAbandoned: number;
-  revenueThb: number;      // earned = delivered × ฿100
-  lostRevenueThb: number;  // walked away to capacity = abandoned × ฿100
+  revenueThb: number;      // earned = delivered × ฿100, both directions
+  lostRevenueThb: number;  // walked away/took Grab = lost × ฿100, both directions
   co2TaxiKg: number;
   co2SavedKg: number;
   tripsCompleted: number;
@@ -271,7 +261,8 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   const departedBuses = deps.filter((d) => d <= nowMin);
   const avgTripMin = 75;
   const nextDep = deps.find((d) => d > nowMin);
-  const paxDelivered = eng.deliveredCum;
+  const paxDelivered = eng.deliveredCum + eng.outDeliveredCum;
+  const paxAbandoned = eng.abandonedCum + eng.outLostCum;
   const avgTripKm = 28;
   const co2TaxiKg = Math.round(paxDelivered * avgTripKm * 0.21);
   const co2BusKg = Math.round(paxDelivered * avgTripKm * 0.06);
@@ -279,12 +270,12 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   return {
     simMinutes: nowMin,
     waiting: eng.waiting,
-    paxWantBus: eng.demandCum,
-    paxBoarded: eng.boardedCum,
+    paxWantBus: eng.demandCum + eng.outDemandCum,
+    paxBoarded: eng.boardedCum + eng.outBoardedCum,
     paxDelivered,
-    paxAbandoned: eng.abandonedCum,
+    paxAbandoned,
     revenueThb: paxDelivered * 100,
-    lostRevenueThb: eng.abandonedCum * 100,
+    lostRevenueThb: paxAbandoned * 100,
     co2TaxiKg,
     co2SavedKg: co2TaxiKg - co2BusKg,
     tripsCompleted,
@@ -327,26 +318,24 @@ export function computeSimState(): SimState {
   const nextFlight = upcoming[0] ?? null;
   const nextFlightMin = nextFlight ? Math.round(nextFlight.arrMin - now) : null;
 
-  // 3–8. Demand, boarding, delivery, queue — ALL from the demand-supply
-  // engine (demandSupplyEngine.ts). One FIFO queue model with abandonment,
-  // precomputed for the whole day. This function no longer carries its own
-  // parallel demand math — that parallel math was exactly why /v2 and /ops
-  // could disagree.
-  const eng = atMinute(now);
-  const paxWantBus = eng.demandCum;       // joined the bus queue so far today
-  const paxBoarded = eng.boardedCum;      // boarded a bus
-  const paxDelivered = eng.deliveredCum;  // alighted at destination
-  const paxAtAirport = eng.waiting;       // in the queue right now
-  const paxAbandoned = eng.abandonedCum;  // gave up after 60 min → took Grab
-
-  // Streaming money/pax numbers come from getLiveTotals (the SSOT the 60fps
-  // ref-writer also uses) so the coarse panel snapshot and the buttery live
-  // numbers are computed by ONE function — they can never drift.
+  // 3–8. Demand, boarding, delivery, queue — ALL from getLiveTotals (the
+  // SSOT the 60fps ref-writer also uses), which is COMBINED across both
+  // directions: arriving pax riding out + departing pax riding back. One
+  // function computes every pax/money figure, so the coarse panel snapshot
+  // and the buttery live numbers can never drift — and neither can pax vs ฿.
   const live = getLiveTotals(now);
+  const paxWantBus = live.paxWantBus;
+  const paxBoarded = live.paxBoarded;
+  const paxDelivered = live.paxDelivered;
+  const paxAbandoned = live.paxAbandoned;
+  const paxAtAirport = live.waiting;      // inbound curb queue right now
 
   const deps = airportDepartures();
   const departedBuses = deps.filter(d => d <= now);
-  const totalBusCapacity = departedBuses.length * BUS_CAPACITY;
+  // Occupancy denominator matches the combined boarded numerator: seats
+  // dispatched in BOTH directions so far (southbound + northbound trips).
+  const northboundDeparted = getAirportboundTrips().filter(t => t.originDepMin <= now).length;
+  const totalBusCapacity = (departedBuses.length + northboundDeparted) * BUS_CAPACITY;
   const avgTripMin = 75; // weighted average across destinations
 
   // 9. Next departure
@@ -581,11 +570,11 @@ export function getFlightFeed(): { recent: Flight[]; upcoming: Flight[] } {
 export type HourlyDemandSupply = {
   hour: number;            // 0–23, but only 6–22 are meaningful
   arrivalPax: number;      // raw arriving passengers from flights
-  busDemandPax: number;    // arrivalPax × BUS_CAPTURE_RATE
+  busDemandPax: number;    // engine queue joins this hour (region-based capture)
   busSeatsAvailable: number; // scheduled bus capacity at this hour
-  servedPax: number;       // min(demand, supply)
-  unmetPax: number;        // demand - supply when positive
-  revenueThb: number;      // servedPax × fare
+  servedPax: number;       // actually boarded this hour (engine)
+  unmetPax: number;        // abandoned this hour (engine)
+  revenueThb: number;      // servedPax × fare — INBOUND leg only
 };
 
 // Memoized per day-of-week — multiple consumers poll this every second;
@@ -620,7 +609,7 @@ export function getHourlyDemandSupply(): HourlyDemandSupply[] {
     busSeatsAvailable: c.seats,
     servedPax: c.boardedPax,
     unmetPax: c.abandonedPax,
-    revenueThb: c.revenueThb
+    revenueThb: c.boardedPax * 100 // inbound-only; corridor.revenueThb is combined
   }));
   hourlyByDow.set(dow, built);
   return built;

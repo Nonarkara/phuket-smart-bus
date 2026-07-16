@@ -8864,7 +8864,7 @@ a { color: var(--tint); }
   color: var(--ax-ink-2) !important;
 }
 
-/* ── Hourly demand chart ─────────────────────────────────────────────────── */
+/* ── Hourly demand chart — the basic missed-money diagram ────────────────── */
 .v2 .v2-hourly {
   background: transparent;
   border: none;
@@ -8879,7 +8879,42 @@ a { color: var(--tint); }
   background: rgba(245, 158, 11, 0.06);
   border-color: rgba(245, 158, 11, 0.35);
 }
-.v2 .v2-hourly__track { background: var(--ax-line); }
+.v2 .v2-hourly__track { background: transparent; }
+.v2 .v2-hourly__group { background: var(--ax-line); }
+/* One demand accent, two treatments: IN solid amber, OUT tinted amber.
+   Seats = ink — the fixed timetable, not a demand. */
+.v2 .v2-hourly__fill--arr { background: var(--ax-warn); }
+.v2 .v2-hourly__fill--out { background: rgba(196, 122, 15, 0.38); }
+.v2 .v2-hourly__fill--seats { background: var(--ax-ink-2); }
+.v2 .v2-hourly__fill-label { color: var(--ax-ink-3); }
+.v2 .v2-hourly__legend-item--arr::before { background: var(--ax-warn); }
+.v2 .v2-hourly__legend-item--out::before { background: rgba(196, 122, 15, 0.38); }
+.v2 .v2-hourly__legend-item--seats::before { background: var(--ax-ink-2); }
+.v2 .v2-hourly__verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 86px;
+}
+.v2 .v2-hourly__status { border-radius: 0; }
+.v2 .v2-hourly__row--shortfall .v2-hourly__status { background: #fdf1e3; color: #8a4a00; border-color: #c47a0f; }
+.v2 .v2-hourly__row--tight .v2-hourly__status { background: #fdf6e3; color: #8a6d00; border-color: #d8b24a; }
+.v2 .v2-hourly__row--balanced .v2-hourly__status { background: #eef6f0; color: var(--ax-accent); border-color: #bcd8c6; }
+.v2 .v2-hourly__row--surplus .v2-hourly__status { background: #f1f1ee; color: var(--ax-ink-2); border-color: var(--ax-line-2); }
+.v2 .v2-hourly__missed {
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #9a6a00; /* dark amber text on light surface (§11.10) */
+}
+.v2 .v2-hourly__footer {
+  border-top: 1px solid var(--ax-line);
+  color: var(--ax-ink-2);
+}
+.v2 .v2-hourly__footer strong { color: var(--ax-ink); }
+.v2 .v2-hourly__footer-earned strong { color: var(--ax-accent); }
+.v2 .v2-hourly__footer-missed strong { color: #9a6a00; }
 
 /* ── Flight schedule (DemandPanel) ──────────────────────────────────────── */
 .v2 .v2-schedule {

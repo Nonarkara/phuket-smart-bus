@@ -114,3 +114,17 @@ weekly revenue roll-up (week = Σ 7 deterministic day models).
 - Remaining: none — feature complete, 107/107 tests green, typecheck clean, build
   clean, verified in preview via screenshot (exact 22:30 freeze) and unit tests
   (deterministic clamp/pause/resume behavior).
+
+---
+
+# Bidirectional demand model + missed-money diagram — 2026-07-16
+
+- [x] travelBehavior.ts: region capture heuristics (Europeans rent cars 3%, SE Asia budget carriers 7%; fleet-wide ≈5-6%, replacing flat 12%)
+- [x] fleetSimulator: getAirportboundTrips() — northbound supply (origin dep + airport arrival)
+- [x] demandSupplyEngine: buildOutbound() — departing flights → be-at-airport-by-T−60 cohorts, latest-feasible-bus assignment w/ cascade, lost→Grab; outbound conservation demand=boarded+lost by construction; combined totals; bidirectional getHourlyCorridor; getReturnTripLoad
+- [x] simulation: getLiveTotals + computeSimState fully combined (SSOT); occupancy denominator = both directions
+- [x] v2OpsPanel: direction-aware verdicts (an hour can need a southbound bus while northbound seats run empty) + emptySeatsPax
+- [x] HourlyBalanceChart → "Missed Money · Hour by Hour": IN/OUT/SEATS bars, ADD BUS/LIGHT chips, per-hour missed ฿, footer = the 4 operator questions
+- [x] Map joins: northbound buses carry real return loads (both panels)
+- [x] 14 new tests (outbound conservation, combined identities, heuristic bounds, weighted avg ∈ 3-8%) — 121/121
+- [x] Verified: diagram footer "฿79,600 earned · ฿356,900 missed · 22 hrs need buses · 3 hrs light (138 empty seats)"; DAY·60s sweep streams combined money

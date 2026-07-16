@@ -24,14 +24,16 @@ import {
   getDayLabel,
   type OpsFlight
 } from "./opsFlightSchedule";
-import { getAirportDepartures } from "./fleetSimulator";
+import { getAirportDepartures, getAirportboundTrips, type AirportboundTrip } from "./fleetSimulator";
+import { captureRateFor, CHECK_IN_LEAD_MIN, MAX_EARLY_ARRIVAL_MIN } from "./travelBehavior";
 
 // ---------------------------------------------------------------------------
 // Model constants — each one sourced, none decorative
 // ---------------------------------------------------------------------------
 
-/** Share of arriving pax who take the bus (budget/mid/premium weighted). */
-export const BUS_CAPTURE_RATE = 0.12;
+// Bus capture is no longer one flat number — it varies by passenger origin
+// (Europeans rent cars; Bangkok budget carriers ride the bus). See
+// travelBehavior.ts for the heuristic table; fleet-wide it averages ~5%.
 /** Customs + baggage: first pax out after 20 min, last after 45. */
 const CUSTOMS_MIN = 20;
 const CUSTOMS_MAX = 45;
@@ -78,6 +80,37 @@ export type WhatIfResult = {
   insertedAt: number[];
 };
 
+/** One northbound (island → airport) trip with its engine-computed load. */
+export type ReturnTrip = {
+  originDepMin: number;     // departs Rawai
+  airportArriveMin: number; // reaches the airport curb
+  boarded: number;          // ≤ BUS_CAPACITY
+};
+
+/** The return leg: departing flights → pax who must reach the airport
+ *  ≥ 1h before takeoff → they ride the northbound schedule. Buses run on
+ *  intervals; flights don't — whoever's needed bus is full or nonexistent
+ *  takes a Grab, and that fare is missed. */
+export type OutboundModel = {
+  returnTrips: ReturnTrip[];
+  /** Minute-indexed cumulative event streams, length 1441.
+   *  demandCum ≡ boardedCum + lostCum at every minute BY CONSTRUCTION:
+   *  a passenger is counted at the moment their outcome happens (boarding
+   *  a bus, or giving up and booking a Grab). */
+  demandCum: number[];
+  boardedCum: number[];
+  lostCum: number[];
+  /** Boarded pax counted as delivered when their bus reaches the airport. */
+  deliveredCum: number[];
+  totals: {
+    demand: number;
+    boarded: number;
+    lost: number;
+    revenueThb: number;      // boarded × fare
+    lostRevenueThb: number;  // lost × fare
+  };
+};
+
 export type DayModel = {
   trips: AirportTrip[];
   /** Minute-indexed cumulative arrays, length 1441. */
@@ -88,6 +121,8 @@ export type DayModel = {
   waiting: number[];
   /** 5-minute snapshots for charting. */
   snapshots: DaySnapshot[];
+  /** INBOUND totals (airport → island). Kept separate so each direction's
+   *  conservation law stays independently checkable. */
   totals: {
     demand: number;
     boarded: number;
@@ -95,6 +130,16 @@ export type DayModel = {
     delivered: number;
     revenueThb: number;       // boarded × fare (fare collected at boarding)
     lostRevenueThb: number;   // abandoned × fare
+  };
+  /** RETURN leg (island → airport, driven by departing flights). */
+  outbound: OutboundModel;
+  /** Both directions summed — what the money surfaces show. */
+  combined: {
+    demand: number;
+    boarded: number;
+    lost: number;             // inbound abandoned + outbound lost
+    revenueThb: number;
+    lostRevenueThb: number;
   };
   whatIf: WhatIfResult[];
 };
@@ -107,7 +152,7 @@ function buildInflow(arrivals: OpsFlight[]): number[] {
   const inflow = new Array<number>(DAY_MIN).fill(0);
   const ramp = CUSTOMS_MAX - CUSTOMS_MIN; // 25 minutes
   for (const f of arrivals) {
-    const demand = Math.round(f.pax * BUS_CAPTURE_RATE);
+    const demand = Math.round(f.pax * captureRateFor(f.city));
     if (demand <= 0) continue;
     // Spread integer demand evenly across the customs ramp using
     // cumulative rounding so the per-flight total is conserved exactly.
@@ -210,6 +255,91 @@ function buildDelivered(trips: AirportTrip[]): number[] {
 }
 
 // ---------------------------------------------------------------------------
+// Return leg — departing flights → island-to-airport bus demand
+//
+// A departing passenger works backward from takeoff: be at the airport by
+// T − 60. Buses run on a fixed interval schedule; flights don't. Each cohort
+// takes the LATEST northbound bus that still makes their deadline (least
+// airport waiting); if it's full, they cascade to earlier buses — but nobody
+// rides one that lands them more than 3h early. Whoever can't fit (or has no
+// feasible bus at all — red-eye departures before the first bus) takes a
+// Grab, and that ฿100 is missed revenue.
+//
+// Like the inbound model, the island is one origin pool (Patong/Karon/Rawai
+// aggregated) — same simplification, same direction of error on both legs.
+// ---------------------------------------------------------------------------
+
+function buildOutbound(departures: OpsFlight[], schedule: AirportboundTrip[]): OutboundModel {
+  const returnTrips: ReturnTrip[] = schedule.map((t) => ({ ...t, boarded: 0 }));
+  const boardEvents = new Array<number>(DAY_MIN).fill(0);
+  const lostEvents = new Array<number>(DAY_MIN).fill(0);
+  const deliverEvents = new Array<number>(DAY_MIN).fill(0);
+
+  const clampMin = (m: number) => Math.max(0, Math.min(DAY_MIN - 1, Math.round(m)));
+
+  // Earliest deadlines claim seats first — same first-come-first-served
+  // fairness as the inbound FIFO queue.
+  const cohorts = departures
+    .map((f) => ({
+      count: Math.round(f.pax * captureRateFor(f.city)),
+      deadline: f.schedMin - CHECK_IN_LEAD_MIN
+    }))
+    .filter((c) => c.count > 0)
+    .sort((a, b) => a.deadline - b.deadline);
+
+  for (const cohort of cohorts) {
+    let remaining = cohort.count;
+    // Latest feasible bus first — least time wasted at the airport.
+    for (let i = returnTrips.length - 1; i >= 0 && remaining > 0; i--) {
+      const trip = returnTrips[i];
+      if (trip.airportArriveMin > cohort.deadline) continue;                       // arrives too late
+      if (trip.airportArriveMin < cohort.deadline - MAX_EARLY_ARRIVAL_MIN) break;  // absurdly early
+      const take = Math.min(BUS_CAPACITY - trip.boarded, remaining);
+      if (take <= 0) continue;
+      trip.boarded += take;
+      remaining -= take;
+      boardEvents[clampMin(trip.originDepMin)] += take;
+      deliverEvents[clampMin(trip.airportArriveMin)] += take;
+    }
+    if (remaining > 0) {
+      // They give up around when the Grab must leave (~1h airport run before
+      // the check-in deadline) — that's when the missed ฿ shows on screen.
+      lostEvents[clampMin(cohort.deadline - 60)] += remaining;
+    }
+  }
+
+  const demandCum = new Array<number>(DAY_MIN).fill(0);
+  const boardedCum = new Array<number>(DAY_MIN).fill(0);
+  const lostCum = new Array<number>(DAY_MIN).fill(0);
+  const deliveredCum = new Array<number>(DAY_MIN).fill(0);
+  let b = 0, l = 0, d = 0;
+  for (let t = 0; t < DAY_MIN; t++) {
+    b += boardEvents[t];
+    l += lostEvents[t];
+    d += deliverEvents[t];
+    boardedCum[t] = b;
+    lostCum[t] = l;
+    deliveredCum[t] = d;
+    demandCum[t] = b + l; // conservation by construction
+  }
+
+  return {
+    returnTrips,
+    demandCum,
+    boardedCum,
+    lostCum,
+    deliveredCum,
+    totals: {
+      demand: b + l,
+      boarded: b,
+      lost: l,
+      revenueThb: b * FARE_THB,
+      lostRevenueThb: l * FARE_THB
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // What-if: insert N extra buses at the worst-queue minutes, re-run
 // ---------------------------------------------------------------------------
 
@@ -262,12 +392,15 @@ function planExtraBuses(
 const modelByDow = new Map<number, DayModel>();
 
 function buildDayModel(dow: number): DayModel {
-  const arrivals = getOpsFlightScheduleFor(dow).filter((f) => f.type === "arr" && f.mode === "flight");
+  const schedule = getOpsFlightScheduleFor(dow);
+  const arrivals = schedule.filter((f) => f.type === "arr" && f.mode === "flight");
+  const departingFlights = schedule.filter((f) => f.type === "dep" && f.mode === "flight");
   const departures = getAirportDepartures();
   const inflow = buildInflow(arrivals);
 
   const base = simulateDay(inflow, departures);
   const deliveredCum = buildDelivered(base.trips);
+  const outbound = buildOutbound(departingFlights, getAirportboundTrips());
 
   const snapshots: DaySnapshot[] = [];
   for (let m = 0; m < DAY_MIN; m += 5) {
@@ -304,6 +437,14 @@ function buildDayModel(dow: number): DayModel {
     };
   });
 
+  const combined = {
+    demand: totals.demand + outbound.totals.demand,
+    boarded: totals.boarded + outbound.totals.boarded,
+    lost: totals.abandoned + outbound.totals.lost,
+    revenueThb: totals.revenueThb + outbound.totals.revenueThb,
+    lostRevenueThb: totals.lostRevenueThb + outbound.totals.lostRevenueThb
+  };
+
   return {
     trips: base.trips,
     demandCum: base.demandCum,
@@ -313,6 +454,8 @@ function buildDayModel(dow: number): DayModel {
     waiting: base.waiting,
     snapshots,
     totals,
+    outbound,
+    combined,
     whatIf
   };
 }
@@ -369,15 +512,17 @@ export function getWeekEconomics(): WeekEconomics {
   if (cachedWeek) return cachedWeek;
   const order = [1, 2, 3, 4, 5, 6, 0]; // MON..SUN
   const days = order.map((dow) => {
-    const t = getDayModelFor(dow).totals;
+    // COMBINED both directions — the week's money story includes the
+    // return leg (departing pax riding back to the airport).
+    const c = getDayModelFor(dow).combined;
     return {
       dow,
       label: getDayLabel(dow),
-      demand: t.demand,
-      boarded: t.boarded,
-      abandoned: t.abandoned,
-      revenueThb: t.revenueThb,
-      lostRevenueThb: t.lostRevenueThb
+      demand: c.demand,
+      boarded: c.boarded,
+      abandoned: c.lost,
+      revenueThb: c.revenueThb,
+      lostRevenueThb: c.lostRevenueThb
     };
   });
   const week = days.reduce(
@@ -394,13 +539,19 @@ export function getWeekEconomics(): WeekEconomics {
   return cachedWeek;
 }
 
-/** Engine state at one minute of the day. O(1) array reads. */
+/** Engine state at one minute of the day. O(1) array reads. Inbound fields
+ *  keep their historical names; `out*` fields are the return leg; revenue
+ *  figures are COMBINED (both directions — what the money surfaces show). */
 export function atMinute(min: number): {
   waiting: number;
   demandCum: number;
   boardedCum: number;
   abandonedCum: number;
   deliveredCum: number;
+  outDemandCum: number;
+  outBoardedCum: number;
+  outLostCum: number;
+  outDeliveredCum: number;
   lostRevenueThb: number;
   revenueThb: number;
 } {
@@ -412,8 +563,12 @@ export function atMinute(min: number): {
     boardedCum: model.boardedCum[m],
     abandonedCum: model.abandonedCum[m],
     deliveredCum: model.deliveredCum[m],
-    lostRevenueThb: model.abandonedCum[m] * FARE_THB,
-    revenueThb: model.deliveredCum[m] * FARE_THB
+    outDemandCum: model.outbound.demandCum[m],
+    outBoardedCum: model.outbound.boardedCum[m],
+    outLostCum: model.outbound.lostCum[m],
+    outDeliveredCum: model.outbound.deliveredCum[m],
+    lostRevenueThb: (model.abandonedCum[m] + model.outbound.lostCum[m]) * FARE_THB,
+    revenueThb: (model.deliveredCum[m] + model.outbound.deliveredCum[m]) * FARE_THB
   };
 }
 
@@ -429,22 +584,44 @@ export function getTripLoad(depMin: number): number | null {
   return best ? best.boarded : null;
 }
 
+/** Boarded pax for the northbound trip that left Rawai at originDepMin (±2 min).
+ *  Joins map buses in the "Bus to Airport" direction to their REAL return loads. */
+export function getReturnTripLoad(originDepMin: number): number | null {
+  const model = getDayModel();
+  let best: ReturnTrip | null = null;
+  for (const t of model.outbound.returnTrips) {
+    if (Math.abs(t.originDepMin - originDepMin) <= 2 && (!best || Math.abs(t.originDepMin - originDepMin) < Math.abs(best.originDepMin - originDepMin))) {
+      best = t;
+    }
+  }
+  return best ? best.boarded : null;
+}
+
 /** Hour-bucketed view for the capacity strip and the demand-supply chart.
- *  Airport corridor only — airport-line seats vs airport-arrival demand.
- *  (The old version counted ferry seats as bus supply. Boats don't pick
- *  up airport queues.) */
+ *  Airport corridor only, BOTH directions — airport-line seats vs the demand
+ *  each direction's flights generate that hour. (Ferries never counted:
+ *  boats don't pick up airport queues.) */
 export type HourlyCorridor = {
   hour: number;
+  // Inbound: airport → island (arriving flights)
   demandPax: number;     // joined the queue this hour
-  seats: number;         // airport-line bus seats departing this hour
+  seats: number;         // southbound bus seats departing this hour
   boardedPax: number;    // actually boarded this hour
   abandonedPax: number;  // gave up this hour (lost to capacity)
+  // Return leg: island → airport (departing flights)
+  outDemandPax: number;  // needed a bus-to-airport this hour
+  outSeats: number;      // northbound bus seats departing origin this hour
+  outBoardedPax: number;
+  outLostPax: number;    // no feasible/available bus → took Grab
+  // Money, both directions
   revenueThb: number;
+  missedThb: number;
 };
 
 export function getHourlyCorridor(): HourlyCorridor[] {
   const model = getDayModel();
   const departures = getAirportDepartures();
+  const northbound = getAirportboundTrips();
 
   const out: HourlyCorridor[] = [];
   for (let h = 0; h < 24; h++) {
@@ -452,11 +629,25 @@ export function getHourlyCorridor(): HourlyCorridor[] {
     // The last hour absorbs minute 1440 (the 24:00 boundary) so the
     // hourly sums reconcile exactly with the day totals.
     const b = h === 23 ? DAY_MIN - 1 : Math.min(DAY_MIN - 1, (h + 1) * 60 - 1);
-    const demandPax = model.demandCum[b] - (a > 0 ? model.demandCum[a - 1] : 0);
-    const boardedPax = model.boardedCum[b] - (a > 0 ? model.boardedCum[a - 1] : 0);
-    const abandonedPax = model.abandonedCum[b] - (a > 0 ? model.abandonedCum[a - 1] : 0);
+    const delta = (arr: number[]) => arr[b] - (a > 0 ? arr[a - 1] : 0);
+
+    const demandPax = delta(model.demandCum);
+    const boardedPax = delta(model.boardedCum);
+    const abandonedPax = delta(model.abandonedCum);
+    const outDemandPax = delta(model.outbound.demandCum);
+    const outBoardedPax = delta(model.outbound.boardedCum);
+    const outLostPax = delta(model.outbound.lostCum);
+
     const seats = departures.filter((d) => d >= h * 60 && d < (h + 1) * 60).length * BUS_CAPACITY;
-    out.push({ hour: h, demandPax, seats, boardedPax, abandonedPax, revenueThb: boardedPax * FARE_THB });
+    const outSeats = northbound.filter((t) => t.originDepMin >= h * 60 && t.originDepMin < (h + 1) * 60).length * BUS_CAPACITY;
+
+    out.push({
+      hour: h,
+      demandPax, seats, boardedPax, abandonedPax,
+      outDemandPax, outSeats, outBoardedPax, outLostPax,
+      revenueThb: (boardedPax + outBoardedPax) * FARE_THB,
+      missedThb: (abandonedPax + outLostPax) * FARE_THB
+    });
   }
   return out;
 }

@@ -25,6 +25,7 @@ import {
   getDayModel,
   getHourlyCorridor,
   getTripLoad,
+  getReturnTripLoad,
   BUS_CAPACITY
 } from "./demandSupplyEngine";
 
@@ -36,22 +37,38 @@ export type HourlyBalanceStatus = "shortfall" | "tight" | "balanced" | "surplus"
 
 export type HourlyBalance = {
   hour: number;
-  arrivalPax: number;     // raw arriving pax this hour (pre-capture)
-  busEligiblePax: number; // 12% of arrivals who want the bus
-  busSeats: number;       // airport-line seats available this hour
+  arrivalPax: number;     // raw arriving pax this hour (pre-capture, context line)
+  // Inbound leg: airport → island
+  busEligiblePax: number; // engine queue joins this hour (region-based capture)
+  busSeats: number;       // southbound seats this hour
   capturedPax: number;    // actually boarded this hour (engine)
   abandonedPax: number;   // gave up after 60 min (engine)
-  gapPax: number;         // busEligible − busSeats (positive = demand > supply)
+  // Return leg: island → airport (departing flights)
+  outEligiblePax: number; // needed a bus-to-airport this hour
+  outSeats: number;       // northbound seats this hour
+  outCapturedPax: number;
+  outLostPax: number;
+  // Verdict + money. Gaps are tracked PER DIRECTION — an hour can need a
+  // southbound bus while northbound seats run empty; a combined number
+  // would hide exactly the "underdemanded" hours the operator asked about.
+  gapPax: number;         // net: total demand − total seats
+  emptySeatsPax: number;  // Σ per-direction surplus seats this hour
+  missedThb: number;      // (abandoned + outLost) × ฿100 this hour
+  earnedThb: number;      // (captured + outCaptured) × ฿100 this hour
   status: HourlyBalanceStatus;
 };
 
 const SHORTFALL_THRESHOLD = 25; // pax gap that triggers "shortfall"
 
-function classify(gap: number, eligible: number, seats: number): HourlyBalanceStatus {
-  if (eligible === 0 && seats === 0) return "balanced";
-  if (gap > SHORTFALL_THRESHOLD) return "shortfall";
-  if (gap > 0) return "tight";
-  if (gap < -SHORTFALL_THRESHOLD) return "surplus";
+/** Direction-aware verdict: a shortage in EITHER direction needs a bus
+ *  (that's where ฿100/boarding is being missed); only when neither is
+ *  short can the hour read as light/balanced. */
+function classify(inGap: number, outGap: number, demand: number, seats: number): HourlyBalanceStatus {
+  if (demand === 0 && seats === 0) return "balanced";
+  const worst = Math.max(inGap, outGap);
+  if (worst > SHORTFALL_THRESHOLD) return "shortfall";
+  if (worst > 0) return "tight";
+  if (Math.min(inGap, outGap) < -SHORTFALL_THRESHOLD) return "surplus";
   return "balanced";
 }
 
@@ -73,22 +90,31 @@ export function getHourlyBalance(): HourlyBalance[] {
     arrivalByHour[h] += f.pax;
   }
 
-  // Bus-eligible & supply come straight from the engine — no parallel math.
+  // Demand & supply for BOTH directions come straight from the engine —
+  // no parallel math, no flat capture rate.
   const corridor = getHourlyCorridor();
 
   const built = corridor.map((c) => {
-    const arrivalPax = arrivalByHour[c.hour];
-    const eligible = Math.round(arrivalPax * 0.12);
-    const gap = eligible - c.seats;
+    const inGap = c.demandPax - c.seats;
+    const outGap = c.outDemandPax - c.outSeats;
+    const totalDemand = c.demandPax + c.outDemandPax;
+    const totalSeats = c.seats + c.outSeats;
     return {
       hour: c.hour,
-      arrivalPax,
-      busEligiblePax: eligible,
+      arrivalPax: arrivalByHour[c.hour],
+      busEligiblePax: c.demandPax,
       busSeats: c.seats,
       capturedPax: c.boardedPax,
       abandonedPax: c.abandonedPax,
-      gapPax: gap,
-      status: classify(gap, eligible, c.seats)
+      outEligiblePax: c.outDemandPax,
+      outSeats: c.outSeats,
+      outCapturedPax: c.outBoardedPax,
+      outLostPax: c.outLostPax,
+      gapPax: totalDemand - totalSeats,
+      emptySeatsPax: Math.max(0, -inGap) + Math.max(0, -outGap),
+      missedThb: c.missedThb,
+      earnedThb: c.revenueThb,
+      status: classify(inGap, outGap, totalDemand, totalSeats)
     };
   });
   balanceByDow.set(dow, built);
@@ -149,8 +175,13 @@ function busCapacity(routeId: string): number {
 }
 
 function loadForVehicle(v: VehiclePosition): number {
-  if (v.tripStartMin != null) {
-    const load = getTripLoad(v.tripStartMin);
+  if (v.routeId === "rawai-airport" && v.tripStartMin != null) {
+    // Both airport-line directions carry ENGINE loads now: southbound buses
+    // board the arrival queue; northbound buses carry departing pax racing
+    // their check-in deadline.
+    const load = v.directionLabel === "Bus to Airport"
+      ? getReturnTripLoad(v.tripStartMin)
+      : getTripLoad(v.tripStartMin);
     if (load !== null) return load;
   }
   // Local lines / no trip start: deterministic local estimate

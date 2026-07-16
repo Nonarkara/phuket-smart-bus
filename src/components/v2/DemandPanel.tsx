@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Counter, InsightCard } from "./V2Shared";
 import { pause, setSimulatedMinutes } from "../../engine/fleetSimulator";
+import { captureRateFor } from "../../engine/travelBehavior";
 import type { SimState, RegionData } from "../../engine/simulation";
 import type { OpsFlight, FlightHourBucket } from "../../engine/opsFlightSchedule";
 import type { HourlyBalance } from "../../engine/v2OpsPanel";
@@ -74,16 +75,21 @@ function FlightScheduleRail({ flights, simMinutes }: FlightScheduleRailProps) {
         {flights.map((flight, index) => {
           const status = classifyFlightRow(flight, simMinutes);
           const rowRef = index === anchoredIndex ? focusRef : undefined;
-          // The demand trace: this flight's contribution to the bus queue.
-          const busDemand = flight.type === "arr" && flight.mode === "flight"
-            ? Math.round(flight.pax * 0.12)
+          // The demand trace: this flight's contribution to bus ridership —
+          // arrivals feed the airport queue, departures feed the return leg.
+          // Capture varies by origin (travelBehavior.ts heuristics).
+          const busDemand = flight.mode === "flight"
+            ? Math.round(flight.pax * captureRateFor(flight.city))
             : 0;
+          const demandNote = busDemand > 0
+            ? (flight.type === "arr" ? ` → ${busDemand} bus pax to island` : ` → ${busDemand} bus pax to airport`)
+            : "";
           return (
             <div
               key={`${flight.flightNo}-${flight.schedMin}-${flight.type}`}
               ref={rowRef}
               className={`v2-schedule__row v2-schedule__row--${status}`}
-              title={`${flight.airline} · ${flight.aircraftName} · ${flight.seats} seats · ${flight.pax} pax (${flight.loadPct}% load)${busDemand > 0 ? ` → ${busDemand} bus pax` : ""}`}
+              title={`${flight.airline} · ${flight.aircraftName} · ${flight.seats} seats · ${flight.pax} pax (${flight.loadPct}% load)${demandNote}`}
             >
               <span className="v2-schedule__time">{flight.timeLabel}</span>
               <span className={`v2-schedule__type v2-schedule__type--${flight.type}`}>
