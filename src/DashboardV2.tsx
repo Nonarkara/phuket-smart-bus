@@ -49,8 +49,9 @@ import { SupplyPanel } from "./components/v2/SupplyPanel";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
+import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 
-type ViewMode = "operations" | "insights" | "live";
+type ViewMode = "operations" | "insights" | "toolkit" | "live";
 
 /** Join a fleet vehicle to the demand-supply engine's per-trip boarding count.
  *
@@ -343,6 +344,10 @@ export default function DashboardV2() {
               className={`v2-mode-btn ${viewMode === 'insights' ? 'is-active' : ''}`}
               onClick={() => setViewMode('insights')}
             >INSIGHTS</button>
+            <button
+              className={`v2-mode-btn ${viewMode === 'toolkit' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('toolkit')}
+            >TOOLKIT</button>
           </div>
           <span className="v2-header__live">●</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
@@ -360,7 +365,10 @@ export default function DashboardV2() {
         />
       </header>
 
-      {viewMode === 'insights' ? (
+      {viewMode === 'toolkit' ? (
+        // TOOLKIT view — the research this console was built to serve
+        <ToolkitPanel />
+      ) : viewMode === 'insights' ? (
         // INSIGHTS view — full-width timeline for the data-science scan
         <main className="v2-body v2-body--insights">
           <aside className={`v2-panel v2-panel--demand`}>

@@ -651,3 +651,131 @@ export function getHourlyCorridor(): HourlyCorridor[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Interactive fleet scenario — "if we add or remove a bus, what changes?"
+//
+// The toolkit's co-design workshop ranked "increase frequency" among the
+// highest-impact interventions but couldn't price it — no demand data. This
+// answers it: the WHOLE day re-runs with the changed fleet, both directions,
+// against the same flights and the same conservation law.
+//
+//   +N buses: each new bus runs a full Airport↔Rawai duty cycle from the
+//     worst-queue moment onward — southbound legs board the arrival queue
+//     (planExtraBuses greedy) and the interleaved northbound legs (half a
+//     cycle later) carry departing pax.
+//   −N buses: the schedule is partitioned into per-bus duty chains (first-fit
+//     at ≥210 min spacing — the same physics as computeMinimumFleet) and the
+//     N lowest-yield chains in each direction are withdrawn. Removing a bus
+//     removes its whole day of trips, not one departure.
+//
+// Demand never changes with the fleet — only who gets served. So for every
+// delta: scenario.boarded + scenario.lost === baseline combined demand.
+// ---------------------------------------------------------------------------
+
+export type FleetScenario = {
+  deltaBuses: number;
+  boarded: number;
+  lost: number;
+  revenueThb: number;
+  lostRevenueThb: number;
+  deltaBoarded: number;
+  deltaRevenueThb: number;
+  deltaLostThb: number;
+};
+
+/** First-fit partition of departure times into per-bus duty chains: a bus
+ *  can take the next trip if ≥ DUTY_CYCLE_MIN after its previous one. */
+function partitionDutyChains(times: number[]): number[][] {
+  const chains: number[][] = [];
+  for (const t of [...times].sort((a, b) => a - b)) {
+    const free = chains.find((ch) => t - ch[ch.length - 1] >= DUTY_CYCLE_MIN);
+    if (free) free.push(t);
+    else chains.push([t]);
+  }
+  return chains;
+}
+
+/** Drop the n chains with the lowest total baseline load. */
+function withdrawChains(
+  times: number[],
+  n: number,
+  loadOf: (t: number) => number
+): number[] {
+  const chains = partitionDutyChains(times)
+    .map((ch) => ({ ch, yield: ch.reduce((s, t) => s + loadOf(t), 0) }))
+    .sort((a, b) => a.yield - b.yield);
+  const removed = new Set(chains.slice(0, Math.min(n, Math.max(0, chains.length - 1))).flatMap((c) => c.ch));
+  return times.filter((t) => !removed.has(t));
+}
+
+const scenarioCache = new Map<string, FleetScenario>();
+
+export function getFleetScenario(deltaBuses: number): FleetScenario {
+  const dow = getSimulationDay();
+  const delta = Math.max(-5, Math.min(10, Math.round(deltaBuses)));
+  const key = `${dow}:${delta}`;
+  const hit = scenarioCache.get(key);
+  if (hit) return hit;
+
+  const baseline = getDayModelFor(dow);
+  const schedule = getOpsFlightScheduleFor(dow);
+  const arrivals = schedule.filter((f) => f.type === "arr" && f.mode === "flight");
+  const departingFlights = schedule.filter((f) => f.type === "dep" && f.mode === "flight");
+  const inflow = buildInflow(arrivals);
+
+  let southbound = getAirportDepartures();
+  let northbound = getAirportboundTrips();
+
+  if (delta > 0) {
+    // Southbound legs target the worst arrival-queue moments…
+    const plan = planExtraBuses(inflow, southbound, delta);
+    southbound = plan.departures;
+    // …and the same physical buses run northbound half a duty cycle later.
+    const HALF_CYCLE = Math.round(DUTY_CYCLE_MIN / 2);
+    const TRIP_MIN = 95;
+    for (const start of plan.startedAt) {
+      for (let t = start + HALF_CYCLE; t < DAY_MIN; t += DUTY_CYCLE_MIN) {
+        northbound = [...northbound, { originDepMin: t, airportArriveMin: t + TRIP_MIN }];
+      }
+    }
+    northbound = [...northbound].sort((a, b) => a.originDepMin - b.originDepMin);
+  } else if (delta < 0) {
+    const n = -delta;
+    const sbLoad = (t: number) =>
+      baseline.trips.find((x) => Math.abs(x.depMin - t) <= 1)?.boarded ?? 0;
+    const nbLoad = (t: number) =>
+      baseline.outbound.returnTrips.find((x) => Math.abs(x.originDepMin - t) <= 1)?.boarded ?? 0;
+    southbound = withdrawChains(southbound, n, sbLoad);
+    const keptNb = new Set(withdrawChains(northbound.map((x) => x.originDepMin), n, nbLoad));
+    northbound = northbound.filter((x) => keptNb.has(x.originDepMin));
+  }
+
+  const inRun = simulateDay(inflow, southbound);
+  const outRun = buildOutbound(departingFlights, northbound);
+  const last = DAY_MIN - 1;
+
+  const boarded = inRun.boardedCum[last] + outRun.totals.boarded;
+  // Inbound "lost" for the scenario counts abandoned + still-waiting at close
+  // of day so demand conservation holds exactly regardless of fleet size.
+  const inUnserved = inRun.abandonedCum[last] + inRun.waiting[last];
+  const lost = inUnserved + outRun.totals.lost;
+
+  // Baseline "unserved" uses the same definition as the scenario (abandoned +
+  // still-waiting + return-leg lost) so deltas compare like with like.
+  const baselineUnserved =
+    baseline.totals.abandoned + baseline.waiting[last] + baseline.outbound.totals.lost;
+
+  const scenario: FleetScenario = {
+    deltaBuses: delta,
+    boarded,
+    lost,
+    revenueThb: boarded * FARE_THB,
+    lostRevenueThb: lost * FARE_THB,
+    deltaBoarded: boarded - baseline.combined.boarded,
+    deltaRevenueThb: (boarded - baseline.combined.boarded) * FARE_THB,
+    deltaLostThb: (lost - baselineUnserved) * FARE_THB
+  };
+  scenarioCache.set(key, scenario);
+  return scenario;
+}

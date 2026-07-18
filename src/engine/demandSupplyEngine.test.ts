@@ -16,6 +16,7 @@ import {
   getTripLoad,
   getReturnTripLoad,
   getHourlyCorridor,
+  getFleetScenario,
   BUS_CAPACITY,
   ABANDON_AFTER_MIN
 } from "./demandSupplyEngine";
@@ -310,5 +311,59 @@ describe("travel-behavior heuristics — stereotypes, stated and bounded", () =>
 
   it("check-in lead time is one hour, as the operator specified", () => {
     expect(CHECK_IN_LEAD_MIN).toBe(60);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Interactive fleet scenario — add/remove buses, re-run the whole day
+// ---------------------------------------------------------------------------
+
+describe("fleet scenario — what changes when the fleet changes", () => {
+  const baseline = getDayModel();
+  const END = 1440;
+
+  it("demand is conserved at EVERY fleet size: boarded + lost === combined demand", () => {
+    for (const d of [-5, -3, -1, 0, 1, 2, 5, 10]) {
+      const s = getFleetScenario(d);
+      expect(s.boarded + s.lost, `delta ${d}`).toBe(baseline.combined.demand);
+    }
+  });
+
+  it("delta 0 reproduces the baseline exactly", () => {
+    const s = getFleetScenario(0);
+    expect(s.boarded).toBe(baseline.combined.boarded);
+    expect(s.revenueThb).toBe(baseline.combined.revenueThb);
+    expect(s.deltaBoarded).toBe(0);
+    expect(s.deltaRevenueThb).toBe(0);
+    expect(s.deltaLostThb).toBe(0);
+  });
+
+  it("revenue is monotonic in fleet size — more buses never earn less", () => {
+    let prev = -Infinity;
+    for (const d of [-5, -4, -3, -2, -1, 0, 1, 2, 3, 5, 8, 10]) {
+      const s = getFleetScenario(d);
+      expect(s.revenueThb, `delta ${d}`).toBeGreaterThanOrEqual(prev);
+      prev = s.revenueThb;
+    }
+  });
+
+  it("removing buses hurts and adding helps (strictly, on a shortfall day)", () => {
+    // Every modelled day is capacity-constrained (missed ฿ > 0), so the
+    // marginal bus must carry someone and a withdrawn bus must strand someone.
+    expect(getFleetScenario(-2).deltaRevenueThb).toBeLessThan(0);
+    expect(getFleetScenario(2).deltaRevenueThb).toBeGreaterThan(0);
+  });
+
+  it("revenue identities hold in every scenario", () => {
+    for (const d of [-3, 0, 4]) {
+      const s = getFleetScenario(d);
+      expect(s.revenueThb).toBe(s.boarded * 100);
+      expect(s.lostRevenueThb).toBe(s.lost * 100);
+    }
+  });
+
+  it("clamps the delta to the supported range", () => {
+    expect(getFleetScenario(99).deltaBuses).toBe(10);
+    expect(getFleetScenario(-99).deltaBuses).toBe(-5);
   });
 });

@@ -128,3 +128,24 @@ weekly revenue roll-up (week = Σ 7 deterministic day models).
 - [x] Map joins: northbound buses carry real return loads (both panels)
 - [x] 14 new tests (outbound conservation, combined identities, heuristic bounds, weighted avg ∈ 3-8%) — 121/121
 - [x] Verified: diagram footer "฿79,600 earned · ฿356,900 missed · 22 hrs need buses · 3 hrs light (138 empty seats)"; DAY·60s sweep streams combined money
+
+---
+
+# Toolkit tab + interactive fleet simulation — 2026-07-19
+
+Source: Phuket_LV_toolkit.pdf (USASCP Smart Mobility Program, US DOT / State /
+METRANS-USC / Chulalongkorn CUTI; Phuket–Las Vegas pairing; credit Roshan Desai).
+
+- [x] engine: getFleetScenario(delta −5..+10) — duty-chain add (S+N legs) /
+      lowest-yield chain removal, rerun both directions, memo by (dow,delta);
+      invariant: boarded+lost === baseline demand at every delta; monotonic
+- [x] tests: scenario(0)=baseline, monotonicity, conservation, chain partition
+- [x] SupplyPanel: interactive FleetScenarioCard (stepper) replaces WhatIfCard
+- [x] ToolkitPanel.tsx: no-nonsense summary tab — why it exists (data-gap
+      lesson), program credits, Phuket vs LV, 5 objectives, method pipeline
+      SVG, OD corridor finding, 8 personas, 6 service themes, impact-effort
+      SVG (15 recs), toolkit→dashboard assumption ledger, IF-WE-HAD-THE-DATA
+      table, honest gaps, short bio
+- [x] DashboardV2: third header tab TOOLKIT
+- [x] styles.css: Axiom-compliant toolkit + scenario styles
+- [x] verify → CDPT — stepper conservation visible in UI (+2 buses: riders +221, unserved −221); toolkit tab 10 sections + 2 SVGs verified in preview

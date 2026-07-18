@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Counter, InsightCard } from "./V2Shared";
-import { getDayModel, getWeekEconomics } from "../../engine/demandSupplyEngine";
+import { getFleetScenario, getWeekEconomics } from "../../engine/demandSupplyEngine";
 import { getSimulationDay } from "../../engine/opsFlightSchedule";
 import type { SimState } from "../../engine/simulation";
 
@@ -48,32 +49,62 @@ function DestinationResponse({ breakdown }: DestinationResponseProps) {
 }
 
 // ---------------------------------------------------------------------------
-// What-if: the engine re-runs the whole day with extra buses inserted at the
-// worst-queue moments. This is the "how much more could we capture" answer,
-// computed — not guessed.
+// Interactive fleet scenario — add or remove buses, the WHOLE day re-runs
+// (both directions) against the same flights. The toolkit's co-design ranked
+// "increase frequency" among the top interventions but couldn't price it —
+// this stepper prices it, live.
 // ---------------------------------------------------------------------------
 
-function fmtClock(min: number) {
-  return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
-}
-
-function WhatIfCard() {
-  const model = getDayModel();
-  if (model.totals.abandoned === 0) return null;
+function FleetScenarioCard() {
+  const [delta, setDelta] = useState(0);
+  const s = getFleetScenario(delta);
+  const gained = s.deltaRevenueThb;
   return (
     <div className="v2-whatif">
-      <h3 className="v2-whatif__title">If we had more buses</h3>
-      {model.whatIf.map((w) => (
-        <div key={w.extraBuses} className="v2-whatif__row" title={`Duty cycles start at ${w.insertedAt.map(fmtClock).join(", ")} — each bus shuttles Airport ↔ Rawai for the rest of the day`}>
-          <span className="v2-whatif__buses">+{w.extraBuses} buses</span>
-          <span className="v2-whatif__gain">+{w.gainedPax.toLocaleString()} pax</span>
-          <span className="v2-whatif__rev">+฿{w.gainedRevenueThb.toLocaleString()}/day</span>
-        </div>
-      ))}
+      <h3 className="v2-whatif__title">Fleet Scenario · Whole-Day Re-run</h3>
+      <div className="v2-scenario__stepper">
+        <button
+          className="v2-scenario__btn"
+          onClick={() => setDelta((d) => Math.max(-5, d - 1))}
+          disabled={delta <= -5}
+          title="Withdraw the emptiest duty chain (a bus's whole day of trips)"
+        >−</button>
+        <span className="v2-scenario__delta">
+          {delta === 0 ? "current fleet" : delta > 0 ? `+${delta} bus${delta > 1 ? "es" : ""}` : `${delta} bus${delta < -1 ? "es" : ""}`}
+        </span>
+        <button
+          className="v2-scenario__btn"
+          onClick={() => setDelta((d) => Math.min(10, d + 1))}
+          disabled={delta >= 10}
+          title="Add a bus running Airport ↔ Rawai duty cycles from the worst-queue moment"
+        >+</button>
+      </div>
+      <div className="v2-whatif__row">
+        <span className="v2-whatif__buses">Revenue</span>
+        <span className="v2-whatif__rev">฿{s.revenueThb.toLocaleString()}</span>
+        <span className={`v2-scenario__delta-val ${gained > 0 ? "is-pos" : gained < 0 ? "is-neg" : ""}`}>
+          {gained === 0 ? "—" : `${gained > 0 ? "+" : "−"}฿${Math.abs(gained).toLocaleString()}`}
+        </span>
+      </div>
+      <div className="v2-whatif__row">
+        <span className="v2-whatif__buses">Riders</span>
+        <span className="v2-whatif__rev">{s.boarded.toLocaleString()}</span>
+        <span className={`v2-scenario__delta-val ${s.deltaBoarded > 0 ? "is-pos" : s.deltaBoarded < 0 ? "is-neg" : ""}`}>
+          {s.deltaBoarded === 0 ? "—" : `${s.deltaBoarded > 0 ? "+" : "−"}${Math.abs(s.deltaBoarded).toLocaleString()} pax`}
+        </span>
+      </div>
+      <div className="v2-whatif__row">
+        <span className="v2-whatif__buses">Unserved</span>
+        <span className="v2-whatif__rev">{s.lost.toLocaleString()} pax</span>
+        <span className={`v2-scenario__delta-val ${s.deltaLostThb < 0 ? "is-pos" : s.deltaLostThb > 0 ? "is-neg" : ""}`}>
+          {s.deltaLostThb === 0 ? "—" : `${s.deltaLostThb > 0 ? "+" : "−"}฿${Math.abs(s.deltaLostThb).toLocaleString()}`}
+        </span>
+      </div>
       <p className="v2-whatif__note">
-        Engine re-runs the whole day with each extra bus shuttling from the
-        worst-queue moment onward (one airport departure every ~3.5 h per bus).
-        Same flights, same 12% capture — only the supply changes.
+        Supply stays scheduled; demand stays what the flights bring. +1 bus =
+        one more Airport ↔ Rawai duty cycle all day (both directions), placed
+        at the worst queue. −1 withdraws the emptiest chain. Every number is a
+        full-day re-run; passengers stay conserved.
       </p>
     </div>
   );
@@ -192,7 +223,7 @@ export function SupplyPanel({
         </div>
       </div>
 
-      <WhatIfCard />
+      <FleetScenarioCard />
 
       <WeekCard onDayChange={onDayChange} />
 
