@@ -9672,3 +9672,88 @@ a { color: var(--tint); }
 /* tk-title is an h1; the Axiom header rule `.v2 h1 { display:none }` targets
    the brand h1 — re-enable it inside the toolkit page. */
 .v2 .v2-toolkit .tk-title { display: block; }
+
+/* ── Toolkit: thesis tenets A–H ──────────────────────────────────────────── */
+.v2 .tk-tenets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--ax-line);
+  border: 1px solid var(--ax-line-2);
+  margin-top: 14px;
+}
+.v2 .tk-tenet {
+  background: var(--ax-panel);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v2 .tk-tenet__l {
+  font-size: var(--t-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ax-accent);
+  letter-spacing: -0.02em;
+}
+.v2 .tk-tenet__k {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ax-ink);
+}
+.v2 .tk-tenet__d {
+  font-size: var(--t-micro);
+  line-height: 1.55;
+  color: var(--ax-ink-2);
+}
+
+/* ── Toolkit: hypotheses ─────────────────────────────────────────────────── */
+.v2 .tk-hyp {
+  padding: 12px 0 12px 16px;
+  border-left: 2px solid var(--ax-accent);
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v2 .tk-hyp__q {
+  font-size: var(--t-body);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ax-ink);
+  max-width: 68ch;
+}
+.v2 .tk-hyp__t {
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--ax-ink-2);
+  max-width: 64ch;
+}
+
+/* ── Toolkit: partner logo strip ─────────────────────────────────────────── */
+.v2 .tk-logos {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--ax-line);
+  border: 1px solid var(--ax-line-2);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.v2 .tk-logo {
+  background: #ffffff;
+  height: 72px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  padding: 12px 20px;
+  box-sizing: content-box;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 720px) {
+  .v2 .tk-tenets { grid-template-columns: 1fr 1fr; }
+  .v2 .tk-logo { height: 52px; padding: 10px 14px; }
+}

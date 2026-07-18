@@ -17,6 +17,44 @@
 // Static content — distilled from the 23-page toolkit
 // ---------------------------------------------------------------------------
 
+/** The thesis, A to H: people don't choose the fast mode — they choose the
+ *  mode that wins on the dimensions they actually feel. */
+const TENETS = [
+  { l: "A", k: "Accessibility", d: "Can a first-time visitor find it, board it, and understand it — without local knowledge?" },
+  { l: "B", k: "Budget", d: "฿100 flat against ฿600–1,000 for a Grab. The spread does the marketing by itself." },
+  { l: "C", k: "Comfort", d: "Air-con, a real seat, space for the luggage. After a red-eye, comfort converts." },
+  { l: "D", k: "Duration", d: "Not fastest — predictable. A known 95 minutes beats an unknown 60 every time." },
+  { l: "E", k: "Experience", d: "The window seat over the Kamala coast is content. The ride can be part of the holiday." },
+  { l: "F", k: "Free", d: "Free of the parking hunt, the rental desk, the deposit, the damage claim on return." },
+  { l: "G", k: "Green", d: "A zero-carbon EV fleet — the choice a growing share of travelers already wants to make." },
+  { l: "H", k: "Hip", d: "Nobody photographs a rental counter. A bus that is cool gets chosen for being cool." },
+];
+
+/** The falsifiable questions this console exists to test — each mapped to
+ *  the instrument that tests it. */
+const HYPOTHESES = [
+  {
+    q: "If the bus is cheap enough, does price override the convenience of a rental car?",
+    t: "The ฿100-vs-฿720 spread runs through every surface; the capture heuristics are the knob that real ticketing data will answer this with."
+  },
+  {
+    q: "If we match supply to airport demand hour by hour, can we pull people out of rental cars?",
+    t: "The whole demand-supply engine. The Missed Money diagram shows exactly which hours the match fails today; the Fleet Scenario stepper prices fixing it."
+  },
+  {
+    q: "If bus + Grab connect seamlessly for the last mile, does it beat renting a motorbike — for tourists who hold no license at home and meet Phuket's rain-slick mountain roads as amateurs?",
+    t: "First–last mile is the toolkit's #1-impact intervention and this model's declared gap — the next thing the data unlocks. The safety case is already on the tourist app's risk strip."
+  },
+  {
+    q: "If we make taking the bus cool, does persona 8 — premium, app-first, Grab-loyal — switch?",
+    t: "Tenet H. The survey says punctuality, cleanliness and app integration are their price of entry; the positive-attitude campaign (#14) is the push."
+  },
+  {
+    q: "If we intercept the 'how do I get around Phuket' decision before travelers leave the arrivals hall, does capture jump?",
+    t: "Boarding/alighting points (#1) and tourist information (theme 4) — the decision is made in the first fifty meters after customs. Nothing on this console models it yet; an arrivals-hall pilot would."
+  },
+];
+
 const OBJECTIVES = [
   { k: "Congestion", d: "Fewer private cars and vans on a road network already at capacity" },
   { k: "Safety", d: "Fewer motorbike-taxi and rental-car trips by first-time visitors" },
@@ -198,9 +236,51 @@ export function ToolkitPanel() {
           </p>
         </section>
 
+        {/* ── The thesis ──────────────────────────────────────────────── */}
+        <section className="tk-section">
+          <h2 className="tk-h2">The Thesis — Nobody Chooses a Mode Because It Is Fast</h2>
+          <p className="tk-body">
+            Transport planning keeps optimizing for speed while travelers keep
+            choosing on everything else: money, certainty, comfort, image, the
+            hassle they are escaping. Eight tenets, A to H, decide whether a
+            visitor steps onto a bus — and every one of them is designable.
+          </p>
+          <div className="tk-tenets">
+            {TENETS.map((t) => (
+              <div className="tk-tenet" key={t.l}>
+                <span className="tk-tenet__l">{t.l}</span>
+                <span className="tk-tenet__k">{t.k}</span>
+                <span className="tk-tenet__d">{t.d}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── The hypotheses ──────────────────────────────────────────── */}
+        <section className="tk-section">
+          <h2 className="tk-h2">The Hypotheses — What If?</h2>
+          <p className="tk-body">
+            A simulation is only worth building if it can be proven wrong.
+            These are the falsifiable questions this console exists to test,
+            each with the instrument that tests it:
+          </p>
+          {HYPOTHESES.map((h, i) => (
+            <div className="tk-hyp" key={i}>
+              <span className="tk-hyp__q">{h.q}</span>
+              <span className="tk-hyp__t">{h.t}</span>
+            </div>
+          ))}
+        </section>
+
         {/* ── Program credit ──────────────────────────────────────────── */}
         <section className="tk-section">
           <h2 className="tk-h2">The Program</h2>
+          <div className="tk-logos">
+            <img src={`${import.meta.env.BASE_URL}brand/usascp.png`} alt="U.S.-ASEAN Smart Cities Partnership (USASCP)" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/usdot.svg`} alt="U.S. Department of Transportation" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/depa.jpg`} alt="Digital Economy Promotion Agency (DEPA)" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`} alt="Smart City Thailand Office" className="tk-logo" />
+          </div>
           <p className="tk-body">
             The research behind this comes from the <strong>U.S.-ASEAN Smart Cities
             Mobility Program</strong> — a U.S. Department of Transportation-led
