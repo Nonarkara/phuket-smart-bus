@@ -18,3 +18,4 @@ data/*.sqlite3-wal
 
 # Local editor state
 .vscode/
+.worktrees/
