@@ -80,7 +80,7 @@ export function RoiCalculator() {
             />
             <div className="roi-input__scale">
               <span>5% (today)</span>
-              <span>12% (modeled)</span>
+              <span>12% (growth case)</span>
               <span>35% (Singapore-class)</span>
             </div>
           </div>

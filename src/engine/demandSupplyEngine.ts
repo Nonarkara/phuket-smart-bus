@@ -3,7 +3,7 @@
  *
  *   Flights land (airline · aircraft · seats · pax)
  *     → passengers clear customs (20–45 min ramp)
- *     → 12% join the bus queue at the airport curb
+ *     → 3–7% join by origin heuristic (~5% weighted fleet-wide)
  *     → each scheduled bus departure boards FIFO up to 25
  *     → passengers who wait > 60 min give up and take Grab  (= lost revenue)
  *     → boarded passengers alight progressively along the route

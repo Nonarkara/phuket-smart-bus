@@ -26,7 +26,7 @@ const TENETS = [
   { l: "D", k: "Duration", d: "Not fastest — predictable. A known 95 minutes beats an unknown 60 every time." },
   { l: "E", k: "Experience", d: "The window seat over the Kamala coast is content. The ride can be part of the holiday." },
   { l: "F", k: "Free", d: "Free of the parking hunt, the rental desk, the deposit, the damage claim on return." },
-  { l: "G", k: "Green", d: "A zero-carbon EV fleet — the choice a growing share of travelers already wants to make." },
+  { l: "G", k: "Green", d: "A lower-carbon bus fleet — the choice a growing share of travelers already wants to make." },
   { l: "H", k: "Hip", d: "Nobody photographs a rental counter. A bus that is cool gets chosen for being cool." },
 ];
 

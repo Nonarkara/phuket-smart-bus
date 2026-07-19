@@ -69,8 +69,8 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
         aria-label="Queue timeline: waiting peaks midday, capture dominates, abandoned accumulates"
       >
         {/* axis lines */}
-        <line x1={PAD_X} y1={PAD_Y} x2={PAD_X} y2={H - PAD_Y} stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-        <line x1={PAD_X} y1={H - PAD_Y} x2={W - PAD_X} y2={H - PAD_Y} stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+        <line x1={PAD_X} y1={PAD_Y} x2={PAD_X} y2={H - PAD_Y} stroke="var(--ax-line-2, #d2cfc5)" strokeWidth="1" />
+        <line x1={PAD_X} y1={H - PAD_Y} x2={W - PAD_X} y2={H - PAD_Y} stroke="var(--ax-line-2, #d2cfc5)" strokeWidth="1" />
 
         {/* hour grid */}
         {[0, 6, 12, 18, 24].map((h) => (
@@ -80,10 +80,10 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
               x2={x(h * 60)}
               y1={PAD_Y}
               y2={H - PAD_Y}
-              stroke="rgba(255,255,255,0.06)"
+              stroke="var(--ax-line, #e7e5dd)"
               strokeDasharray="2 4"
             />
-            <text x={x(h * 60)} y={H - PAD_Y + 14} fontSize="9" fill="rgba(255,255,255,0.4)" textAnchor="middle" fontFamily="var(--font-mono)">
+            <text x={x(h * 60)} y={H - PAD_Y + 14} fontSize="9" fill="var(--ax-ink-3, #a9a59a)" textAnchor="middle" fontFamily="var(--font-mono)">
               {String(h).padStart(2, "0")}:00
             </text>
           </g>
@@ -92,12 +92,12 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
         {/* areas */}
         <path d={boardedArea} fill="rgba(22,165,116,0.18)" />
         <path d={abandonedArea} fill="rgba(245,158,11,0.18)" />
-        <path d={waitingArea} fill="rgba(255,255,255,0.05)" />
+        <path d={waitingArea} fill="rgba(25,23,18,0.05)" />
 
         {/* lines */}
         <path d={abandonedPath} fill="none" stroke="var(--amber, #f5a623)" strokeWidth="2" />
         <path d={boardedPath} fill="none" stroke="var(--gain, #16a574)" strokeWidth="2" />
-        <path d={waitingPath} fill="none" stroke="#fff" strokeWidth="1.5" strokeOpacity="0.7" />
+        <path d={waitingPath} fill="none" stroke="var(--ax-ink, #191712)" strokeWidth="1.5" strokeOpacity="0.7" />
 
         {/* peak marker */}
         {peak && (
@@ -105,13 +105,13 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
             <line
               x1={x(peak.min)} x2={x(peak.min)}
               y1={PAD_Y} y2={H - PAD_Y}
-              stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeDasharray="3 3"
+              stroke="var(--ax-ink-2, #6f6c63)" strokeWidth="1" strokeDasharray="3 3"
             />
-            <circle cx={x(peak.min)} cy={yWaiting(peak.waiting)} r="3" fill="#fff" />
+            <circle cx={x(peak.min)} cy={yWaiting(peak.waiting)} r="3" fill="var(--ax-ink, #191712)" />
             <text
               x={x(peak.min)} y={yWaiting(peak.waiting) - 6}
               fontSize="10"
-              fill="rgba(255,255,255,0.85)"
+              fill="var(--ax-ink, #191712)"
               textAnchor={peak.min > 720 ? "end" : "start"}
               fontFamily="var(--font-mono)"
             >
@@ -131,16 +131,16 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
         </g>
 
         {/* y labels */}
-        <text x={PAD_X - 6} y={PAD_Y + 4} fontSize="9" fill="rgba(255,255,255,0.45)" textAnchor="end" fontFamily="var(--font-mono)">
+        <text x={PAD_X - 6} y={PAD_Y + 4} fontSize="9" fill="var(--ax-ink-3, #a9a59a)" textAnchor="end" fontFamily="var(--font-mono)">
           {view.maxWaiting}
         </text>
-        <text x={PAD_X - 6} y={H - PAD_Y} fontSize="9" fill="rgba(255,255,255,0.45)" textAnchor="end" fontFamily="var(--font-mono)">
+        <text x={PAD_X - 6} y={H - PAD_Y} fontSize="9" fill="var(--ax-ink-3, #a9a59a)" textAnchor="end" fontFamily="var(--font-mono)">
           0
         </text>
       </svg>
 
       <div className="v2-insights__legend">
-        <span><span className="v2-insights__legend-dot" style={{ background: "#fff" }} /> waiting</span>
+        <span><span className="v2-insights__legend-dot" style={{ background: "var(--ax-ink, #191712)" }} /> waiting</span>
         <span><span className="v2-insights__legend-dot" style={{ background: "var(--gain, #16a574)" }} /> boarded (cum)</span>
         <span><span className="v2-insights__legend-dot" style={{ background: "var(--amber, #f5a623)" }} /> abandoned (cum)</span>
       </div>

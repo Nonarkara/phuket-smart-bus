@@ -5,6 +5,8 @@ import { scrubToHour } from "./DemandPanel";
 interface HourlyBalanceChartProps {
   rows: HourlyBalance[];
   simMinutes: number;
+  /** INSIGHTS shows only the five highest-cost hours. OPS keeps the full day. */
+  mode?: "all" | "priority";
   /** Hour currently shown to operators. When the user clicks a row we
    *  scrub the simulation to that hour so the map follows along. */
   onHourSelect?: (hour: number) => void;
@@ -45,7 +47,7 @@ function fmtThb(n: number): string {
  * demand outran the fixed schedule. Gray LIGHT hours are seats flying
  * past nobody. The footer totals answer the operator's four questions.
  */
-export function HourlyBalanceChart({ rows, simMinutes, onHourSelect }: HourlyBalanceChartProps) {
+export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelect }: HourlyBalanceChartProps) {
   const currentHour = Math.floor(simMinutes / 60) % 24;
   const max = useMemo(
     () => Math.max(1, ...rows.map((r) => Math.max(r.busEligiblePax, r.outEligiblePax, r.busSeats + r.outSeats))),
@@ -66,16 +68,25 @@ export function HourlyBalanceChart({ rows, simMinutes, onHourSelect }: HourlyBal
     return { earned, missed, shortHours, lightHours, emptySeats };
   }, [rows]);
 
+  const visibleRows = useMemo(() => {
+    if (mode === "all") return rows;
+    return [...rows]
+      .sort((left, right) => right.missedThb - left.missedThb || right.gapPax - left.gapPax)
+      .slice(0, 5);
+  }, [mode, rows]);
+
   return (
-    <div className="v2-hourly">
-      <div className="v2-hourly__title">Missed Money · Hour by Hour</div>
+    <div className={`v2-hourly ${mode === "priority" ? "v2-hourly--priority" : ""}`}>
+      <div className="v2-hourly__title">
+        {mode === "priority" ? "Five Hours To Fix First" : "Missed Money · Hour by Hour"}
+      </div>
       <div className="v2-hourly__legend">
         <span className="v2-hourly__legend-item v2-hourly__legend-item--arr">IN → island</span>
         <span className="v2-hourly__legend-item v2-hourly__legend-item--out">OUT → airport</span>
         <span className="v2-hourly__legend-item v2-hourly__legend-item--seats">Seats scheduled</span>
       </div>
       <div className="v2-hourly__rows">
-        {rows.map((row) => {
+        {visibleRows.map((row) => {
           const isCurrent = row.hour === currentHour;
           const w = (n: number) => `${Math.max(0, Math.min(100, (n / max) * 100))}%`;
           const gap = row.gapPax;

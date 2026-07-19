@@ -45,7 +45,7 @@ Every number on screen — riders, revenue, CO₂ saved, wait times, route profi
 flowchart LR
     subgraph P1["Phase 1 — NOW"]
         direction TB
-        S1["🛫 Real flight schedule\n(65 peak-day flights)"]
+        S1["🛫 Peak-day flight fixture\n(380 movements)"]
         S2["🧮 Demand model\n(customs clearance,\ncapture rate, destinations)"]
         S3["🗺️ Polyline simulator\n(3,944 road geometry points)"]
         S1 --> S2 --> S3
@@ -85,9 +85,9 @@ Every metric traces back to this chain. If a number can't be traced here, it doe
 
 ```mermaid
 flowchart TD
-    F["✈️ Flights land at HKT\n65 peak-day arrivals\n26 real airlines, real origins\n~6,500 pax on Dec 30"]
+    F["✈️ Flights land at HKT\n190 base-day arrivals\n29 real airlines · 36 cities\n38,667 scheduled pax"]
     C["🛃 Customs clearance model\n20–45 min depending on origin\n(EU/UK longer, ASEAN shorter)"]
-    D["🤔 Mode choice\n12% want ground transport by bus\n(Grab/taxi share: 68%, walk/hotel: 20%)"]
+    D["🤔 Mode choice\n3–7% choose bus by origin\n~5% weighted fleet-wide"]
     B["🚌 Board at airport\n18 daily departures, 25 seats each\nSchedule from official PKSB timetable"]
     T["🏖️ Delivered to destination\nPatong 35% · Karon/Kata 20%\nOld Town 18% · Kamala 12%\nRawai 8% · Laguna 7%"]
     R["💰 Revenue\n฿100 flat fare\nvs ฿600–1,000 Grab alternative"]
@@ -172,10 +172,10 @@ Three sliders. Every assumption sourced. Built for the bus company CFO who will 
 | Input | Range | Default |
 |---|---|---|
 | Fleet size | 10 (pilot) → 80 (full island) | 20 buses |
-| Bus capture rate | 5% (today) → 35% (Singapore-class) | 12% |
+| Bus capture rate | 5% (today) → 35% (Singapore-class) | 12% growth case |
 | Average fare | ฿50 (subsidised) → ฿150 (premium) | ฿100 |
 
-**At defaults (20 buses, 12% capture, ฿100 fare):**
+**At the growth-case defaults (20 buses, 12% capture, ฿100 fare):**
 
 | Metric | Annual |
 |---|---|
@@ -286,7 +286,7 @@ It's just not deployed yet. When the buses get GPS devices, it deploys.
 | Data | Source | Status |
 |---|---|---|
 | Bus timetable | Official PKSB schedule (effective 18 Jan 2025) | ✅ Hardcoded |
-| Flight schedule | 65 peak-day flights, real airlines & origins | ✅ Hardcoded |
+| Flight schedule | 380 peak-day movements, 29 airlines & 36 cities | ✅ Fixture + deterministic weekly variation |
 | Route polylines | 3,944 GPS points of actual road geometry | ✅ Bundled GeoJSON |
 | Ferry schedules | phi-phi.com + pier websites | ✅ Hardcoded |
 | Pricing | 2025 Phuket market rates (Grab, taxi, tuk-tuk) | ✅ Sourced in code |
@@ -362,7 +362,7 @@ flowchart LR
 - [ ] Replace GeoJSON polylines in `src/data/upstream/` with your road traces
 - [ ] Update `ROUTE_DEFINITIONS` in `config.ts` with your route names and metadata
 - [ ] Update `PRICE_COMPARISONS` with local taxi/rideshare rates
-- [ ] Set `BUS_CAPTURE_RATE` to your realistic baseline (12% for Phuket)
+- [ ] Replace `captureRateFor()` with measured origin/segment rates (Phuket currently uses 3–7%, ~5% weighted)
 - [ ] Update fleet roster in `fleetSimulator.ts` with local vehicle plates
 - [ ] Translate `src/lib/i18n.ts` strings for your target languages
 - [ ] Deploy to Cloudflare Pages — works on free tier
@@ -441,20 +441,17 @@ The deploy is blocked if any gate fails.
 
 ---
 
-## The Numbers (Peak Day Simulation)
+## The Numbers (Representative Sunday Simulation)
 
 ```
-Flights landing:    65 arrivals · ~6,500 pax
-Cleared customs:    ~5,000 in the service window (06:00–22:30)
-Want the bus:       ~600 (12% capture)
-Actually board:     ~580 (limited by timetable capacity)
-Delivered:          ~560 (some still in transit at end of day)
+Flights landing:    188 arrivals · 40,891 pax
+Want the bus:       2,460 (3–7% by origin, ~5% weighted)
+Actually board:     386 (limited by timetable capacity)
+Walked away:        2,064 after the 60-minute patience threshold
+Delivered by 24:00: 359 (the remainder are still in transit)
 
-Revenue:            ฿56,000 (peak day)
-vs Grab equivalent: ฿403,000 (what they'd have paid)
-Rider savings:      ฿347,000 in a single peak day
-
-CO₂ avoided:        ~840 kg vs full-taxi equivalent
+Revenue:            ฿38,600
+Missed revenue:     ฿206,400
 ```
 
 ---
@@ -499,7 +496,8 @@ src/
 │   ├── roi.ts                  # ROI math with sourced constants
 │   ├── config.ts               # Routes, pricing, destinations
 │   ├── routes.ts               # GeoJSON loader
-│   ├── flightData.ts           # 65 peak-day flights
+│   ├── opsFlightSchedule.ts    # 380-movement fixture + weekly variation
+│   ├── flightData.ts           # Smaller tourist-app flight window
 │   └── regression.test.ts      # 10 regression tests
 ├── components/
 │   ├── OpsConsole.tsx          # Wall screen dashboard

@@ -49,6 +49,7 @@ import { SupplyPanel } from "./components/v2/SupplyPanel";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
+import { InsightsSummaryPanel } from "./components/v2/InsightsSummaryPanel";
 import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
@@ -78,10 +79,14 @@ function vehiclePax(v: VehiclePosition): number {
   return Math.max(0, Math.round(cap * occ) + (seed - 3));
 }
 
-/** 1440px is the design reference; wall screens scale up, never down. */
+/** 1440×900 is the design reference; wall screens scale up, never down.
+ * Width-only scaling clipped the body on common 16:9 displays because the
+ * header/footer consumed more than their share of the zoomed height. */
 function computeOpsScale(): number {
   if (typeof window === "undefined") return 1;
-  return Math.min(2.5, Math.max(1, window.innerWidth / 1440));
+  const widthScale = window.innerWidth / 1440;
+  const heightScale = window.innerHeight / 900;
+  return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
 }
 
 function formatClockLabel(min: number): string {
@@ -369,23 +374,16 @@ export default function DashboardV2() {
         // TOOLKIT view — the research this console was built to serve
         <ToolkitPanel />
       ) : viewMode === 'insights' ? (
-        // INSIGHTS view — full-width timeline for the data-science scan
+        // INSIGHTS view — one-screen bridge from toolkit evidence to decision
         <main className="v2-body v2-body--insights">
-          <aside className={`v2-panel v2-panel--demand`}>
-            <h2 className="v2-panel__title">Demand · HKT Airport</h2>
-            <DemandPanel
-              state={state}
-              serviceGap={serviceGap}
-              currentDemandPax={currentDemandPax}
-              nextIncomingFlight={nextIncomingFlight}
-              nextPeakBucket={nextPeakBucket}
-              hourlyFlights={hourlyFlights}
-              dailyFlights={dailyFlights}
-            />
-          </aside>
+          <InsightsSummaryPanel
+            rows={hourlyBalance}
+            points={queueTimeline}
+            currentWaiting={state.paxAtAirport}
+          />
           <section className="v2-insights-main">
             <InsightsTimeline points={queueTimeline} simMinutes={state.simMinutes} />
-            <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} />
+            <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} mode="priority" />
           </section>
         </main>
       ) : (

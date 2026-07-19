@@ -24,7 +24,7 @@ const SCRIPT: Caption[] = [
   { fromMin: 480, toMin: 510, text: "08:00 — Bus กข 1001 prepares to leave the airport. Fares set at ฿100 vs ฿800 by Grab." },
   { fromMin: 510, toMin: 555, text: "08:30 — First bus departs. 21 boarded. Second bus loading at gate 6." },
   { fromMin: 555, toMin: 615, text: "09:15 — Morning rush hits. 4 buses on the Airport-Patong corridor. Demand exceeds supply." },
-  { fromMin: 615, toMin: 690, text: "10:15 — Capture rate holds at 12%. Each tourist who chose the bus saved an average of ฿620." },
+  { fromMin: 615, toMin: 690, text: "10:15 — Origin-based capture runs 3–7% (about 5% fleet-wide). Each tourist who chose the bus saved an average of ฿620." },
   { fromMin: 690, toMin: 780, text: "11:30 — Right bar climbing past ฿14k revenue and 96 kg CO₂ avoided." },
   { fromMin: 780, toMin: 870, text: "13:00 — A China Southern charter from Guangzhou adds 234 pax. Day-of-week patterns reshape the schedule." },
   { fromMin: 870, toMin: 990, text: "14:30 — Buses follow real road geometry, no shortcut diagonals across landmarks." },

@@ -277,7 +277,7 @@ export function GovernorDashboard() {
         <section className="governor__panel">
           <h2 className="governor__panel-title">
             Financial Model
-            <span className="governor__panel-source">20 buses · 12% capture · ฿100 fare</span>
+            <span className="governor__panel-source">20 buses · 12% growth case · ฿100 fare</span>
           </h2>
 
           <div className="governor__roi-row">

@@ -1,6 +1,6 @@
 # Phuket Smart Bus — Project Intelligence
 
-This file is the single source of truth for this project. Every Claude Code session should read this before writing a single line.
+This file is the single source of truth for this project. Every Codex session should read this before writing a single line.
 
 ---
 

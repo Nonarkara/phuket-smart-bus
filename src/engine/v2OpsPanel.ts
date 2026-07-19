@@ -5,7 +5,7 @@
  *
  *   getHourlyBalance(hour) — three numbers per hour:
  *     arrivalPax    · raw arriving passengers that hour
- *     busEligible   · 12% who join the bus queue (engine demand curve)
+ *     busEligible   · origin-based 3–7% who join the bus queue
  *     busSeats      · airport-line seats departing that hour
  *     + status pill (SHORTFALL / TIGHT / BALANCED / SURPLUS)
  *

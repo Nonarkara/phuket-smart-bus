@@ -8312,8 +8312,8 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Wall-screen scale: DashboardV2 sets inline zoom on this element from
-     window.innerWidth / 1440 (clamped 1–2.5). Every size in this block is
+  /* Wall-screen scale: DashboardV2 fits a 1440×900 design canvas to the
+     available width AND height (clamped 1–2.5). Every size in this block is
      fixed px so zoom is the ONLY scale mechanism — vw units would ignore
      zoom (standardized Chrome) and double-scale. */
 }
@@ -9114,6 +9114,163 @@ a { color: var(--tint); }
   /* The Demand panel inside INSIGHTS view becomes a slim sidebar */
   margin: 18px 0 18px 18px;
   height: calc(100vh - 220px);
+}
+
+/* INSIGHTS is the bridge between TOOLKIT evidence and OPS detail. It must fit
+   in one viewport: one decision rail, one queue shape, five priority hours. */
+.v2 .v2-body--insights {
+  grid-template-columns: 300px minmax(0, 1fr);
+  overflow: hidden;
+}
+.v2 .v2-insights-rail {
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ax-panel);
+  display: flex;
+  flex-direction: column;
+}
+.v2 .v2-insights-rail__head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2 .v2-insights-rail__eyebrow,
+.v2 .v2-insights-decision__label,
+.v2 .v2-insights-proof > span {
+  display: block;
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.v2 .v2-insights-rail__head h2 {
+  margin: 5px 0;
+  color: var(--ax-ink);
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.v2 .v2-insights-rail__head p,
+.v2 .v2-insights-decision > span:last-child,
+.v2 .v2-insights-proof p {
+  margin: 0;
+  color: var(--ax-ink-2);
+  font-size: var(--t-micro);
+  line-height: 1.35;
+}
+.v2 .v2-insights-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 16px;
+  background: #fdf6e8;
+  border-bottom: 1px solid #e6c987;
+}
+.v2 .v2-insights-decision strong {
+  color: #8a4a00;
+  font-size: 24px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.v2 .v2-insights-now {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--ax-line);
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.v2 .v2-insights-now strong {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: var(--ax-ink);
+  font-size: 28px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.v2 .v2-evidence-chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--ax-line);
+  gap: 1px;
+}
+.v2 .v2-evidence-chain li {
+  background: var(--ax-panel);
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.v2 .v2-evidence-chain span {
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.v2 .v2-evidence-chain strong {
+  color: var(--ax-ink);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.v2 .v2-evidence-chain li:nth-child(2) strong,
+.v2 .v2-evidence-chain li:nth-child(4) strong { color: var(--ax-accent); }
+.v2 .v2-evidence-chain li:nth-child(3) strong { color: #9a6a00; }
+.v2 .v2-insights-proof {
+  padding: 9px 16px;
+  display: grid;
+  gap: 3px;
+}
+.v2 .v2-insights-proof p + span { margin-top: 7px; }
+.v2 .v2-insights-main {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+  border: none;
+  background: var(--ax-paper);
+}
+.v2 .v2-insights {
+  min-height: 0;
+  gap: 8px;
+  padding: 12px 16px;
+  overflow: hidden;
+  border: 1px solid var(--ax-line-2);
+  background: var(--ax-panel);
+}
+.v2 .v2-insights__head { gap: 2px; }
+.v2 .v2-insights__eyebrow { color: var(--ax-ink-3); }
+.v2 .v2-insights__title { color: var(--ax-ink); font-size: 18px; }
+.v2 .v2-insights__svg { min-height: 120px; max-height: 190px; }
+.v2 .v2-insights__legend,
+.v2 .v2-insights__kpis { display: none; }
+.v2 .v2-insights__kpis { gap: 1px; padding-top: 6px; border-top-color: var(--ax-line); background: var(--ax-line); }
+.v2 .v2-insights__kpi { gap: 2px; padding: 7px 10px; border: none; background: var(--ax-panel); }
+.v2 .v2-insights__kpi--alert { box-shadow: inset 0 -2px 0 var(--ax-warn); }
+.v2 .v2-insights__kpi-val { color: var(--ax-ink); font-size: 19px; }
+.v2 .v2-insights__kpi-label { color: var(--ax-ink-3); }
+.v2 .v2-hourly--priority {
+  gap: 5px;
+  padding: 10px 16px;
+  border: 1px solid var(--ax-line-2);
+  background: var(--ax-panel);
+}
+.v2 .v2-hourly--priority .v2-hourly__row { padding-block: 3px; }
+.v2 .v2-hourly--priority .v2-hourly__footer { padding-top: 5px; }
+
+@media (max-width: 900px) {
+  .v2 .v2-body--insights { grid-template-columns: 250px minmax(0, 1fr); }
+  .v2 .v2-insights-proof { display: none; }
 }
 
 /* Center column: map on top + operator fleet panel below                    */
