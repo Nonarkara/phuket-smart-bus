@@ -142,7 +142,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
           <span className="hero-section__safety-icon">⚠</span>
           <span className="hero-section__safety-text">
             {safetyInfo.injured.toLocaleString()} {safetyInfo.nation} tourists injured in Thai traffic this year
-            ({motorcyclePct}% on motorcycles) — bus riders: 0.
+            ({motorcyclePct}% involving motorcycles). Choose the bus instead of renting a scooter.
           </span>
         </div>
       )}
@@ -153,7 +153,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
             PM2.5 {pm25.value}
           </span>
           <span className="hero-pm25__msg" style={{ color: pm25.color }}>
-            {pm25.level} · 1 rider = 1 less scooter
+            {pm25.level} · Phuket Airport air quality
           </span>
         </div>
       )}

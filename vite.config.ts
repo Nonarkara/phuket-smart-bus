@@ -11,7 +11,7 @@ export default defineConfig({
   json: {
     stringify: false
   },
-  base: "/",
+  base: process.env.GITHUB_PAGES === "true" ? "/phuket-smart-bus/" : "/",
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },

@@ -51,8 +51,15 @@ import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
 import { InsightsSummaryPanel } from "./components/v2/InsightsSummaryPanel";
 import { ToolkitPanel } from "./components/v2/ToolkitPanel";
+import { OpsBriefing } from "./components/v2/OpsBriefing";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
+
+function getInitialViewMode(): ViewMode {
+  if (typeof window === "undefined") return "operations";
+  const requested = new URLSearchParams(window.location.search).get("view");
+  return requested === "insights" || requested === "toolkit" ? requested : "operations";
+}
 
 /** Join a fleet vehicle to the demand-supply engine's per-trip boarding count.
  *
@@ -109,7 +116,7 @@ function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
 }
 
 export default function DashboardV2() {
-  const [viewMode, setViewMode] = useState<ViewMode>("operations");
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
   const [simDay, setSimDayState] = useState(() => getSimulationDay());
   const [state, setState] = useState(() => computeSimState());
   const [metrics, setMetrics] = useState(() => getHeadlineMetrics());
@@ -176,6 +183,7 @@ export default function DashboardV2() {
   // cumulative abandonment. The old serviceGap (demand − boarded) summed
   // both into one fake "waiting" number.
   const serviceGap = state.paxAtAirport;
+  const standbyBusesNeeded = Math.ceil(serviceGap / 25);
   const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
   const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
 
@@ -207,11 +215,25 @@ export default function DashboardV2() {
   // factor on a normal element is honored everywhere. All fonts inside the
   // Axiom block are fixed px, so zoom is the single scale mechanism.
   const [opsScale, setOpsScale] = useState(() => computeOpsScale());
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 1180
+  );
   useEffect(() => {
-    const onResize = () => setOpsScale(computeOpsScale());
+    const onResize = () => {
+      setOpsScale(computeOpsScale());
+      setIsCompact(window.innerWidth < 1180);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  const handleViewModeChange = (next: Exclude<ViewMode, "live">) => {
+    setViewMode(next);
+    const url = new URL(window.location.href);
+    if (next === "operations") url.searchParams.delete("view");
+    else url.searchParams.set("view", next);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
 
   // ── The heartbeat: rAF loop + failsafe, two cadences ───────────────────
   // Per frame (~60fps): read the continuous clock ONCE, then drive the two
@@ -308,14 +330,17 @@ export default function DashboardV2() {
               {serviceGap.toLocaleString()} pax in the airport queue now
               {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today (฿${state.lostRevenueThb.toLocaleString()} lost)`}.
             </strong>
-            <span>Next departure absorbs 25. Dispatching {Math.min(5, Math.ceil(serviceGap / 25))} standby buses clears the current queue.</span>
+            <span>Next departure absorbs 25. Dispatching {standbyBusesNeeded} standby buses would clear the current queue.</span>
           </div>
         </div>
       )}
 
       <header className="v2-header">
         <div className="v2-header__brand">
-          <span className="v2-header__eyebrow">Airport Ops Console</span>
+          <span className="v2-header__eyebrow">
+            <span className="v2-header__eyebrow-full">Airport Ops Console</span>
+            <span className="v2-header__eyebrow-compact">Airport Ops</span>
+          </span>
           <h1>Phuket Smart Bus</h1>
           <span className="v2-header__sub">Demand-Supply Intelligence</span>
         </div>
@@ -339,21 +364,27 @@ export default function DashboardV2() {
             </span>
           )}
         </div>
+        <nav className="v2-mode-toggle" aria-label="Dashboard views" role="tablist">
+          <button
+            className={`v2-mode-btn ${viewMode === 'operations' || viewMode === 'live' ? 'is-active' : ''}`}
+            onClick={() => handleViewModeChange('operations')}
+            role="tab"
+            aria-selected={viewMode === 'operations' || viewMode === 'live'}
+          >OPS</button>
+          <button
+            className={`v2-mode-btn ${viewMode === 'insights' ? 'is-active' : ''}`}
+            onClick={() => handleViewModeChange('insights')}
+            role="tab"
+            aria-selected={viewMode === 'insights'}
+          >INSIGHTS</button>
+          <button
+            className={`v2-mode-btn ${viewMode === 'toolkit' ? 'is-active' : ''}`}
+            onClick={() => handleViewModeChange('toolkit')}
+            role="tab"
+            aria-selected={viewMode === 'toolkit'}
+          >TOOLKIT</button>
+        </nav>
         <div className="v2-header__clock">
-          <div className="v2-mode-toggle">
-            <button
-              className={`v2-mode-btn ${viewMode === 'operations' || viewMode === 'live' ? 'is-active' : ''}`}
-              onClick={() => setViewMode('operations')}
-            >OPS</button>
-            <button
-              className={`v2-mode-btn ${viewMode === 'insights' ? 'is-active' : ''}`}
-              onClick={() => setViewMode('insights')}
-            >INSIGHTS</button>
-            <button
-              className={`v2-mode-btn ${viewMode === 'toolkit' ? 'is-active' : ''}`}
-              onClick={() => setViewMode('toolkit')}
-            >TOOLKIT</button>
-          </div>
           <span className="v2-header__live">●</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
           <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
@@ -386,6 +417,22 @@ export default function DashboardV2() {
             <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} mode="priority" />
           </section>
         </main>
+      ) : isCompact ? (
+        <OpsBriefing
+          mapRef={mapRef}
+          waiting={state.paxAtAirport}
+          movingBuses={metrics.fleet.movingBuses}
+          boarded={state.paxBoarded}
+          abandoned={state.paxAbandoned}
+          earnedThb={state.revenueThb}
+          lostThb={state.lostRevenueThb}
+          currentDemandPax={currentDemandPax}
+          currentBusDemand={currentBusDemand}
+          currentSupplySeats={currentSupplySeats}
+          standbyBuses={standbyBusesNeeded}
+          nextDeparture={state.nextDeparture}
+          hourlyBalance={hourlyBalance}
+        />
       ) : (
         // OPERATIONS view — three columns, fleet panel under map
         <main className="v2-body">

@@ -192,7 +192,8 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 - Dark theme (#0a0e14 background) — reduces eye strain in ops rooms
 - Three-column grid: left (demand/flights), center (map), right (supply/impact)
 - Bottom accumulator bar: Buses, Trips, Km, Pax, Revenue, CO₂ — all climbing in real time
-- `zoom: clamp(1, calc(100vw / 1920), 3)` on `html.ops-mode` — auto-scales for any display size
+- `DashboardV2` fits a 1440×900 design canvas against both viewport width and height, then zooms up for wall screens
+- Below 1180px, Operations becomes a focused briefing: decision, live map, evidence chain, totals, then three priority hours
 - Flight ticker with animated pop-in as planes "land"
 - Regional origin bar chart (SE Asia, China, Russia/CIS, Europe, India, Middle East)
 - Every metric derived from the demand-supply chain, not hardcoded
@@ -258,13 +259,12 @@ Don't hardcode "1,200 riders today." Instead: scheduled flight pax × origin-bas
 
 ## What Needs Work
 
-1. **DashboardV2** (`/v2`) — the demand-supply intelligence dashboard is built but needs polish. Left sidebar flight ticker, regional bar chart, and accumulating metrics are coded but need testing at desktop width.
-2. **OpsConsole** — 1,591 lines in one file. Should be split into sub-components (FleetPanel, DemandPanel, WeatherPanel, etc.).
-3. **The OpsConsole bottom bar** — needs to show live accumulating metrics from the 30× engine at all times, not just during Simulate replay.
-4. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand.
-5. **i18n** — 919 lines of hardcoded strings. Should eventually be JSON files.
-6. **Dead code** — ~15% of CSS unused (drift).
-7. **Testing** — <1% test coverage. Needs unit tests for the engine, component tests, and E2E.
+1. **OpsConsole** — 1,591 lines in one file. Should be split into sub-components (FleetPanel, DemandPanel, WeatherPanel, etc.).
+2. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand.
+3. **i18n** — 919 lines of hardcoded strings. Should eventually be JSON files.
+4. **Dead code** — ~15% of CSS unused (drift).
+5. **Responsive regression testing** — the engine has broad unit coverage, but phone/laptop/wall layouts still need automated visual tests.
+6. **ROI arrival baseline** — `roi.ts` still uses 4,350 average daily arriving passengers and needs a sourced reconciliation with the larger operations fixture.
 
 ---
 

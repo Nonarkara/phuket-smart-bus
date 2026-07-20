@@ -42,6 +42,7 @@ import { GovernorDashboard } from "./components/GovernorDashboard";
 import { DemoCaption, buildTuesdayDemoClock } from "./components/DemoCaption";
 import { setClockOverride } from "./engine/fleetSimulator";
 import { haversineDistanceMeters } from "./lib/geo";
+import { appPath, routePath } from "./lib/paths";
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = [
@@ -67,11 +68,11 @@ type AppView = "map" | "more";
 type MorePanel = "stops" | "pass" | null;
 type MapRouteFilter = RouteId | "all-core";
 
-const VIEW_PATHS: Record<AppView, string> = { map: "/", more: "/more" };
+const VIEW_PATHS: Record<AppView, string> = { map: appPath("/"), more: appPath("/more") };
 
 function getInitialView(): AppView | "ops" {
   if (typeof window === "undefined") return "map";
-  const p = window.location.pathname;
+  const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
@@ -170,33 +171,41 @@ export default function App() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  useEffect(() => {
+    const onPopState = () => setIsOps(getInitialView() === "ops");
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   function goOps() {
     setIsOps(true);
-    window.history.pushState({}, "", "/ops");
+    window.history.pushState({}, "", appPath("/ops"));
   }
   function goTourist() {
     setIsOps(false);
-    window.history.pushState({}, "", "/");
+    window.history.pushState({}, "", appPath("/"));
   }
 
+  const pathname = typeof window !== "undefined" ? routePath(window.location.pathname) : "/";
+
   // /governor — Governor's impact dashboard
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/governor")) {
+  if (pathname.startsWith("/governor")) {
     return <GovernorDashboard />;
   }
 
   // /driver/[plate] tablet view (single-bus driver perspective)
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/driver/")) {
-    const plate = decodeURIComponent(window.location.pathname.slice("/driver/".length));
+  if (pathname.startsWith("/driver/")) {
+    const plate = decodeURIComponent(pathname.slice("/driver/".length));
     return <DriverTablet plate={plate} />;
   }
 
   // /roi page (financial model for buyers)
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/roi")) {
+  if (pathname.startsWith("/roi")) {
     return <RoiCalculator />;
   }
 
   // v2 dashboard at /v2 path
-  if (typeof window !== "undefined" && window.location.pathname.includes("/v2")) {
+  if (pathname.startsWith("/v2")) {
     return <>
       <DashboardV2 />
       {DEMO_MODE && <DemoCaption />}
@@ -242,10 +251,21 @@ export default function App() {
           Operator Console
         </button>
         <div className="desktop-shell__more">
-          <a className="desktop-shell__link" href="/roi">Financial model →</a>
-          <a className="desktop-shell__link" href="/driver/กข 1001 ภูเก็ต">Driver tablet →</a>
-          <a className="desktop-shell__link" href="/?demo=tuesday">Auto-play demo →</a>
-          <a className="desktop-shell__link" href="/governor">Governor's Dashboard →</a>
+          <span className="desktop-shell__more-label">Explore the system</span>
+          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=insights`}>
+            <strong>Insights</strong><span>See demand become a dispatch decision</span>
+          </a>
+          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=toolkit`}>
+            <strong>Toolkit</strong><span>Read the research, method and assumptions</span>
+          </a>
+          <a className="desktop-shell__link" href={appPath("/roi")}>
+            <strong>Financial model</strong><span>Test fleet size, capture and fare</span>
+          </a>
+          <a className="desktop-shell__link" href={appPath("/governor")}>
+            <strong>Public impact</strong><span>Safety, savings and CO₂ in one view</span>
+          </a>
+          <a className="desktop-shell__link desktop-shell__link--quiet" href={appPath("/driver/กข 1001 ภูเก็ต")}>Driver tablet →</a>
+          <a className="desktop-shell__link desktop-shell__link--quiet" href={`${appPath("/")}?demo=tuesday`}>Watch the day unfold →</a>
         </div>
         <p className="desktop-shell__hint">Open in your phone for the best experience</p>
       </div>
@@ -684,7 +704,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
       setMorePanel("stops");
       setView("more");
     });
-    if (typeof window !== "undefined") window.history.pushState({ view: "more" }, "", "/more");
+    if (typeof window !== "undefined") window.history.pushState({ view: "more" }, "", appPath("/more"));
   }
 
   return (

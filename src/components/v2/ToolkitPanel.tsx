@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { appPath } from "../../lib/paths";
+
 /**
  * TOOLKIT tab — the no-nonsense summary of the USASCP toolkit this console
  * was built to serve:
@@ -58,7 +61,7 @@ const HYPOTHESES = [
 const OBJECTIVES = [
   { k: "Congestion", d: "Fewer private cars and vans on a road network already at capacity" },
   { k: "Safety", d: "Fewer motorbike-taxi and rental-car trips by first-time visitors" },
-  { k: "Emissions", d: "EV buses replacing petrol door-to-door runs" },
+  { k: "Emissions", d: "Shared bus trips replacing higher-emission door-to-door runs" },
   { k: "User cost", d: "฿100 flat vs ฿600–1,000 Grab — money that stays in tourists' pockets" },
   { k: "Operator cost", d: "A private operator with no subsidy must fill seats or die" },
 ];
@@ -210,14 +213,45 @@ function ImpactEffortFigure() {
 // ---------------------------------------------------------------------------
 
 export function ToolkitPanel() {
+  const [showFullToolkit, setShowFullToolkit] = useState(false);
+
   return (
     <main className="v2-toolkit">
+      <h1 className="sr-only">Phuket Smart Bus Toolkit</h1>
       <div className="tk-inner">
+        <section className="tk-mobile-summary" aria-labelledby="tk-mobile-title">
+          <span className="tk-eyebrow">The toolkit in four moves</span>
+          <h2 className="tk-title" id="tk-mobile-title">Research that runs.</h2>
+          <p className="tk-lead">
+            This is not a report pasted into a dashboard. Each research finding
+            becomes a measurable assumption, an operating signal, and a decision.
+          </p>
+          <ol className="tk-mobile-steps">
+            <li><strong>Listen</strong><span>Survey riders and non-riders to find the real barrier.</span></li>
+            <li><strong>Model</strong><span>Turn flights, customs, likely riders and the timetable into one queue.</span></li>
+            <li><strong>Decide</strong><span>Show which hour needs a bus and how much delay costs.</span></li>
+            <li><strong>Replace</strong><span>Swap simulation inputs for GPS, ticketing and camera data when ready.</span></li>
+          </ol>
+          <nav className="tk-mobile-actions" aria-label="Continue exploring">
+            <a href={`${appPath("/v2")}?view=insights`}>See the evidence →</a>
+            <a href={appPath("/ops")}>Open operations →</a>
+          </nav>
+          <button
+            className="tk-mobile-more"
+            type="button"
+            onClick={() => setShowFullToolkit((open) => !open)}
+            aria-expanded={showFullToolkit}
+          >
+            {showFullToolkit ? "Hide full research notes" : "Read full research notes"}
+          </button>
+        </section>
+
+        <div className={`tk-full ${showFullToolkit ? "is-open" : ""}`}>
 
         {/* ── Why this exists ─────────────────────────────────────────── */}
         <section className="tk-hero">
           <span className="tk-eyebrow">The Toolkit Behind This Console</span>
-          <h1 className="tk-title">Everyone collaborated. The buses still ran emptier than expected.</h1>
+          <h2 className="tk-title">Everyone collaborated. The buses still ran emptier than expected.</h2>
           <p className="tk-lead">
             In October 2024, Phuket Smart Bus — a private operator under Phuket City
             Development — launched a new EV route between Phuket Town and Patong,
@@ -482,6 +516,7 @@ export function ToolkitPanel() {
           </p>
         </section>
 
+        </div>
       </div>
     </main>
   );

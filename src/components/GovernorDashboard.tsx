@@ -7,6 +7,7 @@ import {
   ECONOMIC_COST_PER_INJURY_THB
 } from "../engine/safetyData";
 import { computeRoi, formatTHB, formatPayback } from "../engine/roi";
+import { appPath } from "../lib/paths";
 
 // ---------------------------------------------------------------------------
 // Live stat hook — single source of truth via getHeadlineMetrics()
@@ -318,7 +319,7 @@ export function GovernorDashboard() {
             <div className="governor__cta-body">
               5 buses · Airport corridor · ฿1.25M capex · Exit clauses at day 30 + 60
             </div>
-            <a className="governor__cta-link" href="/roi">Full financial model →</a>
+            <a className="governor__cta-link" href={appPath("/roi")}>Full financial model →</a>
           </div>
         </section>
       </div>
@@ -348,11 +349,11 @@ export function GovernorDashboard() {
         <span>·</span>
         <span>Data: ThaiRSC (road safety) · PTAT (arrivals) · PKSB (operations) · APTA (CO₂)</span>
         <span>·</span>
-        <a href="/ops">Ops Console</a>
+        <a href={appPath("/ops")}>Ops Console</a>
         <span>·</span>
-        <a href="/roi">ROI Calculator</a>
+        <a href={appPath("/roi")}>ROI Calculator</a>
         <span>·</span>
-        <a href="/">Rider App</a>
+        <a href={appPath("/")}>Rider App</a>
       </footer>
     </div>
   );

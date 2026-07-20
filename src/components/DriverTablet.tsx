@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getVehicleDetail, getVehiclesNow, type DriverTabletData } from "../engine/fleetSimulator";
 import { getEnvironmentSnapshot } from "../engine/environmentSimulator";
 import { simNow, simClock } from "../engine/simulation";
+import { appPath } from "../lib/paths";
 
 /**
  * Per-bus tablet view at /driver/[plate]. The driver sees their trip,
@@ -45,14 +46,14 @@ export function DriverTablet({ plate }: { plate: string }) {
               <ul>
                 {activePlates.map((p) => (
                   <li key={p}>
-                    <a href={`/driver/${encodeURIComponent(p)}`}>{p}</a>
+                    <a href={appPath(`/driver/${encodeURIComponent(p)}`)}>{p}</a>
                   </li>
                 ))}
               </ul>
             </div>
           )}
           <div className="driver-tablet__missing-clock">{simClock()} BKK</div>
-          <a href="/" className="driver-tablet__missing-back">← Operator Console</a>
+          <a href={appPath("/ops")} className="driver-tablet__missing-back">← Operator Console</a>
         </div>
       </div>
     );

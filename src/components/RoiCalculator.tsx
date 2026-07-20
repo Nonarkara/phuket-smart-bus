@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { computeRoi, formatTHB, formatPayback, ROI_CONSTANTS } from "../engine/roi";
+import { appPath } from "../lib/paths";
 
 /**
  * The "show me the money" page. Pitched at the buyer's CFO.
@@ -205,7 +206,7 @@ export function RoiCalculator() {
       </section>
 
       <footer className="roi-foot">
-        <a href="/" className="roi-back">← Back to live demo</a>
+        <a href={appPath("/")} className="roi-back">← Back to live demo</a>
         <span className="roi-foot__legal">
           Pro-forma model. Not a financial guarantee. PKSB and Phuket
           municipality data superseded by their own audited statements.

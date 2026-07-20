@@ -470,14 +470,16 @@ cd phuket-smart-bus
 npm install
 npm run dev          # Tourist app at localhost:5173/
                      # Ops console at localhost:5173/ops
+                     # Insights at localhost:5173/v2?view=insights
+                     # Toolkit at localhost:5173/v2?view=toolkit
                      # ROI calculator at localhost:5173/roi
                      # Driver tablet at localhost:5173/driver/กข%201001%20ภูเก็ต
 ```
 
-To build for production:
+To build the GitHub Pages artifact with its repository base path:
 
 ```bash
-npm run build        # Runs tsc + vite build
+GITHUB_PAGES=true npm run build:client
 cp dist/client/index.html dist/client/404.html   # SPA routing fallback
 ```
 
@@ -505,9 +507,11 @@ src/
 │   ├── DriverTablet.tsx        # Cab display
 │   ├── LiveMap.tsx             # Leaflet + imperative markers
 │   ├── WelcomeSheet.tsx        # Tourist bottom sheet
+│   ├── v2/OpsBriefing.tsx      # Phone/small-laptop operations summary
 │   └── DemoCaption.tsx         # Auto-play narration
 ├── lib/
 │   ├── i18n.ts                 # 6-language strings
+│   ├── paths.ts                # GitHub Pages-aware client routes
 │   └── vehicleAnimation.ts     # CSS transition helpers
 └── data/upstream/
     ├── rawai_airport_line.json  # 3,944-point road polyline

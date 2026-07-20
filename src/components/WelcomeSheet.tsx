@@ -217,12 +217,25 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   if (step === "ask") {
     if (!expanded) {
       return (
-        <div className="welcome-sheet welcome-sheet--collapsed" onClick={() => setExpanded(true)}>
+        <button
+          className="welcome-sheet welcome-sheet--collapsed"
+          type="button"
+          onClick={() => setExpanded(true)}
+          aria-expanded="false"
+          aria-label={`Plan a trip. Next bus to ${tickingDisplay.dest} in ${tickingDisplay.text}. Flat fare ${BUS_FARE} baht.`}
+        >
           <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
-          <div className="welcome-sheet__peek welcome-sheet__peek--minimal">
-            <span className="welcome-sheet__peek-hint">Plan a trip · Routes · Fares</span>
+          <div className="welcome-sheet__peek">
+            <span className="welcome-sheet__next-bus">
+              <span className="welcome-sheet__next-label">Next bus to {tickingDisplay.dest}</span>
+              <strong className={`welcome-sheet__next-time ${tickingDisplay.cls}`}>{tickingDisplay.text}</strong>
+            </span>
+            <span className="welcome-sheet__peek-right">
+              <strong className="welcome-sheet__peek-fare">฿{BUS_FARE} flat fare</strong>
+              <span className="welcome-sheet__peek-hint">Plan trip →</span>
+            </span>
           </div>
-        </div>
+        </button>
       );
     }
 
@@ -240,6 +253,7 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
           <button className="welcome-sheet__search-btn" type="button" onClick={handleSearch}>
+            <span className="sr-only">Search destinations</span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
           </button>
         </div>

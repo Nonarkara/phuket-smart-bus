@@ -53,21 +53,25 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
         {DAY_OPTIONS.map((d) => (
           <button
             key={d.dow}
+            type="button"
             className={`v2-timebar__speed ${simDay === d.dow ? "is-active" : ""}`}
             onClick={() => onDayChange(d.dow)}
             title={`Replay ${d.label} — deterministic day-of-week schedule`}
+            aria-pressed={simDay === d.dow}
           >
             {d.label}
           </button>
         ))}
       </div>
       <button
+        type="button"
         className="v2-timebar__play"
         onClick={() => {
           togglePlayPause();
           onClockStateChange(getClockState());
         }}
         title={clockState.mode === 'playing' ? 'Pause' : 'Play'}
+        aria-label={clockState.mode === 'playing' ? 'Pause simulation' : 'Play simulation'}
       >
         {clockState.mode === 'playing' ? '⏸' : '▶'}
       </button>
@@ -78,6 +82,7 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
         max={SERVICE_END}
         step={1}
         value={sliderValue}
+        aria-label="Simulation time"
         onChange={(e) => {
           const val = Number(e.target.value);
           setSliderValue(val);
@@ -89,6 +94,7 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
       <span className="v2-timebar__label">{formatSimTime(sliderValue)}</span>
       <div className="v2-timebar__speeds">
         <button
+          type="button"
           className="v2-timebar__day-sweep"
           onClick={onStartDaySweep}
           title="Replay the whole service day (05:30 → 22:30) in ~60 seconds"
@@ -98,11 +104,13 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
         {SPEED_OPTIONS.map((s) => (
           <button
             key={s}
+            type="button"
             className={`v2-timebar__speed ${clockState.speed === s ? 'is-active' : ''}`}
             onClick={() => {
               setSpeed(s);
               onClockStateChange(getClockState());
             }}
+            aria-pressed={clockState.speed === s}
           >
             {s}×
           </button>

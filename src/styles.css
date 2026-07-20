@@ -8363,6 +8363,7 @@ a { color: var(--tint); }
   text-transform: uppercase;
   color: var(--ax-accent);
 }
+.v2 .v2-header__eyebrow-compact { display: none; }
 
 .v2 .v2-header__story {
   background: transparent;
@@ -9826,9 +9827,10 @@ a { color: var(--tint); }
   .v2 .tk-gap { grid-template-columns: 1fr; gap: 4px; }
 }
 
-/* tk-title is an h1; the Axiom header rule `.v2 h1 { display:none }` targets
-   the brand h1 — re-enable it inside the toolkit page. */
+/* The Axiom header rule `.v2 h1 { display:none }` targets the brand heading;
+   keep toolkit section titles visible and preserve its screen-reader h1. */
 .v2 .v2-toolkit .tk-title { display: block; }
+.v2 .v2-toolkit > .sr-only { display: block; }
 
 /* ── Toolkit: thesis tenets A–H ──────────────────────────────────────────── */
 .v2 .tk-tenets {
@@ -9913,4 +9915,417 @@ a { color: var(--tint); }
 @media (max-width: 720px) {
   .v2 .tk-tenets { grid-template-columns: 1fr 1fr; }
   .v2 .tk-logo { height: 52px; padding: 10px 14px; }
+}
+
+/* ============================================================================
+ * RESPONSIVE PRODUCT AUDIT — phone, laptop and wall-screen roles
+ *
+ * OPS is a dark, glanceable operating surface. INSIGHTS and TOOLKIT remain
+ * light editorial surfaces. Below 1180px the wall grid becomes a focused
+ * briefing instead of shrinking three columns until they are unreadable.
+ * ========================================================================== */
+
+/* Operations wall: honour the dark-room design rule without changing the
+   editorial character of Insights and Toolkit. */
+.v2--operations {
+  --ax-paper:  #0a0e14;
+  --ax-panel:  #0f141d;
+  --ax-ink:    #f3f6f8;
+  --ax-ink-2:  #aeb7c0;
+  --ax-ink-3:  #707b87;
+  --ax-line:   #202832;
+  --ax-line-2: #303a45;
+  --ax-accent: #46b986;
+  --ax-neg:    #ff8a7a;
+  --ax-warn:   #e0a243;
+}
+.v2--operations .v2-flight-row:hover,
+.v2--operations .v2-week__row:hover { background: #151b24; }
+.v2--operations .v2-hourly__row.is-current,
+.v2--operations .v2-schedule__row--active { background: rgba(224, 162, 67, 0.10); }
+.v2--operations .v2-hourly__row--shortfall .v2-hourly__status {
+  background: rgba(224, 162, 67, 0.12);
+  color: #f0bd68;
+  border-color: #9d6e24;
+}
+.v2--operations .v2-hourly__row--tight .v2-hourly__status {
+  background: rgba(224, 162, 67, 0.08);
+  color: #ddba78;
+  border-color: #796337;
+}
+.v2--operations .v2-hourly__row--balanced .v2-hourly__status {
+  background: rgba(70, 185, 134, 0.10);
+  color: var(--ax-accent);
+  border-color: #2f7958;
+}
+.v2--operations .v2-hourly__row--surplus .v2-hourly__status {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ax-ink-2);
+  border-color: var(--ax-line-2);
+}
+
+/* The mode switch is a first-class sibling, which makes it responsive and
+   gives every view a stable deep-link destination. */
+.v2 .v2-header {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+.v2 .v2-mode-toggle { grid-column: 3; }
+.v2 .v2-header__clock { grid-column: 4; }
+
+/* Compact operations briefing */
+.v2-brief {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  align-content: start;
+  gap: 1px;
+  padding: 1px;
+  background: var(--ax-line);
+}
+.v2-brief > section { background: var(--ax-panel); }
+.v2-brief__decision {
+  grid-column: 1 / -1;
+  padding: 20px 22px;
+  border-left: 4px solid var(--ax-accent);
+}
+.v2-brief__decision.is-warning { border-left-color: var(--ax-warn); }
+.v2-brief__eyebrow {
+  display: block;
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.v2-brief h2 {
+  margin: 5px 0 6px;
+  color: var(--ax-ink);
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.v2-brief p {
+  margin: 0;
+  color: var(--ax-ink-2);
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+.v2-brief__next {
+  display: block;
+  margin-top: 10px;
+  color: var(--ax-warn);
+  font-size: var(--t-micro);
+  font-weight: 700;
+}
+.v2-brief__map,
+.v2-brief__evidence,
+.v2-brief__priority { min-width: 0; }
+.v2-brief__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2-brief__section-head h2 { font-size: 18px; margin-bottom: 0; }
+.v2-brief__section-head > strong {
+  color: var(--ax-accent);
+  font-size: var(--t-body);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.v2-brief__map-frame { height: 330px; }
+.v2-brief__map-frame > .v2-map__canvas { height: 100%; min-height: 0; }
+.v2-brief__note { padding: 12px 18px; font-size: var(--t-micro) !important; }
+.v2-brief__chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: brief-step;
+}
+.v2-brief__chain li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--ax-line);
+  counter-increment: brief-step;
+}
+.v2-brief__chain li::before {
+  content: counter(brief-step);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+}
+.v2-brief__chain span { color: var(--ax-ink-2); font-size: var(--t-body); }
+.v2-brief__chain strong {
+  color: var(--ax-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.v2-brief__chain li:last-child strong { color: var(--ax-warn); }
+.v2-brief__totals {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--ax-line) !important;
+}
+.v2-brief__totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 15px 18px;
+  background: var(--ax-panel);
+}
+.v2-brief__totals span {
+  color: var(--ax-ink-3);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.v2-brief__totals strong {
+  color: var(--ax-ink);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.v2-brief__totals > div:nth-child(3) strong { color: var(--ax-accent); }
+.v2-brief__totals > div:nth-child(2) strong,
+.v2-brief__totals > div:nth-child(4) strong { color: var(--ax-warn); }
+.v2-brief__priority { grid-column: 1 / -1; }
+.v2-brief__hours { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ax-line); }
+.v2-brief__hours button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 10px 16px;
+  border: 0;
+  background: var(--ax-panel);
+  color: var(--ax-ink-2);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.v2-brief__hours button:hover,
+.v2-brief__hours button:focus-visible { background: color-mix(in srgb, var(--ax-panel) 92%, var(--ax-accent)); }
+.v2-brief__hours button > span:first-child { color: var(--ax-ink); font-weight: 700; }
+.v2-brief__hours strong { color: var(--ax-warn); font-size: var(--t-micro); }
+
+@media (max-width: 1179px) {
+  .v2 { zoom: 1 !important; }
+  .v2 .v2-alert-banner { display: none; }
+  .v2 .v2-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 44px 44px 48px;
+    padding: 0 16px;
+  }
+  .v2 .v2-header__brand { grid-column: 1; grid-row: 1; }
+  .v2 .v2-header__story { display: none; }
+  .v2 .v2-header__clock { grid-column: 2; grid-row: 1; justify-self: end; }
+  .v2 .v2-mode-toggle {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: stretch;
+    justify-self: stretch;
+    width: 100%;
+  }
+  .v2 .v2-mode-btn { flex: 1; min-height: 44px; }
+  .v2 .v2-timebar { grid-row: 3; padding: 4px 0; gap: 8px; justify-self: stretch; width: 100%; }
+  .v2 .v2-timebar__days { display: none; }
+  .v2 .v2-timebar__play { width: 44px; height: 44px; }
+  .v2 .v2-timebar__speeds .v2-timebar__speed { display: none; }
+  .v2 .v2-timebar__day-sweep { min-height: 44px; margin: 0; }
+  .v2 .v2-timebar__label { min-width: 42px; font-size: var(--t-micro); }
+  .v2 .v2-footer { display: none; }
+
+  .v2 .v2-body--insights {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--ax-paper);
+  }
+  .v2 .v2-insights-rail { flex: none; overflow: visible; }
+  .v2 .v2-insights-main {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    padding: 10px;
+  }
+  .v2 .v2-insights { min-height: 280px; }
+
+  .v2--toolkit .v2-header { grid-template-rows: 44px 44px; }
+  .v2--toolkit .v2-timebar { display: none; }
+}
+
+@media (max-width: 720px) {
+  .v2 .v2-header { padding: 0 12px; }
+  .v2 .v2-header__eyebrow { letter-spacing: 0.09em; }
+  .v2 .v2-header__eyebrow-full { display: none; }
+  .v2 .v2-header__eyebrow-compact { display: inline; }
+  .v2 .v2-header__live,
+  .v2 .v2-header__day,
+  .v2 .v2-header__speed { display: none; }
+  .v2 .v2-header__time { font-size: 14px; }
+  .v2 .v2-timebar__day-sweep { padding-inline: 10px; }
+
+  .v2-brief { display: flex; flex-direction: column; }
+  .v2-brief__decision { padding: 18px 16px; }
+  .v2-brief h2 { font-size: 20px; }
+  .v2-brief__map-frame { height: 260px; }
+  .v2-brief__totals { grid-template-columns: 1fr 1fr; flex: none; }
+  .v2-brief__totals strong { font-size: 20px; }
+  .v2-brief__hours { grid-template-columns: 1fr; }
+  .v2-brief__hours button { min-height: 58px; }
+
+  .v2 .v2-body--insights { padding: 0; gap: 1px; }
+  .v2 .v2-insights-main { padding: 8px; }
+  .v2 .v2-insights { min-height: 250px; }
+  .v2 .v2-hourly--priority .v2-hourly__legend { display: none; }
+  .v2 .v2-hourly--priority .v2-hourly__row { grid-template-columns: 42px 1fr 82px; }
+
+  .v2 .tk-inner { padding: 26px 16px 56px; }
+  .v2 .tk-title { font-size: 26px; }
+  .v2 .tk-objectives,
+  .v2 .tk-personas,
+  .v2 .tk-tenets { grid-template-columns: 1fr; }
+}
+
+/* Tourist phone: the bottom sheet is a useful, accessible CTA and route
+   filters remain visible above it. */
+.welcome-sheet--collapsed {
+  width: 100%;
+  max-height: 74px;
+  padding: 0 20px 10px;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  color: var(--text-primary);
+  text-align: left;
+  font: inherit;
+  appearance: none;
+}
+.welcome-sheet--collapsed .welcome-sheet__handle { padding: 7px 0 3px; }
+.welcome-sheet--collapsed .welcome-sheet__peek { padding: 1px 0; }
+.welcome-sheet--collapsed .welcome-sheet__next-time { font-size: 24px; }
+.welcome-sheet--collapsed .welcome-sheet__next-time--dim { font-size: 15px; }
+.map-pills { bottom: 78px; }
+.map-lang--compact { opacity: 0.95; transform: none; }
+.map-lang--compact .lang-toggle__button {
+  min-width: 30px;
+  min-height: 28px;
+  font-size: 11px;
+}
+
+/* Laptop landing: make the product architecture legible, not a list of
+   cryptic demo links. */
+.desktop-shell__more { gap: 0; }
+.desktop-shell__more-label {
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.desktop-shell__link {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+.desktop-shell__link strong { color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 600; }
+.desktop-shell__link span { color: rgba(255, 255, 255, 0.5); font-size: 10px; line-height: 1.35; }
+.desktop-shell__link--quiet {
+  display: block;
+  padding-block: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.desktop-shell__more a:last-child::after { content: none; }
+
+/* Toolkit progressive disclosure: desktop gets the complete reference;
+   phones get the four-step lesson first and can reveal the long notes. */
+.tk-mobile-summary { display: none; }
+.tk-full { display: block; }
+
+@media (max-width: 720px) {
+  .v2 .tk-mobile-summary {
+    display: block;
+    padding-bottom: 22px;
+  }
+  .v2 .tk-mobile-summary .tk-title { display: block; }
+  .v2 .tk-mobile-steps {
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+    counter-reset: toolkit-step;
+    border-top: 1px solid var(--ax-line);
+  }
+  .v2 .tk-mobile-steps li {
+    display: grid;
+    grid-template-columns: 30px 72px 1fr;
+    gap: 10px;
+    align-items: baseline;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--ax-line);
+    counter-increment: toolkit-step;
+  }
+  .v2 .tk-mobile-steps li::before {
+    content: counter(toolkit-step);
+    color: var(--ax-accent);
+    font-size: var(--t-micro);
+    font-weight: 700;
+  }
+  .v2 .tk-mobile-steps strong { color: var(--ax-ink); font-size: var(--t-body); }
+  .v2 .tk-mobile-steps span { color: var(--ax-ink-2); font-size: var(--t-micro); line-height: 1.45; }
+  .v2 .tk-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-top: 18px;
+    border: 1px solid var(--ax-line-2);
+    background: var(--ax-line);
+  }
+  .v2 .tk-mobile-actions a {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--ax-panel);
+    color: var(--ax-accent);
+    font-size: var(--t-micro);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .v2 .tk-mobile-more {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 12px;
+    border: 1px solid var(--ax-line-2);
+    background: var(--ax-panel);
+    color: var(--ax-ink);
+    font: inherit;
+    font-size: var(--t-micro);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .v2 .tk-full { display: none; }
+  .v2 .tk-full.is-open { display: block; }
 }
