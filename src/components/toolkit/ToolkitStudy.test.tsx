@@ -2,9 +2,20 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DesignThinkingStudy, FeasibilityStudy } from "./ToolkitStudy";
+import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 
 describe("Toolkit research studies", () => {
+  it("invites readers into three concrete live-system experiments", () => {
+    render(<TryLiveSystem busUrl="https://bus.nonarkara.org/" />);
+
+    expect(screen.getByRole("link", { name: /Open the live system/i })).toHaveAttribute("href", "https://bus.nonarkara.org/");
+    expect(screen.getByRole("link", { name: /Open operations view/i })).toHaveAttribute("href", "https://bus.nonarkara.org/v2");
+    expect(screen.getByRole("link", { name: /Open model view/i })).toHaveAttribute("href", "https://bus.nonarkara.org/v2?view=toolkit");
+    expect(screen.getByRole("img", { name: /Flights become passenger demand waves/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /simulation positions buses on real road geometry/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /fleet decision changes passengers, revenue and public value/i })).toBeInTheDocument();
+  });
+
   it("turns a what-if shock into a measurable operating experiment", async () => {
     render(<DesignThinkingStudy />);
 

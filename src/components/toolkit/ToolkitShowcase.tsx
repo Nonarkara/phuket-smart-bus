@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
-import { DesignThinkingStudy, FeasibilityStudy } from "./ToolkitStudy";
+import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
 
@@ -388,10 +388,10 @@ export default function ToolkitShowcase() {
           <span>NON</span><strong>City Systems Toolkit</strong>
         </a>
         <nav aria-label="Page chapters">
+          <a href="#try-system">Try it</a>
           <a href="#method">Method</a>
           <a href="#pain-map">Pain map</a>
           <a href="#feasibility">Feasibility</a>
-          <a href="#deal">The deal</a>
         </nav>
         <a className="tk-nav__live" href={BUS_URL}>Live system ↗</a>
       </header>
@@ -404,7 +404,7 @@ export default function ToolkitShowcase() {
             <p className="tk-hero__standfirst">A practical toolkit for turning fieldwork, public data and difficult questions into city systems that people can actually use.</p>
             <div className="tk-hero__actions">
               <a href="#method">Read the method <span>↓</span></a>
-              <a href={BUS_URL}>See the bus system prove it <span>↗</span></a>
+              <a href={BUS_URL}>Try the live bus system <span>↗</span></a>
             </div>
           </div>
           <HeroPhotoRotator />
@@ -415,6 +415,8 @@ export default function ToolkitShowcase() {
         </section>
 
         <LiveProof />
+
+        <TryLiveSystem busUrl={BUS_URL} />
 
         <section className="tk-thesis">
           <p>We studied how cities think.</p>

@@ -11,6 +11,58 @@
 .tk-hero__photo-controls button[aria-pressed="true"] { color: var(--tk-ink); background: var(--tk-yellow); }
 .tk-hero__photo-controls button:hover { color: #fff; background: var(--tk-red); }
 
+.tk-try-system { padding: clamp(90px, 10vw, 170px) clamp(24px, 6.5vw, 110px); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); }
+.tk-try-system__intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); gap: clamp(52px, 8vw, 140px); align-items: end; }
+.tk-try-system__intro h2 { max-width: 11ch; margin-top: 28px; }
+.tk-try-system__intro p { max-width: 48ch; color: var(--tk-muted); font-size: 18px; }
+.tk-try-system__intro p strong { color: var(--tk-ink); }
+.tk-try-system__door { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-top: 38px; padding: 22px; color: #fff !important; background: var(--tk-red); text-decoration: none; }
+.tk-try-system__door span { grid-column: 1 / -1; color: rgba(255,255,255,0.7); font: 700 11px/1 var(--font-mono); }
+.tk-try-system__door strong { font: 700 clamp(1.45rem, 2.4vw, 2.5rem)/1 var(--font-display); letter-spacing: -0.04em; }
+.tk-try-system__door b { font-size: 38px; line-height: 1; }
+.tk-try-system__door:hover { color: var(--tk-ink) !important; background: var(--tk-yellow); }
+.tk-try-system__door:hover span { color: rgba(17,24,32,0.62); }
+
+.tk-try-system__experiments { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: clamp(72px, 8vw, 120px); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
+.tk-try-system__experiments a { display: flex; min-height: 320px; flex-direction: column; padding: 27px; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); text-decoration: none; }
+.tk-try-system__experiments a > span { color: var(--tk-red); font: 700 11px/1 var(--font-mono); }
+.tk-try-system__experiments h3 { max-width: 10ch; margin-top: 55px; }
+.tk-try-system__experiments p { max-width: 39ch; margin-top: 20px; color: var(--tk-muted); }
+.tk-try-system__experiments a > strong { margin-top: auto; padding-top: 28px; }
+.tk-try-system__experiments a:hover { color: #fff; background: var(--tk-ink); }
+.tk-try-system__experiments a:hover p { color: rgba(255,255,255,0.68); }
+.tk-try-system__experiments a:hover > strong { color: var(--tk-yellow); }
+
+.tk-machine { margin-top: clamp(120px, 14vw, 220px); color: #fff; background: var(--tk-ink); }
+.tk-machine__heading { display: grid; grid-template-columns: 0.34fr 1fr 0.6fr; gap: 48px; align-items: start; padding: clamp(32px, 5vw, 74px); border-bottom: 1px solid rgba(255,255,255,0.35); }
+.tk-machine__heading p { color: rgba(255,255,255,0.64); }
+.tk-machine__drawings { display: grid; grid-template-columns: repeat(3, 1fr); }
+.tk-machine__drawings article { display: grid; min-width: 0; min-height: 610px; grid-template-rows: auto auto auto 1fr; padding: 0 28px 32px; border-right: 1px solid rgba(255,255,255,0.35); }
+.tk-machine__drawings article:last-child { border-right: 0; }
+.tk-machine__drawings article > div { margin: 0 -28px 28px; border-bottom: 1px solid rgba(255,255,255,0.35); background: var(--tk-paper); }
+.tk-machine__drawings svg { display: block; width: 100%; height: auto; }
+.tk-machine__drawings article > span { color: var(--tk-red); font: 700 11px/1 var(--font-mono); }
+.tk-machine__drawings h3 { margin-top: 38px; }
+.tk-machine__drawings p { align-self: end; margin-top: 35px; color: rgba(255,255,255,0.62); font-size: 15px; }
+.tk-machine-drawing__rule { fill: none; stroke: rgba(17,24,32,0.3); stroke-width: 1; }
+.tk-machine-drawing__line { fill: none; stroke: var(--tk-ink); stroke-width: 3; }
+.tk-machine-drawing__road { fill: none; stroke: var(--tk-ink); stroke-width: 8; }
+.tk-machine-drawing__muted { fill: rgba(17,24,32,0.28); }
+.tk-machine-drawing__signal { fill: var(--tk-red); }
+.tk-machine-drawing__accent { fill: var(--tk-yellow); stroke: var(--tk-ink); stroke-width: 2; }
+.tk-machine-drawing__stop { fill: var(--tk-paper); stroke: var(--tk-red); stroke-width: 4; }
+.tk-machine-drawing__bus rect { fill: var(--tk-red); stroke: var(--tk-ink); stroke-width: 2; }
+.tk-machine-drawing__bus path { fill: none; stroke: #fff; stroke-width: 3; }
+.tk-machine-drawing__bus circle { fill: var(--tk-yellow); stroke: var(--tk-ink); stroke-width: 2; }
+.tk-machine__drawings svg text { fill: var(--tk-ink); font: 700 10px/1 var(--font-mono); letter-spacing: 0.04em; }
+.tk-machine__drawings svg .tk-machine-drawing__big { font-size: 13px; letter-spacing: -0.04em; }
+.tk-machine__drawings svg .tk-machine-drawing__hero { font: 700 38px/1 var(--font-mono); letter-spacing: -0.08em; }
+.tk-machine__drawings svg .tk-machine-drawing__value { fill: #fff; font-size: 14px; letter-spacing: -0.03em; }
+.tk-machine__handoff { display: grid; grid-template-columns: auto 1fr auto auto 1fr auto auto 1fr; gap: 18px; align-items: center; min-height: 100px; padding: 24px 30px; color: var(--tk-ink); background: var(--tk-yellow); }
+.tk-machine__handoff strong { font: 700 1.35rem/1 var(--font-display); }
+.tk-machine__handoff span { font-size: 14px; }
+.tk-machine__handoff b { color: var(--tk-red); font-size: 25px; }
+
 .tk-design-study { background: #fff; }
 .tk-pain-map { border-block: 1px solid var(--tk-ink); }
 .tk-pain-map__axis { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; min-height: 58px; color: var(--tk-muted); font: 700 11px/1 var(--font-mono); text-transform: uppercase; }
@@ -128,6 +180,19 @@
 .tk-feasibility__sources a:hover span { color: rgba(17,24,32,0.64); }
 
 @media (max-width: 1120px) {
+  .tk-try-system__intro { grid-template-columns: 1fr; }
+  .tk-try-system__intro h2 { max-width: 14ch; }
+  .tk-try-system__intro > div:last-child { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: end; }
+  .tk-try-system__door { margin-top: 0; }
+  .tk-machine__heading { grid-template-columns: 170px 1fr; }
+  .tk-machine__heading p { grid-column: 2; }
+  .tk-machine__drawings { grid-template-columns: 1fr; }
+  .tk-machine__drawings article { min-height: 0; grid-template-columns: minmax(260px, 0.8fr) 70px 1fr; grid-template-rows: auto 1fr; padding: 0; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.35); }
+  .tk-machine__drawings article > div { grid-row: 1 / span 2; margin: 0; border-right: 1px solid rgba(255,255,255,0.35); border-bottom: 0; }
+  .tk-machine__drawings article > span { padding: 30px 0 0 28px; }
+  .tk-machine__drawings h3 { margin: 28px 28px 0 0; }
+  .tk-machine__drawings p { grid-column: 2 / -1; margin: 34px 28px 30px; }
+  .tk-machine__handoff { grid-template-columns: auto 1fr auto; }
   .tk-pain-map__plot { grid-template-columns: repeat(3, 1fr); }
   .tk-pain-map__plot article { border-bottom: 1px solid var(--tk-ink); }
   .tk-study-split { grid-template-columns: 1fr; }
@@ -142,6 +207,25 @@
 }
 
 @media (max-width: 760px) {
+  .tk-try-system { padding: 82px 20px; }
+  .tk-try-system__intro { display: block; }
+  .tk-try-system__intro h2 { margin-top: 24px; }
+  .tk-try-system__intro > div:last-child { display: block; }
+  .tk-try-system__intro p { margin-top: 30px; }
+  .tk-try-system__door { margin-top: 30px; }
+  .tk-try-system__experiments { grid-template-columns: 1fr; }
+  .tk-try-system__experiments a { min-height: 270px; }
+  .tk-machine { margin-right: -20px; margin-left: -20px; }
+  .tk-machine__heading { display: block; padding: 66px 20px; }
+  .tk-machine__heading h2 { margin-top: 24px; }
+  .tk-machine__heading p { margin-top: 28px; }
+  .tk-machine__drawings article { display: block; padding: 0 20px 42px; }
+  .tk-machine__drawings article > div { margin: 0 -20px 30px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.35); }
+  .tk-machine__drawings article > span { display: block; padding: 0; }
+  .tk-machine__drawings h3 { margin: 32px 0 0; }
+  .tk-machine__drawings p { margin: 58px 0 0; }
+  .tk-machine__handoff { grid-template-columns: auto 1fr; padding: 28px 20px; }
+  .tk-machine__handoff b { display: none; }
   .tk-hero__photo-controls { top: 10px; right: 10px; }
   .tk-hero__photo-controls button { width: 34px; height: 34px; }
   .tk-pain-map__axis { grid-template-columns: 1fr 1fr; }

@@ -128,6 +128,128 @@ function formatMillion(value: number, digits = 1) {
   return `฿${(value / 1_000_000).toFixed(digits)}m`;
 }
 
+function DemandWaveDrawing() {
+  return (
+    <svg viewBox="0 0 360 210" role="img" aria-labelledby="demand-wave-title demand-wave-desc">
+      <title id="demand-wave-title">Flights become passenger demand waves</title>
+      <desc id="demand-wave-desc">Arrival bars feed through a customs delay into a larger curb-ready passenger wave.</desc>
+      <path className="tk-machine-drawing__rule" d="M24 178H336" />
+      <path className="tk-machine-drawing__line" d="M34 64h82l22 18h74" />
+      <path className="tk-machine-drawing__line" d="m92 45 18 19-18 19M57 52l10 12-10 12" />
+      <text x="28" y="28">FLIGHTS LAND</text>
+      <text x="224" y="28">CURB READY</text>
+      {[38, 76, 114].map((x, index) => <rect key={x} className="tk-machine-drawing__muted" x={x} y={148 - index * 16} width="22" height={30 + index * 16} />)}
+      {[230, 264, 298].map((x, index) => <rect key={x} className="tk-machine-drawing__signal" x={x} y={132 - index * 24} width="24" height={46 + index * 24} />)}
+      <circle className="tk-machine-drawing__accent" cx="177" cy="82" r="26" />
+      <text className="tk-machine-drawing__big" x="177" y="87" textAnchor="middle">20–45</text>
+      <text x="177" y="119" textAnchor="middle">MIN CLEARANCE</text>
+    </svg>
+  );
+}
+
+function MovingBusDrawing() {
+  return (
+    <svg viewBox="0 0 360 210" role="img" aria-labelledby="moving-bus-title moving-bus-desc">
+      <title id="moving-bus-title">The simulation positions buses on real road geometry</title>
+      <desc id="moving-bus-desc">A clock advances along a curved road line, placing a bus between scheduled stops.</desc>
+      <text x="26" y="28">SCHEDULE + CLOCK</text>
+      <circle className="tk-machine-drawing__accent" cx="58" cy="72" r="28" />
+      <path className="tk-machine-drawing__line" d="M58 53v19l14 9" />
+      <text className="tk-machine-drawing__big" x="58" y="121" textAnchor="middle">30×</text>
+      <path className="tk-machine-drawing__road" d="M112 168c44-6 36-91 93-92 56-1 50 79 130 45" />
+      <circle className="tk-machine-drawing__stop" cx="117" cy="165" r="7" />
+      <circle className="tk-machine-drawing__stop" cx="204" cy="76" r="7" />
+      <circle className="tk-machine-drawing__stop" cx="332" cy="122" r="7" />
+      <g className="tk-machine-drawing__bus" transform="translate(239 106) rotate(24)">
+        <rect x="0" y="0" width="58" height="29" />
+        <path d="M10 7h29M45 7h6" />
+        <circle cx="13" cy="30" r="4" /><circle cx="46" cy="30" r="4" />
+      </g>
+      <text x="208" y="196" textAnchor="middle">3,944 ROAD POINTS · NOT A STRAIGHT LINE</text>
+    </svg>
+  );
+}
+
+function DecisionLedgerDrawing() {
+  return (
+    <svg viewBox="0 0 360 210" role="img" aria-labelledby="decision-ledger-title decision-ledger-desc">
+      <title id="decision-ledger-title">A fleet decision changes passengers, revenue and public value</title>
+      <desc id="decision-ledger-desc">Three extra buses flow through the simulation to more served passengers and fare revenue.</desc>
+      <text x="24" y="28">OPERATING MOVE</text>
+      <rect className="tk-machine-drawing__accent" x="24" y="51" width="90" height="104" />
+      <text className="tk-machine-drawing__hero" x="69" y="100" textAnchor="middle">+3</text>
+      <text x="69" y="126" textAnchor="middle">BUSES</text>
+      <path className="tk-machine-drawing__line" d="M130 103h52m-13-13 13 13-13 13" />
+      <text x="202" y="54">MODEL ANSWERS</text>
+      <rect className="tk-machine-drawing__signal" x="202" y="72" width="134" height="35" />
+      <rect className="tk-machine-drawing__signal" x="202" y="117" width="105" height="35" />
+      <text className="tk-machine-drawing__value" x="212" y="95">+316 PAX</text>
+      <text className="tk-machine-drawing__value" x="212" y="140">+฿31,600</text>
+      <path className="tk-machine-drawing__rule" d="M24 178H336" />
+      <text x="24" y="198">SAME FLIGHTS · SAME DEMAND · DIFFERENT DUTIES</text>
+    </svg>
+  );
+}
+
+export function TryLiveSystem({ busUrl }: { busUrl: string }) {
+  const experiments = [
+    {
+      number: "01",
+      title: "Ride it like a passenger",
+      copy: "Choose a route. Watch the countdown. Compare the ฿100 bus with the expensive certainty of a taxi.",
+      href: busUrl,
+      action: "Open passenger view"
+    },
+    {
+      number: "02",
+      title: "Run the whole day",
+      copy: "Watch flight waves create queues, buses absorb seats and the operating totals climb together.",
+      href: `${busUrl}v2`,
+      action: "Open operations view"
+    },
+    {
+      number: "03",
+      title: "Challenge the model",
+      copy: "Move the fleet assumption. If the passengers, revenue and unmet demand do not change, something is broken.",
+      href: `${busUrl}v2?view=toolkit`,
+      action: "Open model view"
+    }
+  ];
+
+  const mechanics = [
+    ["01", "Demand arrives in waves", "Touchdown is not demand. The engine delays each arrival through a 20–45 minute clearance model before passengers reach the curb.", <DemandWaveDrawing />],
+    ["02", "The clock moves the fleet", "Published duties meet a 30× operating clock. Each active bus is placed along the actual road polyline between timed stops.", <MovingBusDrawing />],
+    ["03", "A decision changes the ledger", "Add capacity and the engine rebuilds duty chains. Served passengers, lost demand, fare revenue and CO₂ respond to the same intervention.", <DecisionLedgerDrawing />]
+  ] as const;
+
+  return (
+    <section className="tk-try-system" id="try-system">
+      <div className="tk-try-system__intro">
+        <div><span className="tk-kicker">Your turn · the real working system</span><h2>Do not just read the case. Drive it.</h2></div>
+        <div><p>The toolkit explains our thinking. <strong>bus.nonarkara.org</strong> lets you test whether that thinking survives contact with a moving day. No login. No video pretending to be software.</p><a className="tk-try-system__door" href={busUrl}><span>bus.nonarkara.org</span><strong>Open the live system</strong><b>↗</b></a></div>
+      </div>
+
+      <div className="tk-try-system__experiments" aria-label="Three experiments to try in the Phuket Smart Bus system">
+        {experiments.map((experiment) => (
+          <a href={experiment.href} key={experiment.number}>
+            <span>{experiment.number}</span><h3>{experiment.title}</h3><p>{experiment.copy}</p><strong>{experiment.action} ↗</strong>
+          </a>
+        ))}
+      </div>
+
+      <div className="tk-machine">
+        <div className="tk-machine__heading"><span className="tk-kicker">Open the bonnet</span><h2>Three mechanics worth kicking.</h2><p>The screen is only the last inch. Here is the machinery underneath it.</p></div>
+        <div className="tk-machine__drawings">
+          {mechanics.map(([number, title, copy, drawing]) => (
+            <article key={number}><div>{drawing}</div><span>{number}</span><h3>{title}</h3><p>{copy}</p></article>
+          ))}
+        </div>
+        <div className="tk-machine__handoff"><strong>Today</strong><span>schedule simulation</span><b>→</b><strong>Next</strong><span>direct GPS + seat cameras</span><b>→</b><strong>Same interface</strong><span>real operating decisions</span></div>
+      </div>
+    </section>
+  );
+}
+
 function DesignJourney() {
   return (
     <div className="tk-pain-map" role="img" aria-label="Hypothesis map of pain across the airport-to-bus journey">
