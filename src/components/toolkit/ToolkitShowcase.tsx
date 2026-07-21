@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
+import { DesignThinkingStudy, FeasibilityStudy } from "./ToolkitStudy";
 import "./toolkit-showcase.css";
+import "./toolkit-study.css";
 
 const BUS_URL = "https://bus.nonarkara.org/";
 const FIELD_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/field-notes/`;
@@ -44,6 +46,45 @@ const FIELD_NOTES = [
     note: "USDOT reunion. The conversation has moved from what cities could do to what our systems can already demonstrate."
   }
 ];
+
+const HERO_PHOTOS = [
+  {
+    src: `${FIELD_ASSET_ROOT}singapore-2022.jpg`,
+    alt: "depa and USDOT learning cohort in Singapore in August 2022",
+    title: "Study the system.",
+    meta: "Singapore · 01 Aug 2022"
+  },
+  {
+    src: `${FIELD_ASSET_ROOT}los-angeles-2023.jpg`,
+    alt: "Transit service design workshop in Los Angeles in July 2023",
+    title: "Draw the argument.",
+    meta: "Los Angeles · 12 Jul 2023"
+  },
+  {
+    src: `${FIELD_ASSET_ROOT}phuket-2024.jpg`,
+    alt: "City systems field workshop in Phuket in March 2024",
+    title: "Bring it home.",
+    meta: "Phuket · 13 Mar 2024"
+  },
+  {
+    src: `${FIELD_ASSET_ROOT}boston-2024.jpg`,
+    alt: "depa and USDOT learning cohort in Boston in September 2024",
+    title: "Make it reproducible.",
+    meta: "Boston · 17 Sep 2024"
+  },
+  {
+    src: `${FIELD_ASSET_ROOT}johor-ops-2025.jpg`,
+    alt: "Operations discussion in Johor Bahru in August 2025",
+    title: "Put it to work.",
+    meta: "Johor Bahru · 11 Aug 2025"
+  },
+  {
+    src: `${FIELD_ASSET_ROOT}johor-usdot-2025.jpg`,
+    alt: "Dr Non with a USDOT colleague in Johor Bahru in August 2025",
+    title: "Signed. Sealed. Now deliver.",
+    meta: "Johor Bahru · 12 Aug 2025"
+  }
+] as const;
 
 const FLIGHT_MONTHS = [
   ["Jan", 8481], ["Feb", 9301], ["Mar", 10705], ["Apr", 11435],
@@ -156,6 +197,31 @@ function ReadingProgress() {
     };
   }, []);
   return <div className="tk-progress" style={{ transform: `scaleX(${value})` }} aria-hidden="true" />;
+}
+
+function HeroPhotoRotator() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => setActiveIndex((current) => (current + 1) % HERO_PHOTOS.length), 5200);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const active = HERO_PHOTOS[activeIndex];
+  return (
+    <figure className="tk-hero__photo">
+      <div className="tk-hero__photo-stack">
+        {HERO_PHOTOS.map((photo, index) => (
+          <img key={photo.src} src={photo.src} alt={index === activeIndex ? photo.alt : ""} aria-hidden={index !== activeIndex} className={index === activeIndex ? "is-active" : ""} />
+        ))}
+      </div>
+      <figcaption><strong>{active.title}</strong><span>{active.meta}</span></figcaption>
+      <div className="tk-hero__photo-controls" aria-label="Choose hero photograph">
+        {HERO_PHOTOS.map((photo, index) => <button key={photo.src} type="button" aria-label={`Show ${photo.meta}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)}>{String(index + 1).padStart(2, "0")}</button>)}
+      </div>
+    </figure>
+  );
 }
 
 function LiveProof() {
@@ -323,9 +389,9 @@ export default function ToolkitShowcase() {
         </a>
         <nav aria-label="Page chapters">
           <a href="#method">Method</a>
-          <a href="#proof">Proof</a>
+          <a href="#pain-map">Pain map</a>
+          <a href="#feasibility">Feasibility</a>
           <a href="#deal">The deal</a>
-          <a href="#field-notes">Field notes</a>
         </nav>
         <a className="tk-nav__live" href={BUS_URL}>Live system ↗</a>
       </header>
@@ -341,10 +407,7 @@ export default function ToolkitShowcase() {
               <a href={BUS_URL}>See the bus system prove it <span>↗</span></a>
             </div>
           </div>
-          <figure className="tk-hero__photo">
-            <img src={`${FIELD_ASSET_ROOT}johor-usdot-2025.jpg`} alt="Dr Non with a USDOT colleague in Johor Bahru in August 2025" />
-            <figcaption><strong>Signed. Sealed. Now deliver.</strong><span>Johor Bahru · 12 Aug 2025</span></figcaption>
-          </figure>
+          <HeroPhotoRotator />
           <aside className="tk-hero__note">
             <strong>A PDF cannot move a bus.</strong>
             <p>It can frame the problem. Then the toolkit has to earn its keep.</p>
@@ -381,6 +444,8 @@ export default function ToolkitShowcase() {
           </div>
         </section>
 
+        <DesignThinkingStudy />
+
         <section className="tk-section tk-proof" id="proof">
           <div className="tk-section__intro tk-section__intro--dark">
             <span className="tk-kicker">Proof, not promise</span>
@@ -416,6 +481,8 @@ export default function ToolkitShowcase() {
           </div>
           <FleetLab />
         </section>
+
+        <FeasibilityStudy />
 
         <section className="tk-section tk-deal" id="deal">
           <div className="tk-section__intro tk-section__intro--dark">
@@ -500,6 +567,11 @@ export default function ToolkitShowcase() {
             <a href="https://www.data.go.th/th/dataset/stattourism"><span>03</span><strong>Monthly provincial tourism statistics</strong><small>Ministry of Tourism and Sports · data.go.th</small><b>↗</b></a>
             <a href="https://www.data.go.th/dataset/dataset_10_3710"><span>04</span><strong>International passengers through Phuket Airport</strong><small>Phuket Provincial Office · data.go.th catalogue</small><b>↗</b></a>
             <a href={`${BUS_URL}v2?view=toolkit`}><span>05</span><strong>Assumptions, formulas and live simulation</strong><small>Phuket Smart Bus · working system</small><b>↗</b></a>
+            <a href="https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf"><span>06</span><strong>Phuket Airport traffic report, 2025</strong><small>Airports of Thailand · 17.5m passenger movements</small><b>↗</b></a>
+            <a href="https://www.phuket.go.th/webpk/file_data/hilight/hilight2567.pdf"><span>07</span><strong>Phuket provincial highlights, 2024</strong><small>Existing EV routes and ridership evidence</small><b>↗</b></a>
+            <a href="https://www.otp.go.th/uploads/tiny_uploads/ProjectOTP/2560/Project17/4-DevelopmentofaFundingMechanism.pdf"><span>08</span><strong>Thailand clean-mobility funding mechanism</strong><small>OTP · EV bus costs and financing gap</small><b>↗</b></a>
+            <a href="https://sme.krungthai.com/sme/productListAction.action?cateId=14&cateMenu=PRODUCT&command=getDetail&itemId=438"><span>09</span><strong>Krungthai sustainability loan</strong><small>Indicative green-finance product terms</small><b>↗</b></a>
+            <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><span>10</span><strong>Thailand lending-rate stress benchmark</strong><small>Bank of Thailand · Q1 2026</small><b>↗</b></a>
           </div>
           <p className="tk-sources__caveat">* CO₂ is a modelled avoided-emissions estimate, not a certified carbon credit. Accident and congestion benefits are intervention goals until an instrumented baseline and observed counterfactual exist. We would rather tell you exactly what we do not know than sell you a decimal point wearing a tie.</p>
         </section>
