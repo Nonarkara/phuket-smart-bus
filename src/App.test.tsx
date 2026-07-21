@@ -32,7 +32,10 @@ vi.mock("./components/LiveMap", () => ({
 
 describe("App", () => {
   beforeEach(() => {
-    window.history.replaceState({}, "", "/");
+    // This branch reserves / for the toolkit showcase. An unreserved path
+    // still resolves to the rider app and keeps that surface independently
+    // testable without changing its default Map state.
+    window.history.replaceState({}, "", "/tourist");
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     window.dispatchEvent(new Event("resize"));
     Object.defineProperty(window.navigator, "geolocation", {
@@ -83,6 +86,14 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Map" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
+  });
+
+  it("uses the toolkit as the branch landing page", () => {
+    window.history.replaceState({}, "", "/");
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "The report was never the deliverable." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
   });
 
   it("switches between Map and More tabs", async () => {

@@ -403,7 +403,19 @@ export default function DashboardV2() {
 
       {viewMode === 'toolkit' ? (
         // TOOLKIT view — the research this console was built to serve
-        <ToolkitPanel />
+        <ToolkitPanel
+          clockLabel={state.clockLabel}
+          flightsLanded={state.landedFlights.length}
+          arrivingPax={state.totalArrPax}
+          likelyRiders={state.paxWantBus}
+          boarded={state.paxBoarded}
+          waiting={state.paxAtAirport}
+          walkedAway={state.paxAbandoned}
+          revenueThb={state.revenueThb}
+          missedThb={state.lostRevenueThb}
+          movingBuses={metrics.fleet.movingBuses}
+          onOpenSystem={() => handleViewModeChange('operations')}
+        />
       ) : viewMode === 'insights' ? (
         // INSIGHTS view — one-screen bridge from toolkit evidence to decision
         <main className="v2-body v2-body--insights">

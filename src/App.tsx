@@ -26,6 +26,7 @@ import { getVehiclesNow } from "./engine/fleetSimulator";
 import { getDayInfo } from "./engine/simulation";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
 import DashboardV2 from "./DashboardV2";
+import ToolkitShowcase from "./components/toolkit/ToolkitShowcase";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -202,6 +203,13 @@ export default function App() {
   // /roi page (financial model for buyers)
   if (pathname.startsWith("/roi")) {
     return <RoiCalculator />;
+  }
+
+  // This branch is the research-and-development showcase. The existing
+  // operational surfaces remain available at /ops, /v2, /ride and the
+  // specialist routes above; the root becomes the toolkit's front door.
+  if (pathname === "/" || pathname.startsWith("/toolkit")) {
+    return <ToolkitShowcase />;
   }
 
   // v2 dashboard at /v2 path

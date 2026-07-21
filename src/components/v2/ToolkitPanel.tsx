@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { appPath } from "../../lib/paths";
 
 /**
  * TOOLKIT tab — the no-nonsense summary of the USASCP toolkit this console
@@ -12,8 +11,8 @@ import { appPath } from "../../lib/paths";
  *
  * Written in Dr Non's paraphrase: why the system exists, what the research
  * found, which assumptions this dashboard runs on, and what data would
- * sharpen it. All figures are hand-coded SVG under the Axiom laws — zero
- * radius, zero gradient, zero shadow, green + amber only.
+ * sharpen it. The page follows the Axiom laws — zero gradient, zero shadow,
+ * one green accent, and diagrams that teach instead of showing off.
  */
 
 // ---------------------------------------------------------------------------
@@ -38,23 +37,23 @@ const TENETS = [
 const HYPOTHESES = [
   {
     q: "If the bus is cheap enough, does price override the convenience of a rental car?",
-    t: "The ฿100-vs-฿720 spread runs through every surface; the capture heuristics are the knob that real ticketing data will answer this with."
+    t: "The app keeps the ฿100 bus beside the ฿720 taxi. Real ticket sales will tell us whether the price gap changes behaviour or merely wins arguments."
   },
   {
     q: "If we match supply to airport demand hour by hour, can we pull people out of rental cars?",
-    t: "The whole demand-supply engine. The Missed Money diagram shows exactly which hours the match fails today; the Fleet Scenario stepper prices fixing it."
+    t: "This is the whole engine. Missed Money finds the bad hours; the fleet stepper adds a bus and reruns the day. No bus is purchased for emotional reasons."
   },
   {
     q: "If bus + Grab connect seamlessly for the last mile, does it beat renting a motorbike — for tourists who hold no license at home and meet Phuket's rain-slick mountain roads as amateurs?",
-    t: "First–last mile is the toolkit's #1-impact intervention and this model's declared gap — the next thing the data unlocks. The safety case is already on the tourist app's risk strip."
+    t: "First–last mile ranked #1 for impact and is still the model's biggest blank. Stop catchments and feeder-trip data would turn it from a good idea into a priced one."
   },
   {
     q: "If we make taking the bus cool, does persona 8 — premium, app-first, Grab-loyal — switch?",
-    t: "Tenet H. The survey says punctuality, cleanliness and app integration are their price of entry; the positive-attitude campaign (#14) is the push."
+    t: "Persona 8 does not need a lecture about sustainability. They need a clean bus, an arrival time they believe and a tap in the app. Then we count whether they switch."
   },
   {
     q: "If we intercept the 'how do I get around Phuket' decision before travelers leave the arrivals hall, does capture jump?",
-    t: "Boarding/alighting points (#1) and tourist information (theme 4) — the decision is made in the first fifty meters after customs. Nothing on this console models it yet; an arrivals-hall pilot would."
+    t: "The choice is often made in the first fifty metres after customs. The console does not model that persuasion yet. An arrivals-hall pilot, with a control period, would."
   },
 ];
 
@@ -141,6 +140,50 @@ const GAPS = [
   { gap: "Seasonality", why: "The week model is high-season. AOT monthly curves would give a monsoon week and an honest annual number." },
 ];
 
+const CAUSAL_STORIES = [
+  {
+    id: "wait",
+    tab: "The wait",
+    observation: "Non-riders use the same Town–Kathu–Patong corridor as riders.",
+    correlation: "The route is useful. The service still loses them.",
+    cause: "Long, uncertain waits make a cheap bus feel expensive in time.",
+    intervention: "Match departures to flight demand, hour by hour.",
+    measure: "Boarded, still waiting, walked away and missed baht.",
+  },
+  {
+    id: "last-mile",
+    tab: "The last mile",
+    observation: "Visitors value the bus fare but still choose door-to-door transport.",
+    correlation: "Price matters. Convenience often wins anyway.",
+    cause: "The bus can reach the corridor without reaching the hotel door.",
+    intervention: "Test a bus + feeder or bus + Grab connection.",
+    measure: "Conversion by stop catchment, transfer time and total trip cost.",
+  },
+  {
+    id: "trust",
+    tab: "The trust gap",
+    observation: "Punctuality, information and cleanliness recur across eight personas.",
+    correlation: "People who distrust the service are less willing to try it.",
+    cause: "A timetable nobody believes is just decorative typography.",
+    intervention: "Publish live arrival evidence and improve service delivery.",
+    measure: "Repeat use, app conversion, observed punctuality and complaints.",
+  },
+] as const;
+
+type ToolkitPanelProps = {
+  clockLabel: string;
+  flightsLanded: number;
+  arrivingPax: number;
+  likelyRiders: number;
+  boarded: number;
+  waiting: number;
+  walkedAway: number;
+  revenueThb: number;
+  missedThb: number;
+  movingBuses: number;
+  onOpenSystem: () => void;
+};
+
 // ---------------------------------------------------------------------------
 // SVG figures — hand-coded, Axiom palette, zero decoration
 // ---------------------------------------------------------------------------
@@ -153,21 +196,15 @@ function PipelineFigure() {
     ["Co-design", "~$5k workshop · 15 recommendations"],
     ["Impact–Effort", "sequenced action"],
   ];
-  const W = 860, H = 92, box = 150, gap = (W - box * 5) / 4;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="tk-fig" role="img" aria-label="Toolkit method pipeline">
-      {steps.map(([t, d], i) => {
-        const x = i * (box + gap);
-        return (
-          <g key={t}>
-            <rect x={x} y={18} width={box} height={56} fill="#ffffff" stroke="#d2cfc5" />
-            <text x={x + box / 2} y={42} textAnchor="middle" fontSize="13" fontWeight="700" fill="#191712">{t}</text>
-            <text x={x + box / 2} y={60} textAnchor="middle" fontSize="10" fill="#6f6c63">{d}</text>
-            {i < 4 && <path d={`M ${x + box + 6} 46 h ${gap - 18} m -6 -5 l 6 5 l -6 5`} stroke="#a9a59a" fill="none" />}
-          </g>
-        );
-      })}
-    </svg>
+    <ol className="tk-pipeline" aria-label="Toolkit method pipeline">
+      {steps.map(([title, detail]) => (
+        <li key={title}>
+          <strong>{title}</strong>
+          <span>{detail}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -208,76 +245,141 @@ function ImpactEffortFigure() {
   );
 }
 
+function CausalMap() {
+  const [activeId, setActiveId] = useState<(typeof CAUSAL_STORIES)[number]["id"]>("wait");
+  const active = CAUSAL_STORIES.find((story) => story.id === activeId) ?? CAUSAL_STORIES[0];
+
+  return (
+    <div className="tk-causal">
+      <div className="tk-causal__tabs" role="group" aria-label="Choose a research question">
+        {CAUSAL_STORIES.map((story) => (
+          <button
+            key={story.id}
+            type="button"
+            aria-pressed={story.id === activeId}
+            onClick={() => setActiveId(story.id)}
+          >
+            {story.tab}
+          </button>
+        ))}
+      </div>
+      <div className="tk-causal__graph" role="img" aria-label={`${active.observation} This suggests ${active.correlation} We test ${active.cause} by ${active.intervention} and measure ${active.measure}`}>
+        <div className="tk-causal__node">
+          <span>01 · We observed</span>
+          <strong>{active.observation}</strong>
+        </div>
+        <div className="tk-causal__edge tk-causal__edge--correlation">
+          <span>correlation</span>
+          <b>suggests, does not prove</b>
+        </div>
+        <div className="tk-causal__node">
+          <span>02 · Our best explanation</span>
+          <strong>{active.cause}</strong>
+          <small>{active.correlation}</small>
+        </div>
+        <div className="tk-causal__edge tk-causal__edge--causal">
+          <span>causal test</span>
+          <b>change one thing</b>
+        </div>
+        <div className="tk-causal__node tk-causal__node--test">
+          <span>03 · We would change</span>
+          <strong>{active.intervention}</strong>
+          <small>Then measure: {active.measure}</small>
+        </div>
+      </div>
+      <p className="tk-note">A relationship is a clue. An intervention with a measured outcome is evidence. The dashboard is the measuring instrument, not the conclusion.</p>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // The tab
 // ---------------------------------------------------------------------------
 
-export function ToolkitPanel() {
-  const [showFullToolkit, setShowFullToolkit] = useState(false);
+export function ToolkitPanel({
+  clockLabel,
+  flightsLanded,
+  arrivingPax,
+  likelyRiders,
+  boarded,
+  waiting,
+  walkedAway,
+  revenueThb,
+  missedThb,
+  movingBuses,
+  onOpenSystem,
+}: ToolkitPanelProps) {
+  const accountedFor = boarded + waiting + walkedAway;
 
   return (
     <main className="v2-toolkit">
       <h1 className="sr-only">Phuket Smart Bus Toolkit</h1>
       <div className="tk-inner">
-        <section className="tk-mobile-summary" aria-labelledby="tk-mobile-title">
-          <span className="tk-eyebrow">The toolkit in four moves</span>
-          <h2 className="tk-title" id="tk-mobile-title">Research that runs.</h2>
-          <p className="tk-lead">
-            This is not a report pasted into a dashboard. Each research finding
-            becomes a measurable assumption, an operating signal, and a decision.
-          </p>
-          <ol className="tk-mobile-steps">
-            <li><strong>Listen</strong><span>Survey riders and non-riders to find the real barrier.</span></li>
-            <li><strong>Model</strong><span>Turn flights, customs, likely riders and the timetable into one queue.</span></li>
-            <li><strong>Decide</strong><span>Show which hour needs a bus and how much delay costs.</span></li>
-            <li><strong>Replace</strong><span>Swap simulation inputs for GPS, ticketing and camera data when ready.</span></li>
-          </ol>
-          <nav className="tk-mobile-actions" aria-label="Continue exploring">
-            <a href={`${appPath("/v2")}?view=insights`}>See the evidence →</a>
-            <a href={appPath("/ops")}>Open operations →</a>
-          </nav>
-          <button
-            className="tk-mobile-more"
-            type="button"
-            onClick={() => setShowFullToolkit((open) => !open)}
-            aria-expanded={showFullToolkit}
-          >
-            {showFullToolkit ? "Hide full research notes" : "Read full research notes"}
-          </button>
+        <nav className="tk-index" aria-label="Toolkit chapters">
+          <a href="#toolkit-system"><span>01</span> The system</a>
+          <a href="#toolkit-thinking"><span>02</span> The thinking</a>
+          <a href="#toolkit-evidence"><span>03</span> The evidence</a>
+          <a href="#toolkit-build"><span>04</span> The build</a>
+        </nav>
+
+        {/* ── The working system is the hero ─────────────────────────── */}
+        <section className="tk-system-hero" id="toolkit-system" aria-labelledby="tk-system-title">
+          <div className="tk-system-hero__copy">
+            <span className="tk-eyebrow">The system is the hero</span>
+            <h2 className="tk-display" id="tk-system-title">We did the research. Then we made it move.</h2>
+            <p className="tk-lead">
+              A report can tell you buses and travelers miss each other. This one
+              watches it happen, prices the miss, and lets the operator try another
+              bus before buying one. Much cheaper than learning by parking a new bus.
+            </p>
+            <div className="tk-actions">
+              <button className="tk-action tk-action--primary" type="button" onClick={onOpenSystem}>Open the live system <span aria-hidden="true">→</span></button>
+              <a className="tk-action" href="#toolkit-evidence">Follow the evidence <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+
+          <div className="tk-live" aria-label={`Live simulation at ${clockLabel}`}>
+            <div className="tk-live__status">
+              <span><i aria-hidden="true" /> LIVE MODEL · {clockLabel}</span>
+              <span>{movingBuses} buses moving · 30× time</span>
+            </div>
+            <ol className="tk-live__chain">
+              <li><span>Flights landed</span><strong>{flightsLanded}</strong><small>{arrivingPax.toLocaleString()} arriving passengers</small></li>
+              <li><span>Likely bus riders</span><strong>{likelyRiders.toLocaleString()}</strong><small>3–7% by passenger origin</small></li>
+              <li><span>Boarded</span><strong>{boarded.toLocaleString()}</strong><small>25 seats per airport bus</small></li>
+              <li><span>Waiting now</span><strong>{waiting.toLocaleString()}</strong><small>{walkedAway.toLocaleString()} already walked away</small></li>
+            </ol>
+            <div className="tk-live__money">
+              <span><small>Earned</small><strong>฿{revenueThb.toLocaleString()}</strong></span>
+              <span><small>Missed</small><strong>฿{missedThb.toLocaleString()}</strong></span>
+            </div>
+            <p className={`tk-live__check ${accountedFor === likelyRiders ? "is-true" : ""}`}>
+              {likelyRiders.toLocaleString()} likely riders = {boarded.toLocaleString()} boarded + {waiting.toLocaleString()} waiting + {walkedAway.toLocaleString()} walked away
+            </p>
+          </div>
         </section>
 
-        <div className={`tk-full ${showFullToolkit ? "is-open" : ""}`}>
-
-        {/* ── Why this exists ─────────────────────────────────────────── */}
-        <section className="tk-hero">
-          <span className="tk-eyebrow">The Toolkit Behind This Console</span>
-          <h2 className="tk-title">Everyone collaborated. The buses still ran emptier than expected.</h2>
-          <p className="tk-lead">
-            In October 2024, Phuket Smart Bus — a private operator under Phuket City
-            Development — launched a new EV route between Phuket Town and Patong,
-            with the Department of Land Transport's blessing. Regulators, operators,
-            hotels and universities all showed up. And ridership still came in under
-            expectations. The toolkit's own closing lesson says why: <em>nobody had
-            reliable demand data. Service design wasn't aligned with how people
-            actually travel.</em> Buses run on intervals; travelers don't.
-          </p>
-          <p className="tk-lead">
-            This console is the answer to that sentence. It models the demand the
-            island already generates — every arriving and departing flight — against
-            the fixed timetable, and prices the mismatch in baht, hour by hour. When
-            real data arrives, the heuristics become measurements. The machine is
-            already built.
-          </p>
+        <section className="tk-story" aria-label="Why the system exists">
+          <span className="tk-story__number">00</span>
+          <div>
+            <h2>Everyone came to the meeting. The buses still ran emptier than expected.</h2>
+            <p>
+              Regulators, operators, hotels and universities were in the room. The
+              missing person was demand. Nobody could say, hour by hour, who needed
+              the bus and whether a seat would be there. So we stopped producing
+              another recommendation and built the instrument the recommendation needed.
+            </p>
+          </div>
         </section>
 
         {/* ── The thesis ──────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-h2">The Thesis — Nobody Chooses a Mode Because It Is Fast</h2>
+        <section className="tk-section" id="toolkit-thinking">
+          <span className="tk-chapter">02 · The thinking</span>
+          <h2 className="tk-section-title">Nobody chooses a mode because a planner says it is efficient.</h2>
           <p className="tk-body">
-            Transport planning keeps optimizing for speed while travelers keep
-            choosing on everything else: money, certainty, comfort, image, the
-            hassle they are escaping. Eight tenets, A to H, decide whether a
-            visitor steps onto a bus — and every one of them is designable.
+            People choose the whole deal: money, certainty, comfort, image and the
+            nonsense they avoid. Eight useful lenses keep us honest. “Fast” is only
+            one of them, and not always the winner.
           </p>
           <div className="tk-tenets">
             {TENETS.map((t) => (
@@ -292,11 +394,10 @@ export function ToolkitPanel() {
 
         {/* ── The hypotheses ──────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">The Hypotheses — What If?</h2>
+          <h2 className="tk-section-title tk-section-title--small">Good research gives the system something it can prove wrong.</h2>
           <p className="tk-body">
-            A simulation is only worth building if it can be proven wrong.
-            These are the falsifiable questions this console exists to test,
-            each with the instrument that tests it:
+            These are not inspirational questions. Each one demands a number that
+            can embarrass us later. That is healthy.
           </p>
           {HYPOTHESES.map((h, i) => (
             <div className="tk-hyp" key={i}>
@@ -306,38 +407,9 @@ export function ToolkitPanel() {
           ))}
         </section>
 
-        {/* ── Program credit ──────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-h2">The Program</h2>
-          <div className="tk-logos">
-            <img src={`${import.meta.env.BASE_URL}brand/usascp.png`} alt="U.S.-ASEAN Smart Cities Partnership (USASCP)" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/usdot.svg`} alt="U.S. Department of Transportation" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/depa.jpg`} alt="Digital Economy Promotion Agency (DEPA)" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`} alt="Smart City Thailand Office" className="tk-logo" />
-          </div>
-          <p className="tk-body">
-            The research behind this comes from the <strong>U.S.-ASEAN Smart Cities
-            Mobility Program</strong> — a U.S. Department of Transportation-led
-            initiative under the U.S.-ASEAN Smart Cities Partnership (USASCP), with
-            the U.S. Department of State, pairing eight cities across two continents.
-            Phuket's partner city is <strong>Las Vegas</strong>. Research support came
-            from the METRANS Transportation Consortium (USC / CSULB) and the
-            Chulalongkorn University Transportation Institute, with DEPA, the Regional
-            Transportation Commission of Southern Nevada, PKCD / Phuket Smart Bus,
-            Phuket Mahanakorn, and the Department of Land Transport at the table.
-          </p>
-          <p className="tk-body">
-            Credit where it is due: the transportation program — and the
-            peer-exchange structure that made a Phuket–Las Vegas pairing produce
-            something this practical — is led by <strong>Roshan Desai</strong>{" "}
-            (<a className="tk-link" href="https://www.usascp.org/programs/transportationprogram/" target="_blank" rel="noreferrer">usascp.org/programs/transportationprogram</a>).
-            I have been part of this project from day one.
-          </p>
-        </section>
-
         {/* ── Two cities, one problem ─────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">Two Tourism Cities, Opposite Problems</h2>
+          <h2 className="tk-section-title tk-section-title--small">Phuket and Las Vegas: same tourism, opposite physics.</h2>
           <div className="tk-table" role="table">
             <div className="tk-tr tk-tr--head" role="row">
               <span role="columnheader"></span>
@@ -353,16 +425,15 @@ export function ToolkitPanel() {
             ))}
           </div>
           <p className="tk-note">
-            Same industry, inverted physics. Las Vegas fights the private car with
-            walkability; Phuket must fight the door-to-door taxi with a bus that is
-            legally barred from the hotel door. That is why capture rates here are
-            single-digit — and why every captured rider is earned.
+            Las Vegas tries to get visitors out of cars after they arrive. Phuket
+            must win the very first trip, while the taxi is waiting at the door and
+            the bus is not allowed to be. Same workshop vocabulary; very different Tuesday.
           </p>
         </section>
 
         {/* ── Objectives ──────────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">Five Things a Bus Fixes at Once</h2>
+          <h2 className="tk-section-title tk-section-title--small">One bus problem is secretly five problems.</h2>
           <div className="tk-objectives">
             {OBJECTIVES.map((o) => (
               <div className="tk-obj" key={o.k}>
@@ -375,27 +446,35 @@ export function ToolkitPanel() {
 
         {/* ── Method ──────────────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">The Method, Minus the Jargon</h2>
+          <h2 className="tk-section-title tk-section-title--small">The method, with the ceremony removed.</h2>
           <p className="tk-body">
-            Map who actually controls the system. Survey riders <em>and</em>{" "}
-            non-riders where they stand (Cochran-sized sample, 500 m around stops,
-            pilot first). Cluster the answers into eight real people instead of one
-            imaginary average passenger. Then lock the people who run the system in
-            a room until the findings become fifteen ranked actions.
+            Map who can say yes. Survey riders and non-riders where they actually
+            travel. Turn the answers into eight recognisable people, not one mythical
+            “average user.” Then put the people who control the system in a room until
+            fifteen actions come out ranked. Coffee helps. Evidence helps more.
           </p>
           <PipelineFigure />
         </section>
 
+        <section className="tk-section" id="toolkit-evidence">
+          <span className="tk-chapter">03 · The evidence</span>
+          <h2 className="tk-section-title">Correlation gives us a suspect. Causation needs an experiment.</h2>
+          <p className="tk-body">
+            A beautiful network diagram can still be a bowl of spaghetti. This one
+            is a guided path: what we saw, what might explain it, what we change, and
+            what number decides whether we were right.
+          </p>
+          <CausalMap />
+        </section>
+
         {/* ── Findings ────────────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">What the Survey Found</h2>
+          <h2 className="tk-section-title tk-section-title--small">The non-riders are not somewhere else. They are right there.</h2>
           <p className="tk-body">
-            The origin–destination grids produced the single most useful sentence in
-            the study: <strong>non-users travel the same Phuket Town–Kathu–Patong
-            corridor the bus already serves.</strong> They are not going somewhere
-            else — they are choosing something else. Non-use is a service-performance
-            problem, not a route problem. That is latent demand, standing on the
-            curb, priced daily by this console's missed-฿ column.
+            The origin–destination grids gave us the useful bit: <strong>non-users
+            travel the same Phuket Town–Kathu–Patong corridor the bus already
+            serves.</strong> The route is not innocent, but it is not the whole crime.
+            People are choosing another mode because the total offer works better.
           </p>
           <div className="tk-personas">
             {PERSONAS.map((p) => (
@@ -409,7 +488,7 @@ export function ToolkitPanel() {
             ))}
           </div>
           <p className="tk-body">
-            Across all eight, six service themes decide whether people board:
+            Across all eight, the same six annoyances keep turning up:
           </p>
           <div className="tk-themes">
             {THEMES.map((t) => <span className="tk-theme" key={t}>{t}</span>)}
@@ -418,24 +497,32 @@ export function ToolkitPanel() {
 
         {/* ── Recommendations ─────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">Fifteen Actions, Ranked by the People Who Must Do Them</h2>
+          <h2 className="tk-section-title tk-section-title--small">Fifteen ideas entered. Impact and effort decided who left first.</h2>
           <ImpactEffortFigure />
+          <ol className="tk-recs-mobile" aria-label="Ranked recommendations">
+            {RECS.map((recommendation) => (
+              <li key={recommendation.n}>
+                <span>{String(recommendation.n).padStart(2, "0")}</span>
+                <strong>{recommendation.label}</strong>
+                <small>{recommendation.q === "quick" ? "Do now" : recommendation.q === "major" ? "Fund and sequence" : recommendation.q === "fill" ? "Fill-in" : "Hard slog"}</small>
+              </li>
+            ))}
+          </ol>
           <p className="tk-note">
-            Quick wins are people-and-information problems: driver training, safety
-            standards, app integration, honest timetables, free trial rides. The
-            expensive quadrant is structural: first–last mile, routes, frequency.
-            This console exists to price that quadrant — the Fleet Scenario stepper
-            on the OPS view re-runs the whole day for "increase frequency" (#2)
-            before anyone signs for a bus.
+            The cheap wins are mostly trust: safer driving, better information,
+            decent service. The expensive ones involve asphalt, routes and buses.
+            The live scenario tool prices “increase frequency” before the purchase
+            order does. Procurement officers may now breathe normally.
           </p>
         </section>
 
         {/* ── Assumption ledger ───────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-h2">How the Toolkit Became This Dashboard</h2>
+        <section className="tk-section" id="toolkit-build">
+          <span className="tk-chapter">04 · The build</span>
+          <h2 className="tk-section-title">Every research sentence has to earn a job in the software.</h2>
           <p className="tk-body">
-            Every number on this console traces to a modelling assumption, and every
-            assumption traces to a finding. The ledger, in full:
+            Finding → assumption → code → visible decision. If we cannot trace the
+            route, the number does not get a seat on the dashboard.
           </p>
           <div className="tk-table tk-table--ledger" role="table">
             <div className="tk-tr tk-tr--head" role="row">
@@ -452,19 +539,18 @@ export function ToolkitPanel() {
             ))}
           </div>
           <p className="tk-note">
-            One law binds all of it: passengers are conserved. Everyone who wants a
-            bus either boards, gives up, or is still waiting — counted exactly once,
-            asserted in tests at every minute of every modelled day.
+            The non-negotiable law: nobody disappears into a PowerPoint transition.
+            Every likely rider boards, waits, or walks away — exactly once. The test
+            suite checks that conservation across the modelled day.
           </p>
         </section>
 
         {/* ── Data wanted ─────────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">If We Can Find the Data, We Can Map This Better</h2>
+          <h2 className="tk-section-title tk-section-title--small">The simulation is scaffolding. Real data replaces one plank at a time.</h2>
           <p className="tk-body">
-            The toolkit's hardest-won lesson is that collaboration without demand
-            intelligence produces empty buses. Here is exactly which data sharpens
-            which number:
+            We are not pretending the estimates are sensors. Each future data feed
+            has a named place to land and a specific assumption to retire.
           </p>
           <div className="tk-table tk-table--ledger" role="table">
             <div className="tk-tr tk-tr--head" role="row">
@@ -484,7 +570,7 @@ export function ToolkitPanel() {
 
         {/* ── Honest gaps ─────────────────────────────────────────────── */}
         <section className="tk-section">
-          <h2 className="tk-h2">What This Model Still Does Not Know</h2>
+          <h2 className="tk-section-title tk-section-title--small">What we do not know yet — printed here so nobody mistakes confidence for accuracy.</h2>
           {GAPS.map((g) => (
             <div className="tk-gap" key={g.gap}>
               <span className="tk-gap__k">{g.gap}</span>
@@ -494,29 +580,48 @@ export function ToolkitPanel() {
         </section>
 
         {/* ── Bio + source ────────────────────────────────────────────── */}
-        <section className="tk-section tk-bio">
-          <h2 className="tk-h2">About</h2>
+        <section className="tk-section tk-program">
+          <h2 className="tk-section-title tk-section-title--small">The serious people who made the useful trouble possible.</h2>
+          <div className="tk-logos">
+            <img src={`${import.meta.env.BASE_URL}brand/usascp.png`} alt="U.S.-ASEAN Smart Cities Partnership (USASCP)" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/usdot.svg`} alt="U.S. Department of Transportation" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/depa.jpg`} alt="Digital Economy Promotion Agency (DEPA)" className="tk-logo" />
+            <img src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`} alt="Smart City Thailand Office" className="tk-logo" />
+          </div>
           <p className="tk-body">
-            <strong>Non Arkara</strong> is an architect and urban-intelligence
-            practitioner working across Thailand and ASEAN — creator of the SLIC and
-            SCITI city indices and builder of operational dashboards for cities that
-            want to act on their own data. He has been part of the US-ASEAN Smart
-            Cities transportation program from day one, working the Phuket–Las Vegas
-            pairing alongside the toolkit team, and built this console for the
-            Phuket Smart Bus operation under Phuket City Development — so that the
-            next service decision on this island starts from evidence, not
-            intervals.
+            This work grew from the <strong>U.S.-ASEAN Smart Cities Mobility
+            Program</strong>, led by U.S. DOT under USASCP with the U.S. Department
+            of State. Phuket was paired with Las Vegas; METRANS/USC, Chulalongkorn
+            CUTI, DEPA, RTC Southern Nevada, PKCD / Phuket Smart Bus, Phuket
+            Mahanakorn and DLT brought the brains, constraints and actual buses.
+          </p>
+          <p className="tk-body">
+            Credit to <strong>Roshan Desai</strong> for leading the transportation
+            program and making an unlikely city pairing useful instead of ceremonial.
+            <a className="tk-link" href="https://www.usascp.org/programs/transportationprogram/" target="_blank" rel="noreferrer"> Read the program →</a>
+          </p>
+        </section>
+
+        <section className="tk-section tk-bio">
+          <h2 className="tk-section-title tk-section-title--small">Who built this, and why.</h2>
+          <p className="tk-body">
+            <strong>Non Arkara</strong> is an architect who got tired of city reports
+            ending exactly where the work should begin. He builds urban-intelligence
+            systems across Thailand and ASEAN, created the SLIC and SCITI city
+            indices, worked on the Phuket–Las Vegas program from day one, and built
+            this console so the next bus decision starts with evidence rather than a
+            confident person pointing at a timetable.
           </p>
           <p className="tk-source">
             Source: <em>Transit Service Planning for Sustainable Tourism Travel —
             Insights from Phuket and Las Vegas</em>, US-ASEAN Smart Cities Mobility
             Program (U.S. DOT, U.S. Dept. of State, METRANS/USC, Chulalongkorn CUTI).
             Visitor-mix figures: AOT Annual Reports 2024–2025. Simulation assumptions:
-            this repository, tested.
+            this repository, tested. Diagram approach informed by the open-source
+            <a className="tk-link" href="https://github.com/Egonex-AI/Understand-Anything" target="_blank" rel="noreferrer"> Understand Anything</a>
+            principle that graphs should teach rather than merely impress.
           </p>
         </section>
-
-        </div>
       </div>
     </main>
   );

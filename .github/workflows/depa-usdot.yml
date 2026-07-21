@@ -1,0 +1,112 @@
+name: Deploy depa USDOT toolkit
+
+on:
+  push:
+    branches: [depa-usdot.nonarkara.org]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: depa-usdot-toolkit
+  cancel-in-progress: false
+
+env:
+  TOOLKIT_BRANCH: depa-usdot.nonarkara.org
+  TOOLKIT_BRANCH_ALIAS: depa-usdot-nonarkara-org.phuket-smart-bus.pages.dev
+  TOOLKIT_DOMAIN: depa-usdot.nonarkara.org
+  PAGES_PROJECT: phuket-smart-bus
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npx vite build
+
+      - name: Copy SPA fallback
+        run: cp dist/client/index.html dist/client/404.html
+
+      - name: Deploy toolkit branch to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist/client --project-name=${{ env.PAGES_PROJECT }} --branch=${{ env.TOOLKIT_BRANCH }}
+
+      - name: Attach custom domain to Pages project
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          domains_url="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT}/domains"
+          existing_status="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer ${CF_API_TOKEN}" \
+            "${domains_url}/${TOOLKIT_DOMAIN}" | jq -r '.result.status // empty' 2>/dev/null || true)"
+
+          if [ -z "${existing_status}" ]; then
+            response="$(curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${CF_API_TOKEN}" \
+              --header "Content-Type: application/json" \
+              --data "{\"name\":\"${TOOLKIT_DOMAIN}\"}" \
+              "${domains_url}")"
+            test "$(jq -r '.success' <<<"${response}")" = "true"
+          fi
+
+      - name: Point custom domain at toolkit branch alias
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          zone_response="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer ${CF_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/zones?name=nonarkara.org")"
+          zone_id="$(jq -r '.result[0].id // empty' <<<"${zone_response}")"
+          test -n "${zone_id}"
+
+          records_url="https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records"
+          record_response="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer ${CF_API_TOKEN}" \
+            "${records_url}?type=CNAME&name=${TOOLKIT_DOMAIN}")"
+          record_id="$(jq -r '.result[0].id // empty' <<<"${record_response}")"
+          payload="$(jq -cn \
+            --arg name "${TOOLKIT_DOMAIN}" \
+            --arg content "${TOOLKIT_BRANCH_ALIAS}" \
+            '{type:"CNAME", name:$name, content:$content, proxied:true, ttl:1}')"
+
+          if [ -n "${record_id}" ]; then
+            response="$(curl --fail-with-body --silent --show-error \
+              --request PUT \
+              --header "Authorization: Bearer ${CF_API_TOKEN}" \
+              --header "Content-Type: application/json" \
+              --data "${payload}" \
+              "${records_url}/${record_id}")"
+          else
+            response="$(curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${CF_API_TOKEN}" \
+              --header "Content-Type: application/json" \
+              --data "${payload}" \
+              "${records_url}")"
+          fi
+
+          test "$(jq -r '.success' <<<"${response}")" = "true"
