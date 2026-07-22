@@ -1,5 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { getFleetScenario } from "../../engine/demandSupplyEngine";
+import { useState, type CSSProperties } from "react";
 
 const PAIN_POINTS = [
   {
@@ -118,6 +117,7 @@ const EQUITY_THB = PROJECT_COST_THB - DEBT_THB;
 const TERM_YEARS = 8;
 const ANNUAL_EV_OPEX_THB = 900_000 * 3;
 const DSCR_COVENANT = 1.3;
+const PEAK_DAY_ADDITIONAL_RIDERS = 316;
 
 function annualDebtService(principal: number, annualRatePct: number, years: number) {
   const rate = annualRatePct / 100;
@@ -345,10 +345,11 @@ function FeasibilityBridge() {
 }
 
 function FinanceLab() {
-  const expansion = useMemo(() => getFleetScenario(3), []);
   const [realisationPct, setRealisationPct] = useState(70);
   const [interestPct, setInterestPct] = useState(4);
-  const annualPeakFare = expansion.deltaRevenueThb * 365;
+  // Keep the credit memo tied to its disclosed peak-day reference case.
+  // The live scenario varies by simulation weekday; a loan case must not.
+  const annualPeakFare = PEAK_DAY_ADDITIONAL_RIDERS * 100 * 365;
   const realisedFare = annualPeakFare * realisationPct / 100;
   const cashForDebt = realisedFare - ANNUAL_EV_OPEX_THB;
   const debtService = annualDebtService(DEBT_THB, interestPct, TERM_YEARS);

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
+import { AbcdefFramework, ProgramArchive } from "./ProgramArchive";
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
@@ -389,9 +390,9 @@ export default function ToolkitShowcase() {
         </a>
         <nav aria-label="Page chapters">
           <a href="#try-system">Try it</a>
+          <a href="#abcdef">ABCDEF</a>
+          <a href="#programme">Journey</a>
           <a href="#method">Method</a>
-          <a href="#pain-map">Pain map</a>
-          <a href="#feasibility">Feasibility</a>
         </nav>
         <a className="tk-nav__live" href={BUS_URL}>Live system ↗</a>
       </header>
@@ -423,6 +424,10 @@ export default function ToolkitShowcase() {
           <p>Then we built something that thinks with them.</p>
           <small>Not magic AI. Not decorative KPI soup. A traceable chain from evidence to action.</small>
         </section>
+
+        <AbcdefFramework />
+
+        <ProgramArchive />
 
         <section className="tk-section tk-method" id="method">
           <div className="tk-section__intro">
@@ -574,6 +579,8 @@ export default function ToolkitShowcase() {
             <a href="https://www.otp.go.th/uploads/tiny_uploads/ProjectOTP/2560/Project17/4-DevelopmentofaFundingMechanism.pdf"><span>08</span><strong>Thailand clean-mobility funding mechanism</strong><small>OTP · EV bus costs and financing gap</small><b>↗</b></a>
             <a href="https://sme.krungthai.com/sme/productListAction.action?cateId=14&cateMenu=PRODUCT&command=getDetail&itemId=438"><span>09</span><strong>Krungthai sustainability loan</strong><small>Indicative green-finance product terms</small><b>↗</b></a>
             <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><span>10</span><strong>Thailand lending-rate stress benchmark</strong><small>Bank of Thailand · Q1 2026</small><b>↗</b></a>
+            <a href="https://www.usascp.org/programs/transportationprogram/"><span>11</span><strong>Smart Sustainable Mobility programme record</strong><small>U.S.-ASEAN Smart Cities Partnership</small><b>↗</b></a>
+            <a href="https://www.metrans.org/upp"><span>12</span><strong>University Partnership Programme and four toolkits</strong><small>METRANS Transportation Consortium · 2026</small><b>↗</b></a>
           </div>
           <p className="tk-sources__caveat">* CO₂ is a modelled avoided-emissions estimate, not a certified carbon credit. Accident and congestion benefits are intervention goals until an instrumented baseline and observed counterfactual exist. We would rather tell you exactly what we do not know than sell you a decimal point wearing a tie.</p>
         </section>
