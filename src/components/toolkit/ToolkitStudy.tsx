@@ -192,6 +192,8 @@ function DecisionLedgerDrawing() {
 }
 
 export function TryLiveSystem({ busUrl }: { busUrl: string }) {
+  const operationsUrl = `${busUrl}ops`;
+  const toolkitConsoleUrl = `${operationsUrl}?view=toolkit`;
   const experiments = [
     {
       number: "01",
@@ -204,15 +206,15 @@ export function TryLiveSystem({ busUrl }: { busUrl: string }) {
       number: "02",
       title: "Run the whole day",
       copy: "Watch flight waves create queues, buses absorb seats and the operating totals climb together.",
-      href: `${busUrl}v2`,
+      href: operationsUrl,
       action: "Open operations view"
     },
     {
       number: "03",
       title: "Challenge the model",
-      copy: "Move the fleet assumption. If the passengers, revenue and unmet demand do not change, something is broken.",
-      href: `${busUrl}v2?view=toolkit`,
-      action: "Open model view"
+      copy: "Read every finding beside the assumption, operating signal and decision it produced. Then try to prove it wrong.",
+      href: toolkitConsoleUrl,
+      action: "Open toolkit console"
     }
   ];
 
@@ -236,6 +238,23 @@ export function TryLiveSystem({ busUrl }: { busUrl: string }) {
           </a>
         ))}
       </div>
+
+      <section className="tk-live-console" id="working-console" aria-labelledby="working-console-title">
+        <header>
+          <div><span className="tk-kicker">The research, now operational</span><h2 id="working-console-title">This is what “more than a report” looks like.</h2></div>
+          <div><p>The archive explains how the partnership reached its conclusions. The console shows what those conclusions became: a thesis, falsifiable questions, operating assumptions, ranked actions, known gaps and the data needed next.</p><a href={toolkitConsoleUrl}>Open the full toolkit console <b>↗</b></a></div>
+        </header>
+        <div className="tk-live-console__frame">
+          <div className="tk-live-console__bar"><span><i /> LIVE WORKING SYSTEM</span><strong>bus.nonarkara.org/ops?view=toolkit</strong><a href={toolkitConsoleUrl}>Open full screen ↗</a></div>
+          <iframe
+            src={toolkitConsoleUrl}
+            title="Interactive Phuket Smart Bus toolkit and operations console"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+        <footer><span>Read</span><strong>Research finding</strong><b>→</b><span>Translate</span><strong>Measurable assumption</strong><b>→</b><span>Operate</span><strong>Signal + decision</strong></footer>
+      </section>
 
       <div className="tk-machine">
         <div className="tk-machine__heading"><span className="tk-kicker">Open the bonnet</span><h2>Three mechanics worth kicking.</h2><p>The screen is only the last inch. Here is the machinery underneath it.</p></div>

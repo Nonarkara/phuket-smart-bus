@@ -392,7 +392,7 @@ export default function ToolkitShowcase() {
           <a href="#try-system">Try it</a>
           <a href="#abcdef">ABCDEF</a>
           <a href="#programme">Journey</a>
-          <a href="#method">Method</a>
+          <a href="#working-console">Console</a>
         </nav>
         <a className="tk-nav__live" href={BUS_URL}>Live system ↗</a>
       </header>
@@ -573,7 +573,7 @@ export default function ToolkitShowcase() {
             <a href="https://www.data.go.th/dataset/rtddi"><span>02</span><strong>Integrated road-death records, 3 databases</strong><small>Department of Disease Control · data.go.th</small><b>↗</b></a>
             <a href="https://www.data.go.th/th/dataset/stattourism"><span>03</span><strong>Monthly provincial tourism statistics</strong><small>Ministry of Tourism and Sports · data.go.th</small><b>↗</b></a>
             <a href="https://www.data.go.th/dataset/dataset_10_3710"><span>04</span><strong>International passengers through Phuket Airport</strong><small>Phuket Provincial Office · data.go.th catalogue</small><b>↗</b></a>
-            <a href={`${BUS_URL}v2?view=toolkit`}><span>05</span><strong>Assumptions, formulas and live simulation</strong><small>Phuket Smart Bus · working system</small><b>↗</b></a>
+            <a href={`${BUS_URL}ops?view=toolkit`}><span>05</span><strong>Assumptions, formulas and live simulation</strong><small>Phuket Smart Bus · working toolkit console</small><b>↗</b></a>
             <a href="https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf"><span>06</span><strong>Phuket Airport traffic report, 2025</strong><small>Airports of Thailand · 17.5m passenger movements</small><b>↗</b></a>
             <a href="https://www.phuket.go.th/webpk/file_data/hilight/hilight2567.pdf"><span>07</span><strong>Phuket provincial highlights, 2024</strong><small>Existing EV routes and ridership evidence</small><b>↗</b></a>
             <a href="https://www.otp.go.th/uploads/tiny_uploads/ProjectOTP/2560/Project17/4-DevelopmentofaFundingMechanism.pdf"><span>08</span><strong>Thailand clean-mobility funding mechanism</strong><small>OTP · EV bus costs and financing gap</small><b>↗</b></a>

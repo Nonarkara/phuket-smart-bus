@@ -9,8 +9,9 @@ describe("Toolkit research studies", () => {
     render(<TryLiveSystem busUrl="https://bus.nonarkara.org/" />);
 
     expect(screen.getByRole("link", { name: /Open the live system/i })).toHaveAttribute("href", "https://bus.nonarkara.org/");
-    expect(screen.getByRole("link", { name: /Open operations view/i })).toHaveAttribute("href", "https://bus.nonarkara.org/v2");
-    expect(screen.getByRole("link", { name: /Open model view/i })).toHaveAttribute("href", "https://bus.nonarkara.org/v2?view=toolkit");
+    expect(screen.getByRole("link", { name: /Open operations view/i })).toHaveAttribute("href", "https://bus.nonarkara.org/ops");
+    expect(screen.getByRole("link", { name: /Open toolkit console/i })).toHaveAttribute("href", "https://bus.nonarkara.org/ops?view=toolkit");
+    expect(screen.getByTitle("Interactive Phuket Smart Bus toolkit and operations console")).toHaveAttribute("src", "https://bus.nonarkara.org/ops?view=toolkit");
     expect(screen.getByRole("img", { name: /Flights become passenger demand waves/i })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /simulation positions buses on real road geometry/i })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /fleet decision changes passengers, revenue and public value/i })).toBeInTheDocument();
