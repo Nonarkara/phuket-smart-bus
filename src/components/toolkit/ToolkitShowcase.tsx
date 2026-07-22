@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
-import { AbcdefFramework, ProgramArchive } from "./ProgramArchive";
+import { AbcdefFramework, ProgramArchive, VegasFile, VEGAS_CASES } from "./ProgramArchive";
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
@@ -523,6 +523,7 @@ export default function ToolkitShowcase() {
             <Arrow />
             <div><b>4</b><strong>Public benefit payment</strong><small>Government pays only for verified additional outcomes</small></div>
           </div>
+          <VegasFile vegasCase={VEGAS_CASES.deal} />
         </section>
 
         <section className="tk-section tk-ecosystem">
@@ -581,6 +582,7 @@ export default function ToolkitShowcase() {
             <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><span>10</span><strong>Thailand lending-rate stress benchmark</strong><small>Bank of Thailand · Q1 2026</small><b>↗</b></a>
             <a href="https://www.usascp.org/programs/transportationprogram/"><span>11</span><strong>Smart Sustainable Mobility programme record</strong><small>U.S.-ASEAN Smart Cities Partnership</small><b>↗</b></a>
             <a href="https://www.metrans.org/upp"><span>12</span><strong>University Partnership Programme and four toolkits</strong><small>METRANS Transportation Consortium · 2026</small><b>↗</b></a>
+            <a href="https://thenevadaindependent.com/article/as-passenger-counts-dwindle-on-strip-buses-the-rtc-eyes-innovation-while-closely-monitoring-financials"><span>13</span><strong>Las Vegas Strip bus financing case study</strong><small>The Nevada Independent · farebox recovery, ridership, subsidy history</small><b>↗</b></a>
           </div>
           <p className="tk-sources__caveat">* CO₂ is a modelled avoided-emissions estimate, not a certified carbon credit. Accident and congestion benefits are intervention goals until an instrumented baseline and observed counterfactual exist. We would rather tell you exactly what we do not know than sell you a decimal point wearing a tie.</p>
         </section>

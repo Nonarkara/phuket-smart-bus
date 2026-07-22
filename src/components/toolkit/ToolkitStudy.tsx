@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from "react";
+import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
 
 const PAIN_POINTS = [
   {
@@ -456,6 +457,7 @@ export function FeasibilityStudy() {
       <FeasibilityBridge />
       <div className="tk-feasibility__intro"><span className="tk-kicker">The bankability test</span><h2>A good project can still be a bad loan.</h2><p>The sliders expose the two variables a credit committee will attack first: how much modeled demand becomes cash, and what the money costs.</p></div>
       <FinanceLab />
+      <VegasFile vegasCase={VEGAS_CASES.financing} />
       <MockCreditMemo />
       <div className="tk-feasibility__intro"><span className="tk-kicker">Signed, sealed, delivered—in tranches</span><h2>Five gates. One escape hatch.</h2><p>If evidence fails, stop. A smaller loss teaches more than a fully financed mistake.</p></div>
       <DeliveryPlan />

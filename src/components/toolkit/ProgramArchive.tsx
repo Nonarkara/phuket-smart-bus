@@ -2,6 +2,90 @@ import { useState } from "react";
 
 const PROGRAM_URL = "https://www.usascp.org/programs/transportationprogram/";
 const UPP_URL = "https://www.metrans.org/upp";
+const VEGAS_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/vegas/`;
+
+type VegasCase = {
+  photo: { src: string; alt: string; credit: string };
+  title: string;
+  lede: string;
+  facts: readonly (readonly [string, string, string])[];
+  source: string;
+  sourceHref: string;
+};
+
+const VEGAS_CASES = {
+  abcdef: {
+    photo: {
+      src: `${VEGAS_ASSET_ROOT}deuce-strip.jpg`,
+      alt: "A Deuce double-decker bus running on the Las Vegas Strip",
+      credit: "Photo: Eric Fischer · CC BY 2.0 · Wikimedia Commons"
+    },
+    title: "Vegas already passed the ABCDEF test, at Strip scale.",
+    lede: "USASCP paired Phuket with Las Vegas in 2024 to study tourism mode choice for exactly this reason. RTC Southern Nevada’s Strip service is the closest real proof this pitch has: legible pricing, honest timing and a fleet built for the trip, not adapted to it.",
+    facts: [
+      ["$4 · $8", "single ride · 24-hour pass", "B — arithmetic a first-time visitor can do at the curb"],
+      ["100 seats", "Alexander Dennis Enviro500 double-decker", "C + H — capacity and tourist appeal in one vehicle"],
+      ["2005", "the Strip’s dedicated double-decker service began", "D — two decades of one fixed, legible route"],
+      ["No parking. No rental counter.", "the same freedom argument as ฿100 versus a car", "F"]
+    ],
+    source: "RTC Southern Nevada, Fares & Passes",
+    sourceHref: "https://www.rtcsnv.com/ways-to-travel/fares-passes/"
+  },
+  financing: {
+    photo: {
+      src: `${VEGAS_ASSET_ROOT}deuce-vehicle.jpg`,
+      alt: "An RTC Transit Alexander Dennis Enviro500 double-decker bus, the vehicle used on the Deuce route",
+      credit: "Photo: Cello06, 2006 · public domain · Wikimedia Commons"
+    },
+    title: "A corridor that ran a $6m annual profit—until it had competition.",
+    lede: "This is the financing case study behind our thesis. The Strip service is funded by a sales tax built for transit, not scraped from a general fund. It ran profitably for a decade. Then ride-hailing arrived, and even a purpose-built tax base needed to start subsidising it.",
+    facts: [
+      ["0.375%", "of Clark County sales tax, dedicated to transit since 2002", "a funding source designed for buses, not competing with schools and roads for a vote"],
+      ["~40¢", "farebox recovery per operating dollar, general routes", "about double the U.S. national average—and still not enough alone"],
+      ["$6m/yr", "Strip corridor profit before 2015", "the double-decker route paid for itself, once"],
+      ["2015 → 2019", "ride-hailing legalised → RTC subsidises the Strip for the first time", "3.3m fewer passenger trips; seats filled fell from 90% to ~60%"]
+    ],
+    source: "The Nevada Independent, “As passenger counts dwindle on Strip buses…”, 22 Jul 2019. Percentages are RTC’s own public reporting, not an independent audit.",
+    sourceHref: "https://thenevadaindependent.com/article/as-passenger-counts-dwindle-on-strip-buses-the-rtc-eyes-innovation-while-closely-monitoring-financials"
+  },
+  deal: {
+    photo: {
+      src: `${VEGAS_ASSET_ROOT}deuce-stop.jpg`,
+      alt: "A Deuce bus stop on the Las Vegas Strip",
+      credit: "Photo: Sean MacEntee · CC BY 2.0 · Wikimedia Commons"
+    },
+    title: "The joined ledger, already law in Clark County.",
+    lede: "Nevada’s motor-fuel tax is constitutionally restricted to roads—it cannot legally pay for a bus. So the county built a second, dedicated stream for transit instead of hoping the farebox would stretch. That is the same structural move this deal proposes for Phuket.",
+    facts: [
+      ["Roadway-only", "constitutional limit on Nevada’s fuel tax", "transit needed its own lane, literally by law"],
+      ["3 states", "reporting names Nevada among states with zero state-level transit funding", "the county, not the state, carries the mandate"]
+    ],
+    source: "Nevada Current / News From The States, “Last year Nevada delivered on roadway funding…”, 4 Mar 2026",
+    sourceHref: "https://nevadacurrent.com/2026/03/04/last-year-nevada-delivered-on-roadway-funding-public-transit-may-not-fare-as-well/"
+  }
+} as const satisfies Record<string, VegasCase>;
+
+function VegasFile({ vegasCase }: { vegasCase: VegasCase }) {
+  return (
+    <aside className="tk-vegas" aria-label={`Partner city comparable: Las Vegas Strip — ${vegasCase.title}`}>
+      <figure>
+        <img src={vegasCase.photo.src} alt={vegasCase.photo.alt} loading="lazy" />
+        <figcaption>{vegasCase.photo.credit}</figcaption>
+      </figure>
+      <div className="tk-vegas__body">
+        <span className="tk-kicker">Partner city file · Las Vegas Strip</span>
+        <h3>{vegasCase.title}</h3>
+        <p>{vegasCase.lede}</p>
+        <div className="tk-vegas__facts">
+          {vegasCase.facts.map(([value, label, note]) => (
+            <div key={label}><strong>{value}</strong><span>{label}</span><small>{note}</small></div>
+          ))}
+        </div>
+        <p className="tk-source"><a href={vegasCase.sourceHref}>Source: {vegasCase.source} ↗</a></p>
+      </div>
+    </aside>
+  );
+}
 
 const MODE_LENS = [
   ["A", "Accessibility", "Can a first-time visitor find it, understand it and board it without borrowing local knowledge?"],
@@ -116,6 +200,7 @@ function AbcdefFramework() {
         ))}
       </div>
       <p className="tk-abcdef__caveat">This is a proposition map, not a causal estimate. The live system gives us somewhere to test which letters actually change search, boarding and repeat use.</p>
+      <VegasFile vegasCase={VEGAS_CASES.abcdef} />
     </section>
   );
 }
@@ -200,4 +285,4 @@ function ProgramArchive() {
   );
 }
 
-export { AbcdefFramework, ProgramArchive };
+export { AbcdefFramework, ProgramArchive, VegasFile, VEGAS_CASES };

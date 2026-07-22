@@ -173,6 +173,21 @@ html.toolkit-site-mode #root {
 .tk-abcdef__extensions article p { grid-column: 1 / -1; color: var(--tk-muted); font-size: 14px; }
 .tk-abcdef__caveat { max-width: 78ch; margin-top: 24px !important; color: var(--tk-muted); font-size: 14px; }
 
+.tk-vegas { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; margin-top: 46px; border: 1px solid var(--tk-ink); }
+.tk-vegas figure { display: flex; flex-direction: column; margin: 0; min-height: 260px; }
+.tk-vegas img { flex: 1; min-height: 0; object-fit: cover; }
+.tk-vegas figcaption { padding: 10px 14px; color: rgba(255,255,255,0.6); font-size: 11px; background: var(--tk-ink); }
+.tk-vegas__body { padding: 28px; color: var(--tk-ink); background: var(--tk-yellow); }
+.tk-vegas__body h3 { margin-top: 10px; font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
+.tk-vegas__body > p { max-width: 62ch; margin-top: 12px; color: rgba(17,24,32,0.72); font-size: 14px; }
+.tk-vegas__facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 28px; margin-top: 24px; padding-top: 22px; border-top: 1px solid rgba(17,24,32,0.28); }
+.tk-vegas__facts div { display: flex; flex-direction: column; gap: 4px; }
+.tk-vegas__facts strong { font: 700 1.3rem/1.1 var(--font-mono); }
+.tk-vegas__facts span { font-size: 13px; font-weight: 700; }
+.tk-vegas__facts small { color: rgba(17,24,32,0.62); font-size: 12px; }
+.tk-vegas .tk-source { margin-top: 22px !important; color: rgba(17,24,32,0.6) !important; }
+.tk-vegas .tk-source a { color: var(--tk-ink) !important; }
+
 /* Programme archive: one short spine on the main page, depth behind tabs. */
 .tk-program { color: #fff; background: var(--tk-blue); border-bottom: 1px solid rgba(255,255,255,0.25); }
 .tk-program__header { display: grid; grid-template-columns: minmax(180px, 0.28fr) minmax(0, 1.2fr) minmax(270px, 0.52fr); gap: clamp(26px, 4vw, 70px); padding: clamp(90px, 10vw, 170px) clamp(24px, 6.5vw, 110px) clamp(70px, 8vw, 120px); }
@@ -403,6 +418,8 @@ html.toolkit-site-mode #root {
   .tk-contract { grid-template-columns: repeat(2, 1fr); }
   .tk-contract > span { grid-column: 1 / -1; }
   .tk-contract > .tk-arrow { display: none; }
+  .tk-vegas { grid-template-columns: 1fr; }
+  .tk-vegas figure { min-height: 200px; }
 }
 
 @media (max-width: 760px) {
@@ -488,6 +505,8 @@ html.toolkit-site-mode #root {
   .tk-stakeholders { grid-template-columns: 1fr; }
   .tk-stakeholders article { min-height: auto; }
   .tk-contract { grid-template-columns: 1fr; }
+  .tk-vegas__facts { grid-template-columns: 1fr; }
+  .tk-vegas__body { padding: 22px; }
   .tk-ecosystem__grid { grid-template-columns: 1fr; }
   .tk-ecosystem__grid a { min-height: 250px; }
   .tk-ecosystem__lesson { grid-template-columns: 1fr; }
