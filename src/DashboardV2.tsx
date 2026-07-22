@@ -52,6 +52,7 @@ import { InsightsTimeline } from "./components/v2/InsightsTimeline";
 import { InsightsSummaryPanel } from "./components/v2/InsightsSummaryPanel";
 import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 import { OpsBriefing } from "./components/v2/OpsBriefing";
+import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
 
@@ -460,6 +461,7 @@ export default function DashboardV2() {
           />
 
           <section className="v2-map">
+            <PhuketConditionsStrip />
             <div className="v2-map__hero">
               <div className="v2-map__hero-card">
                 <span className="v2-map__hero-label">Demand Queue</span>

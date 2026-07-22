@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { Counter } from "./V2Shared";
 import type { OperatorFleetRow, BusProblem } from "../../engine/v2OpsPanel";
+import { getDriverProfile } from "../../engine/driverRoster";
+import { getDriverDayRecord } from "../../engine/driverStats";
+import { DriverProfileSheet } from "./DriverProfileSheet";
 
 interface OperatorFleetPanelProps {
   rows: OperatorFleetRow[];
@@ -26,12 +29,12 @@ const PROBLEM_DESC: Record<NonNullable<BusProblem>, string> = {
 /**
  * Per-vehicle operations panel.
  *
- * Each row shows: plate, route, status, load bar, ETA, problem flag.
- * Sort: problems first, then moving, then plate.
- * Filter chips let the operator zoom on: all / issues only / moving / idle.
+ * Each row shows: driver face + name, plate, route, status, load bar, ETA.
+ * Click / Enter opens the driver dossier (sim-derived day record).
  */
 export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelProps) {
   const [filter, setFilter] = useState<Filter>("all");
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     switch (filter) {
@@ -51,8 +54,9 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
     return counts;
   }, [rows]);
 
+  const selectedRecord = selectedVehicleId ? getDriverDayRecord(selectedVehicleId) : null;
+
   const headerCount = rows.length;
-  // Alerts: only problem flags, not FULL (which is informational).
   const issueCount = rows.filter((r) => r.problem !== null).length;
 
   return (
@@ -70,16 +74,18 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
           </strong>
           <span className="v2-fleet__sub">
             {waitingAtCurb > 0
-              ? `${waitingAtCurb} pax waiting at curb right now`
-              : "Curb queue clear"}
+              ? `${waitingAtCurb} pax waiting at curb · click a driver for today's record`
+              : "Curb queue clear · click a driver for today's record"}
           </span>
         </div>
-        <div className="v2-fleet__chips">
+        <div className="v2-fleet__chips" role="toolbar" aria-label="Filter fleet">
           {(["all", "issues", "moving", "idle"] as Filter[]).map((f) => (
             <button
               key={f}
+              type="button"
               className={`v2-fleet__chip ${filter === f ? "is-active" : ""}`}
               onClick={() => setFilter(f)}
+              aria-pressed={filter === f}
             >
               {f === "all" ? `All ${headerCount}` : f === "issues" ? `Issues ${issueCount}` : f === "moving" ? `Moving ${rows.filter((r) => r.status === "MOVING").length}` : `Idle ${rows.filter((r) => r.status !== "MOVING").length}`}
             </button>
@@ -87,7 +93,6 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
         </div>
       </header>
 
-      {/* Aggregate problem summary — visible at a glance */}
       {(issueCount > 0 || problemCounts.FULL > 0) && (
         <div className="v2-fleet__problems">
           {problemCounts.STUCK > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--stuck">{problemCounts.STUCK} STUCK</span>}
@@ -97,26 +102,49 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
         </div>
       )}
 
-      <div className="v2-fleet__list">
-        <div className="v2-fleet__row v2-fleet__row--header">
-          <span>Plate</span>
+      <div className="v2-fleet__list" role="list">
+        <div className="v2-fleet__row v2-fleet__row--header" aria-hidden="true">
+          <span>Driver</span>
           <span>Route</span>
           <span>Load</span>
           <span>Status</span>
           <span>ETA</span>
         </div>
         {filtered.map((row) => (
-          <FleetRow key={row.vehicleId} row={row} />
+          <FleetRow
+            key={row.vehicleId}
+            row={row}
+            selected={row.vehicleId === selectedVehicleId}
+            onSelect={() => setSelectedVehicleId(row.vehicleId)}
+          />
         ))}
         {filtered.length === 0 && (
           <div className="v2-fleet__empty">No buses match the current filter.</div>
         )}
       </div>
+
+      <DriverProfileSheet
+        record={selectedRecord}
+        onClose={() => setSelectedVehicleId(null)}
+      />
     </div>
   );
 }
 
-function FleetRow({ row }: { row: OperatorFleetRow }) {
+function FleetRow({
+  row,
+  selected,
+  onSelect,
+}: {
+  row: OperatorFleetRow;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const driver = getDriverProfile({
+    vehicleId: row.vehicleId,
+    plate: row.plate,
+    routeId: row.routeId,
+  });
   const isFull = row.full;
   const loadTone = isFull
     ? "v2-fleet__bar--full"
@@ -136,9 +164,29 @@ function FleetRow({ row }: { row: OperatorFleetRow }) {
       : row.routeId === "dragon-line"
         ? "Dragon"
         : row.routeId;
+  const plateShort = row.plate.replace(" ภูเก็ต", "");
+
   return (
-    <div className={`v2-fleet__row ${row.problem ? "has-problem" : ""} ${isFull && !row.problem ? "is-full" : ""}`} title={row.summary}>
-      <span className="v2-fleet__plate">{row.plate.replace(" ภูเก็ต", "")}</span>
+    <div
+      role="listitem"
+      className={`v2-fleet__row v2-fleet__row--clickable ${row.problem ? "has-problem" : ""} ${isFull && !row.problem ? "is-full" : ""} ${selected ? "is-selected" : ""}`}
+      title={`${driver.nameEn} · ${row.summary} · Open driver dossier`}
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      <span className="v2-fleet__driver">
+        <img className="v2-fleet__face" src={driver.faceDataUri} alt="" width={28} height={28} />
+        <span className="v2-fleet__driver-text">
+          <span className="v2-fleet__driver-name">{driver.nameTh}</span>
+          <span className="v2-fleet__plate">{plateShort}</span>
+        </span>
+      </span>
       <span className="v2-fleet__route">
         <span className="v2-fleet__route-tag">{routeShort}</span>
         <span className="v2-fleet__route-dir">{dir.replace("Bus to ", "→ ")}</span>

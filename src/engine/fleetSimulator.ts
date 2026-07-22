@@ -1220,6 +1220,83 @@ export function getVehiclesNow(now = new Date(), overrideMin?: number): VehicleP
   return [...smart, ...orange];
 }
 
+/** One scheduled leg assigned to a land bus — used for driver day records. */
+export type AssignedTripLeg = {
+  vehicleId: string;
+  plate: string;
+  routeId: OperationalRouteId;
+  directionLabel: string;
+  depMin: number;
+  tripDurationMin: number;
+  /** Full one-way route length in km. */
+  routeKm: number;
+  /** 0–1 progress at nowMin (1 = completed). */
+  progress: number;
+  completed: boolean;
+};
+
+/**
+ * Deterministic duty-chain assignment for all land-bus departures up to nowMin.
+ * Same tripHash seed as live map assignment; free-at probe keeps one bus from
+ * being double-booked across overlapping legs. Every departure maps to exactly
+ * one vehicle → fleet-sum of driver stats reconciles with the schedule.
+ */
+export function listLandTripAssignments(nowMin: number): AssignedTripLeg[] {
+  ensureFleetRoster();
+  const legs: AssignedTripLeg[] = [];
+
+  for (const routeId of landRouteIds) {
+    const pool = fleetByRoute[routeId];
+    if (!pool || pool.length === 0) continue;
+
+    const freeAt = new Array<number>(pool.length).fill(SERVICE_START - 120);
+    const allDeps = profilesByRoute[routeId]
+      .flatMap((p) => p.departures.map((dep) => ({ profile: p, dep })))
+      .sort((a, b) => a.dep - b.dep || a.profile.directionLabel.localeCompare(b.profile.directionLabel));
+
+    for (const { profile, dep } of allDeps) {
+      // Skip far-future prestarts (same ~12 min window as buildTripOccurrences).
+      if (dep > nowMin + 12) continue;
+
+      const h = tripHash(profile.routeId, profile.directionLabel, dep);
+      let idx = h % pool.length;
+      let tries = 0;
+      while (freeAt[idx]! > dep && tries < pool.length) {
+        idx = (idx + 1) % pool.length;
+        tries++;
+      }
+
+      const vehicle = pool[idx]!;
+      const duration = profile.tripDurationMinutes;
+      freeAt[idx] = dep + duration + 10;
+
+      const age = nowMin - dep;
+      if (age < -12) continue;
+
+      const progress = age <= 0 ? 0 : age >= duration ? 1 : age / duration;
+      legs.push({
+        vehicleId: vehicle.vehicleId,
+        plate: vehicle.licensePlate,
+        routeId,
+        directionLabel: profile.directionLabel,
+        depMin: dep,
+        tripDurationMin: duration,
+        routeKm: Math.round((profile.polylineTotalMeters / 1000) * 10) / 10,
+        progress,
+        completed: progress >= 1,
+      });
+    }
+  }
+
+  return legs;
+}
+
+/** Land-bus roster rows (plates + route) after lazy init. */
+export function getLandBusRoster(): { vehicleId: string; licensePlate: string; routeId: OperationalRouteId }[] {
+  ensureFleetRoster();
+  return landRouteIds.flatMap((id) => fleetByRoute[id] ?? []);
+}
+
 // ---------------------------------------------------------------------------
 // Driver tablet helper — given a license plate, return everything the
 // per-bus driver view needs: route, stops with ETA, on-time delta, pax

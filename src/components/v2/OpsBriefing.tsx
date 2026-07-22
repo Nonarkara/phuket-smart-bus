@@ -2,6 +2,7 @@ import { useMemo, type RefObject } from "react";
 import type { HourlyBalance } from "../../engine/v2OpsPanel";
 import { scrubToHour } from "./DemandPanel";
 import { V2LiveMap, type V2MapHandle } from "./V2LiveMap";
+import { PhuketConditionsStrip } from "./PhuketConditionsStrip";
 
 interface OpsBriefingProps {
   mapRef: RefObject<V2MapHandle | null>;
@@ -72,6 +73,8 @@ export function OpsBriefing({
         </p>
         {nextDeparture !== null && <span className="v2-brief__next">Next scheduled departure in {nextDeparture} min</span>}
       </section>
+
+      <PhuketConditionsStrip />
 
       <section className="v2-brief__map" aria-labelledby="brief-map-title">
         <header className="v2-brief__section-head">
