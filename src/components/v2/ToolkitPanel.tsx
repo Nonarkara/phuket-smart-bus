@@ -372,256 +372,262 @@ export function ToolkitPanel({
           </div>
         </section>
 
-        {/* ── The thesis ──────────────────────────────────────────────── */}
-        <section className="tk-section" id="toolkit-thinking">
-          <span className="tk-chapter">02 · The thinking</span>
-          <h2 className="tk-section-title">Nobody chooses a mode because a planner says it is efficient.</h2>
-          <p className="tk-body">
-            People choose the whole deal: money, certainty, comfort, image and the
-            nonsense they avoid. Eight useful lenses keep us honest. “Fast” is only
-            one of them, and not always the winner.
-          </p>
-          <div className="tk-tenets">
-            {TENETS.map((t) => (
-              <div className="tk-tenet" key={t.l}>
-                <span className="tk-tenet__l">{t.l}</span>
-                <span className="tk-tenet__k">{t.k}</span>
-                <span className="tk-tenet__d">{t.d}</span>
+        <div className="tk-columns">
+          <div className="tk-columns__main">
+            {/* ── The thesis ──────────────────────────────────────────────── */}
+            <section className="tk-section" id="toolkit-thinking">
+              <span className="tk-chapter">02 · The thinking</span>
+              <h2 className="tk-section-title">Nobody chooses a mode because a planner says it is efficient.</h2>
+              <p className="tk-body">
+                People choose the whole deal: money, certainty, comfort, image and the
+                nonsense they avoid. Eight useful lenses keep us honest. “Fast” is only
+                one of them, and not always the winner.
+              </p>
+              <div className="tk-tenets">
+                {TENETS.map((t) => (
+                  <div className="tk-tenet" key={t.l}>
+                    <span className="tk-tenet__l">{t.l}</span>
+                    <span className="tk-tenet__k">{t.k}</span>
+                    <span className="tk-tenet__d">{t.d}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
 
-        {/* ── The hypotheses ──────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">Good research gives the system something it can prove wrong.</h2>
-          <p className="tk-body">
-            These are not inspirational questions. Each one demands a number that
-            can embarrass us later. That is healthy.
-          </p>
-          {HYPOTHESES.map((h, i) => (
-            <div className="tk-hyp" key={i}>
-              <span className="tk-hyp__q">{h.q}</span>
-              <span className="tk-hyp__t">{h.t}</span>
-            </div>
-          ))}
-        </section>
+            {/* ── The hypotheses ──────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">Good research gives the system something it can prove wrong.</h2>
+              <p className="tk-body">
+                These are not inspirational questions. Each one demands a number that
+                can embarrass us later. That is healthy.
+              </p>
+              {HYPOTHESES.map((h, i) => (
+                <div className="tk-hyp" key={i}>
+                  <span className="tk-hyp__q">{h.q}</span>
+                  <span className="tk-hyp__t">{h.t}</span>
+                </div>
+              ))}
+            </section>
 
-        {/* ── Two cities, one problem ─────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">Phuket and Las Vegas: same tourism, opposite physics.</h2>
-          <div className="tk-table" role="table">
-            <div className="tk-tr tk-tr--head" role="row">
-              <span role="columnheader"></span>
-              <span role="columnheader">Phuket</span>
-              <span role="columnheader">Las Vegas</span>
-            </div>
-            {CITY_CONTRAST.map((r) => (
-              <div className="tk-tr" role="row" key={r.dim}>
-                <span className="tk-dim" role="cell">{r.dim}</span>
-                <span role="cell">{r.phuket}</span>
-                <span role="cell">{r.vegas}</span>
+            {/* ── Two cities, one problem ─────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">Phuket and Las Vegas: same tourism, opposite physics.</h2>
+              <div className="tk-table" role="table">
+                <div className="tk-tr tk-tr--head" role="row">
+                  <span role="columnheader"></span>
+                  <span role="columnheader">Phuket</span>
+                  <span role="columnheader">Las Vegas</span>
+                </div>
+                {CITY_CONTRAST.map((r) => (
+                  <div className="tk-tr" role="row" key={r.dim}>
+                    <span className="tk-dim" role="cell">{r.dim}</span>
+                    <span role="cell">{r.phuket}</span>
+                    <span role="cell">{r.vegas}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="tk-note">
-            Las Vegas tries to get visitors out of cars after they arrive. Phuket
-            must win the very first trip, while the taxi is waiting at the door and
-            the bus is not allowed to be. Same workshop vocabulary; very different Tuesday.
-          </p>
-        </section>
+              <p className="tk-note">
+                Las Vegas tries to get visitors out of cars after they arrive. Phuket
+                must win the very first trip, while the taxi is waiting at the door and
+                the bus is not allowed to be. Same workshop vocabulary; very different Tuesday.
+              </p>
+            </section>
 
-        {/* ── Objectives ──────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">One bus problem is secretly five problems.</h2>
-          <div className="tk-objectives">
-            {OBJECTIVES.map((o) => (
-              <div className="tk-obj" key={o.k}>
-                <span className="tk-obj__k">{o.k}</span>
-                <span className="tk-obj__d">{o.d}</span>
+            {/* ── Objectives ──────────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">One bus problem is secretly five problems.</h2>
+              <div className="tk-objectives">
+                {OBJECTIVES.map((o) => (
+                  <div className="tk-obj" key={o.k}>
+                    <span className="tk-obj__k">{o.k}</span>
+                    <span className="tk-obj__d">{o.d}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </section>
+
+            {/* ── Method ──────────────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">The method, with the ceremony removed.</h2>
+              <p className="tk-body">
+                Map who can say yes. Survey riders and non-riders where they actually
+                travel. Turn the answers into eight recognisable people, not one mythical
+                “average user.” Then put the people who control the system in a room until
+                fifteen actions come out ranked. Coffee helps. Evidence helps more.
+              </p>
+              <PipelineFigure />
+            </section>
           </div>
-        </section>
 
-        {/* ── Method ──────────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">The method, with the ceremony removed.</h2>
-          <p className="tk-body">
-            Map who can say yes. Survey riders and non-riders where they actually
-            travel. Turn the answers into eight recognisable people, not one mythical
-            “average user.” Then put the people who control the system in a room until
-            fifteen actions come out ranked. Coffee helps. Evidence helps more.
-          </p>
-          <PipelineFigure />
-        </section>
+          <div className="tk-columns__side">
+            <section className="tk-section" id="toolkit-evidence">
+              <span className="tk-chapter">03 · The evidence</span>
+              <h2 className="tk-section-title">Correlation gives us a suspect. Causation needs an experiment.</h2>
+              <p className="tk-body">
+                A beautiful network diagram can still be a bowl of spaghetti. This one
+                is a guided path: what we saw, what might explain it, what we change, and
+                what number decides whether we were right.
+              </p>
+              <CausalMap />
+            </section>
 
-        <section className="tk-section" id="toolkit-evidence">
-          <span className="tk-chapter">03 · The evidence</span>
-          <h2 className="tk-section-title">Correlation gives us a suspect. Causation needs an experiment.</h2>
-          <p className="tk-body">
-            A beautiful network diagram can still be a bowl of spaghetti. This one
-            is a guided path: what we saw, what might explain it, what we change, and
-            what number decides whether we were right.
-          </p>
-          <CausalMap />
-        </section>
-
-        {/* ── Findings ────────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">The non-riders are not somewhere else. They are right there.</h2>
-          <p className="tk-body">
-            The origin–destination grids gave us the useful bit: <strong>non-users
-            travel the same Phuket Town–Kathu–Patong corridor the bus already
-            serves.</strong> The route is not innocent, but it is not the whole crime.
-            People are choosing another mode because the total offer works better.
-          </p>
-          <div className="tk-personas">
-            {PERSONAS.map((p) => (
-              <div className={`tk-persona ${p.user ? "is-user" : ""}`} key={p.n}>
-                <span className="tk-persona__n">{p.n}</span>
-                <span className="tk-persona__who">{p.who}</span>
-                <span className="tk-persona__split">{p.split}</span>
-                <span className="tk-persona__need">{p.need}</span>
-                <span className="tk-persona__tag">{p.user ? "RIDES TODAY" : "COULD RIDE"}</span>
+            {/* ── Findings ────────────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">The non-riders are not somewhere else. They are right there.</h2>
+              <p className="tk-body">
+                The origin–destination grids gave us the useful bit: <strong>non-users
+                travel the same Phuket Town–Kathu–Patong corridor the bus already
+                serves.</strong> The route is not innocent, but it is not the whole crime.
+                People are choosing another mode because the total offer works better.
+              </p>
+              <div className="tk-personas">
+                {PERSONAS.map((p) => (
+                  <div className={`tk-persona ${p.user ? "is-user" : ""}`} key={p.n}>
+                    <span className="tk-persona__n">{p.n}</span>
+                    <span className="tk-persona__who">{p.who}</span>
+                    <span className="tk-persona__split">{p.split}</span>
+                    <span className="tk-persona__need">{p.need}</span>
+                    <span className="tk-persona__tag">{p.user ? "RIDES TODAY" : "COULD RIDE"}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="tk-body">
-            Across all eight, the same six annoyances keep turning up:
-          </p>
-          <div className="tk-themes">
-            {THEMES.map((t) => <span className="tk-theme" key={t}>{t}</span>)}
-          </div>
-        </section>
-
-        {/* ── Recommendations ─────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">Fifteen ideas entered. Impact and effort decided who left first.</h2>
-          <ImpactEffortFigure />
-          <ol className="tk-recs-mobile" aria-label="Ranked recommendations">
-            {RECS.map((recommendation) => (
-              <li key={recommendation.n}>
-                <span>{String(recommendation.n).padStart(2, "0")}</span>
-                <strong>{recommendation.label}</strong>
-                <small>{recommendation.q === "quick" ? "Do now" : recommendation.q === "major" ? "Fund and sequence" : recommendation.q === "fill" ? "Fill-in" : "Hard slog"}</small>
-              </li>
-            ))}
-          </ol>
-          <p className="tk-note">
-            The cheap wins are mostly trust: safer driving, better information,
-            decent service. The expensive ones involve asphalt, routes and buses.
-            The live scenario tool prices “increase frequency” before the purchase
-            order does. Procurement officers may now breathe normally.
-          </p>
-        </section>
-
-        {/* ── Assumption ledger ───────────────────────────────────────── */}
-        <section className="tk-section" id="toolkit-build">
-          <span className="tk-chapter">04 · The build</span>
-          <h2 className="tk-section-title">Every research sentence has to earn a job in the software.</h2>
-          <p className="tk-body">
-            Finding → assumption → code → visible decision. If we cannot trace the
-            route, the number does not get a seat on the dashboard.
-          </p>
-          <div className="tk-table tk-table--ledger" role="table">
-            <div className="tk-tr tk-tr--head" role="row">
-              <span role="columnheader">Toolkit finding</span>
-              <span role="columnheader">Model assumption</span>
-              <span role="columnheader">Where it lives</span>
-            </div>
-            {LEDGER.map((r) => (
-              <div className="tk-tr" role="row" key={r.surface}>
-                <span role="cell">{r.finding}</span>
-                <span role="cell">{r.model}</span>
-                <span className="tk-dim" role="cell">{r.surface}</span>
+              <p className="tk-body">
+                Across all eight, the same six annoyances keep turning up:
+              </p>
+              <div className="tk-themes">
+                {THEMES.map((t) => <span className="tk-theme" key={t}>{t}</span>)}
               </div>
-            ))}
-          </div>
-          <p className="tk-note">
-            The non-negotiable law: nobody disappears into a PowerPoint transition.
-            Every likely rider boards, waits, or walks away — exactly once. The test
-            suite checks that conservation across the modelled day.
-          </p>
-        </section>
+            </section>
 
-        {/* ── Data wanted ─────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">The simulation is scaffolding. Real data replaces one plank at a time.</h2>
-          <p className="tk-body">
-            We are not pretending the estimates are sensors. Each future data feed
-            has a named place to land and a specific assumption to retire.
-          </p>
-          <div className="tk-table tk-table--ledger" role="table">
-            <div className="tk-tr tk-tr--head" role="row">
-              <span role="columnheader">Data</span>
-              <span role="columnheader">Source</span>
-              <span role="columnheader">What it unlocks</span>
-            </div>
-            {DATA_WANTED.map((r) => (
-              <div className="tk-tr" role="row" key={r.metric}>
-                <span className="tk-dim" role="cell">{r.metric}</span>
-                <span role="cell">{r.source}</span>
-                <span role="cell">{r.unlocks}</span>
+            {/* ── Recommendations ─────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">Fifteen ideas entered. Impact and effort decided who left first.</h2>
+              <ImpactEffortFigure />
+              <ol className="tk-recs-mobile" aria-label="Ranked recommendations">
+                {RECS.map((recommendation) => (
+                  <li key={recommendation.n}>
+                    <span>{String(recommendation.n).padStart(2, "0")}</span>
+                    <strong>{recommendation.label}</strong>
+                    <small>{recommendation.q === "quick" ? "Do now" : recommendation.q === "major" ? "Fund and sequence" : recommendation.q === "fill" ? "Fill-in" : "Hard slog"}</small>
+                  </li>
+                ))}
+              </ol>
+              <p className="tk-note">
+                The cheap wins are mostly trust: safer driving, better information,
+                decent service. The expensive ones involve asphalt, routes and buses.
+                The live scenario tool prices “increase frequency” before the purchase
+                order does. Procurement officers may now breathe normally.
+              </p>
+            </section>
+
+            {/* ── Assumption ledger ───────────────────────────────────────── */}
+            <section className="tk-section" id="toolkit-build">
+              <span className="tk-chapter">04 · The build</span>
+              <h2 className="tk-section-title">Every research sentence has to earn a job in the software.</h2>
+              <p className="tk-body">
+                Finding → assumption → code → visible decision. If we cannot trace the
+                route, the number does not get a seat on the dashboard.
+              </p>
+              <div className="tk-table tk-table--ledger" role="table">
+                <div className="tk-tr tk-tr--head" role="row">
+                  <span role="columnheader">Toolkit finding</span>
+                  <span role="columnheader">Model assumption</span>
+                  <span role="columnheader">Where it lives</span>
+                </div>
+                {LEDGER.map((r) => (
+                  <div className="tk-tr" role="row" key={r.surface}>
+                    <span role="cell">{r.finding}</span>
+                    <span role="cell">{r.model}</span>
+                    <span className="tk-dim" role="cell">{r.surface}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+              <p className="tk-note">
+                The non-negotiable law: nobody disappears into a PowerPoint transition.
+                Every likely rider boards, waits, or walks away — exactly once. The test
+                suite checks that conservation across the modelled day.
+              </p>
+            </section>
+
+            {/* ── Data wanted ─────────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">The simulation is scaffolding. Real data replaces one plank at a time.</h2>
+              <p className="tk-body">
+                We are not pretending the estimates are sensors. Each future data feed
+                has a named place to land and a specific assumption to retire.
+              </p>
+              <div className="tk-table tk-table--ledger" role="table">
+                <div className="tk-tr tk-tr--head" role="row">
+                  <span role="columnheader">Data</span>
+                  <span role="columnheader">Source</span>
+                  <span role="columnheader">What it unlocks</span>
+                </div>
+                {DATA_WANTED.map((r) => (
+                  <div className="tk-tr" role="row" key={r.metric}>
+                    <span className="tk-dim" role="cell">{r.metric}</span>
+                    <span role="cell">{r.source}</span>
+                    <span role="cell">{r.unlocks}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ── Honest gaps ─────────────────────────────────────────────── */}
+            <section className="tk-section">
+              <h2 className="tk-section-title tk-section-title--small">What we do not know yet — printed here so nobody mistakes confidence for accuracy.</h2>
+              {GAPS.map((g) => (
+                <div className="tk-gap" key={g.gap}>
+                  <span className="tk-gap__k">{g.gap}</span>
+                  <span className="tk-gap__d">{g.why}</span>
+                </div>
+              ))}
+            </section>
+
+            {/* ── Bio + source ────────────────────────────────────────────── */}
+            <section className="tk-section tk-program">
+              <h2 className="tk-section-title tk-section-title--small">The serious people who made the useful trouble possible.</h2>
+              <div className="tk-logos">
+                <img src={`${import.meta.env.BASE_URL}brand/usascp.png`} alt="U.S.-ASEAN Smart Cities Partnership (USASCP)" className="tk-logo" />
+                <img src={`${import.meta.env.BASE_URL}brand/usdot.svg`} alt="U.S. Department of Transportation" className="tk-logo" />
+                <img src={`${import.meta.env.BASE_URL}brand/depa.jpg`} alt="Digital Economy Promotion Agency (DEPA)" className="tk-logo" />
+                <img src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`} alt="Smart City Thailand Office" className="tk-logo" />
+              </div>
+              <p className="tk-body">
+                This work grew from the <strong>U.S.-ASEAN Smart Cities Mobility
+                Program</strong>, led by U.S. DOT under USASCP with the U.S. Department
+                of State. Phuket was paired with Las Vegas; METRANS/USC, Chulalongkorn
+                CUTI, DEPA, RTC Southern Nevada, PKCD / Phuket Smart Bus, Phuket
+                Mahanakorn and DLT brought the brains, constraints and actual buses.
+              </p>
+              <p className="tk-body">
+                Credit to <strong>Roshan Desai</strong> for leading the transportation
+                program and making an unlikely city pairing useful instead of ceremonial.
+                <a className="tk-link" href="https://www.usascp.org/programs/transportationprogram/" target="_blank" rel="noreferrer"> Read the program →</a>
+              </p>
+            </section>
+
+            <section className="tk-section tk-bio">
+              <h2 className="tk-section-title tk-section-title--small">Who built this, and why.</h2>
+              <p className="tk-body">
+                <strong>Non Arkara</strong> is an architect who got tired of city reports
+                ending exactly where the work should begin. He builds urban-intelligence
+                systems across Thailand and ASEAN, created the SLIC and SCITI city
+                indices, worked on the Phuket–Las Vegas program from day one, and built
+                this console so the next bus decision starts with evidence rather than a
+                confident person pointing at a timetable.
+              </p>
+              <p className="tk-source">
+                Source: <em>Transit Service Planning for Sustainable Tourism Travel —
+                Insights from Phuket and Las Vegas</em>, US-ASEAN Smart Cities Mobility
+                Program (U.S. DOT, U.S. Dept. of State, METRANS/USC, Chulalongkorn CUTI).
+                Visitor-mix figures: AOT Annual Reports 2024–2025. Simulation assumptions:
+                this repository, tested. Diagram approach informed by the open-source
+                <a className="tk-link" href="https://github.com/Egonex-AI/Understand-Anything" target="_blank" rel="noreferrer"> Understand Anything</a>
+                principle that graphs should teach rather than merely impress.
+              </p>
+            </section>
           </div>
-        </section>
-
-        {/* ── Honest gaps ─────────────────────────────────────────────── */}
-        <section className="tk-section">
-          <h2 className="tk-section-title tk-section-title--small">What we do not know yet — printed here so nobody mistakes confidence for accuracy.</h2>
-          {GAPS.map((g) => (
-            <div className="tk-gap" key={g.gap}>
-              <span className="tk-gap__k">{g.gap}</span>
-              <span className="tk-gap__d">{g.why}</span>
-            </div>
-          ))}
-        </section>
-
-        {/* ── Bio + source ────────────────────────────────────────────── */}
-        <section className="tk-section tk-program">
-          <h2 className="tk-section-title tk-section-title--small">The serious people who made the useful trouble possible.</h2>
-          <div className="tk-logos">
-            <img src={`${import.meta.env.BASE_URL}brand/usascp.png`} alt="U.S.-ASEAN Smart Cities Partnership (USASCP)" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/usdot.svg`} alt="U.S. Department of Transportation" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/depa.jpg`} alt="Digital Economy Promotion Agency (DEPA)" className="tk-logo" />
-            <img src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`} alt="Smart City Thailand Office" className="tk-logo" />
-          </div>
-          <p className="tk-body">
-            This work grew from the <strong>U.S.-ASEAN Smart Cities Mobility
-            Program</strong>, led by U.S. DOT under USASCP with the U.S. Department
-            of State. Phuket was paired with Las Vegas; METRANS/USC, Chulalongkorn
-            CUTI, DEPA, RTC Southern Nevada, PKCD / Phuket Smart Bus, Phuket
-            Mahanakorn and DLT brought the brains, constraints and actual buses.
-          </p>
-          <p className="tk-body">
-            Credit to <strong>Roshan Desai</strong> for leading the transportation
-            program and making an unlikely city pairing useful instead of ceremonial.
-            <a className="tk-link" href="https://www.usascp.org/programs/transportationprogram/" target="_blank" rel="noreferrer"> Read the program →</a>
-          </p>
-        </section>
-
-        <section className="tk-section tk-bio">
-          <h2 className="tk-section-title tk-section-title--small">Who built this, and why.</h2>
-          <p className="tk-body">
-            <strong>Non Arkara</strong> is an architect who got tired of city reports
-            ending exactly where the work should begin. He builds urban-intelligence
-            systems across Thailand and ASEAN, created the SLIC and SCITI city
-            indices, worked on the Phuket–Las Vegas program from day one, and built
-            this console so the next bus decision starts with evidence rather than a
-            confident person pointing at a timetable.
-          </p>
-          <p className="tk-source">
-            Source: <em>Transit Service Planning for Sustainable Tourism Travel —
-            Insights from Phuket and Las Vegas</em>, US-ASEAN Smart Cities Mobility
-            Program (U.S. DOT, U.S. Dept. of State, METRANS/USC, Chulalongkorn CUTI).
-            Visitor-mix figures: AOT Annual Reports 2024–2025. Simulation assumptions:
-            this repository, tested. Diagram approach informed by the open-source
-            <a className="tk-link" href="https://github.com/Egonex-AI/Understand-Anything" target="_blank" rel="noreferrer"> Understand Anything</a>
-            principle that graphs should teach rather than merely impress.
-          </p>
-        </section>
+        </div>
       </div>
     </main>
   );

@@ -20,13 +20,16 @@ without inventing a second numbers pipeline.
 - [x] 7. Phuket conditions strip: weather + AQI + flood risk (env sim + FloodDash link)
 - [x] 8. UX pass: clearer fleet affordances, focus states, contrast
 - [x] 9. Tests for driver stats identities + typecheck
-- [ ] 10. CDPT when user asks
+- [x] 10. CDPT — commit `3678457` on main, push, wrangler deploy, live verify
+  (GitHub Actions CF token still auth-fails; deployed via local wrangler.
+   GitHub Pages workflow succeeded. Live bundle on bus.nonarkara.org contains
+   Driver dossier / ADS-B / FloodDash / สมชาย.)
 
 ## Review
-- Shipped locally: Thai driver faces/names on fleet rows; dossier sheet with
+- Shipped: Thai driver faces/names on fleet rows; dossier sheet with
   sim-derived trips/hours/km/pax/revenue/CO₂/efficiency/reliability + career
   rollups; HKT ADS-B + schedule approach beads; layer toggles; conditions strip
   on wall + phone briefing.
-- 6/6 new driver tests green; app typecheck clean. Unrelated ToolkitStudy
-  snapshot test still failing (pre-existing).
-- Remaining: commit/push/deploy/live verify on request.
+- Live: https://bus.nonarkara.org/ops · preview https://f0560908.phuket-smart-bus.pages.dev
+- Bundle evidence: `index-DmgvGBrP.js` includes Driver dossier, ADS-B, FloodDash, สมชาย
+- Note: CI Cloudflare token is broken (auth 10000); local wrangler deploy is the working path until secrets are fixed.
