@@ -35,7 +35,7 @@ a real, verified URL from this session's research agents. Nothing invented.
       improvements and heuristic-goldberg fully merged into main already
       (prior session); codex/wild-y6tj is a stale March-2026 experiment,
       flagged not merged, four commits behind the current architecture
-- [ ] 8. CDPT: commit, push depa-usdot.nonarkara.org, deploy, verify live
+- [x] 8. CDPT: commit `f825dad`, push, wrangler deploy, live-verified
 
 ## Review
 - Shipped: 7 collapsible "Research & data" panels across the toolkit
@@ -53,4 +53,7 @@ a real, verified URL from this session's research agents. Nothing invented.
   transit-specific social impact bond exists yet (Peterborough is the
   general model only); Houston's 2015 redesign has real numbers but no
   peer-reviewed causal study behind it, so it was left out entirely.
-- Live: (fill after deploy)
+- Live: https://depa-usdot.nonarkara.org/ · commit `f825dad` · bundle
+  `index-BNzJXBu8.js`, byte-identical to local build, verified via
+  `--compressed` fetch matching content-length and containing all 7
+  panels' marker strings (McFadden, Kansas City, Double Diamond, PforR).
