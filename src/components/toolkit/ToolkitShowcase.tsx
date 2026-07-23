@@ -329,6 +329,97 @@ function LiveProof() {
   );
 }
 
+function ResearchBrief() {
+  const expansion = useMemo(() => getFleetScenario(3), []);
+  const evidence = [
+    {
+      status: "Observed",
+      value: "17.5m",
+      title: "HKT passenger movements in 2025",
+      copy: "AOT also reports 106,585 aircraft movements. Phuket has market scale; that does not automatically become bus demand.",
+      source: "AOT 2025",
+      href: "https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf"
+    },
+    {
+      status: "Study finding",
+      value: "Same corridor",
+      title: "Non-riders are not somewhere else",
+      copy: "The toolkit found riders and non-riders travelling through the same Town–Kathu–Patong geography. The service offer—not merely the route—needs testing.",
+      source: "Phuket–Las Vegas toolkit",
+      href: "https://www.metrans.org/upp"
+    },
+    {
+      status: "Modelled",
+      value: `+${expansion.deltaBoarded.toLocaleString()}`,
+      title: "additional riders on the peak-day test",
+      copy: "Adding three targeted duties changes who boards in the simulator. It is a capacity hypothesis, not a ridership forecast or a purchase order.",
+      source: "Live demand–supply engine",
+      href: `${BUS_URL}ops`
+    },
+    {
+      status: "Proposed",
+      value: "90 days",
+      title: "instrumented pilot before full finance",
+      copy: "Measure GPS, boarding, denied demand, trip cost and reliability first. Scale only if the operating and repayment case survives.",
+      source: "Mock credit recommendation",
+      href: "#feasibility"
+    }
+  ];
+
+  return (
+    <section className="tk-brief" id="brief" aria-labelledby="brief-title">
+      <header className="tk-brief__header">
+        <div>
+          <span className="tk-kicker">The five-minute brief</span>
+          <h2 id="brief-title">Proceed to a pilot. Do not buy the conclusion.</h2>
+        </div>
+        <div>
+          <p>Phuket has the travel volume, an operating bus company and an observable timing problem. The research says where to look. The simulator says what might happen. Only an instrumented pilot can say what is true.</p>
+          <strong>Current recommendation · conditional proceed</strong>
+        </div>
+      </header>
+
+      <div className="tk-brief__evidence" aria-label="Evidence status from observed market to proposed decision">
+        {evidence.map((item, index) => (
+          <article key={item.status}>
+            <span>{String(index + 1).padStart(2, "0")} · {item.status}</span>
+            <strong>{item.value}</strong>
+            <h3>{item.title}</h3>
+            <p>{item.copy}</p>
+            <a href={item.href}>{item.source} ↗</a>
+          </article>
+        ))}
+      </div>
+
+      <div className="tk-brief__challenge">
+        <div>
+          <span className="tk-kicker">What would change our mind?</span>
+          <h3>A useful model comes with an exit door.</h3>
+        </div>
+        <ul>
+          <li>Ticketing data shows the peak queue is much smaller than the model.</li>
+          <li>GPS shows reliability—not capacity—is the binding failure.</li>
+          <li>A wet-season pilot cannot carry operating cost or tested debt service.</li>
+          <li>First–last mile friction remains after information and timing improve.</li>
+        </ul>
+      </div>
+
+      <nav className="tk-reading-routes" aria-label="Choose a reading route">
+        <span>Choose your route</span>
+        <a href="#try-system"><b>Passenger</b><small>Try the service · 2 min</small></a>
+        <a href="#proof"><b>Operator</b><small>Trace demand to dispatch · 6 min</small></a>
+        <a href="#feasibility"><b>Government + bank</b><small>Test the deal · 8 min</small></a>
+        <a href="#method"><b>Researcher</b><small>Inspect method + evidence · deep read</small></a>
+        <a href="#programme"><b>Programme colleague</b><small>People, journey + memory</small></a>
+      </nav>
+
+      <p className="tk-brief__freshness">
+        Evidence checked <time dateTime="2026-07-24">24 July 2026</time>. “Observed” means a cited external record. “Modelled” means this repository calculated it. “Proposed” means somebody still has to decide.
+      </p>
+    </section>
+  );
+}
+
 function EvidenceChain() {
   const nodes = [
     ["Observed", "107,157 movements", "AEROTHAI 2025"],
@@ -463,10 +554,10 @@ export default function ToolkitShowcase() {
           <span>NON</span><strong>City Systems Toolkit</strong>
         </a>
         <nav aria-label="Page chapters">
-          <a href="#try-system">Try it</a>
-          <a href="#abcdef">ABCDEF</a>
-          <a href="#programme">Journey</a>
-          <a href="#working-console">Console</a>
+          <a href="#brief">Brief</a>
+          <a href="#method">Method</a>
+          <a href="#proof">Proof</a>
+          <a href="#feasibility">Feasibility</a>
         </nav>
         <a className="tk-nav__live" href={BUS_URL}>Live system ↗</a>
       </header>
@@ -478,7 +569,7 @@ export default function ToolkitShowcase() {
             <h1>The report was never the deliverable.</h1>
             <p className="tk-hero__standfirst">A practical toolkit for turning fieldwork, public data and difficult questions into city systems that people can actually use.</p>
             <div className="tk-hero__actions">
-              <a href="#method">Read the method <span>↓</span></a>
+              <a href="#brief">Read the five-minute brief <span>↓</span></a>
               <a href={BUS_URL}>Try the live bus system <span>↗</span></a>
             </div>
           </div>
@@ -491,6 +582,8 @@ export default function ToolkitShowcase() {
 
         <LiveProof />
 
+        <ResearchBrief />
+
         <TryLiveSystem busUrl={BUS_URL} />
 
         <section className="tk-thesis">
@@ -498,10 +591,6 @@ export default function ToolkitShowcase() {
           <p>Then we built something that thinks with them.</p>
           <small>Not magic AI. Not decorative KPI soup. A traceable chain from evidence to action.</small>
         </section>
-
-        <AbcdefFramework />
-
-        <ProgramArchive />
 
         <section className="tk-section tk-method" id="method">
           <div className="tk-section__intro">
@@ -540,6 +629,8 @@ export default function ToolkitShowcase() {
             </p>
           </ResearchPanel>
         </section>
+
+        <AbcdefFramework />
 
         <DesignThinkingStudy />
 
@@ -696,6 +787,8 @@ export default function ToolkitShowcase() {
           </div>
         </section>
 
+        <ProgramArchive />
+
         <TonDedication />
 
         <section className="tk-section tk-field" id="field-notes">
@@ -718,22 +811,23 @@ export default function ToolkitShowcase() {
           <div className="tk-section__intro">
             <span className="tk-kicker">Source rack</span>
             <h2>Open the cupboard. Check our ingredients.</h2>
-            <p>The page separates observations, modelled values and assumptions. These sources are the next layer of audit, not a row of logos pretending to be methodology.</p>
+            <p>Checked 24 July 2026. OBS is an external observation; MODEL is calculated here; BENCH is a planning benchmark; FIN is a financing reference; COMP is a comparable case—not Phuket wearing a fake moustache.</p>
           </div>
           <div className="tk-sources__list">
-            <a href="https://data.go.th/dataset/bangkok-fir-all-2568"><span>01</span><strong>Phuket flight-control volume, FY2025</strong><small>AEROTHAI · data.go.th</small><b>↗</b></a>
-            <a href="https://www.data.go.th/dataset/rtddi"><span>02</span><strong>Integrated road-death records, 3 databases</strong><small>Department of Disease Control · data.go.th</small><b>↗</b></a>
-            <a href="https://www.data.go.th/th/dataset/stattourism"><span>03</span><strong>Monthly provincial tourism statistics</strong><small>Ministry of Tourism and Sports · data.go.th</small><b>↗</b></a>
-            <a href="https://www.data.go.th/dataset/dataset_10_3710"><span>04</span><strong>International passengers through Phuket Airport</strong><small>Phuket Provincial Office · data.go.th catalogue</small><b>↗</b></a>
-            <a href={`${BUS_URL}ops?view=toolkit`}><span>05</span><strong>Assumptions, formulas and live simulation</strong><small>Phuket Smart Bus · working toolkit console</small><b>↗</b></a>
-            <a href="https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf"><span>06</span><strong>Phuket Airport traffic report, 2025</strong><small>Airports of Thailand · 17.5m passenger movements</small><b>↗</b></a>
-            <a href="https://www.phuket.go.th/webpk/file_data/hilight/hilight2567.pdf"><span>07</span><strong>Phuket provincial highlights, 2024</strong><small>Existing EV routes and ridership evidence</small><b>↗</b></a>
-            <a href="https://www.otp.go.th/uploads/tiny_uploads/ProjectOTP/2560/Project17/4-DevelopmentofaFundingMechanism.pdf"><span>08</span><strong>Thailand clean-mobility funding mechanism</strong><small>OTP · EV bus costs and financing gap</small><b>↗</b></a>
-            <a href="https://sme.krungthai.com/sme/productListAction.action?cateId=14&cateMenu=PRODUCT&command=getDetail&itemId=438"><span>09</span><strong>Krungthai sustainability loan</strong><small>Indicative green-finance product terms</small><b>↗</b></a>
-            <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><span>10</span><strong>Thailand lending-rate stress benchmark</strong><small>Bank of Thailand · Q1 2026</small><b>↗</b></a>
-            <a href="https://www.usascp.org/programs/transportationprogram/"><span>11</span><strong>Smart Sustainable Mobility programme record</strong><small>U.S.-ASEAN Smart Cities Partnership</small><b>↗</b></a>
-            <a href="https://www.metrans.org/upp"><span>12</span><strong>University Partnership Programme and four toolkits</strong><small>METRANS Transportation Consortium · 2026</small><b>↗</b></a>
-            <a href="https://thenevadaindependent.com/article/as-passenger-counts-dwindle-on-strip-buses-the-rtc-eyes-innovation-while-closely-monitoring-financials"><span>13</span><strong>Las Vegas Strip bus financing case study</strong><small>The Nevada Independent · farebox recovery, ridership, subsidy history</small><b>↗</b></a>
+            <a href="https://data.go.th/dataset/bangkok-fir-all-2568"><span>01 · OBS</span><strong>Phuket flight-control volume, FY2025</strong><small>AEROTHAI · data.go.th</small><b>↗</b></a>
+            <a href="https://www.data.go.th/dataset/rtddi"><span>02 · OBS</span><strong>Integrated road-death records, 3 databases</strong><small>Department of Disease Control · data.go.th</small><b>↗</b></a>
+            <a href="https://www.data.go.th/th/dataset/stattourism"><span>03 · OBS</span><strong>Monthly provincial tourism statistics</strong><small>Ministry of Tourism and Sports · data.go.th</small><b>↗</b></a>
+            <a href="https://www.data.go.th/dataset/dataset_10_3710"><span>04 · OBS</span><strong>International passengers through Phuket Airport</strong><small>Phuket Provincial Office · data.go.th catalogue</small><b>↗</b></a>
+            <a href={`${BUS_URL}ops?view=toolkit`}><span>05 · MODEL</span><strong>Assumptions, formulas and live simulation</strong><small>Phuket Smart Bus · working toolkit console</small><b>↗</b></a>
+            <a href="https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf"><span>06 · OBS</span><strong>Phuket Airport traffic report, 2025</strong><small>Airports of Thailand · 17.5m passenger movements</small><b>↗</b></a>
+            <a href="https://www.phuket.go.th/webpk/file_data/hilight/hilight2567.pdf"><span>07 · OBS</span><strong>Phuket provincial highlights, 2024</strong><small>Existing EV routes and ridership evidence</small><b>↗</b></a>
+            <a href="https://www.otp.go.th/uploads/tiny_uploads/ProjectOTP/2560/Project17/4-DevelopmentofaFundingMechanism.pdf"><span>08 · BENCH</span><strong>Thailand clean-mobility funding mechanism</strong><small>OTP · EV bus costs and financing gap</small><b>↗</b></a>
+            <a href="https://sme.krungthai.com/sme/productListAction.action?cateId=14&cateMenu=PRODUCT&command=getDetail&itemId=438"><span>09 · FIN</span><strong>Krungthai sustainability loan</strong><small>Indicative green-finance product terms</small><b>↗</b></a>
+            <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><span>10 · FIN</span><strong>Thailand lending-rate stress benchmark</strong><small>Bank of Thailand · Q1 2026</small><b>↗</b></a>
+            <a href="https://www.usascp.org/programs/transportationprogram/"><span>11 · RECORD</span><strong>Smart Sustainable Mobility programme record</strong><small>U.S.-ASEAN Smart Cities Partnership</small><b>↗</b></a>
+            <a href="https://www.metrans.org/upp"><span>12 · STUDY</span><strong>University Partnership Programme and four toolkits</strong><small>METRANS Transportation Consortium · 2026</small><b>↗</b></a>
+            <a href="https://thenevadaindependent.com/article/as-passenger-counts-dwindle-on-strip-buses-the-rtc-eyes-innovation-while-closely-monitoring-financials"><span>13 · COMP</span><strong>Las Vegas Strip bus financing case study</strong><small>The Nevada Independent · farebox recovery, ridership, subsidy history</small><b>↗</b></a>
+            <a href="https://www.who.int/thailand/our-work/road-safety"><span>14 · CONTEXT</span><strong>Thailand road-safety burden and motorcycle exposure</strong><small>WHO Thailand · national context, not a Phuket impact estimate</small><b>↗</b></a>
           </div>
           <p className="tk-sources__caveat">* CO₂ is a modelled avoided-emissions estimate, not a certified carbon credit. Accident and congestion benefits are intervention goals until an instrumented baseline and observed counterfactual exist. We would rather tell you exactly what we do not know than sell you a decimal point wearing a tie.</p>
         </section>

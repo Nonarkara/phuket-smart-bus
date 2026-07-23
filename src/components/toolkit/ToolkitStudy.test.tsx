@@ -2,10 +2,12 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 
 describe("Toolkit research studies", () => {
   it("invites readers into three concrete live-system experiments", () => {
+    const expansion = getFleetScenario(3);
     render(<TryLiveSystem busUrl="https://bus.nonarkara.org/" />);
 
     expect(screen.getByRole("link", { name: /Open the live system/i })).toHaveAttribute("href", "https://bus.nonarkara.org/");
@@ -15,6 +17,7 @@ describe("Toolkit research studies", () => {
     expect(screen.getByRole("img", { name: /Flights become passenger demand waves/i })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /simulation positions buses on real road geometry/i })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /fleet decision changes passengers, revenue and public value/i })).toBeInTheDocument();
+    expect(screen.getByText(`+${expansion.deltaBoarded.toLocaleString()} PAX`)).toBeInTheDocument();
   });
 
   it("turns a what-if shock into a measurable operating experiment", async () => {
@@ -28,14 +31,16 @@ describe("Toolkit research studies", () => {
   });
 
   it("shows a conservative lending case and recalculates its coverage", () => {
+    const expansion = getFleetScenario(3);
     render(<FeasibilityStudy />);
 
-    expect(screen.getAllByText("1.13×")).toHaveLength(2);
-    expect(screen.getByText("฿0.80m")).toBeInTheDocument();
+    expect(screen.getByText(`+${expansion.deltaBoarded.toLocaleString()}`)).toBeInTheDocument();
+    expect(screen.getAllByText("1.08×")).toHaveLength(2);
+    expect(screen.getByText("฿1.03m")).toBeInTheDocument();
 
     fireEvent.input(screen.getByRole("slider", { name: /Demand realised/i }), { target: { value: "100" } });
 
-    expect(screen.getAllByText("1.86×")).toHaveLength(2);
+    expect(screen.getAllByText("1.79×")).toHaveLength(2);
     expect(screen.getByText("฿0")).toBeInTheDocument();
     expect(screen.getByText(/conditional proceed to a 90-day instrumented pilot/i)).toBeInTheDocument();
     expect(screen.queryByText(/research priorities, not survey results/i)).not.toBeInTheDocument();

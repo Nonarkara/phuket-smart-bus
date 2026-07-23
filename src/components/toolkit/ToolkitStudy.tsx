@@ -2,12 +2,13 @@ import { useState, type CSSProperties } from "react";
 import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
 import { ResearchPanel } from "./ResearchPanel";
 import { PERSONAS, THEMES, RECS, DATA_WANTED, GAPS } from "../v2/ToolkitPanel";
+import { getFleetScenario } from "../../engine/demandSupplyEngine";
 
 const METHODOLOGY_CITATIONS = [
   {
     text: "Cooper, A. — The Inmates Are Running the Asylum,",
     meta: "Sams/Macmillan, 1999. The book that put “personas” into design practice — before that, product teams argued about an imaginary “average user” who did not exist.",
-    href: "https://en.wikipedia.org/wiki/Alan_Cooper_(software_designer)"
+    href: "https://books.google.com/books/about/The_Inmates_are_Running_the_Asylum.html?id=1i-t0QEACAAJ"
   },
   {
     text: "Eldeeb, G. & Mohamed, M. — “Understanding the Transit Market: A Persona-Based Approach for Preferences Quantification,”",
@@ -166,7 +167,8 @@ const EQUITY_THB = PROJECT_COST_THB - DEBT_THB;
 const TERM_YEARS = 8;
 const ANNUAL_EV_OPEX_THB = 900_000 * 3;
 const DSCR_COVENANT = 1.3;
-const PEAK_DAY_ADDITIONAL_RIDERS = 316;
+const PEAK_DAY_EXPANSION = getFleetScenario(3);
+const PEAK_DAY_ADDITIONAL_RIDERS = PEAK_DAY_EXPANSION.deltaBoarded;
 
 function annualDebtService(principal: number, annualRatePct: number, years: number) {
   const rate = annualRatePct / 100;
@@ -232,8 +234,8 @@ function DecisionLedgerDrawing() {
       <text x="202" y="54">MODEL ANSWERS</text>
       <rect className="tk-machine-drawing__signal" x="202" y="72" width="134" height="35" />
       <rect className="tk-machine-drawing__signal" x="202" y="117" width="105" height="35" />
-      <text className="tk-machine-drawing__value" x="212" y="95">+316 PAX</text>
-      <text className="tk-machine-drawing__value" x="212" y="140">+฿31,600</text>
+      <text className="tk-machine-drawing__value" x="212" y="95">+{PEAK_DAY_ADDITIONAL_RIDERS.toLocaleString()} PAX</text>
+      <text className="tk-machine-drawing__value" x="212" y="140">+฿{PEAK_DAY_EXPANSION.deltaRevenueThb.toLocaleString()}</text>
       <path className="tk-machine-drawing__rule" d="M24 178H336" />
       <text x="24" y="198">SAME FLIGHTS · SAME DEMAND · DIFFERENT DUTIES</text>
     </svg>
@@ -441,7 +443,7 @@ function FeasibilityBridge() {
     ["Market", "17.5m", "HKT passenger movements · AOT 2025", "Observed"],
     ["Local proof", "230/day", "Dragon Line average · Phuket report", "Observed"],
     ["Operating proof", "6 EV", "Patong route buses already launched", "Observed"],
-    ["Expansion case", "+316", "passengers on a peak model day with +3 buses", "Modelled"],
+    ["Expansion case", `+${PEAK_DAY_ADDITIONAL_RIDERS.toLocaleString()}`, "passengers on a peak model day with +3 buses", "Modelled"],
     ["Decision", "90 days", "instrumented pilot before full drawdown", "Proposed"]
   ];
   return (
