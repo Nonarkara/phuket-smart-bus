@@ -295,13 +295,12 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 
 ## Deployment
 
-- **Platform**: GitHub Pages (free, static only) via custom domain
+- **Platform**: Cloudflare Pages (Production environment, project `phuket-smart-bus`) — this is what actually serves `bus.nonarkara.org`. Confirm with `curl -sI https://bus.nonarkara.org/` — the `server: cloudflare` header is the tell.
 - **Build**: `npx vite build` → `dist/client/`
-- **Custom domain**: `public/CNAME` declares `bus.nonarkara.org`; GitHub Pages serves it
+- **Custom domain**: `bus.nonarkara.org` is bound to the Cloudflare Pages project's production branch (`main`). `public/CNAME` (`bus.nonarkara.org`) and GitHub Pages exist too, but GitHub Pages only 301-redirects `nonarkara.github.io/phuket-smart-bus/` → `bus.nonarkara.org`; it does not serve the live traffic.
 - **SPA routing**: `404.html` copied from `index.html` in the deploy workflow
-- **Auto-deploy**: `.github/workflows/deploy.yml` triggers on push to `main`
+- **Auto-deploy is broken**: `.github/workflows/cloudflare-pages.yml` runs on push to `main` but fails — `CLOUDFLARE_API_TOKEN` auth-fails (error 10000). `.github/workflows/deploy.yml` (GitHub Pages) succeeds but doesn't matter for the live domain. **Working path until the CF secret is fixed**: deploy manually — `npx vite build && cp dist/client/index.html dist/client/404.html && npx wrangler pages deploy dist/client --project-name phuket-smart-bus --commit-dirty=true` (no `--branch` flag → production). Verify with `npx wrangler pages deployment list --project-name phuket-smart-bus` (look for `Environment: Production`, `Branch: main`).
 - **Live URL**: https://bus.nonarkara.org (https://bus.nonarkara.org/ops = DashboardV2)
-- **GitHub Pages mirror**: https://nonarkara.github.io/phuket-smart-bus/
 - **Routes**: `/` (tourist app, v1 chain), `/ops` (DashboardV2), `/v2` (legacy v1 dashboard), `/roi` (investor), `/governor` (God-mode), `/driver` (driver tablet)
 
 ---
