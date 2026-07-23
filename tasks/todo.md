@@ -1,35 +1,56 @@
-# Ops console: drivers · flights · Phuket conditions — 2026-07-22
+# RS&DE audit: collapsible research panels for the toolkit showcase — 2026-07-23
 
 ## Outcome
-Make `/ops` feel human and usable for anyone in Phuket: named drivers with
-sim-derived records, live aircraft on the map, and Flood/Air conditions —
-without inventing a second numbers pipeline.
+Every substantive section of the depa-usdot.nonarkara.org showcase gets a
+collapsible "Research & Data" disclosure: real numbers (some pulled straight
+from the /ops Toolkit tab's SSOT data, some freshly researched), a small
+infographic where it earns its place, and 2-4 verified academic/industry
+citations with real URLs. Bold design stays; adds an academic backbone
+underneath. Voice: direct, witty, clear — not dry academese.
 
-## Conservation laws
-- Driver day stats = f(plate, schedule trips completed by sim clock, trip load, polyline km, fare, CO₂ factor)
-- Aircraft marker = one ADS-B hex from last good poll (never invent positions)
-- Env badge = existing environmentSimulator / FloodDash link (no parallel AQI fiction)
+## Conservation law
+Every claim on a collapsible panel traces to either (a) an array already
+exported from ToolkitPanel.tsx (SSOT, no duplication) or (b) a citation with
+a real, verified URL from this session's research agents. Nothing invented.
 
 ## Plan
-- [x] 1. `driverRoster.ts` — Thai names + deterministic 8-bit SVG faces keyed by plate
-- [x] 2. `driverStats.ts` — per-plate day records from schedule + trip loads + CO₂
-- [x] 3. `DriverProfileSheet.tsx` — click row → shifts, efficiency, reliability, hours, pax, CO₂
-- [x] 4. `OperatorFleetPanel` — avatar + name column; accessible click/keyboard
-- [x] 5. `adsbFlights.ts` + `AircraftLayer` on `V2LiveMap` (airplanes.live HKT + schedule beads)
-- [x] 6. Map layer toggles: Buses / Flights / Rain / Incidents
-- [x] 7. Phuket conditions strip: weather + AQI + flood risk (env sim + FloodDash link)
-- [x] 8. UX pass: clearer fleet affordances, focus states, contrast
-- [x] 9. Tests for driver stats identities + typecheck
-- [x] 10. CDPT — commit `3678457` on main, push, wrangler deploy, live verify
-  (GitHub Actions CF token still auth-fails; deployed via local wrangler.
-   GitHub Pages workflow succeeded. Live bundle on bus.nonarkara.org contains
-   Driver dossier / ADS-B / FloodDash / สมชาย.)
+- [x] 1. Read ToolkitPanel.tsx fully — catalogue reusable SSOT data (TENETS,
+      HYPOTHESES, CITY_CONTRAST, OBJECTIVES, PERSONAS, THEMES, RECS, LEDGER,
+      DATA_WANTED, GAPS, CausalMap stories)
+- [x] 2. Launch 4 parallel research agents: mode-choice theory, causal
+      inference + transit natural experiments, design-thinking/co-design
+      methodology, outcome-based transit financing
+- [x] 3. Export the data arrays from ToolkitPanel.tsx (SSOT, named exports)
+- [x] 4. Build `<ResearchPanel>` — native `<details>/<summary>` disclosure,
+      Axiom/tk-red house style, mono numerics, zero new deps
+- [x] 5. Wire 7 panels: AbcdefFramework (mode-choice + city contrast),
+      tk-method (methodology), DesignThinkingStudy (personas + impact-effort
+      bars), tk-causality (3 causal stories), tk-proof (finding→model→code
+      ledger), FeasibilityStudy (data wanted + honest gaps), tk-deal
+      (DSCR/outcomes financing)
+- [x] 6. Typecheck clean, 139/139 tests, build clean; verified in browser —
+      all 7 panels render with correct counts, native toggle works, dark-
+      section color overrides correct, is-user persona highlight correct
+- [x] 7. Check other agents' code (worktrees/branches) — fix/audit-v2-
+      improvements and heuristic-goldberg fully merged into main already
+      (prior session); codex/wild-y6tj is a stale March-2026 experiment,
+      flagged not merged, four commits behind the current architecture
+- [ ] 8. CDPT: commit, push depa-usdot.nonarkara.org, deploy, verify live
 
 ## Review
-- Shipped: Thai driver faces/names on fleet rows; dossier sheet with
-  sim-derived trips/hours/km/pax/revenue/CO₂/efficiency/reliability + career
-  rollups; HKT ADS-B + schedule approach beads; layer toggles; conditions strip
-  on wall + phone briefing.
-- Live: https://bus.nonarkara.org/ops · preview https://f0560908.phuket-smart-bus.pages.dev
-- Bundle evidence: `index-DmgvGBrP.js` includes Driver dossier, ADS-B, FloodDash, สมชาย
-- Note: CI Cloudflare token is broken (auth 10000); local wrangler deploy is the working path until secrets are fixed.
+- Shipped: 7 collapsible "Research & data" panels across the toolkit
+  showcase, each with real stats (mostly pulled straight from the /ops
+  Toolkit tab's SSOT arrays — PERSONAS, THEMES, RECS, LEDGER, DATA_WANTED,
+  GAPS, CITY_CONTRAST, CAUSAL_STORIES — now exported once, imported
+  everywhere) plus 2-5 freshly-researched, URL-verified academic/industry
+  citations per panel (McFadden/Ben-Akiva discrete choice, TCRP 166 &amp; 36,
+  Design Council Double Diamond, Lewin action research, Cochran sampling,
+  Pearl/Rubin causal inference, a real Kansas City zero-fare natural
+  experiment, World Bank/ADB results-based financing, FTA farebox recovery
+  data, LSTA green loan principles, World Bank PPP DSCR norms).
+- Explicitly flagged rather than overclaimed: ABCDEF is our own synthesis,
+  not a validated model; the "Hip" letter rests on thin literature; no
+  transit-specific social impact bond exists yet (Peterborough is the
+  general model only); Houston's 2015 redesign has real numbers but no
+  peer-reviewed causal study behind it, so it was left out entirely.
+- Live: (fill after deploy)

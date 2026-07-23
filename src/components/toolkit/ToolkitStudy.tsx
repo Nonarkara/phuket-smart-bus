@@ -1,5 +1,53 @@
 import { useState, type CSSProperties } from "react";
 import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
+import { ResearchPanel } from "./ResearchPanel";
+import { PERSONAS, THEMES, RECS, DATA_WANTED, GAPS } from "../v2/ToolkitPanel";
+
+const METHODOLOGY_CITATIONS = [
+  {
+    text: "Cooper, A. — The Inmates Are Running the Asylum,",
+    meta: "Sams/Macmillan, 1999. The book that put “personas” into design practice — before that, product teams argued about an imaginary “average user” who did not exist.",
+    href: "https://en.wikipedia.org/wiki/Alan_Cooper_(software_designer)"
+  },
+  {
+    text: "Eldeeb, G. & Mohamed, M. — “Understanding the Transit Market: A Persona-Based Approach for Preferences Quantification,”",
+    meta: "Sustainability, 12(9), 3863, 2020. Seven rider personas from a 5,238-response Ontario survey — the closest academic sibling to the eight below.",
+    href: "https://www.mdpi.com/2071-1050/12/9/3863"
+  },
+  {
+    text: "TCRP Report 36 — A Handbook: Using Market Segmentation to Increase Transit Ridership,",
+    meta: "Transportation Research Board / National Academies, 1998. Segmentation as a transit-planning discipline, two decades before it had a persona's face.",
+    href: "https://onlinepubs.trb.org/onlinepubs/tcrp/tcrp_rpt_36-a.pdf"
+  },
+  {
+    text: "The impact–effort matrix itself:",
+    meta: "standard Lean/Agile prioritisation practice — genuinely useful, but no single traceable inventor. We use it as a tool, not a theory, and won't pretend otherwise.",
+    href: "https://www.toolshero.com/project-management/impact-effort-matrix/"
+  }
+];
+
+const FINANCING_RESEARCH_CITATIONS = [
+  {
+    text: "World Bank Group — Program-for-Results Financing Policy,",
+    meta: "2012, updated 2023. Pay only against independently verified results — transport is one of its largest sectors by dollar volume.",
+    href: "https://thedocs.worldbank.org/en/doc/100b8a625834bdb25526e4a05391927a-0290012023/original/Policy-PforR.pdf"
+  },
+  {
+    text: "Asian Development Bank — Piloting Results-Based Lending for Programs,",
+    meta: "2013–2019 pilot. 19 loans, 11 countries, $4.8bn committed — the closest regional precedent to what this feasibility study proposes.",
+    href: "https://www.adb.org/documents/piloting-results-based-lending-programs-working-paper"
+  },
+  {
+    text: "Federal Transit Administration — National Transit Database, Annual Database Fare Revenues,",
+    meta: "2023. The primary source for US farebox recovery figures — treat any single “industry average” you read elsewhere with suspicion until it cites this.",
+    href: "https://www.transit.dot.gov/ntd/data-product/2023-annual-database-fare-revenues"
+  },
+  {
+    text: "LSTA — Guidance on Green Loan Principles (GLP),",
+    meta: "Loan Market Association / LSTA / APLMA, updated 2023. Clean transportation — electric buses included — is an explicitly eligible green-loan category.",
+    href: "https://www.lsta.org/content/guidance-on-green-loan-principles-glp/"
+  }
+];
 
 const PAIN_POINTS = [
   {
@@ -192,6 +240,23 @@ function DecisionLedgerDrawing() {
   );
 }
 
+function TopRecsBars() {
+  const top = [...RECS].sort((a, b) => (b.i + b.e) - (a.i + a.e)).slice(0, 6);
+  const max = Math.max(...top.map((r) => r.i + r.e));
+  const labels = { quick: "Do now", major: "Fund & sequence", fill: "Fill-in", hard: "Hard slog" } as const;
+  return (
+    <div className="tk-recs-bars" aria-label="Top six recommendations by combined impact and effort score">
+      {top.map((r) => (
+        <div key={r.n}>
+          <span>{String(r.n).padStart(2, "0")} · {r.label}</span>
+          <i style={{ width: `${((r.i + r.e) / max) * 100}%` }} />
+          <small>{labels[r.q]}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function TryLiveSystem({ busUrl }: { busUrl: string }) {
   const operationsUrl = `${busUrl}ops`;
   const toolkitConsoleUrl = `${operationsUrl}?view=toolkit`;
@@ -338,6 +403,35 @@ export function DesignThinkingStudy() {
       </div>
       <div className="tk-whatif-intro"><span className="tk-kicker">What-if theatre, minus the theatre</span><h2>Break it here, cheaply.</h2><p>The point of a scenario is not to predict the future. It is to expose which assumption can bankrupt the idea, embarrass the operator or strand a passenger.</p></div>
       <WhatIfStudio />
+      <ResearchPanel
+        title="Eight personas and a ranked list of fifteen fixes — where does that actually come from?"
+        stats={[
+          { value: "8", label: "personas, four already ride and four could", note: "clustered from the origin survey, not guessed" },
+          { value: "6", label: "recurring themes across all eight", note: "drivers, waits, app, info, reliability, cleanliness" },
+          { value: "15 → 6", label: "recommendations, shown here as the top six", note: "ranked by a stakeholder impact–effort workshop" }
+        ]}
+        citations={METHODOLOGY_CITATIONS}
+      >
+        <p className="tk-research-note">
+          The personas below are not marketing archetypes — each one carries a resident/visitor split and a stated need, clustered
+          from the same travel survey that fed the demand model. The bars are the same fifteen stakeholder recommendations you can
+          see in full inside the live toolkit console; here, just the six with the highest combined score.
+        </p>
+        <div className="tk-research-cards">
+          {PERSONAS.map((p) => (
+            <article key={p.n} className={p.user ? "is-user" : undefined}>
+              <small>{p.user ? "Rides today" : "Could ride"}</small>
+              <h4>{String(p.n).padStart(2, "0")} · {p.who}</h4>
+              <p>{p.split}</p>
+              <p>{p.need}</p>
+            </article>
+          ))}
+        </div>
+        <div className="tk-research-themes" aria-label="Six recurring themes across all eight personas">
+          {THEMES.map((t) => <span key={t}>{t}</span>)}
+        </div>
+        <TopRecsBars />
+      </ResearchPanel>
     </section>
   );
 }
@@ -468,6 +562,44 @@ export function FeasibilityStudy() {
         <a href="https://sme.krungthai.com/sme/productListAction.action?cateId=14&cateMenu=PRODUCT&command=getDetail&itemId=438"><strong>Krungthai ESG loan</strong><span>from 4% · up to 10 years · eligibility applies ↗</span></a>
         <a href="https://www.bot.or.th/content/dam/bot/documents/en/our-roles/monetary-policy/mpc-publication/monetary-policy-report/MPR_2026_Q1.pdf"><strong>Bank of Thailand</strong><span>7.07% average MLR · April 2026 ↗</span></a>
       </div>
+      <ResearchPanel
+        title="This looks like a pitch deck. Where's the part that admits what we don't know?"
+        stats={[
+          { value: "13–36%", label: "US transit farebox recovery range, 2019 vs 2023–24", note: "NTD data — pre- vs post-pandemic ridership shock" },
+          { value: "6", label: "data feeds that would sharpen this model", note: "each with a named source and a specific assumption to retire" },
+          { value: "5", label: "honest gaps, printed here on purpose", note: "first–last mile ranks worst — the model's biggest blank" }
+        ]}
+        citations={FINANCING_RESEARCH_CITATIONS}
+      >
+        <p className="tk-research-note">
+          Results-based financing and green loans for electric fleets are real, documented instruments — that part of the pitch is
+          not invented. What is invented, deliberately: the specific numbers in the credit memo above, which are illustrative until
+          real ticketing and GPS data replace them. Two different kinds of "financeable," printed on the same page so nobody
+          confuses one for the other.
+        </p>
+        <div className="tk-research-table" role="table" aria-label="Data wanted, its source, and what it unlocks">
+          <div className="tk-research-table__row tk-research-table__row--head" role="row">
+            <span role="columnheader">Data</span>
+            <span role="columnheader">Source</span>
+            <span role="columnheader">Unlocks</span>
+          </div>
+          {DATA_WANTED.map((row) => (
+            <div className="tk-research-table__row" role="row" key={row.metric}>
+              <strong role="cell">{row.metric}</strong>
+              <span role="cell">{row.source}</span>
+              <span role="cell">{row.unlocks}</span>
+            </div>
+          ))}
+        </div>
+        <div className="tk-research-cards">
+          {GAPS.map((g) => (
+            <article key={g.gap}>
+              <h4>{g.gap}</h4>
+              <p>{g.why}</p>
+            </article>
+          ))}
+        </div>
+      </ResearchPanel>
     </section>
   );
 }

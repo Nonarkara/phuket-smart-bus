@@ -188,6 +188,86 @@ html.toolkit-site-mode #root {
 .tk-vegas .tk-source { margin-top: 22px !important; color: rgba(17,24,32,0.6) !important; }
 .tk-vegas .tk-source a { color: var(--tk-ink) !important; }
 
+/* Research & data — collapsible academic backbone under the bold voice.
+ * Native <details>/<summary>: zero JS, zero dependency, Cmd-F finds it. */
+.tk-research { margin-top: 40px; border: 1px solid currentColor; }
+.tk-research > summary { display: flex; align-items: center; gap: 16px; padding: 20px 24px; cursor: pointer; list-style: none; }
+.tk-research > summary::-webkit-details-marker { display: none; }
+.tk-research > summary strong { font: 700 1.05rem/1.2 var(--font-display); letter-spacing: -0.01em; }
+.tk-research > summary .tk-kicker { flex-shrink: 0; }
+.tk-research__toggle { position: relative; flex-shrink: 0; width: 20px; height: 20px; border: 1px solid currentColor; }
+.tk-research__toggle::before, .tk-research__toggle::after { position: absolute; top: 50%; left: 50%; width: 10px; height: 1px; background: currentColor; content: ""; transform: translate(-50%, -50%); }
+.tk-research__toggle::after { transform: translate(-50%, -50%) rotate(90deg); transition: transform 0.15s ease; }
+.tk-research[open] > summary .tk-research__toggle::after { transform: translate(-50%, -50%) rotate(0deg); }
+.tk-research > summary:hover { color: var(--tk-red); }
+.tk-research__body { padding: 0 24px 32px; border-top: 1px solid currentColor; }
+.tk-research__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; padding-top: 28px; }
+.tk-research__stats > div { display: flex; flex-direction: column; gap: 4px; }
+.tk-research__stats strong { font: 700 1.6rem/1.1 var(--font-mono); }
+.tk-research__stats span { font-size: 13px; font-weight: 700; }
+.tk-research__stats small { color: var(--tk-muted); font-size: 12px; }
+.tk-research__figure { margin-top: 28px; }
+.tk-research-note { max-width: 78ch; margin-top: 24px; color: var(--tk-muted); font-size: 14px; line-height: 1.6; }
+.tk-deal .tk-research-note, .tk-feasibility .tk-research-note, .tk-proof .tk-research-note { color: rgba(255,255,255,0.68); }
+.tk-research__cites { margin-top: 28px; padding-top: 24px; border-top: 1px dashed var(--tk-line); }
+.tk-research__cites > .tk-kicker { display: block; margin-bottom: 14px; }
+.tk-research__cites ol { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: cite; }
+.tk-research__cites li { counter-increment: cite; padding-left: 30px; position: relative; }
+.tk-research__cites li::before { content: counter(cite, decimal-leading-zero); position: absolute; left: 0; color: var(--tk-red); font: 700 12px/1.6 var(--font-mono); }
+.tk-research__cites a { font-weight: 700; text-decoration: none; }
+.tk-research__cites a:hover { color: var(--tk-red); }
+.tk-research__cites a b { font-weight: 700; color: var(--tk-red); }
+.tk-research__cites small { display: block; margin-top: 2px; color: var(--tk-muted); font-size: 12.5px; }
+
+/* Reusable data table for research panels — 2–3 column, hairline rows. */
+.tk-research-table { display: grid; border-top: 1px solid currentColor; }
+.tk-research-table__row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--tk-line); font-size: 13.5px; }
+.tk-research-table__row--head { font: 700 11px/1.2 var(--font-mono); text-transform: uppercase; color: var(--tk-muted); }
+.tk-research-table__row > strong { font-weight: 700; }
+
+/* Reusable card grid for research panels (personas, causal stories, gaps). */
+.tk-research-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; margin-top: 4px; background: var(--tk-line); border: 1px solid var(--tk-line); }
+.tk-research-cards > article { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: var(--tk-paper); }
+.tk-research-cards h4 { font: 700 0.95rem/1.25 var(--font-display); }
+.tk-research-cards p { color: var(--tk-muted); font-size: 13px; }
+.tk-research-cards small { font: 700 11px/1 var(--font-mono); text-transform: uppercase; color: var(--tk-red); }
+.tk-research-cards article.is-user { background: var(--tk-yellow); }
+.tk-research-cards article.is-user p { color: rgba(17,24,32,0.68); }
+.tk-research-cards article.is-user small { color: var(--tk-ink); }
+
+/* Recurring-themes pill row. */
+.tk-research-themes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.tk-research-themes span { padding: 6px 12px; border: 1px solid currentColor; font: 700 12px/1 var(--font-mono); text-transform: uppercase; }
+
+/* Top-recommendations horizontal bars — the impact–effort figure, compressed. */
+.tk-recs-bars { display: grid; gap: 14px; margin-top: 24px; }
+.tk-recs-bars > div { display: grid; grid-template-columns: minmax(160px, 0.5fr) 1fr auto; align-items: center; gap: 14px; }
+.tk-recs-bars span { font-size: 13px; font-weight: 700; }
+.tk-recs-bars i { display: block; height: 8px; background: var(--tk-red); font-style: normal; }
+.tk-recs-bars small { color: var(--tk-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.tk-feasibility .tk-recs-bars small { color: rgba(255,255,255,0.6); }
+
+.tk-deal .tk-research, .tk-deal .tk-research-table__row { border-color: rgba(255,255,255,0.4); }
+.tk-deal .tk-research__body { border-color: rgba(255,255,255,0.4); }
+.tk-deal .tk-research__stats small, .tk-deal .tk-research-table__row--head { color: rgba(255,255,255,0.6); }
+.tk-deal .tk-research__cites small { color: rgba(255,255,255,0.55); }
+.tk-deal .tk-research__cites { border-color: rgba(255,255,255,0.25); }
+.tk-deal .tk-research-table__row { border-color: rgba(255,255,255,0.25); }
+.tk-deal .tk-research-cards { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.25); }
+.tk-deal .tk-research-cards > article { background: var(--tk-blue); }
+.tk-deal .tk-research-cards p { color: rgba(255,255,255,0.68); }
+.tk-feasibility .tk-research, .tk-feasibility .tk-research__body, .tk-feasibility .tk-research-table__row { border-color: rgba(255,255,255,0.4); }
+.tk-feasibility .tk-research__stats small, .tk-feasibility .tk-research-table__row--head { color: rgba(255,255,255,0.6); }
+.tk-feasibility .tk-research__cites { border-color: rgba(255,255,255,0.25); }
+.tk-feasibility .tk-research-cards { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.25); }
+.tk-feasibility .tk-research-cards > article { background: var(--tk-ink); }
+.tk-feasibility .tk-research-cards p { color: rgba(255,255,255,0.68); }
+.tk-proof .tk-research, .tk-proof .tk-research__body { border-color: rgba(255,255,255,0.4); }
+.tk-proof .tk-research__stats small { color: rgba(255,255,255,0.6); }
+.tk-proof .tk-research__cites { border-color: rgba(255,255,255,0.25); }
+.tk-proof .tk-research-table__row { border-color: rgba(255,255,255,0.25); }
+.tk-proof .tk-research-table__row--head { color: rgba(255,255,255,0.6); }
+
 /* Programme archive: one short spine on the main page, depth behind tabs. */
 .tk-program { color: #fff; background: var(--tk-blue); border-bottom: 1px solid rgba(255,255,255,0.25); }
 .tk-program__header { display: grid; grid-template-columns: minmax(180px, 0.28fr) minmax(0, 1.2fr) minmax(270px, 0.52fr); gap: clamp(26px, 4vw, 70px); padding: clamp(90px, 10vw, 170px) clamp(24px, 6.5vw, 110px) clamp(70px, 8vw, 120px); }
@@ -508,6 +588,15 @@ html.toolkit-site-mode #root {
   .tk-vegas__facts { grid-template-columns: 1fr; }
   .tk-vegas__body { padding: 22px; }
   .tk-ecosystem__grid { grid-template-columns: 1fr; }
+  .tk-research > summary { padding: 16px 18px; }
+  .tk-research > summary strong { font-size: 0.95rem; }
+  .tk-research__body { padding: 0 18px 26px; }
+  .tk-research-table__row { grid-template-columns: 1fr; gap: 4px; padding: 16px 0; }
+  .tk-research-table__row--head { display: none; }
+  .tk-research-table__row > span:first-child, .tk-research-table__row > strong:first-child { color: var(--tk-red); font: 700 11px/1.2 var(--font-mono); text-transform: uppercase; }
+  .tk-research-cards { grid-template-columns: 1fr; }
+  .tk-recs-bars > div { grid-template-columns: 1fr; gap: 6px; }
+  .tk-recs-bars small { justify-self: start; }
   .tk-ecosystem__grid a { min-height: 250px; }
   .tk-ecosystem__lesson { grid-template-columns: 1fr; }
   .tk-ton { grid-template-columns: 1fr; min-height: auto; }

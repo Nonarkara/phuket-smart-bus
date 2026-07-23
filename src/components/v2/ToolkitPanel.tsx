@@ -632,3 +632,19 @@ export function ToolkitPanel({
     </main>
   );
 }
+
+// Named data exports — the depa-usdot research showcase pulls these directly
+// rather than re-typing the same toolkit findings a second time. One source.
+export {
+  TENETS,
+  HYPOTHESES,
+  OBJECTIVES,
+  CITY_CONTRAST,
+  PERSONAS,
+  THEMES,
+  RECS,
+  LEDGER,
+  DATA_WANTED,
+  GAPS,
+  CAUSAL_STORIES
+};

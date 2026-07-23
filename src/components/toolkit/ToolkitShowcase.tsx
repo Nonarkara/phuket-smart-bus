@@ -3,8 +3,82 @@ import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
 import { AbcdefFramework, ProgramArchive, VegasFile, VEGAS_CASES } from "./ProgramArchive";
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
+import { ResearchPanel } from "./ResearchPanel";
+import { CAUSAL_STORIES, LEDGER } from "../v2/ToolkitPanel";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
+
+const METHOD_CITATIONS = [
+  {
+    text: "Design Council — “History of the Double Diamond,”",
+    meta: "Design Council, UK, 2004–2005. Discover, Define, Develop, Deliver — the shape our six verbs collapse to when we stop showing off.",
+    href: "https://www.designcouncil.org.uk/resources/the-double-diamond/history-of-the-double-diamond/"
+  },
+  {
+    text: "Lewin, K. — “Action Research and Minority Problems,”",
+    meta: "Journal of Social Issues, 2(4), 34–46, 1946. The 80-year-old idea that research and intervention should share one loop, not two departments.",
+    href: "https://spssi.onlinelibrary.wiley.com/doi/abs/10.1111/j.1540-4560.1946.tb02295.x"
+  },
+  {
+    text: "Cochran, W.G. — Sampling Techniques,",
+    meta: "3rd edition, Wiley, 1977. The formula behind “Cochran-sized” — how the travel survey knew when it had asked enough people.",
+    href: "https://www.wiley.com/en-us/Sampling+Techniques,+3rd+Edition-p-9780471162407"
+  },
+  {
+    text: "TCRP Synthesis 89 — Public Participation Strategies for Transit,",
+    meta: "Transportation Research Board / National Academies, 2011. State-of-practice on getting a room of stakeholders to actually decide something.",
+    href: "https://www.nationalacademies.org/publications/22865"
+  }
+];
+
+const CAUSALITY_CITATIONS = [
+  {
+    text: "Pearl, J. & Mackenzie, D. — The Book of Why: The New Science of Cause and Effect,",
+    meta: "Basic Books, 2018. The “ladder of causation” — association, intervention, counterfactual — this section climbs one rung at a time.",
+    href: "https://www.hachettebookgroup.com/titles/judea-pearl/the-book-of-why/9781541608986/"
+  },
+  {
+    text: "Rubin, D.B. — “Estimating Causal Effects of Treatments in Randomized and Nonrandomized Studies,”",
+    meta: "Journal of Educational Psychology, 66(5), 688–701, 1974. The potential-outcomes framework under every “what would have happened instead” question below.",
+    href: "https://eric.ed.gov/?id=EJ118470"
+  },
+  {
+    text: "Grimes, A. et al. — “Impacts of zero-fare transit policy on health and social determinants: protocol for a natural experiment study,”",
+    meta: "Frontiers in Public Health, 12, 2024. Kansas City vs. nine matched comparison cities — a real natural experiment, not a before/after chart. Results not yet published; cited for the design, not a verdict.",
+    href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11532055/"
+  },
+  {
+    text: "Wang, Y., Guo, J., Ceder, A., Currie, G., Dong, W. & Yuan, H. — queueing analysis of balking and reneging transit passengers,",
+    meta: "Transportation Research Part B: Methodological, 2014. The formal model behind our own 60-minute patience threshold — impatience has an equation.",
+    href: "https://www.researchgate.net/publication/261186876"
+  }
+];
+
+const PROOF_CITATIONS = [
+  {
+    text: "Hodges, T. — Public Transportation’s Role in Responding to Climate Change,",
+    meta: "Federal Transit Administration, 2010. The APTA-adjacent methodology behind every CO₂-avoided figure on this site — sourced, not invented at 0.15 kg/pax-km.",
+    href: "https://www.epa.gov/sites/default/files/2016-04/documents/public_transportations_role_in_responding_to_climate_change.pdf"
+  }
+];
+
+const DEAL_CITATIONS = [
+  {
+    text: "World Bank Group — Public-Private Partnerships Reference Guide, Version 3,",
+    meta: "2024. Project-finance convention converges on 1.1×–1.5× DSCR covenants; our mock 1.30× sits at the practitioner base case, not an invented safety margin.",
+    href: "https://ppp.worldbank.org/sites/default/files/2024-08/PPP%20Reference%20Guide%20Version%203.pdf"
+  },
+  {
+    text: "Social Finance UK — HMP Peterborough One Service Social Impact Bond,",
+    meta: "2010. The first outcomes-only-payment contract, ever. No transit-specific version of this exists yet — worth flagging plainly rather than pretending one does.",
+    href: "https://www.socialfinance.org.uk/work/reducing-reoffending-in-peterborough"
+  },
+  {
+    text: "Eno Center for Transportation — “The Mass Transit Fiscal Cliff: Estimating the Size and Scope of the Problem,”",
+    meta: "2023. Why a farebox-only deal structure is a bet against the last decade of US transit finance, not a conservative choice.",
+    href: "https://enotrans.org/article/the-mass-transit-fiscal-cliff-estimating-the-size-and-scope-of-the-problem/"
+  }
+];
 
 const BUS_URL = "https://bus.nonarkara.org/";
 const FIELD_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/field-notes/`;
@@ -449,6 +523,22 @@ export default function ToolkitShowcase() {
               <div key={title}><strong>{title}</strong>{index < METHOD_STEPS.length - 1 ? <Arrow /> : <span className="tk-loop__return">↺</span>}</div>
             ))}
           </div>
+          <ResearchPanel
+            title="Six verbs is a nice poster. Is it a method?"
+            stats={[
+              { value: "~$20k", label: "Cochran-sized travel survey", note: "500 m origin–destination buffers" },
+              { value: "~$5k", label: "stakeholder co-design workshop", note: "5 groups, 15 ranked actions" },
+              { value: "15", label: "recommendations, ranked by impact and effort", note: "the figure lives in Design Thinking, below" }
+            ]}
+            citations={METHOD_CITATIONS}
+          >
+            <p className="tk-research-note">
+              Observe–Frame–Trace–Build–Operate–Learn is our own compression of two much older ideas: the Design Council’s Double
+              Diamond (divergent research, then convergent delivery) and Kurt Lewin’s action research (you don’t get to study a
+              system without also trying to change it). We didn’t invent participatory planning. We just refused to let the
+              participation stop at a workshop with good snacks.
+            </p>
+          </ResearchPanel>
         </section>
 
         <DesignThinkingStudy />
@@ -461,6 +551,30 @@ export default function ToolkitShowcase() {
           </div>
           <EvidenceChain />
           <FlightEvidence />
+          <ResearchPanel
+            title="Show your work: every finding, traced to the exact place it lives in code."
+            citations={PROOF_CITATIONS}
+          >
+            <p className="tk-research-note">
+              This is the ledger that keeps us honest: a research finding on the left, the model assumption it became in the
+              middle, and where you can go watch it move on the right. If a row's middle column can't be justified by its left
+              column, that row gets deleted — not defended.
+            </p>
+            <div className="tk-research-table" role="table" aria-label="Toolkit finding, model assumption, where it lives">
+              <div className="tk-research-table__row tk-research-table__row--head" role="row">
+                <span role="columnheader">Finding</span>
+                <span role="columnheader">Model assumption</span>
+                <span role="columnheader">Where it lives</span>
+              </div>
+              {LEDGER.map((row) => (
+                <div className="tk-research-table__row" role="row" key={row.surface}>
+                  <strong role="cell">{row.finding}</strong>
+                  <span role="cell">{row.model}</span>
+                  <span role="cell">{row.surface}</span>
+                </div>
+              ))}
+            </div>
+          </ResearchPanel>
           <a className="tk-proof__cta" href={BUS_URL}><span>Open bus.nonarkara.org</span><strong>Watch every number move.</strong><b>↗</b></a>
         </section>
 
@@ -478,6 +592,27 @@ export default function ToolkitShowcase() {
               <small>Each arrow has a measurement and an assumption. Break one and the claim gets weaker. Good. Now we know where to look.</small>
             </div>
           </div>
+          <ResearchPanel
+            title="Fine. Where did 'correlation isn't causation' come from, actually?"
+            citations={CAUSALITY_CITATIONS}
+          >
+            <p className="tk-research-note">
+              Three of our own working stories, run through the same test: what we observed, what might explain it, and what we’d
+              have to change and measure to find out if we’re right. None of these are proven. That is the point of writing them
+              down before the fix, not after.
+            </p>
+            <div className="tk-research-cards">
+              {CAUSAL_STORIES.map((story) => (
+                <article key={story.id}>
+                  <small>{story.tab}</small>
+                  <h4>{story.observation}</h4>
+                  <p><strong>Best explanation:</strong> {story.cause}</p>
+                  <p><strong>We’d change:</strong> {story.intervention}</p>
+                  <p><strong>Then measure:</strong> {story.measure}</p>
+                </article>
+              ))}
+            </div>
+          </ResearchPanel>
         </section>
 
         <section className="tk-section tk-scenario">
@@ -524,6 +659,22 @@ export default function ToolkitShowcase() {
             <div><b>4</b><strong>Public benefit payment</strong><small>Government pays only for verified additional outcomes</small></div>
           </div>
           <VegasFile vegasCase={VEGAS_CASES.deal} />
+          <ResearchPanel
+            title="Is 'pay the operator for outcomes, not just rides' a real financing structure?"
+            stats={[
+              { value: "1.1×–1.5×", label: "typical DSCR covenant range, infrastructure project finance", note: "our mock covenant: 1.30×" },
+              { value: "2010", label: "the first outcomes-only-payment contract", note: "Peterborough, UK — prisons, not transit" },
+              { value: "13–36%", label: "US transit farebox recovery range, 2019 vs 2023–24", note: "pre- vs post-pandemic; see Feasibility, below" }
+            ]}
+            citations={DEAL_CITATIONS}
+          >
+            <p className="tk-research-note">
+              The individual pieces are real and well-documented: debt covenants sized against measured cashflow, and payment
+              contracts that only release money for verified outcomes. Nobody has assembled them into a transit deal quite like
+              this — Peterborough was a prison, not a bus route. We're not citing precedent we don't have. We're citing the two
+              adjacent fields this deal borrows its discipline from.
+            </p>
+          </ResearchPanel>
         </section>
 
         <section className="tk-section tk-ecosystem">

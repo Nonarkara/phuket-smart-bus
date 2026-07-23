@@ -1,8 +1,38 @@
 import { useState } from "react";
+import { ResearchPanel } from "./ResearchPanel";
+import { CITY_CONTRAST } from "../v2/ToolkitPanel";
 
 const PROGRAM_URL = "https://www.usascp.org/programs/transportationprogram/";
 const UPP_URL = "https://www.metrans.org/upp";
 const VEGAS_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/vegas/`;
+
+const ABCDEF_CITATIONS = [
+  {
+    text: "McFadden, D. — “Economic Choices,”",
+    meta: "Nobel Prize Lecture, 8 Dec 2000. The math under every discrete mode-choice model, ours included.",
+    href: "https://www.nobelprize.org/prizes/economic-sciences/2000/mcfadden/lecture/"
+  },
+  {
+    text: "Ben-Akiva, M. & Lerman, S.R. — Discrete Choice Analysis: Theory and Application to Travel Demand,",
+    meta: "MIT Press, 1985. The standard textbook translation of that theory into travel-mode models.",
+    href: "https://mitpress.mit.edu/9780262536400/discrete-choice-analysis/"
+  },
+  {
+    text: "Bursa, B., Mailer, M. & Axhausen, K.W. — “Travel behavior on vacation: transport mode choice of tourists at destinations,”",
+    meta: "Transportation Research Part A, 166 (2022), pp. 234–261. Tourists, not commuters — the paper this framework should have to answer to.",
+    href: "https://www.sciencedirect.com/science/article/pii/S0965856422002543"
+  },
+  {
+    text: "TCRP Report 166 — Characteristics of Premium Transit Services that Affect Choice of Mode,",
+    meta: "Transportation Research Board / National Academies, 2013. Comfort and reliability move mode choice independent of price — our C and D, footnoted.",
+    href: "https://nap.nationalacademies.org/catalog/22401/characteristics-of-premium-transit-services-that-affect-choice-of-mode"
+  },
+  {
+    text: "Moody, J. et al. — “Measuring Explicit and Implicit Social Status Bias in Car vs. Bus Mode Choice,”",
+    meta: "MIT Mobility Initiative, 95th TRB Annual Meeting, 2016. Thin literature, real effect — our weakest-cited letter, H, and we say so.",
+    href: "https://mobility.mit.edu/publications/2016/moody-implicit-and-explicit-measures-social-status-bias-mode-choice"
+  }
+];
 
 type VegasCase = {
   photo: { src: string; alt: string; credit: string };
@@ -201,6 +231,36 @@ function AbcdefFramework() {
       </div>
       <p className="tk-abcdef__caveat">This is a proposition map, not a causal estimate. The live system gives us somewhere to test which letters actually change search, boarding and repeat use.</p>
       <VegasFile vegasCase={VEGAS_CASES.abcdef} />
+      <ResearchPanel
+        title="Is “ABCDEF” actually a thing, or did we just make a fun acronym?"
+        stats={[
+          { value: "1974", label: "the year discrete-choice theory was formalised", note: "McFadden — later a Nobel Prize, 2000" },
+          { value: "6+2", label: "lenses in this framework", note: "A–F fundamentals, G/H extensions" },
+          { value: "8", label: "rider personas it was tested against", note: "from the original toolkit survey — see the Design Thinking section" }
+        ]}
+        citations={ABCDEF_CITATIONS}
+      >
+        <p className="tk-research-note">
+          Honest answer: partly. The theory that people weigh a bundle of felt factors — not just price and speed — when picking a
+          travel mode is decades old and Nobel-decorated. “ABCDEF” is our own mnemonic on top of it, built for a workshop room, not
+          peer review. G and H lean on thinner evidence than A–D. We say so on purpose — a framework that hides its weakest plank
+          isn’t a framework, it’s a pitch deck.
+        </p>
+        <div className="tk-research-table" role="table" aria-label="Phuket versus Las Vegas, five structural differences">
+          <div className="tk-research-table__row tk-research-table__row--head" role="row">
+            <span role="columnheader"></span>
+            <span role="columnheader">Phuket</span>
+            <span role="columnheader">Las Vegas</span>
+          </div>
+          {CITY_CONTRAST.map((row) => (
+            <div className="tk-research-table__row" role="row" key={row.dim}>
+              <strong role="cell">{row.dim}</strong>
+              <span role="cell">{row.phuket}</span>
+              <span role="cell">{row.vegas}</span>
+            </div>
+          ))}
+        </div>
+      </ResearchPanel>
     </section>
   );
 }
