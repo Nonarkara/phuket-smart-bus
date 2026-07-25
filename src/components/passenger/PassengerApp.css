@@ -6,6 +6,21 @@
  * system but on a near-white app background so the phone feels native.
  * ========================================================================= */
 
+html.passenger-site-mode,
+body.passenger-site-mode,
+body.passenger-site-mode #root {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.pa-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #1c252e;
+}
+
 .pa-app {
   --pa-pad: clamp(16px, 5vw, 28px);
   --pa-bg: #fafaf7;
@@ -24,6 +39,8 @@
   display: flex;
   flex-direction: column;
 }
+
+.pa-console-invite { display: none; }
 
 .pa-app * { box-sizing: border-box; }
 .pa-app button {
@@ -475,13 +492,93 @@
 }
 .pa-footer__link { font-weight: 700; color: var(--pa-red); }
 
-/* DESKTOP — cap width so the phone app feels like a phone, even on a 4K */
+@media (max-width: 430px) {
+  .pa-home { gap: 20px; }
+  .pa-countdown { padding: 22px 0 18px; }
+  .pa-cards { gap: 10px; }
+  .pa-card { padding: 18px 20px; }
+  .pa-card__copy { margin: 2px 0 8px; }
+  .pa-promise h2 { margin-top: 14px; }
+}
+
+/* DESKTOP — keep the rider task compact and reveal the operator handoff. */
 @media (min-width: 768px) {
-  .pa-app {
-    max-width: 460px;
+  .pa-shell {
+    display: grid;
+    grid-template-columns: minmax(400px, 460px) minmax(420px, 1fr);
+    gap: clamp(40px, 7vw, 112px);
+    align-items: start;
+    max-width: 1360px;
     margin: 0 auto;
-    border-left: 1px solid var(--pa-line);
-    border-right: 1px solid var(--pa-line);
+    padding: 48px clamp(32px, 5vw, 72px);
   }
-  body { background: #1c252e; }
+  .pa-app {
+    min-height: calc(100vh - 96px);
+    min-height: calc(100dvh - 96px);
+    margin: 0 auto;
+    width: 100%;
+    border: 1px solid var(--pa-line);
+  }
+  .pa-console-invite {
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: clamp(44px, 10vh, 110px);
+    position: sticky;
+    top: 48px;
+  }
+  .pa-console-invite__kicker {
+    color: #f2c84b;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .pa-console-invite h2 {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(2.3rem, 4vw, 4.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    margin: 0;
+    max-width: 12ch;
+  }
+  .pa-console-invite p {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    margin: 0;
+    max-width: 54ch;
+  }
+  .pa-console-invite__chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+  .pa-console-invite__chain b { color: #ef442f; }
+  .pa-console-invite > a {
+    align-items: center;
+    background: #ef442f;
+    color: #fff;
+    display: flex;
+    font-weight: 700;
+    justify-content: space-between;
+    max-width: 440px;
+    padding: 18px 20px;
+    text-decoration: none;
+  }
+  .pa-console-invite > a:hover { text-decoration: none; transform: translateY(-1px); }
+  .pa-console-invite > .pa-console-invite__research {
+    background: transparent;
+    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    color: rgba(255, 255, 255, 0.72);
+    padding: 14px 0;
+  }
 }

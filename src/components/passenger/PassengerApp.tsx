@@ -140,8 +140,20 @@ export function PassengerApp() {
   // the rider sees a tab labelled for the bus, not the toolkit.
   useEffect(() => {
     const oldTitle = document.title;
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    const oldDescription = description?.content;
+    document.documentElement.classList.add("passenger-site-mode");
+    document.body.classList.add("passenger-site-mode");
     document.title = "Phuket Smart Bus · ฿100 to Patong";
-    return () => { document.title = oldTitle; };
+    if (description) {
+      description.content = "See the next Phuket Smart Bus from HKT airport, choose a destination and try the single-ride or 3-day pass prototype.";
+    }
+    return () => {
+      document.documentElement.classList.remove("passenger-site-mode");
+      document.body.classList.remove("passenger-site-mode");
+      document.title = oldTitle;
+      if (description && oldDescription !== undefined) description.content = oldDescription;
+    };
   }, []);
 
   // Form state for the mocked Stripe checkout
@@ -177,14 +189,15 @@ export function PassengerApp() {
   }
 
   return (
-    <div className="pa-app" data-step={step}>
+    <div className="pa-shell">
+      <div className="pa-app" data-step={step}>
       <header className="pa-header">
         <div className="pa-header__brand">
           <span className="pa-header__logo" aria-hidden="true">PSKB</span>
           <span className="pa-header__name">Phuket Smart Bus</span>
         </div>
-        <a className="pa-header__link" href="https://depa-usdot.nonarkara.org/">
-          For operators ↗
+        <a className="pa-header__link" href="/ops">
+          Operations ↗
         </a>
       </header>
 
@@ -233,11 +246,29 @@ export function PassengerApp() {
       )}
 
       <footer className="pa-footer">
-        <span>PSKB · ฿100 single · ฿250 3-day · every hour 06:00 – 23:30</span>
-        <a href="https://depa-usdot.nonarkara.org/" className="pa-footer__link">
+        <span>Prototype fares · live timetable simulation · no real payment</span>
+        <a href="/ops" className="pa-footer__link">
           Open the operator console
         </a>
       </footer>
+      </div>
+
+      <aside className="pa-console-invite" aria-label="Operations console preview">
+        <span className="pa-console-invite__kicker">Same system · another job</span>
+        <h2>The passenger sees one bus. The operator sees the whole day.</h2>
+        <p>
+          Every destination request can become a demand signal. GPS shows the duty.
+          Anonymous boarding counts show the load. The console joins them before
+          anybody buys another bus.
+        </p>
+        <div className="pa-console-invite__chain" aria-label="Passenger request becomes an operating decision">
+          <span>Destination</span><b>→</b><span>Boarding</span><b>→</b><span>Dispatch</span><b>→</b><span>Evidence</span>
+        </div>
+        <a href="/ops">Open the live operations console <span aria-hidden="true">↗</span></a>
+        <a className="pa-console-invite__research" href="https://depa-usdot.nonarkara.org/">
+          Read the research behind it
+        </a>
+      </aside>
     </div>
   );
 }
@@ -257,13 +288,14 @@ function HomeStep({
 }) {
   return (
     <main className="pa-home">
+      <h1 className="sr-only">Phuket Smart Bus tickets and next airport departure</h1>
       <section className="pa-countdown" aria-live="polite">
-        <span className="pa-countdown__label">Next bus leaves in</span>
+        <span className="pa-countdown__label">Next scheduled bus leaves in</span>
         <strong className="pa-countdown__time">
           {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
         </strong>
         <span className="pa-countdown__sub">
-          From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong> · 95 min to Patong
+          From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong> · about 100 min to Patong
         </span>
       </section>
 
@@ -272,8 +304,8 @@ function HomeStep({
           <span className="pa-card__kicker">Single ride</span>
           <strong className="pa-card__price">฿100</strong>
           <p className="pa-card__copy">
-            Tell us where. The bus stops at your hotel — anywhere on the
-            airport corridor, no formal stop needed.
+            Name your hotel or area. The driver gets the request and confirms
+            a safe pull-over on the airport corridor.
           </p>
           <span className="pa-card__cta">
             Buy single ride <span aria-hidden="true">→</span>
@@ -284,8 +316,8 @@ function HomeStep({
           <span className="pa-card__kicker">3-day pass</span>
           <strong className="pa-card__price">฿250</strong>
           <p className="pa-card__copy">
-            Unlimited rides for 72 hours. Use the same boarding token on any
-            PKSB bus. Pay once, ride the whole stay.
+            A mock 72-hour pass and reusable boarding token. Stripe Checkout
+            is shown as the production payment path.
           </p>
           <span className="pa-card__cta">
             Buy 3-day pass <span aria-hidden="true">→</span>
@@ -296,10 +328,10 @@ function HomeStep({
       <section className="pa-promise">
         <h2>What the bus is</h2>
         <ul>
-          <li>One bus every hour, 06:00 – 23:30, 25 departures a day.</li>
-          <li>Same vehicle runs both ways — airport curb to your hotel and back.</li>
-          <li>Stops wherever you tell the driver. There are no formal bus stops in Phuket.</li>
-          <li>฿100 is about 7× cheaper than the cheapest Grab to Patong, 10× cheaper than a walk-up taxi.</li>
+          <li>The countdown comes from the published airport timetable, not a decorative timer.</li>
+          <li>The same fleet rotates in both directions — airport to the island and back.</li>
+          <li>Your destination becomes a driver request; the driver still chooses a safe, legal pull-over.</li>
+          <li>฿100 is the modelled single fare. This prototype does not charge a card.</li>
         </ul>
       </section>
     </main>
@@ -330,8 +362,8 @@ function DestinationStep({
       </button>
       <h1 className="pa-form__title">Where are you going?</h1>
       <p className="pa-form__sub">
-        Type the hotel, the beach, or the area. The driver stops there
-        directly — no formal bus stop, no transfer.
+        Type the hotel, beach, or area. The request appears on the driver
+        tablet; the driver confirms the nearest safe pull-over on the corridor.
       </p>
 
       <label className="pa-form__field">
@@ -365,11 +397,11 @@ function DestinationStep({
         onClick={onContinue}
         disabled={!destination.trim()}
       >
-        Pay ฿{SINGLE_FARE_THB} · bus in {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
+        Reserve ride · pay driver ฿{SINGLE_FARE_THB}
       </button>
       <p className="pa-form__note">
-        This is a mockup. No card is charged. The boarding token is for
-        the operator console at <a href="https://depa-usdot.nonarkara.org/">depa-usdot.nonarkara.org</a>.
+        Prototype only. No payment is taken. Your bus is currently due in{" "}
+        {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}.
       </p>
     </main>
   );
@@ -412,9 +444,8 @@ function PaymentStep({
       </button>
       <h1 className="pa-form__title">Pay ฿{THREE_DAY_FARE_THB} for unlimited rides</h1>
       <p className="pa-form__sub">
-        72 hours of unlimited PKSB bus use. One boarding token, valid on
-        any route. Card details are processed by Stripe — this mockup
-        does not transmit data.
+        72 hours of unlimited PKSB bus use. Production would use
+        Stripe-hosted Checkout. This prototype does not transmit card data.
       </p>
 
       <div className="pa-stripe" role="group" aria-label="Card details (Stripe)">
@@ -479,8 +510,7 @@ function PaymentStep({
         Pay ฿{THREE_DAY_FARE_THB} · valid for 72 hours
       </button>
       <p className="pa-form__note">
-        Stripe test card pre-filled (4242…). Real deployment would
-        redirect to Stripe Checkout.
+        Demonstration data only (Stripe's 4242 test number). Nothing is sent.
       </p>
     </main>
   );
@@ -550,8 +580,8 @@ function TicketStep({
           )}
         </dl>
         <footer>
-          <span>Stops anywhere on the airport corridor</span>
-          <span>No formal bus stop in Phuket</span>
+          <span>Requested drop-off on the airport corridor</span>
+          <span>Driver confirms the safe pull-over</span>
         </footer>
       </div>
 

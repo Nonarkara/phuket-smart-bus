@@ -96,10 +96,13 @@ describe("App", () => {
     // argument, not the workshop-report hero.
     expect(
       screen.getByRole("heading", {
-        name: /build a bus system in Phuket/i
+        name: /an airport passenger can find the bus/i
       })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Ten beats/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Evidence status legend")).toHaveTextContent(
+      /Observed.*cited or published record/i
+    );
     expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
   });
 
