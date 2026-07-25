@@ -135,6 +135,15 @@ export function PassengerApp() {
   const [destination, setDestination] = useState<string>("");
   const [ticketId, setTicketId] = useState<string>("");
 
+  // The static index.html is built for the toolkit research surface
+  // (different title, different meta description). Override on mount so
+  // the rider sees a tab labelled for the bus, not the toolkit.
+  useEffect(() => {
+    const oldTitle = document.title;
+    document.title = "Phuket Smart Bus · ฿100 to Patong";
+    return () => { document.title = oldTitle; };
+  }, []);
+
   // Form state for the mocked Stripe checkout
   const [card, setCard] = useState<string>(STRIPE_TEST_CARD);
   const [expiry, setExpiry] = useState<string>("12 / 28");
