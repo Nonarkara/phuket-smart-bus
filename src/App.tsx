@@ -41,6 +41,8 @@ import { DriverTablet } from "./components/DriverTablet";
 import { RoiCalculator } from "./components/RoiCalculator";
 import { GovernorDashboard } from "./components/GovernorDashboard";
 import { DemoCaption, buildTuesdayDemoClock } from "./components/DemoCaption";
+import { PassengerApp } from "./components/passenger/PassengerApp";
+import "./components/passenger/PassengerApp.css";
 import { setClockOverride } from "./engine/fleetSimulator";
 import { haversineDistanceMeters } from "./lib/geo";
 import { appPath, routePath } from "./lib/paths";
@@ -203,6 +205,16 @@ export default function App() {
   // /roi page (financial model for buyers)
   if (pathname.startsWith("/roi")) {
     return <RoiCalculator />;
+  }
+
+  // bus.nonarkara.org is the passenger front door — the only screen a
+  // rider sees on a phone. The operator console lives at /ops.
+  const isRiderDomain =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "bus.nonarkara.org" ||
+      window.location.hostname.startsWith("bus."));
+  if (isRiderDomain && (pathname === "/" || pathname === "")) {
+    return <PassengerApp />;
   }
 
   // This branch is the research-and-development showcase. The existing
