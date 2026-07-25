@@ -5,6 +5,7 @@ import { AbcdefFramework, ProgramArchive, VegasFile, VEGAS_CASES } from "./Progr
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
 import { PhuketContext } from "./PhuketContext";
 import { VegasDemandCase } from "./VegasDemandCase";
+import { LandingPage } from "./LandingPage";
 import { ResearchPanel } from "./ResearchPanel";
 import { CAUSAL_STORIES, LEDGER } from "../v2/ToolkitPanel";
 import "./toolkit-showcase.css";
@@ -567,22 +568,7 @@ export default function ToolkitShowcase() {
       </header>
 
       <main id="top">
-        <section className="tk-hero">
-          <div className="tk-hero__copy">
-            <p className="tk-kicker">Research that got tired of waiting for permission.</p>
-            <h1>The report was never the deliverable.</h1>
-            <p className="tk-hero__standfirst">A practical toolkit for turning fieldwork, public data and difficult questions into city systems that people can actually use.</p>
-            <div className="tk-hero__actions">
-              <a href="#brief">Read the five-minute brief <span>↓</span></a>
-              <a href={BUS_URL}>Try the live bus system <span>↗</span></a>
-            </div>
-          </div>
-          <HeroPhotoRotator />
-          <aside className="tk-hero__note">
-            <strong>A PDF cannot move a bus.</strong>
-            <p>It can frame the problem. Then the toolkit has to earn its keep.</p>
-          </aside>
-        </section>
+        <LandingPage />
 
         <PhuketContext />
 

@@ -92,12 +92,14 @@ describe("App", () => {
     window.history.replaceState({}, "", "/");
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "The report was never the deliverable." })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Proceed to a pilot. Do not buy the conclusion." })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Choose a reading route" })).toBeInTheDocument();
-    expect(screen.getByText("01 · Observed")).toBeInTheDocument();
-    expect(screen.getByText("03 · Modelled")).toBeInTheDocument();
-    expect(screen.getByText("04 · Proposed")).toBeInTheDocument();
+    // The landing replaces the old hero — the front door is the 5-minute
+    // argument, not the workshop-report hero.
+    expect(
+      screen.getByRole("heading", {
+        name: /build a bus system in Phuket/i
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Ten beats/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
   });
 
