@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "depa-usdot-toolkit-router",
+  "main": "cloudflare/toolkit-domain-router.ts",
+  "compatibility_date": "2026-07-21",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "depa-usdot.nonarkara.org",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
