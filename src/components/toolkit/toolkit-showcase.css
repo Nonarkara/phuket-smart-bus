@@ -668,3 +668,356 @@ html.toolkit-site-mode #root {
   html.toolkit-site-mode { scroll-behavior: auto; }
   .tk-live__pulse { animation: none; }
 }
+
+/* ===========================================================================
+ * Phuket Context — the chapter that explains the island the bus is for.
+ * Editorial spread. Big type, real numbers, hand-drawn SVG, real photos.
+ * Same paper-and-ink palette as the rest of the toolkit, with the signal
+ * red as the bus corridor.
+ * ========================================================================= */
+
+.pc-section {
+  --pc-pad: clamp(20px, 3.6vw, 56px);
+  background: var(--tk-paper);
+  color: var(--tk-ink);
+  border-top: 1px solid var(--tk-ink);
+}
+
+.pc-section__head {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(60px, 9vw, 120px) var(--pc-pad) clamp(24px, 4vw, 56px);
+}
+.pc-section__head h2 {
+  max-width: 22ch;
+  margin: 12px 0 24px;
+  font-size: clamp(2.4rem, 5.4vw, 5.6rem);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.pc-section__standfirst {
+  max-width: 78ch;
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  line-height: 1.4;
+  color: #1c252e;
+}
+.pc-section__sub {
+  font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+  letter-spacing: -0.02em;
+}
+.pc-section__sub-note {
+  max-width: 64ch;
+  margin: 8px 0 28px;
+  color: var(--tk-muted);
+  font-size: 1rem;
+}
+
+/* ---- Hero photo + 4 headline numbers ---- */
+.pc-hero {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--pc-pad) 64px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(20px, 3vw, 40px);
+  align-items: stretch;
+}
+.pc-hero__photo {
+  min-height: 480px;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.85) contrast(1.05);
+  position: relative;
+  isolation: isolate;
+}
+.pc-hero__photo::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent, rgba(17, 24, 32, 0.6));
+  pointer-events: none;
+}
+.pc-hero__photo::before {
+  content: "PHUKET 2024 · the field photo at the start of the toolkit";
+  position: absolute;
+  inset: auto 0 16px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fff;
+  z-index: 2;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.pc-hero__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--tk-ink);
+}
+.pc-hero__stats li {
+  padding: 24px 22px;
+  border-right: 1px solid var(--tk-ink);
+  border-bottom: 1px solid var(--tk-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--tk-white);
+}
+.pc-hero__stats li:nth-child(2n) { border-right: none; }
+.pc-hero__stats li:nth-last-child(-n+2) { border-bottom: none; }
+.pc-hero__stats strong {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--tk-ink);
+}
+.pc-hero__stats span {
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--tk-ink);
+}
+.pc-hero__stats small {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--tk-muted);
+  font-family: var(--font-mono);
+}
+
+/* ---- Two-column spread (chart + map) ---- */
+.pc-spread {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px var(--pc-pad) 80px;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: clamp(24px, 3vw, 48px);
+  align-items: start;
+}
+.pc-spread--stack { grid-template-columns: 1fr; }
+
+.pc-figure {
+  margin: 0;
+  padding: 28px 28px 32px;
+  background: var(--tk-white);
+  border: 1px solid var(--tk-ink);
+}
+.pc-figure figcaption {
+  display: block;
+  margin-bottom: 18px;
+}
+.pc-figure figcaption .tk-kicker {
+  display: block;
+  margin-bottom: 4px;
+}
+.pc-figure figcaption strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.1vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.pc-figure figcaption p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #364150;
+}
+.pc-chart { width: 100%; height: auto; color: var(--tk-ink); }
+.pc-map { width: 100%; height: auto; }
+
+/* Bars (accidents) */
+.pc-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pc-bar {
+  display: grid;
+  grid-template-columns: 80px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+}
+.pc-bar__label { font-weight: 700; }
+.pc-bar__track {
+  position: relative;
+  height: 22px;
+  background: rgba(17, 24, 32, 0.06);
+  border: 1px solid var(--tk-line);
+  overflow: hidden;
+}
+.pc-bar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--pc-fill, var(--tk-blue));
+  display: block;
+}
+.pc-bar__val {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Stacked bars (airport history) */
+.pc-stack {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+  height: 220px;
+  align-items: end;
+  margin-top: 18px;
+}
+.pc-stack__row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: end;
+}
+.pc-stack__year {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tk-muted);
+}
+.pc-stack__track {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  border-bottom: 1px solid var(--tk-ink);
+  background: rgba(17, 24, 32, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+.pc-stack__intl, .pc-stack__dom {
+  width: 100%;
+  display: block;
+}
+.pc-stack__intl { background: var(--tk-red); }
+.pc-stack__dom { background: var(--tk-blue); }
+.pc-stack__val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tk-ink);
+}
+.pc-stack__legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--tk-muted);
+}
+.pc-stack__legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+/* Callout (the "market is set up for a bus" sidebar) */
+.pc-callout {
+  background: var(--tk-blue);
+  color: #fff;
+  padding: 32px 32px 28px;
+  border: 1px solid var(--tk-ink);
+}
+.pc-callout h3 {
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  line-height: 1;
+  margin-bottom: 18px;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.pc-callout ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.pc-callout li { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+.pc-callout li:first-child { border-top: none; padding-top: 0; }
+.pc-callout li strong { display: block; margin-bottom: 4px; font-family: var(--font-display); font-size: 1.05rem; }
+.pc-callout li p { font-size: 0.92rem; line-height: 1.5; color: rgba(255, 255, 255, 0.86); }
+
+/* ---- Timeline ---- */
+.pc-timeline {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 64px var(--pc-pad) 32px;
+}
+.pc-timeline__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--tk-ink);
+}
+.pc-timeline__list li {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: clamp(16px, 2.4vw, 36px);
+  padding: 28px 0;
+  border-bottom: 1px solid var(--tk-ink);
+  align-items: start;
+}
+.pc-timeline__year {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--tk-red);
+  line-height: 1;
+  position: sticky;
+  top: 90px;
+}
+.pc-timeline__list li > div strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.1;
+  margin-bottom: 8px;
+  letter-spacing: -0.015em;
+}
+.pc-timeline__list li > div p {
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: #1c252e;
+  max-width: 68ch;
+}
+
+/* ---- Footer link to next chapter ---- */
+.pc-next {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px var(--pc-pad) 80px;
+  font-size: 1rem;
+  color: var(--tk-muted);
+}
+.pc-next a {
+  color: var(--tk-red);
+  text-decoration: none;
+  font-weight: 700;
+}
+.pc-next a:hover { text-decoration: underline; }
+
+/* ---- Responsive ---- */
+@media (max-width: 920px) {
+  .pc-hero { grid-template-columns: 1fr; }
+  .pc-hero__photo { min-height: 320px; }
+  .pc-spread { grid-template-columns: 1fr; padding-bottom: 56px; }
+  .pc-timeline__list li { grid-template-columns: 1fr; gap: 6px; }
+  .pc-timeline__year { position: static; }
+  .pc-stack { grid-template-columns: repeat(5, 1fr); }
+  .pc-bar { grid-template-columns: 64px 1fr 44px; font-size: 0.84rem; }
+}
+@media (max-width: 560px) {
+  .pc-hero__stats { grid-template-columns: 1fr; }
+  .pc-hero__stats li { border-right: none; }
+  .pc-hero__stats li:nth-last-child(-n+2) { border-bottom: 1px solid var(--tk-ink); }
+  .pc-hero__stats li:last-child { border-bottom: none; }
+  .pc-stack { grid-template-columns: repeat(3, 1fr); }
+}
