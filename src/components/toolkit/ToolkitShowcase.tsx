@@ -3,6 +3,8 @@ import { getFleetScenario } from "../../engine/demandSupplyEngine";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
 import { AbcdefFramework, ProgramArchive, VegasFile, VEGAS_CASES } from "./ProgramArchive";
 import { DesignThinkingStudy, FeasibilityStudy, TryLiveSystem } from "./ToolkitStudy";
+import { PhuketContext } from "./PhuketContext";
+import { VegasDemandCase } from "./VegasDemandCase";
 import { ResearchPanel } from "./ResearchPanel";
 import { CAUSAL_STORIES, LEDGER } from "../v2/ToolkitPanel";
 import "./toolkit-showcase.css";
@@ -554,6 +556,8 @@ export default function ToolkitShowcase() {
           <span>NON</span><strong>City Systems Toolkit</strong>
         </a>
         <nav aria-label="Page chapters">
+          <a href="#phuket">Phuket</a>
+          <a href="#vegas-demand">Vegas</a>
           <a href="#brief">Brief</a>
           <a href="#method">Method</a>
           <a href="#proof">Proof</a>
@@ -579,6 +583,10 @@ export default function ToolkitShowcase() {
             <p>It can frame the problem. Then the toolkit has to earn its keep.</p>
           </aside>
         </section>
+
+        <PhuketContext />
+
+        <VegasDemandCase />
 
         <LiveProof />
 

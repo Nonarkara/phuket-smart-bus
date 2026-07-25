@@ -668,3 +668,221 @@ html.toolkit-site-mode #root {
   html.toolkit-site-mode { scroll-behavior: auto; }
   .tk-live__pulse { animation: none; }
 }
+
+/* ===========================================================================
+ * Vegas Demand Case — Chapter 2.
+ * The same paper-and-ink palette as the rest of the toolkit, with the signal
+ * red reserved for the things that actually move the story: the Strip
+ * corridor, the loss years, the urgent-now paragraph.
+ * ========================================================================= */
+
+.vc-section {
+  --vc-pad: clamp(20px, 3.6vw, 56px);
+  background: var(--tk-paper);
+  color: var(--tk-ink);
+  border-top: 1px solid var(--tk-ink);
+}
+
+.vc-section__head {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(60px, 9vw, 120px) var(--vc-pad) clamp(24px, 4vw, 56px);
+}
+.vc-section__head h2 {
+  max-width: 26ch;
+  margin: 12px 0 24px;
+  font-size: clamp(2.4rem, 5.4vw, 5.4rem);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.vc-section__standfirst {
+  max-width: 78ch;
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  line-height: 1.4;
+  color: #1c252e;
+}
+
+.vc-section__divider {
+  max-width: 1280px;
+  margin: 64px auto 24px;
+  padding: 0 var(--vc-pad);
+  border-top: 1px solid var(--tk-ink);
+  padding-top: 48px;
+}
+.vc-section__divider h3 {
+  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  letter-spacing: -0.025em;
+  margin-top: 8px;
+}
+
+/* ---- The Problem — photo + text ---- */
+.vc-problem {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px var(--vc-pad) 64px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(24px, 3vw, 48px);
+  align-items: start;
+}
+.vc-problem__photo figure { margin: 0; }
+.vc-problem__photo img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.85) contrast(1.05);
+}
+.vc-problem__photo figcaption {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--tk-muted);
+}
+.vc-problem__text h3 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 18px;
+  line-height: 1.05;
+}
+.vc-problem__text p {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #1c252e;
+  margin-bottom: 16px;
+  max-width: 60ch;
+}
+
+/* ---- Spread: map + callout ---- */
+.vc-spread {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px var(--vc-pad) 64px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: clamp(24px, 3vw, 48px);
+  align-items: start;
+}
+.vc-spread .vc-callout { background: var(--tk-blue); color: #fff; padding: 32px; border: 1px solid var(--tk-ink); }
+.vc-callout h3 {
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  line-height: 1.05;
+  margin-bottom: 16px;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.vc-callout p {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 14px;
+}
+
+/* ---- Figure (chart, map, comparison) ---- */
+.vc-figure {
+  margin: 0;
+  padding: 28px;
+  background: var(--tk-white);
+  border: 1px solid var(--tk-ink);
+}
+.vc-figure figcaption { display: block; margin-bottom: 18px; }
+.vc-figure figcaption .tk-kicker { display: block; margin-bottom: 4px; }
+.vc-figure figcaption strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.1vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.vc-figure figcaption p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #364150;
+}
+.vc-chart, .vc-map { width: 100%; height: auto; color: var(--tk-ink); }
+
+/* ---- Monorail vs Deuce ---- */
+.vc-figure--compare { padding: 0; }
+.vc-figure--compare figcaption { padding: 28px 28px 24px; margin-bottom: 0; border-bottom: 1px solid var(--tk-ink); }
+.vc-compare { display: grid; grid-template-columns: 1fr 1fr; }
+.vc-compare__side { padding: 28px; background: var(--tk-white); }
+.vc-compare__side--loss { border-right: 1px solid var(--tk-ink); }
+.vc-compare__side header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--tk-line); }
+.vc-compare__side--loss header h3 { color: #5f1d1d; }
+.vc-compare__side--win header h3 { color: var(--tk-ink); }
+.vc-compare__side h3 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+.vc-compare__side dl { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.vc-compare__side dl > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  font-size: 0.92rem;
+  align-items: baseline;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--tk-line);
+}
+.vc-compare__side dl > div:last-child { border-bottom: none; padding-bottom: 0; }
+.vc-compare__side dt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+}
+.vc-compare__side dd { margin: 0; line-height: 1.45; }
+
+/* ---- Transfer chart (bars) ---- */
+.vc-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.vc-bar {
+  display: grid;
+  grid-template-columns: 280px 1fr 80px;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.92rem;
+}
+.vc-bar__label { font-weight: 700; line-height: 1.3; }
+.vc-bar__track {
+  position: relative;
+  height: 26px;
+  background: rgba(17, 24, 32, 0.06);
+  border: 1px solid var(--tk-line);
+  overflow: hidden;
+}
+.vc-bar__fill { position: absolute; inset: 0 auto 0 0; display: block; }
+.vc-bar--demand .vc-bar__fill { background: var(--tk-blue); }
+.vc-bar--result .vc-bar__fill { background: var(--tk-red); }
+.vc-bar--vegas .vc-bar__fill { background: #5f666d; }
+.vc-bar--current .vc-bar__fill { background: #cfd6cf; }
+.vc-bar__val { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; text-align: right; }
+
+/* ---- Next chapter footer ---- */
+.vc-next {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px var(--vc-pad) 80px;
+  font-size: 1rem;
+  color: var(--tk-muted);
+}
+.vc-next em { color: var(--tk-red); font-style: normal; font-weight: 700; }
+
+/* ---- Responsive ---- */
+@media (max-width: 920px) {
+  .vc-problem, .vc-spread { grid-template-columns: 1fr; }
+  .vc-problem__photo img { height: 280px; }
+  .vc-compare { grid-template-columns: 1fr; }
+  .vc-compare__side--loss { border-right: none; border-bottom: 1px solid var(--tk-ink); }
+  .vc-bar { grid-template-columns: 200px 1fr 64px; font-size: 0.84rem; }
+}
+@media (max-width: 560px) {
+  .vc-compare__side dl > div { grid-template-columns: 1fr; gap: 4px; }
+  .vc-bar { grid-template-columns: 1fr; gap: 6px; }
+  .vc-bar__val { text-align: left; }
+}
