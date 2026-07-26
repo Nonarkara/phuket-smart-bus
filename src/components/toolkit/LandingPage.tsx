@@ -140,7 +140,7 @@ export function LandingPage() {
   return (
     <section className="lp-landing" id="landing" aria-labelledby="lp-title">
       <header className="lp-hero">
-        <p className="tk-kicker lp-hero__kicker">depa · USASCP Sustainable Mobility Programme · research translated into a working system</p>
+        <p className="tk-kicker lp-hero__kicker">How to Build a Public Transit System · The Case of Phuket Smart Bus</p>
         <h1 id="lp-title" className="lp-hero__title">
           What if an airport passenger can find the bus, name the hotel and get a ticket in one minute?
         </h1>

@@ -23,6 +23,7 @@
 
 import { useId } from "react";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
+import { PhuketSystemMap } from "./PhuketSystemMap";
 
 /* -------------------------------------------------------------------------
  * Sources
@@ -240,8 +241,8 @@ function MonsoonChart() {
   );
 }
 
-function PhuketMap() {
-  // Schematic, not GIS-accurate. The point is place, not precision.
+function LegacyPhuketMap() {
+  // Kept as a reference drawing while the page uses the real route geometry.
   // West = Andaman Sea. North-up. The 3 districts of the province
   // are labelled (Mueang / Kathu / Thalang). The bus corridor is the
   // spine of the island: HKT airport → Phuket Town → Patong → Kata →
@@ -515,9 +516,12 @@ export function PhuketContext() {
       </div>
 
       {/* ----------------------------------------------------------------- */}
-      <div className="pc-spread">
+      <div className="pc-spread pc-spread--climate">
         <MonsoonChart />
-        <PhuketMap />
+      </div>
+
+      <div className="pc-map-spread">
+        <PhuketSystemMap />
       </div>
 
       <ResearchPanel
