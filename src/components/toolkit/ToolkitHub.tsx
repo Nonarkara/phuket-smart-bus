@@ -23,6 +23,8 @@ import { LegalFramework } from "./LegalFramework";
 import { FeasibilityStudy, DesignThinkingStudy, TryLiveSystem } from "./ToolkitStudy";
 import { AbcdefFramework, ProgramArchive } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
+import { LiveSystemTicker } from "./LiveSystemTicker";
+import { DataProvenance } from "./DataProvenance";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
 import "./toolkit-hub.css";
@@ -97,6 +99,9 @@ export default function ToolkitHub() {
 
   return (
     <div className="toolkit-site toolkit-hub">
+      {/* Skip-to-content for keyboard / screen-reader users */}
+      <a className="hub-skip" href="#panel-overview">Skip to main content</a>
+
       {/* Top navigation — brand + tab bar */}
       <header className="hub-nav" role="banner">
         <div className="hub-nav__brand-row">
@@ -138,6 +143,10 @@ export default function ToolkitHub() {
         <TabContent tabId={activeTab} />
       </main>
 
+      {/* Persistent live-system ticker (bottom-right) — keeps the research
+          page tied to the actual running engine. */}
+      <LiveSystemTicker />
+
       {/* Footer */}
       <footer className="hub-footer">
         <div className="hub-footer__inner">
@@ -176,6 +185,7 @@ function OverviewTab() {
   return (
     <>
       <LandingPage />
+      <DataProvenance />
       <section className="hub-section hub-section--intro">
         <div className="hub-section__intro-pad">
           <p className="tk-kicker">Start here · use the tabs above to go deeper</p>

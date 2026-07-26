@@ -383,3 +383,177 @@
   .pc-stack { gap: 4px; overflow-x: auto; }
   .pc-stack__row { min-width: 34px; }
 }
+
+/* ===========================================================================
+ * Accessibility additions
+ * ========================================================================= */
+
+/* Skip-to-content link — visually hidden until focused. The most
+ * important a11y win for keyboard / screen-reader users. */
+.hub-skip {
+  position: absolute;
+  left: -10000px;
+  top: 8px;
+  padding: 10px 16px;
+  background: var(--tk-ink);
+  color: #fff;
+  font-weight: 700;
+  z-index: 1000;
+  text-decoration: none;
+  border: 2px solid var(--tk-red);
+}
+.hub-skip:focus,
+.hub-skip:focus-visible {
+  left: 8px;
+  outline: 3px solid var(--tk-red);
+  outline-offset: 2px;
+}
+
+/* High-contrast focus ring everywhere — fall back from default UA which
+ * is too subtle for keyboard navigation. */
+.toolkit-site :focus-visible {
+  outline: 3px solid var(--tk-red);
+  outline-offset: 3px;
+}
+
+/* Respect reduced motion across the whole research surface. */
+@media (prefers-reduced-motion: reduce) {
+  .toolkit-site *,
+  .toolkit-site *::before,
+  .toolkit-site *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* "High contrast" mode triggered by the html class — can be activated
+ * via a user CSS rule, a future settings panel, or a browser extension.
+ * Bumps contrast on the hairline borders, softens muted text. */
+html.high-contrast-mode .toolkit-site {
+  --tk-muted: #2a2a2a;
+  --tk-line: rgba(17, 24, 32, 0.45);
+}
+html.high-contrast-mode .toolkit-site .lp-card,
+html.high-contrast-mode .toolkit-site .abc-results,
+html.high-contrast-mode .toolkit-site .abc-controls {
+  border-width: 2px;
+}
+
+/* ===========================================================================
+ * DataProvenance — academic-rigor source register.
+ * ========================================================================= */
+
+.dp-section {
+  --dp-pad: clamp(20px, 3.6vw, 56px);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(60px, 9vw, 120px) var(--dp-pad) clamp(60px, 9vw, 120px);
+  border-top: 1px solid var(--tk-ink);
+}
+.dp-section__head { max-width: 78ch; margin-bottom: 32px; }
+.dp-section__head h2 {
+  font-size: clamp(1.8rem, 3.6vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 12px 0 20px;
+  text-wrap: balance;
+}
+.dp-section__head p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1c252e;
+  margin-bottom: 12px;
+  max-width: 70ch;
+}
+.dp-section__method {
+  padding: 14px 18px;
+  background: var(--tk-paper);
+  border-left: 3px solid var(--tk-ink);
+  font-size: 0.92rem;
+}
+.dp-section__method strong { color: var(--tk-red); }
+
+.dp-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--tk-ink);
+}
+.dp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  background: #fff;
+}
+.dp-table caption {
+  text-align: left;
+  padding: 16px 18px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+  border-bottom: 1px solid var(--tk-line);
+}
+.dp-table th, .dp-table td {
+  text-align: left;
+  padding: 12px 18px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--tk-line);
+  line-height: 1.4;
+}
+.dp-table thead th {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+  font-weight: 700;
+  background: var(--tk-paper);
+}
+.dp-table tbody th {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--tk-ink);
+}
+.dp-table tbody tr:last-child th,
+.dp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.dp-table a {
+  color: var(--tk-red);
+  text-decoration: none;
+  font-weight: 600;
+}
+.dp-table a:hover { text-decoration: underline; }
+.dp-table time { font-family: var(--font-mono); font-size: 0.85em; }
+
+.dp-freshness {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+}
+.dp-freshness--live { color: #16a574; }
+.dp-freshness--annual { color: var(--tk-blue); }
+.dp-freshness--quarterly { color: #f59e0b; }
+
+.dp-cite {
+  margin-top: 18px;
+  padding: 14px 18px;
+  background: var(--tk-paper);
+  border: 1px solid var(--tk-ink);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--tk-ink);
+}
+.dp-cite em { font-style: italic; }
+.dp-cite strong { color: var(--tk-red); }
+.dp-cite a { color: var(--tk-red); text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .dp-table { font-size: 0.82rem; }
+  .dp-table th, .dp-table td { padding: 10px 12px; }
+}

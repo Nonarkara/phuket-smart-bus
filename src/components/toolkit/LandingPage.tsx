@@ -7,6 +7,8 @@
  * still needs a pilot.
  */
 
+import { AddBusCalculator } from "./AddBusCalculator";
+
 type Beat = {
   number: string;
   label: string;
@@ -193,6 +195,8 @@ export function LandingPage() {
           ))}
         </ol>
       </section>
+
+      <AddBusCalculator />
 
       <section className="lp-arg" id="five-minute" aria-labelledby="lp-arg-title">
         <header className="lp-arg__head">
