@@ -55,6 +55,9 @@ export type HourlyBalance = {
   // southbound bus while northbound seats run empty; a combined number
   // would hide exactly the "underdemanded" hours the operator asked about.
   gapPax: number;         // net: total demand − total seats
+  inGapPax: number;       // airport → island demand − seats
+  outGapPax: number;      // island → airport demand − seats
+  busesToAdd: number;     // whole 25-seat buses needed across both directions
   emptySeatsPax: number;  // Σ per-direction surplus seats this hour
   missedThb: number;      // (abandoned + outLost) × ฿100 this hour
   earnedThb: number;      // (captured + outCaptured) × ฿100 this hour
@@ -114,6 +117,10 @@ export function getHourlyBalance(): HourlyBalance[] {
       outCapturedPax: c.outBoardedPax,
       outLostPax: c.outLostPax,
       gapPax: totalDemand - totalSeats,
+      inGapPax: inGap,
+      outGapPax: outGap,
+      busesToAdd: Math.ceil(Math.max(0, inGap) / BUS_CAPACITY)
+        + Math.ceil(Math.max(0, outGap) / BUS_CAPACITY),
       emptySeatsPax: Math.max(0, -inGap) + Math.max(0, -outGap),
       missedThb: c.missedThb,
       earnedThb: c.revenueThb,

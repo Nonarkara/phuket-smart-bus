@@ -21,6 +21,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getAirportDepartures, getSimulatedMinutes } from "../../engine/fleetSimulator";
+import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
+import { ADSB_POLL_MS, fetchAdsbAroundHkt } from "../../engine/adsbFlights";
 
 /* -------------------------------------------------------------------------
  * Ticket options
@@ -64,6 +66,69 @@ function formatClock(min: number): string {
   const h = Math.floor(min / 60) % 24;
   const m = Math.floor(min % 60);
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function FlightWatch() {
+  const [kind, setKind] = useState<"arr" | "dep">("arr");
+  const [now, setNow] = useState(() => getSimulatedMinutes());
+  const [aircraft, setAircraft] = useState<{ count: number; status: "live" | "stale" | "empty" }>({ count: 0, status: "empty" });
+
+  useEffect(() => {
+    const clock = window.setInterval(() => setNow(getSimulatedMinutes()), 2_000);
+    let cancelled = false;
+    const ctrl = new AbortController();
+    const refresh = async () => {
+      const snap = await fetchAdsbAroundHkt(ctrl.signal);
+      if (!cancelled) setAircraft({ count: snap.aircraft.length, status: snap.status });
+    };
+    void refresh();
+    const poll = window.setInterval(() => void refresh(), ADSB_POLL_MS);
+    return () => {
+      cancelled = true;
+      ctrl.abort();
+      window.clearInterval(clock);
+      window.clearInterval(poll);
+    };
+  }, []);
+
+  const flights = useMemo(() => getOpsFlightSchedule()
+    .filter((flight) => flight.mode === "flight" && flight.type === kind && flight.schedMin >= now - 15)
+    .slice(0, 4), [kind, now]);
+
+  return (
+    <section className="pa-flights" aria-labelledby="pa-flight-title">
+      <header className="pa-flights__head">
+        <div>
+          <span className="pa-flights__kicker">HKT flight watch</span>
+          <h2 id="pa-flight-title">Will the terminal get busy?</h2>
+        </div>
+        <span className={`pa-flights__radar pa-flights__radar--${aircraft.status}`}>
+          {aircraft.count} aircraft · {aircraft.status === "live" ? "ADS-B live" : aircraft.status === "stale" ? "last seen" : "no signal"}
+        </span>
+      </header>
+      <div className="pa-flights__tabs" role="tablist" aria-label="Flight direction">
+        <button type="button" role="tab" aria-selected={kind === "arr"} className={kind === "arr" ? "is-active" : ""} onClick={() => setKind("arr")}>Arrivals</button>
+        <button type="button" role="tab" aria-selected={kind === "dep"} className={kind === "dep" ? "is-active" : ""} onClick={() => setKind("dep")}>Departures</button>
+      </div>
+      <div className="pa-flights__board">
+        {flights.map((flight) => (
+          <div className="pa-flights__row" key={`${flight.flightNo}-${flight.schedMin}-${flight.type}`}>
+            <time>{flight.timeLabel}</time>
+            <strong>{flight.flightNo}</strong>
+            <span>{flight.city}</span>
+            <small>{flight.type === "arr" ? "to HKT" : "from HKT"}</small>
+          </div>
+        ))}
+      </div>
+      <p className="pa-flights__truth">
+        Amber aircraft are live ADS-B observations. Times above run with this research simulation—not airport status.
+        For gates, delays and the official live board, use AOT.
+      </p>
+      <a className="pa-flights__official" href="https://phuket.airportthai.co.th/flight" target="_blank" rel="noreferrer">
+        Open official AOT live flight status <span aria-hidden="true">↗</span>
+      </a>
+    </section>
+  );
 }
 
 /* -------------------------------------------------------------------------
@@ -298,6 +363,8 @@ function HomeStep({
           From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong> · about 100 min to Patong
         </span>
       </section>
+
+      <FlightWatch />
 
       <section className="pa-cards" aria-label="Ticket options">
         <button className="pa-card" type="button" onClick={onPickSingle}>

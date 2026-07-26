@@ -34,10 +34,22 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   incidents: false,
 };
 
+const FERRY_ROUTES = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
+
 // ---------------------------------------------------------------------------
 // Bus Marker Icon Builder
 // ---------------------------------------------------------------------------
 function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
+  if (FERRY_ROUTES.has(vehicle.route)) {
+    return L.divIcon({
+      className: "v2-boat-icon",
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      html: `<div class="v2-boat ${vehicle.status === "moving" ? "is-moving" : ""}" style="--heading:${vehicle.heading}deg">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 7 11H5l2.3 7h9.4l2.3-7h-2L12 2Zm-2.4 9L12 6l2.4 5H9.6Z"/></svg>
+      </div>`,
+    });
+  }
   return L.divIcon({
     className: "v2-bus-icon",
     iconSize: [28, 28],
@@ -51,19 +63,25 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
 
 function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number]) {
   marker.setLatLng([vehicle.lat, vehicle.lng]);
-  marker.setTooltipContent(`${vehicle.plate} · ${vehicle.pax}/25 pax · ${vehicle.route}`);
+  const isFerry = FERRY_ROUTES.has(vehicle.route);
+  marker.setTooltipContent(`${vehicle.plate} · ${isFerry ? "scheduled vessel" : `${vehicle.pax}/25 pax`} · ${vehicle.route}`);
 
   const element = marker.getElement();
   if (!element) return;
 
   const bus = element.querySelector<HTMLElement>(".v2-bus");
   const body = element.querySelector<HTMLElement>(".v2-bus__body");
+  const boat = element.querySelector<HTMLElement>(".v2-boat");
   if (bus) {
     bus.classList.toggle("is-moving", vehicle.status === "moving");
     bus.style.setProperty("--heading", `${vehicle.heading}deg`);
   }
   if (body) {
     body.textContent = String(vehicle.pax);
+  }
+  if (boat) {
+    boat.classList.toggle("is-moving", vehicle.status === "moving");
+    boat.style.setProperty("--heading", `${vehicle.heading}deg`);
   }
 }
 
@@ -92,7 +110,8 @@ const VehicleLayer = forwardRef<V2MapHandle, { enabled: boolean }>(function Vehi
         let marker = markers.current.get(vehicle.id);
         if (!marker) {
           marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
-          marker.bindTooltip(`${vehicle.plate} · ${vehicle.pax}/25 pax · ${vehicle.route}`, { direction: "top" });
+          const isFerry = FERRY_ROUTES.has(vehicle.route);
+          marker.bindTooltip(`${vehicle.plate} · ${isFerry ? "scheduled vessel" : `${vehicle.pax}/25 pax`} · ${vehicle.route}`, { direction: "top" });
           markers.current.set(vehicle.id, marker);
         }
         syncBusMarker(marker, vehicle);
@@ -123,7 +142,7 @@ function buildPlaneIcon(heading: number, live: boolean) {
     iconAnchor: [9, 9],
     html: `<div class="v2-plane" style="--heading:${heading}deg;--plane-color:${color}" title="">
       <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-        <path fill="${color}" d="M12 2 L14.5 10 H20 L15 13.5 L17 21 L12 17 L7 21 L9 13.5 L4 10 H9.5 Z"/>
+        <path fill="${color}" d="M12 1.5c-.8 0-1.35.7-1.35 1.55v6.1L4 13v2l6.65-2.05v5.15l-2.05 1.45V21l3.4-.85 3.4.85v-1.45l-2.05-1.45v-5.15L20 15v-2l-6.65-3.85v-6.1C13.35 2.2 12.8 1.5 12 1.5Z"/>
       </svg>
     </div>`,
   });
@@ -135,7 +154,7 @@ function AircraftLayer({
   onStatus,
 }: {
   enabled: boolean;
-  onStatus: (info: { count: number; status: "live" | "stale" | "empty" }) => void;
+  onStatus: (info: { liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }) => void;
 }) {
   const map = useMap();
   const liveMarkers = useRef<Map<string, L.Marker>>(new Map());
@@ -147,7 +166,7 @@ function AircraftLayer({
       liveMarkers.current.clear();
       schedMarkers.current.forEach((m) => map.removeLayer(m));
       schedMarkers.current.clear();
-      onStatus({ count: 0, status: "empty" });
+      onStatus({ liveCount: 0, modelCount: 0, status: "empty" });
       return;
     }
 
@@ -214,12 +233,15 @@ function AircraftLayer({
         })),
         nowMin
       );
-      if (!cancelled) syncSchedule(beads);
+      if (!cancelled) {
+        syncSchedule(beads);
+        onStatus({ liveCount: 0, modelCount: beads.length, status: "empty" });
+      }
 
       const snap = await fetchAdsbAroundHkt(ctrl.signal);
       if (cancelled) return;
       syncLive(snap.aircraft);
-      onStatus({ count: snap.aircraft.length + beads.length, status: snap.status });
+      onStatus({ liveCount: snap.aircraft.length, modelCount: beads.length, status: snap.status });
     };
 
     void tick();
@@ -273,28 +295,32 @@ function HktMarker() {
 // ---------------------------------------------------------------------------
 // Route polyline
 // ---------------------------------------------------------------------------
-const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string }[] = [
+const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string; marine?: boolean }[] = [
   { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#16b8b0" },
   { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#ffcc33" },
   { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#db0000" },
+  { routeId: "rassada-phi-phi", firstStop: [7.8557, 98.4013], color: "#168aad", marine: true },
+  { routeId: "rassada-ao-nang", firstStop: [7.8557, 98.4013], color: "#6c63a8", marine: true },
+  { routeId: "bang-rong-koh-yao", firstStop: [8.0133, 98.4186], color: "#d97706", marine: true },
+  { routeId: "chalong-racha", firstStop: [7.8281, 98.3613], color: "#db2777", marine: true },
 ];
 
 function RoutePolylines() {
-  const polylines: { poly: LatLngTuple[]; color: string }[] = [];
+  const polylines: { poly: LatLngTuple[]; color: string; marine?: boolean; routeId: string }[] = [];
   for (const cfg of ROUTE_POLYLINES) {
     try {
       const poly = getDirectionPolyline(cfg.routeId as never, cfg.firstStop);
-      if (poly.length >= 2) polylines.push({ poly, color: cfg.color });
+      if (poly.length >= 2) polylines.push({ poly, color: cfg.color, marine: cfg.marine, routeId: cfg.routeId });
     } catch { /* */ }
   }
 
   return (
     <>
-      {polylines.map(({ poly, color }, i) => (
+      {polylines.map(({ poly, color, marine, routeId }) => (
         <Polyline
-          key={i}
+          key={routeId}
           positions={poly}
-          pathOptions={{ color, weight: 4, opacity: 0.85 }}
+          pathOptions={{ color, weight: marine ? 2.5 : 4, opacity: marine ? 0.78 : 0.85, dashArray: marine ? "4 9" : undefined }}
         />
       ))}
     </>
@@ -307,7 +333,9 @@ function SyncMapView() {
     let raf = 0;
     const fix = () => {
       map.invalidateSize();
-      map.setView([7.88, 98.37], 11);
+      // Phuket plus the ferry destinations: the operational geography is an
+      // island network, not only the airport road corridor.
+      map.setView([7.88, 98.49], 10);
     };
     raf = requestAnimationFrame(() => {
       raf = requestAnimationFrame(fix);
@@ -399,8 +427,9 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
     ...DEFAULT_LAYERS,
     ...layersProp,
   }));
-  const [flightInfo, setFlightInfo] = useState<{ count: number; status: "live" | "stale" | "empty" }>({
-    count: 0,
+  const [flightInfo, setFlightInfo] = useState<{ liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }>({
+    liveCount: 0,
+    modelCount: 0,
     status: "empty",
   });
 
@@ -418,13 +447,19 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
       <LayerToggles layers={layers} onChange={setAndNotify} />
       {layers.flights && (
         <div className="v2-map__flight-badge" aria-live="polite">
-          {flightInfo.count} aircraft ·{" "}
-          {flightInfo.status === "live" ? "ADS-B live" : flightInfo.status === "stale" ? "ADS-B stale" : "schedule"}
+          {flightInfo.liveCount} live aircraft · {flightInfo.modelCount} timetable ·{" "}
+          {flightInfo.status === "live" ? "ADS-B current" : flightInfo.status === "stale" ? "ADS-B last seen" : "model only"}
         </div>
       )}
+      <div className="v2-map__legend" aria-label="Map key">
+        <span><i className="is-road" /> bus route</span>
+        <span><i className="is-ferry" /> ferry route</span>
+        <span><i className="is-live-plane" /> live aircraft</span>
+        <span><i className="is-model-plane" /> timetable</span>
+      </div>
       <MapContainer
-        center={[7.88, 98.37]}
-        zoom={11}
+        center={[7.88, 98.49]}
+        zoom={10}
         minZoom={6}
         className="v2-map__canvas"
         zoomControl={false}

@@ -25,7 +25,6 @@ import {
 import { getVehiclesNow } from "./engine/dataProvider";
 import {
   getClockState,
-  getFleetAnalysis,
   getSimulatedMinutes,
   setSimulatedMinutes,
   resetClockAnchor,
@@ -44,8 +43,7 @@ import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } fr
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
-import { DemandPanel } from "./components/v2/DemandPanel";
-import { SupplyPanel } from "./components/v2/SupplyPanel";
+import { DemandSupplyGapRail } from "./components/v2/DemandSupplyGapRail";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
@@ -175,10 +173,6 @@ export default function DashboardV2() {
   const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
   const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
   const currentHourBucket = hourlyFlights[Math.floor(state.simMinutes / 60) % 24] ?? hourlyFlights[0];
-  const nextIncomingFlight = arrivalsToday.find((flight) => flight.schedMin >= state.simMinutes) ?? arrivalsToday.at(-1) ?? null;
-  const nextPeakBucket = hourlyFlights
-    .filter((bucket) => bucket.hour >= Math.floor(state.simMinutes / 60) && bucket.arrivalPax > 0)
-    .sort((left, right) => right.arrivalPax - left.arrivalPax)[0] ?? currentHourBucket;
   const responsePct = state.paxWantBus > 0 ? Math.round((state.paxBoarded / state.paxWantBus) * 100) : 100;
   // Honest split: "waiting" is the queue RIGHT NOW; "walked away" is
   // cumulative abandonment. The old serviceGap (demand − boarded) summed
@@ -195,14 +189,9 @@ export default function DashboardV2() {
 
   // Schedule-derived fleet metrics — LAND routes only. Ferry vessels are
   // not buses; counting them produced "74 buses required" absurdity.
-  const LAND_ROUTES = new Set(["rawai-airport", "patong-old-bus-station", "dragon-line"]);
-  const fleetAnalysis = useFleetAnalysis(LAND_ROUTES);
-  const totalBusesRequired = fleetAnalysis.reduce((s, r) => s + r.requiredBuses, 0);
   const currentHourly = getHourlyDemandSupply()[Math.floor(state.simMinutes / 60) % 24];
   const currentSupplySeats = currentHourly?.busSeatsAvailable ?? 0;
   const currentBusDemand = currentHourly?.busDemandPax ?? 0;
-  const currentGap = Math.max(0, currentBusDemand - currentSupplySeats);
-  const gapStatus = currentGap > 20 ? "shortfall" : currentGap > 0 ? "tight" : "surplus";
 
   // Per-vehicle operations panel rows
   const operatorRows = getOperatorFleet();
@@ -447,18 +436,9 @@ export default function DashboardV2() {
           hourlyBalance={hourlyBalance}
         />
       ) : (
-        // OPERATIONS view — three columns, fleet panel under map
-        <main className="v2-body">
-          <DemandPanel
-            state={state}
-            serviceGap={serviceGap}
-            currentDemandPax={currentDemandPax}
-            nextIncomingFlight={nextIncomingFlight}
-            nextPeakBucket={nextPeakBucket}
-            hourlyFlights={hourlyFlights}
-            dailyFlights={dailyFlights}
-            hourlyBalance={hourlyBalance}
-          />
+        // OPERATIONS view — one decision rail, one geographic truth
+        <main className="v2-body v2-body--operations">
+          <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
 
           <section className="v2-map">
             <PhuketConditionsStrip />
@@ -492,18 +472,6 @@ export default function DashboardV2() {
             <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />
           </section>
 
-          <SupplyPanel
-            state={state}
-            serviceGap={serviceGap}
-            totalBusesRequired={totalBusesRequired}
-            inServiceCount={metrics.fleet.totalBuses}
-            fleetAnalysisLength={fleetAnalysis.length}
-            gapStatus={gapStatus}
-            currentSupplySeats={currentSupplySeats}
-            currentBusDemand={currentBusDemand}
-            currentGap={currentGap}
-            onDayChange={handleDayChange}
-          />
         </main>
       )}
 
@@ -553,20 +521,4 @@ export default function DashboardV2() {
       </footer>
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Local hook — fleet analysis for the LAND routes only. Splits out of the
-// component to keep DashboardV2 main body readable.
-// ---------------------------------------------------------------------------
-function useFleetAnalysis(landRoutes: Set<string>) {
-  const [rows, setRows] = useState(() => getFleetAnalysis().filter((r) => landRoutes.has(r.routeId)));
-  useEffect(() => {
-    const id = setInterval(
-      () => setRows(getFleetAnalysis().filter((r) => landRoutes.has(r.routeId))),
-      5000
-    );
-    return () => clearInterval(id);
-  }, [landRoutes]);
-  return rows;
 }

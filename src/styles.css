@@ -8500,6 +8500,55 @@ a { color: var(--tint); }
   overflow: hidden;
 }
 
+/* Operations: one readable decision rail beside one large map. */
+.v2 .v2-body--operations { grid-template-columns: 330px minmax(0, 1fr); }
+.v2-decision-rail {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ax-panel);
+  color: var(--ax-ink);
+}
+.v2-decision-rail__head,
+.v2-decision-rail__source { padding: 18px; border-bottom: 1px solid var(--ax-line); }
+.v2-decision-rail__head > span,
+.v2-decision-rail__source > strong,
+.v2-hour-plan > header span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2-decision-rail__head h2 { margin: 8px 0; font-size: 22px; line-height: 1.05; letter-spacing: -.035em; }
+.v2-decision-rail__head p,
+.v2-decision-rail__source p { margin: 0; color: var(--ax-ink-2); font-size: 12px; line-height: 1.5; }
+.v2-equation { border-bottom: 1px solid var(--ax-line); }
+.v2-equation__term { padding: 14px 18px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+.v2-equation__term--demand { border-left: 4px solid #d97706; }
+.v2-equation__term--supply { border-left: 4px solid #168aad; }
+.v2-equation__term--gap { border-left: 4px solid var(--ax-accent); }
+.v2-equation__term--gap.is-short { border-left-color: var(--ax-neg); background: rgba(190, 48, 35, .055); }
+.v2-equation__step { grid-column: 1; font: 800 10px/1.2 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ax-ink-3); }
+.v2-equation__term strong { grid-column: 2; grid-row: 1 / span 2; font-size: 38px; line-height: .9; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.v2-equation__term p { margin: 2px 0 0; font-size: 13px; line-height: 1.35; font-weight: 700; }
+.v2-equation__term small { grid-column: 1 / -1; color: var(--ax-ink-3); font-size: 10px; }
+.v2-equation__operator { display: block; height: 0; position: relative; z-index: 1; left: 18px; top: -5px; font: 800 16px/1 var(--font-mono); color: var(--ax-ink-3); }
+.v2-hour-plan { border-bottom: 1px solid var(--ax-line); }
+.v2-hour-plan > header { padding: 14px 18px 10px; display: flex; align-items: baseline; justify-content: space-between; }
+.v2-hour-plan > header small { color: var(--ax-ink-3); font-size: 9px; }
+.v2-hour-plan__legend,
+.v2-hour-plan button { display: grid; grid-template-columns: 1fr .8fr .7fr .65fr; align-items: center; text-align: right; }
+.v2-hour-plan__legend { padding: 0 18px 6px; color: var(--ax-ink-3); font: 700 9px/1 var(--font-mono); text-transform: uppercase; }
+.v2-hour-plan__legend span:first-child,
+.v2-hour-plan button strong { text-align: left; }
+.v2-hour-plan button { width: 100%; min-height: 40px; padding: 0 18px; border: 0; border-top: 1px solid var(--ax-line); background: transparent; color: var(--ax-ink-2); font-family: var(--font-mono); font-size: 11px; cursor: pointer; }
+.v2-hour-plan button:hover,
+.v2-hour-plan button.is-now { background: var(--ax-paper); color: var(--ax-ink); }
+.v2-hour-plan button.is-now strong::after { content: " NOW"; color: var(--ax-accent); font-size: 8px; }
+.v2-hour-plan button b { color: var(--ax-accent); }
+.v2-hour-plan button.is-short b { color: var(--ax-neg); }
+
 .v2 .v2-panel {
   background: var(--ax-panel);
   overflow-y: auto;
@@ -9375,6 +9424,25 @@ a { color: var(--tint); }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.v2-map__legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 1000;
+  display: flex;
+  gap: 12px;
+  padding: 7px 9px;
+  background: rgba(10, 14, 20, .86);
+  color: rgba(255,255,255,.76);
+  font: 700 9px/1 var(--font-mono);
+  text-transform: uppercase;
+}
+.v2-map__legend span { display: inline-flex; align-items: center; gap: 5px; }
+.v2-map__legend i { width: 16px; height: 0; border-top: 3px solid #16b8b0; }
+.v2-map__legend i.is-ferry { border-top: 2px dashed #168aad; }
+.v2-map__legend i.is-live-plane,
+.v2-map__legend i.is-model-plane { width: 7px; height: 7px; border: 0; border-radius: 50%; background: #f59e0b; }
+.v2-map__legend i.is-model-plane { background: #94a3b8; }
 .v2-plane {
   width: 18px;
   height: 18px;
@@ -9383,6 +9451,18 @@ a { color: var(--tint); }
   transform: rotate(var(--heading, 0deg));
   will-change: transform;
 }
+.v2-plane-icon { transition: transform 44s linear; will-change: transform; }
+.v2-boat {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(10, 14, 20, .86);
+  border: 1px solid rgba(255,255,255,.7);
+  transform: rotate(var(--heading, 0deg));
+}
+.v2-boat svg { width: 19px; height: 19px; fill: #38bdf8; }
 .v2-plane svg { display: block; }
 
 /* Phuket conditions strip */

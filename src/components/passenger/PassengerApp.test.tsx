@@ -9,6 +9,11 @@ vi.mock("../../engine/fleetSimulator", () => ({
   getSimulatedMinutes: () => 750
 }));
 
+vi.mock("../../engine/adsbFlights", () => ({
+  ADSB_POLL_MS: 45_000,
+  fetchAdsbAroundHkt: () => new Promise(() => {})
+}));
+
 describe("PassengerApp", () => {
   it("shows the timetable-based passenger decision before the ticket choices", () => {
     render(<PassengerApp />);
@@ -18,6 +23,11 @@ describe("PassengerApp", () => {
     expect(screen.getByText(/about 100 min to Patong/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Buy single ride/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Buy 3-day pass/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Will the terminal get busy?" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /official AOT live flight status/i })).toHaveAttribute(
+      "href",
+      "https://phuket.airportthai.co.th/flight"
+    );
     expect(document.documentElement).toHaveClass("passenger-site-mode");
   });
 
