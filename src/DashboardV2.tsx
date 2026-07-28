@@ -328,11 +328,11 @@ export default function DashboardV2() {
       <header className="v2-header">
         <div className="v2-header__brand">
           <span className="v2-header__eyebrow">
-            <span className="v2-header__eyebrow-full">Airport Ops Console</span>
-            <span className="v2-header__eyebrow-compact">Airport Ops</span>
+            <span className="v2-header__eyebrow-full">Investor &amp; Ops Console</span>
+            <span className="v2-header__eyebrow-compact">Investor Ops</span>
           </span>
           <h1>Phuket Smart Bus</h1>
-          <span className="v2-header__sub">Demand-Supply Intelligence</span>
+          <span className="v2-header__sub">Fund the right hour · cut SOVs · bank avoided CO₂ as evidence</span>
         </div>
         <div className="v2-header__story">
           <span className="v2-header__story-label">Right now</span>

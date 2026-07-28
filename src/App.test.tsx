@@ -92,11 +92,10 @@ describe("App", () => {
     window.history.replaceState({}, "", "/");
     render(<App />);
 
-    // The landing replaces the old hero — the front door is the 5-minute
-    // argument, not the workshop-report hero.
+    // The landing is the rehearsal handbook — demand → justify → feasibility…
     expect(
       screen.getByRole("heading", {
-        name: /an airport passenger can find the bus/i
+        name: /how do you build a transit system from scratch/i
       })
     ).toBeInTheDocument();
     expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
@@ -104,6 +103,8 @@ describe("App", () => {
       /Observed.*cited or published record/i
     );
     expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
+    expect(screen.getByRole("heading", { name: /The work continues with him in it/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Ton Jaitong/i).length).toBeGreaterThan(0);
   });
 
   it("switches between Map and More tabs", async () => {

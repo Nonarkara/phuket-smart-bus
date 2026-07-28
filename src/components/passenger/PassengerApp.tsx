@@ -261,8 +261,8 @@ export function PassengerApp() {
           <span className="pa-header__logo" aria-hidden="true">PSKB</span>
           <span className="pa-header__name">Phuket Smart Bus</span>
         </div>
-        <a className="pa-header__link" href="/ops">
-          Operations ↗
+        <a className="pa-header__link" href="https://depa-usdot.nonarkara.org/">
+          Research ↗
         </a>
       </header>
 
@@ -312,12 +312,13 @@ export function PassengerApp() {
 
       <footer className="pa-footer">
         <span>Prototype fares · live timetable simulation · no real payment</span>
-        <a href="/ops" className="pa-footer__link">
-          Open the operator console
+        <a href="https://depa-usdot.nonarkara.org/" className="pa-footer__link">
+          How this system was built
         </a>
       </footer>
       </div>
 
+      {/* Desktop-only: investor/ops is a different job — never the phone tourist chrome. */}
       <aside className="pa-console-invite" aria-label="Operations console preview">
         <span className="pa-console-invite__kicker">Same system · another job</span>
         <h2>The passenger sees one bus. The operator sees the whole day.</h2>

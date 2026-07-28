@@ -12,6 +12,7 @@
  */
 
 import { useState } from "react";
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 
 const HISTORY_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/history/`;
@@ -49,7 +50,7 @@ const PEOPLE_EXPANDED: { name: string; role: string; org: string; phase: string 
   { name: "Pracha Asawateera", role: "Phuket stakeholder coordination", org: "Digital Economy Promotion Agency (depa)", phase: "2022–2024" },
   { name: "Passakon Prathombutr", role: "Smart-city strategy", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
   { name: "Supakorn Siddhichai", role: "Smart-city technology", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
-  { name: "Ton Jaitrong", role: "Colleague, capacity builder and friend", org: "Thailand · in memoriam", phase: "2022–2024" }
+  { name: "Ton Jaitong", role: "Team Leader, depa Southern Office · colleague and friend", org: "Thailand · in memoriam", phase: "2022–2024" }
 ];
 
 type Phase = {
@@ -95,7 +96,7 @@ const PHASES: Phase[] = [
     detail: "USDOT described the workshop's objectives: advancing city-pair workplans, strengthening understanding of smart mobility, creating networking opportunities among ASEAN and U.S. officials, and accelerating implementation. Non and Pracha presented Phuket's mobility challenges, smart-city ambitions and the partnership's goals. Non positioned Phuket as a tourism-intensive city and a testbed for innovative mobility solutions — a living laboratory. Ahead of Jakarta, Non supplied biography information, staff profiles and descriptions of Phuket Smart City initiatives. The workshop attachments included formal invitation letters, agendas, city presentation templates and participant briefing packages.",
     photos: [
       { src: `${HISTORY_ASSET_ROOT}jakarta-2022.jpg`, alt: "USDOT Smart Mobility Workshop participants in Jakarta, December 2022", caption: "Jakarta · December 2022 · the first in-person workshop" },
-      { src: `${HISTORY_ASSET_ROOT}jakarta-ton-2022-detail.jpg`, alt: "Ton Jaitrong with colleagues at the Jakarta workshop", caption: "Ton Jaitrong (centre) at the Jakarta workshop — the friend and colleague this toolkit is dedicated to" }
+      { src: `${HISTORY_ASSET_ROOT}jakarta-ton-2022-detail.jpg`, alt: "Ton Jaitong with colleagues at the Jakarta workshop", caption: "Ton Jaitong (centre) at the Jakarta workshop — Team Leader, depa Southern Office; this handbook is for him" }
     ],
     outputs: [
       "Eight city-pair network established in person",
@@ -293,7 +294,7 @@ function PhaseCard({ phase, index }: { phase: Phase; index: number }) {
   );
 }
 
-export function CollaborationHistory() {
+export function CollaborationHistory({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="th-section" id="history" aria-labelledby="history-title">
       <header className="th-section__head">

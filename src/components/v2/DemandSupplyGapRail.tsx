@@ -95,8 +95,12 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
       </section>
 
       <footer className="v2-decision-rail__source">
-        <strong>What is real?</strong>
-        <p>Bus times are the published PKSB timetable. Flight demand is a labelled research model. Amber aircraft on the map are live ADS-B observations.</p>
+        <strong>Investor read</strong>
+        <p>
+          Add buses only where the gap is. Each boarded rider is one fewer single-occupancy trip;
+          CO₂ here is modelled avoided emissions — a carbon-credit claim still needs a registry pathway.
+          Bus times are the published PKSB timetable. Flight demand is a labelled research model.
+        </p>
       </footer>
     </aside>
   );

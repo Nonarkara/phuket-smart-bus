@@ -7,6 +7,7 @@
  */
 
 import { useState } from "react";
+import type { Lang } from "@shared/types";
 
 type RefCategory = "peer-reviewed" | "grey-literature" | "data-sources" | "programme" | "legal-financial";
 
@@ -242,7 +243,7 @@ const DATA_INVENTORY = [
   { metric: "App analytics", source: "PKSB app + trip planners", unlocks: "Persona 8 conversion tracking" }
 ];
 
-export function ReferencesTab() {
+export function ReferencesTab({ lang = "en" }: { lang?: Lang }) {
   const [activeCategory, setActiveCategory] = useState<RefCategory | "all">("all");
 
   const filtered = activeCategory === "all"

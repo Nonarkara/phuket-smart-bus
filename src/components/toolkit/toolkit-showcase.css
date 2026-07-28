@@ -992,6 +992,163 @@ html.toolkit-site-mode #root {
 .lp-btn--primary { color: var(--tk-ink); }
 .lp-btn span { font-family: var(--font-mono); }
 
+/* REHEARSAL SPINE ------------------------------------------------ */
+.lp-rehearsal {
+  padding: clamp(48px, 7vw, 88px) max(var(--lp-pad), calc((100vw - 1280px) / 2 + var(--lp-pad)));
+  border-bottom: 1px solid var(--tk-ink);
+  background: #fff;
+}
+.lp-rehearsal__head { max-width: 78ch; margin-bottom: 36px; }
+.lp-rehearsal__head h2 {
+  margin: 12px 0 0;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.lp-rehearsal__spine {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--tk-ink);
+  border-left: 1px solid var(--tk-ink);
+}
+.lp-rehearsal__spine li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: start;
+  min-height: 72px;
+  padding: 16px 18px;
+  border-right: 1px solid var(--tk-ink);
+  border-bottom: 1px solid var(--tk-ink);
+}
+.lp-rehearsal__spine span {
+  font: 700 12px/1 var(--font-mono);
+  color: var(--tk-red);
+}
+.lp-rehearsal__spine strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--tk-ink);
+}
+
+/* JAKARTA → JOHOR LOVE STORY ------------------------------------ */
+.lp-journey {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0;
+  border-bottom: 1px solid var(--tk-ink);
+  background: #f7f5f0;
+}
+.lp-journey__copy {
+  padding: clamp(40px, 6vw, 72px) max(var(--lp-pad), calc((100vw - 1280px) / 2 + var(--lp-pad)));
+  border-right: 1px solid var(--tk-ink);
+}
+.lp-journey__copy h2 {
+  margin: 12px 0 20px;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.lp-journey__copy p {
+  max-width: 58ch;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #1c252e;
+}
+.lp-journey__photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  margin: 0;
+}
+.lp-journey__photos figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--tk-ink);
+  border-right: 1px solid var(--tk-ink);
+  background: #fff;
+}
+.lp-journey__photos figure:nth-child(1) {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+}
+.lp-journey__photos figure:nth-child(2),
+.lp-journey__photos figure:nth-child(3) { grid-column: 2 / 3; }
+.lp-journey__photos figure:nth-child(2) { border-bottom: 1px solid var(--tk-ink); }
+.lp-journey__photos figure:nth-child(3) { border-bottom: none; }
+.lp-journey__photos img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  object-fit: cover;
+  filter: grayscale(0.35) contrast(1.04);
+}
+.lp-journey__photos figcaption {
+  padding: 10px 12px;
+  font: 700 11px/1.3 var(--font-mono);
+  color: #4a5560;
+  border-top: 1px solid var(--tk-ink);
+}
+
+/* TON DEDICATION ------------------------------------------------- */
+.lp-ton {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  min-height: 72vh;
+  color: #fff;
+  background: var(--tk-ink);
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+.lp-ton figure {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+  border-right: 1px solid rgba(255,255,255,0.3);
+}
+.lp-ton figure img {
+  flex: 1;
+  min-height: 280px;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.05);
+}
+.lp-ton figcaption {
+  padding: 14px 20px;
+  color: rgba(255,255,255,0.55);
+  font: 700 11px/1.2 var(--font-mono);
+}
+.lp-ton > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(40px, 7vw, 100px);
+}
+.lp-ton .tk-kicker { color: #f2cf57; }
+.lp-ton h2 {
+  margin: 18px 0 28px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+.lp-ton p {
+  max-width: 62ch;
+  margin: 0 0 16px;
+  color: rgba(255,255,255,0.68);
+  font-size: 17px;
+  line-height: 1.45;
+}
+.lp-ton__lead {
+  color: #fff !important;
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem) !important;
+}
+
 /* SIGNAL CHAIN --------------------------------------------------- */
 .lp-signal {
   background: var(--tk-ink);
@@ -1229,6 +1386,23 @@ html.toolkit-site-mode #root {
   .lp-hero__stats div:nth-child(2n+1) { border-right: 1px solid var(--tk-ink); }
   .lp-hero__stats div:nth-child(1),
   .lp-hero__stats div:nth-child(2) { border-bottom: 1px solid var(--tk-ink); }
+  .lp-rehearsal__spine { grid-template-columns: 1fr; }
+  .lp-journey { grid-template-columns: 1fr; }
+  .lp-journey__copy { border-right: none; border-bottom: 1px solid var(--tk-ink); }
+  .lp-journey__photos { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .lp-journey__photos figure:nth-child(1),
+  .lp-journey__photos figure:nth-child(2),
+  .lp-journey__photos figure:nth-child(3) {
+    grid-column: auto;
+    grid-row: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--tk-ink);
+  }
+  .lp-journey__photos figure:last-child { border-bottom: none; }
+  .lp-journey__photos img { min-height: 220px; max-height: 320px; }
+  .lp-ton { grid-template-columns: 1fr; min-height: auto; }
+  .lp-ton figure { min-height: 56svh; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.3); }
+  .lp-ton > div { padding: 56px 20px; }
   .lp-cards { grid-template-columns: 1fr; }
   .lp-signal__chain { grid-template-columns: 1fr; }
   .lp-signal__chain li { min-height: 0; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.28); }

@@ -8,6 +8,7 @@
  * pathway from Governor to DLT.
  */
 
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 
 const PPP_CITATIONS: Citation[] = [
@@ -206,7 +207,7 @@ const CONTRACT_TYPES = [
   }
 ];
 
-export function LegalFramework() {
+export function LegalFramework({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="lf-section" id="legal" aria-labelledby="legal-title">
       <header className="lf-section__head">

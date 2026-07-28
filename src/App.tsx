@@ -89,16 +89,16 @@ function getStoredLang(): Lang {
   } catch {
     // localStorage can throw in privacy-mode / cross-origin / test environments
   }
-  if (stored && ["en", "th", "zh", "de", "fr", "es"].includes(stored)) return stored as Lang;
+  if (stored && ["en", "th", "zh", "ko", "de", "fr", "es"].includes(stored)) return stored as Lang;
   // Auto-detect from browser locale
   const browserLang = typeof navigator !== "undefined" ? navigator.language?.substring(0, 2) : undefined;
-  // Russian and Korean visitors are a major Phuket cohort; the i18n
+  // Russian and Japanese visitors are a major Phuket cohort; the i18n
   // catalog doesn't (yet) carry them, so they fall back to English
   // explicitly rather than getting accidentally bucketed via partial
   // browser-locale matches.
   const langMap: Record<string, Lang> = {
-    th: "th", zh: "zh", de: "de", fr: "fr", es: "es",
-    ru: "en", ko: "en", ja: "en"
+    th: "th", zh: "zh", ko: "ko", de: "de", fr: "fr", es: "es",
+    ru: "en", ja: "en"
   };
   return (browserLang ? langMap[browserLang] : null) ?? "en";
 }
@@ -485,7 +485,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
       } catch {
         // Fallback: show demo routes when backend is unavailable
         if (alive) {
-          const lt = (s: string) => ({ en: s, th: s, zh: s, de: s, fr: s, es: s });
+          const lt = (s: string) => ({ en: s, th: s, zh: s, ko: s, de: s, fr: s, es: s });
           const fallbackRoutes: Route[] = [
             { id: "rawai-airport", name: lt("Airport Line"), shortName: lt("Airport Line"), overview: lt("Airport to Rawai"), axis: "north_south", axisLabel: lt("N-S"), tier: "core", color: "#16b8b0", accentColor: "#16b8b0", bounds: [[7.7804, 98.3225], [8.109, 98.307]], pathSegments: [[[7.7804, 98.3225], [7.842, 98.308], [7.905, 98.305], [8.07, 98.31], [8.109, 98.307]]], stopCount: 5, defaultStopId: "airport-1", activeVehicles: 4, status: lt("Demo mode"), sourceStatus: { source: "bus", state: "fallback", updatedAt: new Date().toISOString(), detail: lt("Demo — backend offline"), freshnessSeconds: null, fallbackReason: "backend_offline" } },
             { id: "patong-old-bus-station", name: lt("Patong Line"), shortName: lt("Patong Line"), overview: lt("Patong to Old Town"), axis: "east_west", axisLabel: lt("E-W"), tier: "core", color: "#e5574f", accentColor: "#e5574f", bounds: [[7.883, 98.293], [7.884, 98.396]], pathSegments: [[[7.883, 98.293], [7.89, 98.32], [7.884, 98.38], [7.884, 98.396]]], stopCount: 4, defaultStopId: "patong-1", activeVehicles: 2, status: lt("Demo mode"), sourceStatus: { source: "bus", state: "fallback", updatedAt: new Date().toISOString(), detail: lt("Demo"), freshnessSeconds: null, fallbackReason: "backend_offline" } },

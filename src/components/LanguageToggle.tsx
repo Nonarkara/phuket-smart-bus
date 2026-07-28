@@ -4,6 +4,7 @@ const LANG_OPTIONS: { code: Lang; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "th", label: "TH" },
   { code: "zh", label: "中" },
+  { code: "ko", label: "한" },
   { code: "de", label: "DE" },
   { code: "fr", label: "FR" },
   { code: "es", label: "ES" },

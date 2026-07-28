@@ -25,6 +25,7 @@
  */
 
 import { useId } from "react";
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
 
@@ -438,7 +439,7 @@ function PhuketTransferChart() {
  * Section component
  * ----------------------------------------------------------------------- */
 
-export function VegasDemandCase() {
+export function VegasDemandCase({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="vc-section" id="vegas-demand" aria-labelledby="vegas-demand-title">
       <header className="vc-section__head">

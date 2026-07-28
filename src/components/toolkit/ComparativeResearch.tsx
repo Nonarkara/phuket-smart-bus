@@ -9,6 +9,7 @@
  * breaks down.
  */
 
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 
 const COMPARATIVE_CITATIONS: Citation[] = [
@@ -166,7 +167,7 @@ const ASEAN_MODE_SHARE = [
   { country: "Singapore", motorcycle: 5, car: 30, bus: 55, other: 10 }
 ];
 
-export function ComparativeResearch() {
+export function ComparativeResearch({ lang = "en" }: { lang?: Lang }) {
   const maxMode = Math.max(...ASEAN_MODE_SHARE.map((d) => d.motorcycle));
   return (
     <section className="cr-section" id="comparative" aria-labelledby="comparative-title">

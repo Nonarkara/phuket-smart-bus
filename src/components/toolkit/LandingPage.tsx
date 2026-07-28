@@ -1,158 +1,77 @@
 /**
  * The short argument that earns the long research.
  *
- * The page begins with the passenger task, then follows the signal through
- * operations, public authority and finance. Claims are labelled so a reader
- * can distinguish what is observed, what the simulator calculates and what
- * still needs a pilot.
+ * Rehearsal first: demand → justify → feasibility → law/PPP → fleet →
+ * on-demand → people → digital safety → feeders → price/scale.
+ * Then the Jakarta→Johor love story and the dedication to Ton Jaitong.
  */
 
-type Beat = {
-  number: string;
-  label: string;
-  status: "Observed" | "Modelled" | "Build-ready" | "Proposed" | "Due diligence";
-  title: string;
-  body: string;
-  proof: string;
-  href: string;
-  link: string;
-};
+import type { Lang } from "@shared/types";
+import { LANDING } from "./translations";
 
-const BEATS: Beat[] = [
-  {
-    number: "01",
-    label: "Passenger promise",
-    status: "Observed",
-    title: "First answer the person standing outside arrivals.",
-    body: "When is the next bus? Where does it leave? How long to Patong? The phone screen reads the published airport timetable and keeps those answers above everything else.",
-    proof: "The live countdown is calculated from the same departure array used by the fleet simulator.",
-    href: "https://bus.nonarkara.org/",
-    link: "Try the passenger screen"
-  },
-  {
-    number: "02",
-    label: "Requested drop-off",
-    status: "Proposed",
-    title: "A hotel name becomes an operating instruction.",
-    body: "The passenger names a hotel, beach or area. The request reaches the driver tablet, which confirms a safe pull-over on the serviced corridor. Flexible does not mean stopping blindly in traffic.",
-    proof: "The prototype captures the destination today. Driver acknowledgement and safe-stop rules are pilot requirements.",
-    href: "https://bus.nonarkara.org/",
-    link: "Test the destination flow"
-  },
-  {
-    number: "03",
-    label: "Payment",
-    status: "Proposed",
-    title: "Sell one ride simply. Sell three days without inventing another wallet.",
-    body: "The prototype offers a ฿100 single ride and a mock 72-hour pass. Production should hand card entry to a hosted payment page and add PromptPay or EMV only after the operator chooses settlement, refunds and fraud rules.",
-    proof: "No live card is charged. The page demonstrates the transaction and boarding-token contract, not a finished acquiring agreement.",
-    href: "https://bus.nonarkara.org/",
-    link: "Walk through the mock checkout"
-  },
-  {
-    number: "04",
-    label: "Authority",
-    status: "Due diligence",
-    title: "The app can be built before the concession. The service cannot.",
-    body: "Before fleet finance comes route authority, curb access, fare approval, insurance, data responsibilities and a contract long enough to repay the assets. Software does not make those questions disappear. It makes them visible sooner.",
-    proof: "The feasibility chapter separates the operating case from the approvals and contracts still requiring legal review.",
-    href: "#feasibility",
-    link: "Inspect the feasibility case"
-  },
-  {
-    number: "05",
-    label: "Fleet duties",
-    status: "Modelled",
-    title: "One bus is two directions, a layover and a promise to come back.",
-    body: "The same airport fleet rotates southbound and northbound. The engine follows each duty along real road geometry, accounts for the turnaround and keeps demand separate in both directions.",
-    proof: "Published timetable + 3,944-point route geometry + one simulated clock. No decorative vehicle dots.",
-    href: "https://bus.nonarkara.org/ops",
-    link: "Watch the fleet move"
-  },
-  {
-    number: "06",
-    label: "Devices",
-    status: "Build-ready",
-    title: "GPS tells us where. A tablet tells the driver why. A counter tells us how full.",
-    body: "Start with three instruments, not a shopping catalogue: vehicle position, a driver task screen and anonymous boarding/alighting counts. Each feed has a job and an ingest path already waiting in the production backend.",
-    proof: "Telemetry, seat, driver-attention and passenger-flow types and endpoints already exist in this repository.",
-    href: "#proof",
-    link: "Trace research into code"
-  },
-  {
-    number: "07",
-    label: "Privacy",
-    status: "Proposed",
-    title: "Count people. Do not identify them.",
-    body: "An overhead or doorway counter should emit boarding and alighting events, confidence and device health—not faces. Keep images on the device where possible; transmit counts; set retention to the minimum needed for calibration.",
-    proof: "This is the privacy design constraint for the pilot. A vendor and PDPA review still have to prove the implementation.",
-    href: "#proof",
-    link: "Read the evidence discipline"
-  },
-  {
-    number: "08",
-    label: "Dispatch",
-    status: "Proposed",
-    title: "The clever bit is not more buses. It is the right bus in the right hour.",
-    body: "Flight arrivals create waves. Destination requests reveal where they want to go. Seats and boarding counts reveal what the fleet can absorb. Dispatch changes only when the measured gap survives all three checks.",
-    proof: "The operations console shows inbound and airport-bound demand separately so one direction cannot hide the other.",
-    href: "https://bus.nonarkara.org/ops",
-    link: "Open missed money by hour"
-  },
-  {
-    number: "09",
-    label: "Partners",
-    status: "Proposed",
-    title: "A voucher is useful only when somebody can settle it.",
-    body: "Hotels, attractions and restaurants can subsidise or bundle rides, but the operational questions come first: who issued the benefit, who redeemed it, what journey occurred and who owes whom at the end of the day.",
-    proof: "The token can carry an offer ID. Partner contracts, reconciliation and abuse controls remain outside this prototype.",
-    href: "#method",
-    link: "See the system method"
-  },
-  {
-    number: "10",
-    label: "Finance",
-    status: "Modelled",
-    title: "Do not finance the conclusion. Finance the next test.",
-    body: "The current model is a conditional case, not a purchase order. Instrument a 90-day pilot, measure reliability, boarding, denied demand, trip cost and repayment coverage, then release fleet capital only when the agreed gates hold.",
-    proof: "The finance chapter exposes the modelled DSCR and support gap; the pilot is designed to replace assumptions with records.",
-    href: "#feasibility",
-    link: "Stress-test the deal"
-  }
-];
+const HISTORY = `${import.meta.env.BASE_URL}toolkit/history/`;
+const FIELD = `${import.meta.env.BASE_URL}toolkit/field-notes/`;
 
-const HEADLINE_STATS = [
-  { value: "17.5m", label: "HKT passenger movements", note: "observed · AOT 2025" },
-  { value: "20", label: "airport departures in the timetable", note: "observed · current fixture" },
-  { value: "25", label: "seats per airport bus", note: "modelled capacity" },
-  { value: "90 days", label: "instrumented pilot", note: "proposed decision" }
-];
+function tr(key: string, lang: Lang): string {
+  return LANDING[key]?.[lang] ?? LANDING[key]?.en ?? key;
+}
 
-const SIGNAL_CHAIN = [
-  ["Passenger", "destination + pass"],
-  ["Driver", "safe drop-off request"],
-  ["Vehicle", "GPS + anonymous count"],
-  ["Operator", "queue, load + dispatch"],
-  ["Lender / city", "verified outcome"]
-] as const;
+export function LandingPage({ lang = "en" }: { lang?: Lang }) {
+  const BEATS = [
+    { number: "01", label: tr("beat01Label", lang), status: "Observed", title: tr("beat01Title", lang), body: tr("beat01Body", lang), proof: tr("beat01Proof", lang), href: "https://bus.nonarkara.org/", link: tr("beat01Link", lang) },
+    { number: "02", label: tr("beat02Label", lang), status: "Proposed", title: tr("beat02Title", lang), body: tr("beat02Body", lang), proof: tr("beat02Proof", lang), href: "#feasibility", link: tr("beat02Link", lang) },
+    { number: "03", label: tr("beat03Label", lang), status: "Due diligence", title: tr("beat03Title", lang), body: tr("beat03Body", lang), proof: tr("beat03Proof", lang), href: "#feasibility", link: tr("beat03Link", lang) },
+    { number: "04", label: tr("beat04Label", lang), status: "Due diligence", title: tr("beat04Title", lang), body: tr("beat04Body", lang), proof: tr("beat04Proof", lang), href: "#feasibility", link: tr("beat04Link", lang) },
+    { number: "05", label: tr("beat05Label", lang), status: "Modelled", title: tr("beat05Title", lang), body: tr("beat05Body", lang), proof: tr("beat05Proof", lang), href: "https://bus.nonarkara.org/ops", link: tr("beat05Link", lang) },
+    { number: "06", label: tr("beat06Label", lang), status: "Modelled", title: tr("beat06Title", lang), body: tr("beat06Body", lang), proof: tr("beat06Proof", lang), href: "https://bus.nonarkara.org/ops", link: tr("beat06Link", lang) },
+    { number: "07", label: tr("beat07Label", lang), status: "Build-ready", title: tr("beat07Title", lang), body: tr("beat07Body", lang), proof: tr("beat07Proof", lang), href: "https://bus.nonarkara.org/ops", link: tr("beat07Link", lang) },
+    { number: "08", label: tr("beat08Label", lang), status: "Proposed", title: tr("beat08Title", lang), body: tr("beat08Body", lang), proof: tr("beat08Proof", lang), href: "#proof", link: tr("beat08Link", lang) },
+    { number: "09", label: tr("beat09Label", lang), status: "Proposed", title: tr("beat09Title", lang), body: tr("beat09Body", lang), proof: tr("beat09Proof", lang), href: "#method", link: tr("beat09Link", lang) },
+    { number: "10", label: tr("beat10Label", lang), status: "Modelled", title: tr("beat10Title", lang), body: tr("beat10Body", lang), proof: tr("beat10Proof", lang), href: "#feasibility", link: tr("beat10Link", lang) },
+  ];
 
-export function LandingPage() {
+  const REHEARSAL = [
+    tr("rehearsal01", lang),
+    tr("rehearsal02", lang),
+    tr("rehearsal03", lang),
+    tr("rehearsal04", lang),
+    tr("rehearsal05", lang),
+    tr("rehearsal06", lang),
+    tr("rehearsal07", lang),
+    tr("rehearsal08", lang),
+    tr("rehearsal09", lang),
+    tr("rehearsal10", lang),
+  ];
+
+  const HEADLINE_STATS = [
+    { value: "17.5m", label: tr("statPaxMovements", lang), note: tr("statPaxNote", lang) },
+    { value: "20", label: tr("statDepartures", lang), note: tr("statDeparturesNote", lang) },
+    { value: "25", label: tr("statSeats", lang), note: tr("statSeatsNote", lang) },
+    { value: "90 days", label: tr("statPilot", lang), note: tr("statPilotNote", lang) }
+  ];
+
+  const SIGNAL_CHAIN: [string, string][] = [
+    [tr("actorPassenger", lang), tr("signalPassengerAction", lang)],
+    [tr("actorDriver", lang), tr("signalDriverAction", lang)],
+    [tr("actorVehicle", lang), tr("signalVehicleAction", lang)],
+    [tr("actorOperator", lang), tr("signalOperatorAction", lang)],
+    [tr("actorLender", lang), tr("signalLenderAction", lang)],
+  ];
+
   return (
     <section className="lp-landing" id="landing" aria-labelledby="lp-title">
       <header className="lp-hero">
-        <p className="tk-kicker lp-hero__kicker">How to Build a Public Transit System · The Case of Phuket Smart Bus</p>
+        <p className="tk-kicker lp-hero__kicker">{tr("heroKicker", lang)}</p>
         <h1 id="lp-title" className="lp-hero__title">
-          What if an airport passenger can find the bus, name the hotel and get a ticket in one minute?
+          {tr("heroTitle", lang)}
         </h1>
         <p className="lp-hero__sub">
-          Good. Now follow that tiny decision all the way through the driver,
-          the fleet, the city and the bank. The passenger gets one simple screen.
-          The system gets evidence it can use.
+          {tr("heroSub", lang)}
         </p>
         <div className="lp-hero__status" aria-label="Evidence status legend">
-          <span><b>Observed</b> cited or published record</span>
-          <span><b>Modelled</b> calculated by this repository</span>
-          <span><b>Proposed</b> still needs a decision or pilot</span>
+          <span><b>{tr("statusObserved", lang)}</b> {tr("statusObservedNote", lang)}</span>
+          <span><b>{tr("statusModelled", lang)}</b> {tr("statusModelledNote", lang)}</span>
+          <span><b>{tr("statusProposed", lang)}</b> {tr("statusProposedNote", lang)}</span>
         </div>
         <div className="lp-hero__stats" role="list" aria-label="Headline evidence">
           {HEADLINE_STATS.map((stat) => (
@@ -164,22 +83,75 @@ export function LandingPage() {
           ))}
         </div>
         <div className="lp-hero__actions">
-          <a className="lp-btn lp-btn--primary" href="https://bus.nonarkara.org/">
-            Try the passenger screen <span>↗</span>
+          <a className="lp-btn lp-btn--primary" href="#rehearsal">
+            {tr("followWholeSystem", lang)} <span>↓</span>
           </a>
-          <a className="lp-btn" href="#five-minute">
-            Follow the whole system <span>↓</span>
+          <a className="lp-btn" href="https://bus.nonarkara.org/">
+            {tr("tryPassengerScreen", lang)} <span>↗</span>
           </a>
         </div>
       </header>
 
+      <section className="lp-rehearsal" id="rehearsal" aria-labelledby="lp-rehearsal-title">
+        <header className="lp-rehearsal__head">
+          <p className="tk-kicker">{tr("rehearsalKicker", lang)}</p>
+          <h2 id="lp-rehearsal-title">{tr("rehearsalTitle", lang)}</h2>
+        </header>
+        <ol className="lp-rehearsal__spine" aria-label="Build sequence">
+          {REHEARSAL.map((step, index) => (
+            <li key={step}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{step}</strong>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="lp-journey" aria-labelledby="lp-journey-title">
+        <div className="lp-journey__copy">
+          <p className="tk-kicker">{tr("journeyKicker", lang)}</p>
+          <h2 id="lp-journey-title">{tr("journeyTitle", lang)}</h2>
+          <p>{tr("journeyBody", lang)}</p>
+        </div>
+        <div className="lp-journey__photos" role="list">
+          <figure role="listitem">
+            <img src={`${HISTORY}jakarta-2022.jpg`} alt="" loading="lazy" />
+            <figcaption>{tr("journeyJakarta", lang)}</figcaption>
+          </figure>
+          <figure role="listitem">
+            <img src={`${HISTORY}jakarta-ton-2022-detail.jpg`} alt="" loading="lazy" />
+            <figcaption>{tr("journeyTonCap", lang)}</figcaption>
+          </figure>
+          <figure role="listitem">
+            <img src={`${HISTORY}johor-2025.jpg`} alt="" loading="lazy" />
+            <figcaption>{tr("journeyJohor", lang)}</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section className="lp-ton" aria-labelledby="lp-ton-title">
+        <figure>
+          <img
+            src={`${FIELD}jakarta-ton-2022.jpg`}
+            alt="Ton Jaitong with colleagues at the Jakarta workshop in December 2022"
+            loading="lazy"
+          />
+          <figcaption>Jakarta · December 2022</figcaption>
+        </figure>
+        <div>
+          <p className="tk-kicker">{tr("tonKicker", lang)}</p>
+          <h2 id="lp-ton-title">{tr("tonTitle", lang)}</h2>
+          <p className="lp-ton__lead">{tr("tonLead", lang)}</p>
+          <p>{tr("tonBody", lang)}</p>
+        </div>
+      </section>
+
       <section className="lp-signal" aria-labelledby="lp-signal-title">
         <div className="lp-signal__intro">
-          <p className="tk-kicker">One screen · five consequences</p>
-          <h2 id="lp-signal-title">A ticket is not the end of the journey. It is the first useful signal.</h2>
+          <p className="tk-kicker">{tr("signalKicker", lang)}</p>
+          <h2 id="lp-signal-title">{tr("signalTitle", lang)}</h2>
           <p>
-            The design stays simple because the machinery behind it is explicit.
-            Each handoff creates a record, and each record answers a different decision.
+            {tr("signalBody", lang)}
           </p>
         </div>
         <ol className="lp-signal__chain" aria-label="Passenger action to verified outcome">
@@ -196,12 +168,10 @@ export function LandingPage() {
 
       <section className="lp-arg" id="five-minute" aria-labelledby="lp-arg-title">
         <header className="lp-arg__head">
-          <p className="tk-kicker">The five-minute build sequence</p>
-          <h2 id="lp-arg-title">Ten questions. In order. Then we are ready to test—not ready to buy buses.</h2>
+          <p className="tk-kicker">{tr("fiveMinKicker", lang)}</p>
+          <h2 id="lp-arg-title">{tr("fiveMinTitle", lang)}</h2>
           <p className="lp-arg__sub">
-            Read the label on every card. “Observed” is evidence. “Modelled” is
-            a calculation. “Proposed” is work still owed. Mixing those three is
-            how a sensible pilot turns into a very expensive press release.
+            {tr("fiveMinSub", lang)}
           </p>
         </header>
 
@@ -211,14 +181,14 @@ export function LandingPage() {
               <div className="lp-card__head">
                 <span className="lp-card__num">{beat.number}</span>
                 <span className="lp-card__label">{beat.label}</span>
-                <span className={`lp-card__status lp-card__status--${beat.status.toLowerCase().replace("-", "-").replace(" ", "-")}`}>
+                <span className={`lp-card__status lp-card__status--${beat.status.toLowerCase().replace(/\s+/g, "-")}`}>
                   {beat.status}
                 </span>
               </div>
               <h3 className="lp-card__title">{beat.title}</h3>
               <p className="lp-card__body">{beat.body}</p>
               <div className="lp-card__proof">
-                <span className="tk-kicker">What proves it—or still has to</span>
+                <span className="tk-kicker">{tr("proofKicker", lang)}</span>
                 <p>{beat.proof}</p>
                 <a href={beat.href} className="lp-card__link">
                   {beat.link} <span>↗</span>
@@ -231,26 +201,23 @@ export function LandingPage() {
 
       <section className="lp-handover" aria-labelledby="lp-handover-title">
         <div className="lp-handover__copy">
-          <p className="tk-kicker">The full research</p>
-          <h2 id="lp-handover-title">That was the front door. The evidence room is downstairs.</h2>
+          <p className="tk-kicker">{tr("handoverKicker", lang)}</p>
+          <h2 id="lp-handover-title">{tr("handoverTitle", lang)}</h2>
           <p>
-            The long read keeps the Phuket context, Las Vegas comparison,
-            fieldwork, method, causal tests, live model, feasibility study and
-            the people who made the work possible. Dense material gets room to
-            breathe. The argument above tells you why each chapter exists.
+            {tr("handoverBody", lang)}
           </p>
         </div>
         <div className="lp-handover__buttons">
-          <a className="lp-btn lp-btn--primary" href="#phuket">Open the full research <span>↓</span></a>
-          <a className="lp-btn" href="https://bus.nonarkara.org/ops">Run the operations console <span>↗</span></a>
+          <a className="lp-btn lp-btn--primary" href="#phuket">{tr("handoverOpenResearch", lang)} <span>↓</span></a>
+          <a className="lp-btn" href="https://bus.nonarkara.org/ops">{tr("handoverRunConsole", lang)} <span>↗</span></a>
         </div>
         <ol className="lp-handover__chapters" role="list" aria-label="Full research chapters">
-          <li><span>01</span><div><strong>Phuket</strong><em>the place and the problem</em></div></li>
-          <li><span>02</span><div><strong>Vegas</strong><em>the comparison and its limits</em></div></li>
-          <li><span>03</span><div><strong>Brief</strong><em>the conditional recommendation</em></div></li>
-          <li><span>04</span><div><strong>Method</strong><em>how findings become instruments</em></div></li>
-          <li><span>05</span><div><strong>Proof</strong><em>the working system and ledger</em></div></li>
-          <li><span>06</span><div><strong>Feasibility</strong><em>the pilot, finance and exit doors</em></div></li>
+          <li><span>01</span><div><strong>{tr("chapter01Name", lang)}</strong><em>{tr("chapter01Desc", lang)}</em></div></li>
+          <li><span>02</span><div><strong>{tr("chapter02Name", lang)}</strong><em>{tr("chapter02Desc", lang)}</em></div></li>
+          <li><span>03</span><div><strong>{tr("chapter03Name", lang)}</strong><em>{tr("chapter03Desc", lang)}</em></div></li>
+          <li><span>04</span><div><strong>{tr("chapter04Name", lang)}</strong><em>{tr("chapter04Desc", lang)}</em></div></li>
+          <li><span>05</span><div><strong>{tr("chapter05Name", lang)}</strong><em>{tr("chapter05Desc", lang)}</em></div></li>
+          <li><span>06</span><div><strong>{tr("chapter06Name", lang)}</strong><em>{tr("chapter06Desc", lang)}</em></div></li>
         </ol>
       </section>
     </section>

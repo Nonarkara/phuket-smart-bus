@@ -22,8 +22,14 @@
  */
 
 import { useId } from "react";
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 import { PhuketSystemMap } from "./PhuketSystemMap";
+import { PC } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return PC[key]?.[lang] ?? PC[key]?.en ?? key;
+}
 
 /* -------------------------------------------------------------------------
  * Sources
@@ -486,12 +492,12 @@ function AirportStat() {
  * Section component
  * ----------------------------------------------------------------------- */
 
-export function PhuketContext() {
+export function PhuketContext({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="pc-section" id="phuket" aria-labelledby="phuket-title">
       <header className="pc-section__head">
-        <p className="tk-kicker">Chapter 1 · The island the bus is for</p>
-        <h2 id="phuket-title">Phuket is a 547-square-kilometre argument for public transport.</h2>
+        <p className="tk-kicker">{tr("pcKicker", lang)}</p>
+        <h2 id="phuket-title">{tr("pcTitle", lang)}</h2>
         <p className="pc-section__standfirst">
           Before the bus, the timetable, the bankability or the bid, you need to know the
           place. An island slightly larger than Singapore, twice as rainy as London, run

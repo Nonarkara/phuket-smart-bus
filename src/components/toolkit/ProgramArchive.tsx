@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Lang } from "@shared/types";
 import { ResearchPanel } from "./ResearchPanel";
 import { CITY_CONTRAST } from "../v2/ToolkitPanel";
 
@@ -265,7 +266,7 @@ function AbcdefFramework() {
   );
 }
 
-function ProgramArchive() {
+function ProgramArchive({ lang = "en" }: { lang?: Lang }) {
   const [activeTab, setActiveTab] = useState<ArchiveTab>("journey");
   const tabs: { id: ArchiveTab; label: string }[] = [
     { id: "journey", label: "The journey" },

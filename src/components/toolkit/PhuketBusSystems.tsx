@@ -8,8 +8,16 @@
  * hotels. Every claim is sourced.
  */
 
+import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
+import { PB } from "./translations";
 
+function tr(key: string, lang: Lang): string {
+  return PB[key]?.[lang] ?? PB[key]?.en ?? key;
+}
+
+// Citations are bibliographic references to external documents — kept
+// in their original language per standard i18n practice for source titles.
 const BUS_CITATIONS: Citation[] = [
   {
     text: "Phuket Provincial Government — “Phuket Highlights 2024,”",
@@ -51,17 +59,10 @@ const REGULATORY_CITATIONS: Citation[] = [
   }
 ];
 
-const OPERATOR_STATS: Stat[] = [
-  { value: "3", label: "formal bus operators in Phuket", note: "PKCD/PKSB · Phuket Mahanakorn · Orange Line" },
-  { value: "~25", label: "daily Airport Line departures (each direction)", note: "PKSB timetable, effective Jan 2025" },
-  { value: "฿100", label: "flat fare, Airport ↔ Rawai (95 min)", note: "vs ฿600–1,200 Grab/taxi" },
-  { value: "~230/day", label: "Dragon Line average boardings", note: "Phuket provincial report, 2024" }
-];
-
 type Operator = {
   name: string;
   abbr: string;
-  type: "Private smart-city" | "Private legacy" | "Government";
+  type: string;
   fleet: string;
   routes: string;
   fare: string;
@@ -70,107 +71,81 @@ type Operator = {
   notes: string;
 };
 
-const OPERATORS: Operator[] = [
-  {
-    name: "Phuket City Development Smart Bus",
-    abbr: "PKCD / PKSB",
-    type: "Private smart-city",
-    fleet: "10 Airport Line vehicles (กข 1001–1010) + 7 Patong Line (กค 2001–2007) + 3 Dragon Line (กง 3001–3003)",
-    routes: "Airport Line (Rawai ↔ HKT, ~95 min), Patong Line (Patong ↔ Old Town), Dragon Line (Old Town loop)",
-    fare: "฿100 flat, Airport Line · ฿40–100 zone-based on other lines",
-    coverage: "North–south spine: Airport → Thalang → Phuket Town → Kata/Karon → Rawai. East–west: Patong ↔ Old Town.",
-    status: "Operational. The system this website simulates.",
-    notes: "Operated by Phuket City Development (PKCD), supported by depa's smart-city platform. The Airport Line is the corridor the USASCP toolkit studied. 20 vehicles total; the same 10 rotate through both Airport Line directions."
-  },
-  {
-    name: "Phuket Mahanakorn",
-    abbr: "PMN",
-    type: "Private legacy",
-    fleet: "Conventional buses (diesel), route-dependent",
-    routes: "Local Phuket Town routes, feeder services",
-    fare: "฿15–30, zone-based",
-    coverage: "Phuket Town urban core and immediate surroundings. Not airport-connected.",
-    status: "Operational but declining ridership. Serves the resident base-load.",
-    notes: "The legacy local operator. Personas 1–2 and 7 from the USASCP survey are PMN's core riders: low-income students, bus-friendly freelancers and mid-income residents."
-  },
-  {
-    name: "Orange Line (Route 8411)",
-    abbr: "ORANGE",
-    type: "Government",
-    fleet: "~3 simulated vehicles in this system; government-operated",
-    routes: "Airport ↔ Phuket Town (Bus Terminal 1), via Boat Lagoon, Central/Big C, Pearl Village",
-    fare: "฿85–100",
-    coverage: "Airport → Highway 402 → Phuket Town. Does NOT serve Patong, Kata, Karon or Rawai directly.",
-    status: "Operational. The government competitor on the airport corridor.",
-    notes: "Government-operated, every 60–90 min, 08:00–21:00, 80 min trip. Cheaper than PKSB but does not reach the west-coast beaches where 60%+ of tourists stay. This is the structural gap the toolkit identified."
-  }
-];
+export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
+  const operatorStats: Stat[] = [
+    { value: "3", label: tr("pbStat1Label", lang), note: tr("pbStat1Note", lang) },
+    { value: "~25", label: tr("pbStat2Label", lang), note: tr("pbStat2Note", lang) },
+    { value: "฿100", label: tr("pbStat3Label", lang), note: tr("pbStat3Note", lang) },
+    { value: "~230/day", label: tr("pbStat4Label", lang), note: tr("pbStat4Note", lang) }
+  ];
 
-const COMPETITORS = [
-  { mode: "Grab", cost: "฿450–600", note: "HKT → Patong. Legal monopoly inside airport terminal. Only ride-hailing app with official HKT pickup authorisation." },
-  { mode: "Bolt", cost: "฿360–480", note: "20–30% cheaper than Grab but cannot pick up inside the airport terminal. Legal since 2023." },
-  { mode: "Official airport taxi", cost: "฿650", note: "Fixed-fare counter. Green-plate, government-regulated." },
-  { mode: "Walk-up touts", cost: "฿800–1,200", note: "Unregulated. The tout economy the absence of clear public transit creates." },
-  { mode: "Songthaew", cost: "฿30–50", note: "Red truck, local routes. Cheap but no airport service, no fixed schedule, no English information." },
-  { mode: "Motorbike taxi", cost: "฿150–300", note: "Informal. The mode 92.7% of Phuket accidents involve." }
-];
+  const operators: Operator[] = [
+    {
+      name: tr("pbOp1Name", lang),
+      abbr: "PKCD / PKSB",
+      type: tr("pbOpTypeSmartCity", lang),
+      fleet: tr("pbOp1Fleet", lang),
+      routes: tr("pbOp1Routes", lang),
+      fare: tr("pbOp1Fare", lang),
+      coverage: tr("pbOp1Coverage", lang),
+      status: tr("pbOp1Status", lang),
+      notes: tr("pbOp1Notes", lang)
+    },
+    {
+      name: tr("pbOp2Name", lang),
+      abbr: "PMN",
+      type: tr("pbOpTypeLegacy", lang),
+      fleet: tr("pbOp2Fleet", lang),
+      routes: tr("pbOp2Routes", lang),
+      fare: tr("pbOp2Fare", lang),
+      coverage: tr("pbOp2Coverage", lang),
+      status: tr("pbOp2Status", lang),
+      notes: tr("pbOp2Notes", lang)
+    },
+    {
+      name: tr("pbOp3Name", lang),
+      abbr: "ORANGE",
+      type: tr("pbOpTypeGovt", lang),
+      fleet: tr("pbOp3Fleet", lang),
+      routes: tr("pbOp3Routes", lang),
+      fare: tr("pbOp3Fare", lang),
+      coverage: tr("pbOp3Coverage", lang),
+      status: tr("pbOp3Status", lang),
+      notes: tr("pbOp3Notes", lang)
+    }
+  ];
 
-const REGULATORY_LAYERS = [
-  {
-    level: "National",
-    body: "Department of Land Transport (DLT)",
-    role: "Route planning, operator licensing, regulatory oversight. Bus routes are concessioned at the national level, not provincial.",
-    constraint: "A Phuket operator cannot launch a new route without DLT approval — a process that can take months and requires demonstrating public need."
-  },
-  {
-    level: "National",
-    body: "Office of Transport Policy and Planning (OTP)",
-    role: "National public transport policy and strategic planning. Sets EV bus cost benchmarks (฿12m/vehicle) and identifies financing gaps.",
-    constraint: "OTP's funding mechanism study (2017) is the closest thing to a national clean-bus financing framework — but it is advisory, not a budget line."
-  },
-  {
-    level: "National",
-    body: "Commission for the Management of Land Traffic (CMLT)",
-    role: "Inter-agency coordination, enforcement alignment, operational issue resolution.",
-    constraint: "The hotel-stop ban — buses may not stop directly at major hotels — is enforced through CMLT-aligned channels. It is a structural capture suppressor."
-  },
-  {
-    level: "Provincial",
-    body: "Phuket Provincial Governor's Office",
-    role: "Coordinates public agencies, supports cross-sector alignment.",
-    constraint: "The Governor can convene but cannot override national DLT route licensing. Political authority is real but legally bounded."
-  },
-  {
-    level: "Provincial",
-    body: "Phuket Provincial Administration Organization (PAO)",
-    role: "Local governmental organisation. Co-design workshop participant in the USASCP toolkit.",
-    constraint: "PAO controls some local infrastructure (stops, shelters) but not route authority or fare approval."
-  },
-  {
-    level: "Industry",
-    body: "Patong Hotel Association / THA Southern Chapter",
-    role: "Tourism-sector coordination. Hotel stop advocacy, information dissemination, service feedback.",
-    constraint: "Hotels want door-adjacent stops. DLT forbids them. The political question: can the hotel lobby change the regulation, or must the bus adapt to it?"
-  }
-];
+  const competitors = [
+    { mode: "Grab", cost: "฿450–600", note: tr("pbCh1Note", lang) },
+    { mode: "Bolt", cost: "฿360–480", note: tr("pbCh2Note", lang) },
+    { mode: tr("pbCh3Mode", lang), cost: "฿650", note: tr("pbCh3Note", lang) },
+    { mode: tr("pbCh4Mode", lang), cost: "฿800–1,200", note: tr("pbCh4Note", lang) },
+    { mode: "Songthaew", cost: "฿30–50", note: tr("pbCh5Note", lang) },
+    { mode: tr("pbCh6Mode", lang), cost: "฿150–300", note: tr("pbCh6Note", lang) }
+  ];
 
-export function PhuketBusSystems() {
+  const regulatoryLayers = [
+    { level: tr("pbLevelNational", lang), body: "Department of Land Transport (DLT)", role: tr("pbReg1Role", lang), constraint: tr("pbReg1Constraint", lang) },
+    { level: tr("pbLevelNational", lang), body: "Office of Transport Policy and Planning (OTP)", role: tr("pbReg2Role", lang), constraint: tr("pbReg2Constraint", lang) },
+    { level: tr("pbLevelNational", lang), body: "Commission for the Management of Land Traffic (CMLT)", role: tr("pbReg3Role", lang), constraint: tr("pbReg3Constraint", lang) },
+    { level: tr("pbLevelProvincial", lang), body: tr("pbReg4Body", lang), role: tr("pbReg4Role", lang), constraint: tr("pbReg4Constraint", lang) },
+    { level: tr("pbLevelProvincial", lang), body: tr("pbReg5Body", lang), role: tr("pbReg5Role", lang), constraint: tr("pbReg5Constraint", lang) },
+    { level: tr("pbLevelIndustry", lang), body: tr("pbReg6Body", lang), role: tr("pbReg6Role", lang), constraint: tr("pbReg6Constraint", lang) }
+  ];
+
   return (
     <section className="pb-section" id="bus-systems" aria-labelledby="bus-systems-title">
       <header className="pb-section__head">
-        <p className="tk-kicker">The transit landscape</p>
-        <h2 id="bus-systems-title">What buses already run in Phuket.</h2>
+        <p className="tk-kicker">{tr("pbKicker", lang)}</p>
+        <h2 id="bus-systems-title">{tr("pbTitle", lang)}</h2>
         <p className="pb-section__standfirst">
-          The answer is messier than visitors expect. Three formal operators, a government competitor on the airport
-          corridor, an informal songthaew network, and a ride-hailing monopoly. The regulatory regime forbids buses
-          from stopping at hotels — a structural capture suppressor that taxis exploit. Understanding the landscape
-          is step zero before any expansion argument.
+          {tr("pbStandfirst", lang)}
         </p>
       </header>
 
       {/* Stats */}
-      <div className="pb-stats" role="list" aria-label="Phuket bus system headline figures">
-        {OPERATOR_STATS.map((s) => (
+      <div className="pb-stats" role="list" aria-label={tr("pbStatsAria", lang)}>
+        {operatorStats.map((s) => (
           <div key={s.label} role="listitem">
             <strong>{s.value}</strong>
             <span>{s.label}</span>
@@ -181,8 +156,8 @@ export function PhuketBusSystems() {
 
       {/* Operator cards */}
       <div className="pb-operators">
-        <h3 className="pb-subhead">The three formal operators</h3>
-        {OPERATORS.map((op) => (
+        <h3 className="pb-subhead">{tr("pbOperatorsSubhead", lang)}</h3>
+        {operators.map((op) => (
           <article key={op.abbr} className={`pb-operator pb-operator--${op.type.toLowerCase().replace(/\s+/g, "-")}`}>
             <header>
               <span className="pb-operator__type">{op.type}</span>
@@ -190,11 +165,11 @@ export function PhuketBusSystems() {
               <strong>{op.abbr}</strong>
             </header>
             <dl>
-              <div><dt>Fleet</dt><dd>{op.fleet}</dd></div>
-              <div><dt>Routes</dt><dd>{op.routes}</dd></div>
-              <div><dt>Fare</dt><dd>{op.fare}</dd></div>
-              <div><dt>Coverage</dt><dd>{op.coverage}</dd></div>
-              <div><dt>Status</dt><dd>{op.status}</dd></div>
+              <div><dt>{tr("pbDtFleet", lang)}</dt><dd>{op.fleet}</dd></div>
+              <div><dt>{tr("pbDtRoutes", lang)}</dt><dd>{op.routes}</dd></div>
+              <div><dt>{tr("pbDtFare", lang)}</dt><dd>{op.fare}</dd></div>
+              <div><dt>{tr("pbDtCoverage", lang)}</dt><dd>{op.coverage}</dd></div>
+              <div><dt>{tr("pbDtStatus", lang)}</dt><dd>{op.status}</dd></div>
             </dl>
             <p className="pb-operator__notes">{op.notes}</p>
           </article>
@@ -203,19 +178,17 @@ export function PhuketBusSystems() {
 
       {/* Competitor landscape */}
       <div className="pb-competitors">
-        <h3 className="pb-subhead">The substitute ecosystem</h3>
+        <h3 className="pb-subhead">{tr("pbCompetitorsSubhead", lang)}</h3>
         <p className="pb-intro-note">
-          The bus does not compete in an empty market. It competes against six modes, each with a different price,
-          convenience and risk profile. The ฿100 bus wins on price; it loses on door-to-door convenience. The
-          question the USASCP toolkit asked: can service quality close the gap?
+          {tr("pbCompetitorsIntro", lang)}
         </p>
-        <div className="pb-competitor-table" role="table" aria-label="Competitor modes and fares, HKT to Patong">
+        <div className="pb-competitor-table" role="table" aria-label={tr("pbChAria", lang)}>
           <div className="pb-competitor-row pb-competitor-row--head" role="row">
-            <span role="columnheader">Mode</span>
-            <span role="columnheader">Fare (HKT → Patong)</span>
-            <span role="columnheader">What it actually is</span>
+            <span role="columnheader">{tr("pbChMode", lang)}</span>
+            <span role="columnheader">{tr("pbChFare", lang)}</span>
+            <span role="columnheader">{tr("pbChWhat", lang)}</span>
           </div>
-          {COMPETITORS.map((c) => (
+          {competitors.map((c) => (
             <div className="pb-competitor-row" role="row" key={c.mode}>
               <strong role="cell">{c.mode}</strong>
               <span role="cell">{c.cost}</span>
@@ -227,19 +200,17 @@ export function PhuketBusSystems() {
 
       {/* Regulatory landscape */}
       <div className="pb-regulatory">
-        <h3 className="pb-subhead">The regulatory stack — who can say yes to what</h3>
+        <h3 className="pb-subhead">{tr("pbRegSubhead", lang)}</h3>
         <p className="pb-intro-note">
-          Thailand's transport governance is centralised. The DLT in Bangkok controls route licensing; the Governor
-          in Phuket convenes but cannot overrule. The hotel-stop ban is enforced through CMLT channels. Any expansion
-          plan has to navigate this stack — not around it.
+          {tr("pbRegIntro", lang)}
         </p>
         <div className="pb-regulatory-grid">
-          {REGULATORY_LAYERS.map((layer) => (
+          {regulatoryLayers.map((layer) => (
             <article key={layer.body} className={`pb-reg-layer pb-reg-layer--${layer.level.toLowerCase()}`}>
               <span className="pb-reg-layer__level">{layer.level}</span>
               <h4>{layer.body}</h4>
               <p className="pb-reg-layer__role">{layer.role}</p>
-              <p className="pb-reg-layer__constraint"><strong>Constraint: </strong>{layer.constraint}</p>
+              <p className="pb-reg-layer__constraint"><strong>{tr("pbConstraintLabel", lang)}</strong>{layer.constraint}</p>
             </article>
           ))}
         </div>
@@ -248,62 +219,48 @@ export function PhuketBusSystems() {
       {/* The structural gap */}
       <div className="pb-gap">
         <div>
-          <span className="tk-kicker">The structural gap</span>
-          <h3>The Orange Line is cheaper. The Orange Line doesn't go to the beaches.</h3>
+          <span className="tk-kicker">{tr("pbGapKicker", lang)}</span>
+          <h3>{tr("pbGapTitle", lang)}</h3>
           <p>
-            The government's Orange Line (Route 8411) runs Airport → Phuket Town for ฿85–100. It is the cheapest
-            formal option. But it stops at Bus Terminal 1 in Phuket Town — not at Patong, Kata, Karon or Rawai,
-            where 60%+ of tourists stay. A tourist arriving at HKT and heading to Patong faces: the ฿85 Orange
-            Line to Bus Terminal 1, then a ฿400+ songthaew or Grab to Patong. Total: ~฿500 and two transfers.
+            {tr("pbGapBody1", lang)}
           </p>
           <p>
-            PKSB's Airport Line goes directly to Patong for ฿100. That is the structural advantage — and the
-            structural question: can the direct service capture enough of the 17.4M annual HKT passengers to
-            justify the fleet? The USASCP survey found the answer is yes, if the service is reliable, information
-            is clear and the last-mile connection is solved. The engine models exactly that.
+            {tr("pbGapBody2", lang)}
           </p>
         </div>
         <div className="pb-gap__visual">
           <div className="pb-route-compare">
             <div className="pb-route-compare__option pb-route-compare__option--pksb">
-              <span className="tk-kicker">PKSB Airport Line</span>
+              <span className="tk-kicker">{tr("pbPksbLabel", lang)}</span>
               <strong>฿100</strong>
-              <small>HKT → Patong direct · 95 min · 0 transfers</small>
+              <small>{tr("pbPksbNote", lang)}</small>
             </div>
             <div className="pb-route-compare__option pb-route-compare__option--orange">
-              <span className="tk-kicker">Orange Line + transfer</span>
+              <span className="tk-kicker">{tr("pbOrangeLabel", lang)}</span>
               <strong>~฿500</strong>
-              <small>HKT → Bus Terminal 1 → songthaew → Patong · ~120 min · 2 transfers</small>
+              <small>{tr("pbOrangeNote", lang)}</small>
             </div>
           </div>
         </div>
       </div>
 
       <ResearchPanel
-        title="Sources: operators, fares, fleet rosters and regulatory bodies"
-        stats={OPERATOR_STATS}
+        title={tr("pbRp1Title", lang)}
+        stats={operatorStats}
         citations={BUS_CITATIONS}
       >
         <p>
-          Fleet rosters (กข 1001–1010, กค 2001–2007, กง 3001–3003) and the Airport Line timetable are from the
-          official PKSB schedule effective 18 January 2025, built into this repository's <code>engine/config.ts</code>.
-          Dragon Line ridership (~230/day) is from the Phuket Provincial Government's 2024 highlights document.
-          Orange Line details are from RTPS and local news reporting. The regulatory structure is summarised from
-          the USASCP toolkit's governance section (pp. 13–14).
+          {tr("pbRp1Body", lang)}
         </p>
       </ResearchPanel>
 
       <ResearchPanel
-        title="The regulatory stack — DLT, OTP, CMLT and the hotel-stop ban"
+        title={tr("pbRp2Title", lang)}
         stats={[]}
         citations={REGULATORY_CITATIONS}
       >
         <p>
-          Thailand's public transport governance is centralised under the Ministry of Transport. The DLT controls
-          route licensing nationally; the Governor and PAO have implementation but not licensing authority. The
-          hotel-stop ban — buses may not stop directly at major hotels — is the most consequential regulatory
-          constraint on capture: it hands door-to-door advantage to taxis and ride-hailing by law, not just by
-          market dynamics. Any PPP or concession structure must address this explicitly.
+          {tr("pbRp2Body", lang)}
         </p>
       </ResearchPanel>
     </section>

@@ -1,4 +1,4 @@
-export type Lang = "en" | "th" | "zh" | "de" | "fr" | "es";
+export type Lang = "en" | "th" | "zh" | "ko" | "de" | "fr" | "es";
 
 export type OperationalRouteId =
   | "rawai-airport"
@@ -64,6 +64,7 @@ export interface LocalizedText {
   en: string;
   th: string;
   zh: string;
+  ko: string;
   de: string;
   fr: string;
   es: string;
