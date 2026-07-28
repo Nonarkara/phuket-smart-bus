@@ -1,59 +1,81 @@
-# RS&DE audit: collapsible research panels for the toolkit showcase — 2026-07-23
+# Voice + graphics pass on the toolkit research hub — 2026-07-28
 
 ## Outcome
-Every substantive section of the depa-usdot.nonarkara.org showcase gets a
-collapsible "Research & Data" disclosure: real numbers (some pulled straight
-from the /ops Toolkit tab's SSOT data, some freshly researched), a small
-infographic where it earns its place, and 2-4 verified academic/industry
-citations with real URLs. Bold design stays; adds an academic backbone
-underneath. Voice: direct, witty, clear — not dry academese.
+The site had grown to 6,248 lines across 18 components (ToolkitHub's 5-tab
+restructure, built by other agents over the prior 5 days). User's ask: cut
+the showing-off academic jargon and longwinded prose, make it sound more
+like Dr Non — direct, witty, clear — while staying professional. Also fix
+graphics/artifacts. Then check other agents' work, then CDPT.
 
-## Conservation law
-Every claim on a collapsible panel traces to either (a) an array already
-exported from ToolkitPanel.tsx (SSOT, no duplication) or (b) a citation with
-a real, verified URL from this session's research agents. Nothing invented.
+## What was found and fixed
 
-## Plan
-- [x] 1. Read ToolkitPanel.tsx fully — catalogue reusable SSOT data (TENETS,
-      HYPOTHESES, CITY_CONTRAST, OBJECTIVES, PERSONAS, THEMES, RECS, LEDGER,
-      DATA_WANTED, GAPS, CausalMap stories)
-- [x] 2. Launch 4 parallel research agents: mode-choice theory, causal
-      inference + transit natural experiments, design-thinking/co-design
-      methodology, outcome-based transit financing
-- [x] 3. Export the data arrays from ToolkitPanel.tsx (SSOT, named exports)
-- [x] 4. Build `<ResearchPanel>` — native `<details>/<summary>` disclosure,
-      Axiom/tk-red house style, mono numerics, zero new deps
-- [x] 5. Wire 7 panels: AbcdefFramework (mode-choice + city contrast),
-      tk-method (methodology), DesignThinkingStudy (personas + impact-effort
-      bars), tk-causality (3 causal stories), tk-proof (finding→model→code
-      ledger), FeasibilityStudy (data wanted + honest gaps), tk-deal
-      (DSCR/outcomes financing)
-- [x] 6. Typecheck clean, 139/139 tests, build clean; verified in browser —
-      all 7 panels render with correct counts, native toggle works, dark-
-      section color overrides correct, is-user persona highlight correct
-- [x] 7. Check other agents' code (worktrees/branches) — fix/audit-v2-
-      improvements and heuristic-goldberg fully merged into main already
-      (prior session); codex/wild-y6tj is a stale March-2026 experiment,
-      flagged not merged, four commits behind the current architecture
-- [x] 8. CDPT: commit `f825dad`, push, wrangler deploy, live-verified
+### Voice
+- `PhuketContext.tsx` (782 lines, worst offender): "orographic-lift" (3x
+  narrative occurrences — kept the 1 legitimate citation-metadata use),
+  "comparative Austronesian linguistics", a citation-reconciliation
+  paragraph that read like a bibliography defending itself, a "The
+  compound:" fragment, an over-hedged "not X but Y" sentence. Rewrote all
+  of it plainly without losing any fact.
+- `ComparativeResearch.tsx` + `LegalFramework.tsx`: both opened with an
+  invented "professors at USL Transport Institute" strawman — a
+  specific-sounding fictional source is worse than no source. Cut it,
+  reframed as a plain skeptic's-claim structure (which the content already
+  answers well).
+- `LandingPage.tsx`: tightened one 7-item comma-run sentence.
+- `VegasDemandCase.tsx`, `CollaborationHistory.tsx`, `PhuketBusSystems.tsx`,
+  `AddBusCalculator.tsx`, `DataProvenance.tsx`, `LiveSystemTicker.tsx`,
+  `PhuketSystemMap.tsx`, `ReferencesTab.tsx`: read them all — already close
+  to house voice (some genuinely good lines: "Dotted lines are boats,
+  because a ferry should not drive across the Andaman Sea."). Left alone.
 
-## Review
-- Shipped: 7 collapsible "Research & data" panels across the toolkit
-  showcase, each with real stats (mostly pulled straight from the /ops
-  Toolkit tab's SSOT arrays — PERSONAS, THEMES, RECS, LEDGER, DATA_WANTED,
-  GAPS, CITY_CONTRAST, CAUSAL_STORIES — now exported once, imported
-  everywhere) plus 2-5 freshly-researched, URL-verified academic/industry
-  citations per panel (McFadden/Ben-Akiva discrete choice, TCRP 166 &amp; 36,
-  Design Council Double Diamond, Lewin action research, Cochran sampling,
-  Pearl/Rubin causal inference, a real Kansas City zero-fare natural
-  experiment, World Bank/ADB results-based financing, FTA farebox recovery
-  data, LSTA green loan principles, World Bank PPP DSCR norms).
-- Explicitly flagged rather than overclaimed: ABCDEF is our own synthesis,
-  not a validated model; the "Hip" letter rests on thin literature; no
-  transit-specific social impact bond exists yet (Peterborough is the
-  general model only); Houston's 2015 redesign has real numbers but no
-  peer-reviewed causal study behind it, so it was left out entirely.
-- Live: https://depa-usdot.nonarkara.org/ · commit `f825dad` · bundle
-  `index-BNzJXBu8.js`, byte-identical to local build, verified via
-  `--compressed` fetch matching content-length and containing all 7
-  panels' marker strings (McFadden, Kansas City, Double Diamond, PforR).
+### Graphics/artifacts
+- Real bug: `LiveSystemTicker` (persistent bottom-right live badge) was a
+  fixed ~320×70px card that permanently covered whatever page content
+  scrolled under that corner — including the hero's 4th stat card on first
+  load (unreadable) and body text lower down (confirmed via screenshot).
+  Reworked to a compact ~120×34px pill (clock + missed-money only),
+  expanding to full detail on hover/focus/tap via CSS-only popover. Also
+  hidden until scroll > 480px so it never blocks the first thing anyone
+  sees.
+- Dead code: `isMonsoon` variable computed and discarded in `MonsoonChart`
+  (found while editing the same function for prose) — removed.
+
+### Dead code (found during the language check, in scope because polishing
+invisible code wastes effort and duplicate half-abandoned files are
+exactly the kind of mess this task exists to clean up)
+- `ToolkitShowcase.tsx` (838 lines) — confirmed via grep, zero references
+  anywhere in the app. `ToolkitHub.tsx` replaced it days ago; its content
+  (method/causality/proof/deal research panels) was already absorbed into
+  the new chapter components. The orphaned file just sat there. Deleted.
+
+### Other agents' work — checked
+- `fix/audit-v2-improvements`: fully merged into main already (prior
+  session). No new work.
+- `feat/depa-polish` was 16 commits ahead of the tracked
+  `depa-usdot.nonarkara.org` branch — the live site had been deployed
+  straight from this worktree via ad-hoc wrangler calls without ever
+  updating the branch ref. Fast-forwarded `depa-usdot.nonarkara.org` to
+  match (a strict fast-forward, verified before doing it) so the branch
+  name means what it says again.
+- `feat/landing-page`, `feat/passenger-app`, `feat/phuket-context-intro`,
+  `feat/vegas-demand-case`: all fully merged into `feat/depa-polish`
+  already (0 unique commits each) — the consolidation already happened,
+  nothing pending there.
+- Stray leftover on `main` (untracked, not this branch): a file literally
+  named `src/components/toolkit/toolkit` containing what should have been
+  `toolkit-hub.css` — a botched redirect from an earlier agent. Flagged,
+  not touched (different branch, out of scope this round).
+
+## Verification
+Typecheck clean. 152/152 tests. Build clean (1.49 MB JS, 341 KB CSS).
+Live-bundle byte-hash matches local build exactly. Confirmed on the live
+site: ticker pill is compact and hidden until scroll, "USL Transport" and
+narrative "orographic" strings both gone, dead ToolkitShowcase strings
+gone.
+
+## Shipped
+- Commit `e57dfa1` on `feat/depa-polish`, fast-forwarded onto
+  `depa-usdot.nonarkara.org`, both pushed to origin.
+- Deployed via `wrangler pages deploy --branch=depa-usdot.nonarkara.org`.
+- Live: https://depa-usdot.nonarkara.org/ — bundle `index-DXxar6Jh.js`,
+  byte-identical to the local build.
