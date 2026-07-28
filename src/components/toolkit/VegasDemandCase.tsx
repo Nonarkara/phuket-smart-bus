@@ -28,6 +28,11 @@ import { useId } from "react";
 import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
+import { VEGAS } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return VEGAS[key]?.[lang] ?? VEGAS[key]?.en ?? key;
+}
 
 /* -------------------------------------------------------------------------
  * Citations
@@ -443,10 +448,9 @@ export function VegasDemandCase({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="vc-section" id="vegas-demand" aria-labelledby="vegas-demand-title">
       <header className="vc-section__head">
-        <p className="tk-kicker">Chapter 2 · Las Vegas already answered the demand question</p>
+        <p className="tk-kicker">{tr("vegasKicker", lang)}</p>
         <h2 id="vegas-demand-title">
-          The Strip had a 4.2-per-100k pedestrian death problem first, a transit agency that
-          measured it second, and a US$650M mistake before the cheap answer worked.
+          {tr("vegasTitle", lang)}
         </h2>
         <p className="vc-section__standfirst">
           Phuket's case is not new. Las Vegas had the same shape: a 4-mile tourism

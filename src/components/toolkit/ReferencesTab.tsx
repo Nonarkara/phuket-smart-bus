@@ -8,6 +8,11 @@
 
 import { useState } from "react";
 import type { Lang } from "@shared/types";
+import { RT } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return RT[key]?.[lang] ?? RT[key]?.en ?? key;
+}
 
 type RefCategory = "peer-reviewed" | "grey-literature" | "data-sources" | "programme" | "legal-financial";
 
@@ -253,8 +258,8 @@ export function ReferencesTab({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="rt-section" id="references" aria-labelledby="references-title">
       <header className="rt-section__head">
-        <p className="tk-kicker">Bibliography · data inventory · reproducibility</p>
-        <h2 id="references-title">Open the cupboard. Check our ingredients.</h2>
+        <p className="tk-kicker">{tr("rtKicker", lang)}</p>
+        <h2 id="references-title">{tr("rtTitle", lang)}</h2>
         <p className="rt-section__standfirst">
           Every citation in this research hub, consolidated and categorised. Filter by type to find peer-reviewed
           literature, government reports, open data sources, programme records or legal-financial references.

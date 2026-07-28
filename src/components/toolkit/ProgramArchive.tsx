@@ -2,6 +2,11 @@ import { useState } from "react";
 import type { Lang } from "@shared/types";
 import { ResearchPanel } from "./ResearchPanel";
 import { CITY_CONTRAST } from "../v2/ToolkitPanel";
+import { PA } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return PA[key]?.[lang] ?? PA[key]?.en ?? key;
+}
 
 const PROGRAM_URL = "https://www.usascp.org/programs/transportationprogram/";
 const UPP_URL = "https://www.metrans.org/upp";
@@ -277,8 +282,8 @@ function ProgramArchive({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="tk-program" id="programme" aria-labelledby="programme-title">
       <header className="tk-program__header">
-        <span className="tk-kicker">USASCP Sustainable Mobility Programme · 2022–2026</span>
-        <h2 id="programme-title">Four years. Eight cities. One useful habit: keep going.</h2>
+        <span className="tk-kicker">{tr("paKicker", lang)}</span>
+        <h2 id="programme-title">{tr("paTitle", lang)}</h2>
         <p>The public record gives the programme’s structure. This archive adds the view from inside the email chains, workshops and living documents—where continuity, disagreement and quiet follow-through turned introductions into practical tools.</p>
         <div className="tk-program__links">
           <a href={PROGRAM_URL}>Official programme record ↗</a>

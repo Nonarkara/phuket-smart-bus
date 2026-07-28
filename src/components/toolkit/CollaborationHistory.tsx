@@ -14,6 +14,11 @@
 import { useState } from "react";
 import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
+import { CH } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return CH[key]?.[lang] ?? CH[key]?.en ?? key;
+}
 
 const HISTORY_ASSET_ROOT = `${import.meta.env.BASE_URL}toolkit/history/`;
 
@@ -298,8 +303,8 @@ export function CollaborationHistory({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="th-section" id="history" aria-labelledby="history-title">
       <header className="th-section__head">
-        <p className="tk-kicker">The collaboration · 2021–2025</p>
-        <h2 id="history-title">How a diplomatic initiative became a working system.</h2>
+        <p className="tk-kicker">{tr("chKicker", lang)}</p>
+        <h2 id="history-title">{tr("chTitle", lang)}</h2>
         <p className="th-section__standfirst">
           The U.S.-ASEAN Smart Cities Partnership paired Phuket with Las Vegas in late 2021. Over four years,
           five in-person workshops, a $25,000 field-research investment and one consequential methodological critique,

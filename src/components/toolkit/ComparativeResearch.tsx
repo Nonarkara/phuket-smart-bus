@@ -11,6 +11,11 @@
 
 import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
+import { CR } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return CR[key]?.[lang] ?? CR[key]?.en ?? key;
+}
 
 const COMPARATIVE_CITATIONS: Citation[] = [
   {
@@ -172,8 +177,8 @@ export function ComparativeResearch({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="cr-section" id="comparative" aria-labelledby="comparative-title">
       <header className="cr-section__head">
-        <p className="tk-kicker">Global benchmarks · the "cake and eat it" question</p>
-        <h2 id="comparative-title">Seven tourism destinations. One question. The data answers it.</h2>
+        <p className="tk-kicker">{tr("crKicker", lang)}</p>
+        <h2 id="comparative-title">{tr("crTitle", lang)}</h2>
         <p className="cr-section__standfirst">
           Can a tourism corridor support a profitable bus AND serve the public interest? The comparative evidence
           says yes — under specific structural conditions. Las Vegas did it for seven years. Barcelona does it

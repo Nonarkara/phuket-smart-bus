@@ -270,7 +270,7 @@ function BuildTab({ lang }: { lang: Lang }) {
       <AbcdefFramework />
       <TryLiveSystem busUrl={BUS_URL} />
       <FeasibilityStudy />
-      <LegalFramework />
+      <LegalFramework lang={lang} />
     </>
   );
 }

@@ -605,8 +605,18 @@ export const PC: Record<string, Entry> = {
 // ===========================================================================
 
 export const VEGAS: Record<string, Entry> = {
-  vegasKicker: e("Chapter 2 \u00b7 The comparison", "บทที่ 2 \u00b7 การเปรียบเทียบ", "第二章 · 比较", "2장 · 비교"),
-  vegasTitle: e("The Las Vegas Strip is the closest analogue to Phuket's airport corridor.", "ลาสเวกัสสตริปคือสิ่งที่ใกล้เคียงที่สุดกับเส้นทางสนามบินภูเก็ต", "拉斯维加斯大道是最接近普吉机场走廊的类比。", "라스베이거스 스트립은 푸껫 공항 복도에 가장 가까운 유사 사례입니다."),
+  vegasKicker: e(
+    "Chapter 2 · Las Vegas already answered the demand question",
+    "บทที่ 2 · ลาสเวกัสตอบคำถามความต้องการไปแล้ว",
+    "第二章 · 拉斯维加斯已经回答了需求问题",
+    "2장 · 라스베이거스가 수요 질문에 이미 답했습니다"
+  ),
+  vegasTitle: e(
+    "The Strip had a 4.2-per-100k pedestrian death problem first, a transit agency that measured it second, and a US$650M mistake before the cheap answer worked.",
+    "สตริปมีปัญหาคนเดินเท้าเสียชีวิต 4.2 ต่อแสนคนก่อน มีหน่วยงานขนส่งที่วัดผลทีหลัง และผิดพลาดมูลค่า 650 ล้านดอลลาร์ก่อนคำตอบราคาถูกจะได้ผล",
+    "大道先有每10万人4.2人的行人死亡问题，再有测量它的交通机构，再有6.5亿美元的错误，然后廉价答案才奏效。",
+    "스트립은 먼저 10만 명당 4.2명의 보행자 사망 문제가 있었고, 그다음 측정한 교통 기관이 있었으며, 값싼 답이 통하기 전에 6억 5천만 달러의 실수가 있었습니다."
+  ),
 };
 
 // ===========================================================================
@@ -614,8 +624,18 @@ export const VEGAS: Record<string, Entry> = {
 // ===========================================================================
 
 export const CR: Record<string, Entry> = {
-  crKicker: e("Global benchmarks", "มาตรฐานสากล", "全球基准", "글로벌 벤치마크"),
-  crTitle: e("How other transit systems solve the same problem.", "ระบบขนส่งอื่นแก้ปัญหาเดียวกันอย่างไร", "其他交通系统如何解决同样的问题。", "다른 교통 시스템이 같은 문제를 어떻게 해결하는가."),
+  crKicker: e(
+    "Global benchmarks · the \"cake and eat it\" question",
+    "มาตรฐานสากล · คำถาม \"ได้กินเค้กและเก็บไว้ด้วย\"",
+    "全球基准 · “鱼和熊掌”问题",
+    "글로벌 벤치마크 · “케이크를 먹고도 남기는” 질문"
+  ),
+  crTitle: e(
+    "Seven tourism destinations. One question. The data answers it.",
+    "เจ็ดจุดหมายท่องเที่ยว คำถามเดียว ข้อมูลตอบ",
+    "七个旅游目的地。一个问题。数据作答。",
+    "일곱 관광 목적지. 하나의 질문. 데이터가 답합니다."
+  ),
 };
 
 // ===========================================================================
@@ -624,7 +644,12 @@ export const CR: Record<string, Entry> = {
 
 export const STUDY: Record<string, Entry> = {
   studyKicker: e("Build & finance", "สร้างและการเงิน", "建设与融资", "구축 및 재무"),
-  studyTitle: e("Method, prototype and the conditional deal.", "วิธีการ ต้นแบบ และข้อตกลงมีเงื่อนไข", "方法、原型和有条件的交易。", "방법론, 프로토타입 및 조건부 거래."),
+  studyTitle: e(
+    "Method, prototype and the conditional deal.",
+    "วิธีการ ต้นแบบ และข้อตกลงมีเงื่อนไข",
+    "方法、原型和有条件的交易。",
+    "방법론, 프로토타입 및 조건부 거래."
+  ),
 };
 
 // ===========================================================================
@@ -632,8 +657,18 @@ export const STUDY: Record<string, Entry> = {
 // ===========================================================================
 
 export const LF: Record<string, Entry> = {
-  lfKicker: e("Regulatory landscape", "ภูมิทัศน์กฎระเบียบ", "监管格局", "규제 환경"),
-  lfTitle: e("The approvals, contracts and legal review still required.", "การอนุมัติ สัญญา และการตรวจสอบทางกฎหมายที่ยังต้องการ", "仍需的批准、合同和法律审查。", "여전히 필요한 승인, 계약 및 법적 검토."),
+  lfKicker: e(
+    "PPP, concessions and the politics of approach",
+    "PPP สัมปทาน และการเมืองของแนวทาง",
+    "PPP、特许经营与路径政治",
+    "PPP, 양허, 그리고 접근의 정치"
+  ),
+  lfTitle: e(
+    "Can you have cake and eat it too? Yes — if the contract joins the ledgers.",
+    "กินเค้กแล้วเก็บไว้ได้ไหม? ได้ — ถ้าสัญญาเชื่อมบัญชีสองเล่ม",
+    "鱼和熊掌可以兼得吗？可以——如果合同把两本账连在一起。",
+    "케이크를 먹고도 남길 수 있는가? 가능하다 — 계약이 두 원장을 이으면."
+  ),
 };
 
 // ===========================================================================
@@ -641,8 +676,18 @@ export const LF: Record<string, Entry> = {
 // ===========================================================================
 
 export const PA: Record<string, Entry> = {
-  paKicker: e("Program history", "ประวัติโปรแกรม", "项目历史", "프로그램 역사"),
-  paTitle: e("The depa \u00d7 USDOT learning journey, year by year.", "การเดินทางเรียนรู้ depa \u00d7 USDOT ปีต่อปี", "depa × USDOT学习之旅，逐年回顾。", "depa × USDOT 학습 여정, 해마다."),
+  paKicker: e(
+    "USASCP Sustainable Mobility Programme · 2022–2026",
+    "โปรแกรมการสัญจรที่ยั่งยืน USASCP · 2022–2026",
+    "USASCP可持续出行计划 · 2022–2026",
+    "USASCP 지속가능 모빌리티 프로그램 · 2022–2026"
+  ),
+  paTitle: e(
+    "Four years. Eight cities. One useful habit: keep going.",
+    "สี่ปี แปดเมือง นิสัยที่มีประโยชน์หนึ่งอย่าง: เดินหน้าต่อ",
+    "四年。八座城市。一个有用的习惯：继续做下去。",
+    "4년. 여덟 도시. 하나의 유용한 습관: 계속 가라."
+  ),
 };
 
 // ===========================================================================
@@ -650,8 +695,18 @@ export const PA: Record<string, Entry> = {
 // ===========================================================================
 
 export const CH: Record<string, Entry> = {
-  chKicker: e("People + history", "บุคคล + ประวัติ", "人物 + 历史", "사람 + 역사"),
-  chTitle: e("The collaboration behind the toolkit.", "การร่วมมือเบื้องหลังชุดเครื่องมือ", "工具包背后的合作。", "툴킷 뒤의 협업."),
+  chKicker: e(
+    "The collaboration · 2021–2025",
+    "ความร่วมมือ · 2021–2025",
+    "合作 · 2021–2025",
+    "협업 · 2021–2025"
+  ),
+  chTitle: e(
+    "How a diplomatic initiative became a working system.",
+    "โครงการทูตกลายเป็นระบบที่ใช้งานได้อย่างไร",
+    "一项外交倡议如何变成一套运行中的系统。",
+    "외교 이니셔티브가 작동하는 시스템이 된 방식."
+  ),
 };
 
 // ===========================================================================
@@ -659,6 +714,16 @@ export const CH: Record<string, Entry> = {
 // ===========================================================================
 
 export const RT: Record<string, Entry> = {
-  rtKicker: e("Sources + references", "แหล่งข้อมูล + เอกสารอ้างอิง", "来源 + 参考文献", "출처 + 참고문헌"),
-  rtTitle: e("Every citation, traceable.", "ทุกการอ้างอิง สามารถตรวจสอบได้", "每个引用，可追溯。", "모든 인용, 추적 가능."),
+  rtKicker: e(
+    "Bibliography · data inventory · reproducibility",
+    "บรรณานุกรม · คลังข้อมูล · การทำซ้ำได้",
+    "参考文献 · 数据清单 · 可复现性",
+    "참고문헌 · 데이터 목록 · 재현성"
+  ),
+  rtTitle: e(
+    "Open the cupboard. Check our ingredients.",
+    "เปิดตู้ดู ส่วนผสมของเรา",
+    "打开橱柜。核对我们的原料。",
+    "찬장을 여십시오. 재료를 확인하십시오."
+  ),
 };

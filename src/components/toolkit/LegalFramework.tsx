@@ -10,6 +10,11 @@
 
 import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
+import { LF } from "./translations";
+
+function tr(key: string, lang: Lang): string {
+  return LF[key]?.[lang] ?? LF[key]?.en ?? key;
+}
 
 const PPP_CITATIONS: Citation[] = [
   {
@@ -211,8 +216,8 @@ export function LegalFramework({ lang = "en" }: { lang?: Lang }) {
   return (
     <section className="lf-section" id="legal" aria-labelledby="legal-title">
       <header className="lf-section__head">
-        <p className="tk-kicker">PPP, concessions and the politics of approach</p>
-        <h2 id="legal-title">Can you have cake and eat it too? Yes — if the contract joins the ledgers.</h2>
+        <p className="tk-kicker">{tr("lfKicker", lang)}</p>
+        <h2 id="legal-title">{tr("lfTitle", lang)}</h2>
         <p className="lf-section__standfirst">
           The professors who say "you can't" are right about one thing: a farebox-only deal structure is a bet
           against the last decade of transit finance. The operator sells rides; the city receives safety, emissions
