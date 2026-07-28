@@ -56,7 +56,7 @@ const BEATS: Beat[] = [
     label: "Authority",
     status: "Due diligence",
     title: "The app can be built before the concession. The service cannot.",
-    body: "Before fleet finance comes route authority, curb access, fare approval, insurance, data responsibilities and a contract long enough to repay the assets. Software does not make those questions disappear. It makes them visible sooner.",
+    body: "Route authority, curb access, fare approval, insurance, a contract long enough to repay the assets — none of that shows up in a demo. Software doesn't make those questions disappear. It makes them visible sooner.",
     proof: "The feasibility chapter separates the operating case from the approvals and contracts still requiring legal review.",
     href: "#feasibility",
     link: "Inspect the feasibility case"

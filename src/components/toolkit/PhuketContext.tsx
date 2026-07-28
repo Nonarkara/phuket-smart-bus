@@ -196,7 +196,6 @@ function MonsoonChart() {
         {months.map((d, i) => {
           const x = pad + i * stepX;
           const y = h - pad - barH(d.mm);
-          const isMonsoon = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"].includes(d.mm >= 200 ? d.mm >= 200 ? d.m : d.m : d.m) || d.mm >= 200;
           const monsoon = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"].includes(d.m);
           return (
             <g key={d.m}>
@@ -540,18 +539,14 @@ export function PhuketContext() {
           the October 2025 reading was 508 mm — more than 50% above the long-term norm.
         </p>
         <p>
-          The 30 June 2024 flood is the recent reference event. A orographic-lift
-          pattern over central Phuket dropped <strong>320.4 mm at the Bang Niew
-          Dam station in four hours</strong> (05:00–09:00, 29–30 June 2024). The
-          Governor declared Kathu and Thalang disaster zones — 1,468 people in
-          740 households across seven sub-districts. Low-lying roads were
-          impassable. The Phuket–Phang Nga main artery was closed.
+          The 30 June 2024 flood is the one to know. Rain got trapped against the hills behind town and
+          dumped <strong>320 mm on Bang Niew Dam in four hours</strong> (05:00–09:00, 29–30 June 2024). The
+          Governor declared Kathu and Thalang disaster zones — 1,468 people, 740 households, seven
+          sub-districts. Low roads went under. The Phuket–Phang Nga highway closed.
         </p>
         <p>
-          A public bus that runs on a fixed route and a published timetable is the
-          transport mode that copes best with a road network that goes underwater
-          three or four times a year: a songthaew or a Grab driver simply
-          disappears; the bus either runs or it is the news.
+          This is the case for a fixed-route bus in one sentence: a songthaew or a Grab driver can just not
+          show up when the road floods. A bus on a published timetable either runs, or its absence is news.
         </p>
       </ResearchPanel>
 
@@ -632,10 +627,9 @@ export function PhuketContext() {
               <p>
                 Phuket International Airport processes 17.2 million passengers,
                 operating at 39% over the 12.5-million designed capacity (a
-                limit exceeded in 2015). In June, the orographic-lift storm
-                triggers a governor's disaster declaration for Kathu and
-                Thalang. By October, the island is again over its 30-year
-                rainfall normal.
+                limit exceeded in 2015). In June, a storm trapped against the
+                hills dumps a disaster declaration on Kathu and Thalang. By
+                October, the island is again over its 30-year rainfall norm.
               </p>
             </div>
           </li>
@@ -648,26 +642,18 @@ export function PhuketContext() {
         citations={HIST_CITATIONS}
       >
         <p>
-          The 500-year span above is a 12-paragraph compression of more than a
-          century of work by Thai, British, French and Australian historians —
-          most usefully summarised in the Siam Society's 2021 survey of the
-          Andaman tin industry, the Phuket Provincial Government's 2024 "Visit
-          Phuket" historical note, and the 2014 UNESCO intangible cultural
-          heritage dossier on the Moken.
+          Six moments, four centuries — compressed from real sources: the Siam Society's 2021 survey of
+          the Andaman tin trade, the Provincial Government's own history note, and UNESCO's 2014 dossier
+          on the Moken.
         </p>
         <p>
-          The 2004 tsunami figures are the Thai Department of Disaster
-          Prevention and Mitigation (DDPM) final numbers, March 2005. They
-          differ slightly from the Tsunami Evaluation Coalition's 227,898
-          total, which aggregates 14 countries — the Thai numbers are the
-          province-level breakdown.
+          The 2004 tsunami numbers are Thailand's official count (DDPM, March 2005) — the province-level
+          breakdown, not the 14-country total you'll see quoted elsewhere.
         </p>
         <p>
-          Where the timeline is thin: the Moken presence in Phuket before
-          the 19th-century tin rush is <em>poorly documented</em> in Thai
-          state records, because the Burmese destroyed all island settlements
-          in 1810. We work from oral histories collected by the Moken
-          themselves and from comparative Austronesian linguistics.
+          Where we're guessing: how long the Moken were in Phuket before the 19th-century tin rush. The
+          Burmese burned every settlement on the island in 1810, so the written record starts late. What we
+          have instead is Moken oral history and what their language tells us about where they came from.
         </p>
       </ResearchPanel>
 
@@ -724,12 +710,10 @@ export function PhuketContext() {
           (ThaiRSC, reported in The Phuket News).
         </p>
         <p>
-          This is the case for a bus: <em>not</em> because the bus is a
-          technology that beats a car, but because the choice tourists
-          actually face, in the absence of a bus, is between an expensive
-          monopoly (Grab), a dangerous motorbike, or a private car whose
-          owner is also a tourist. The bus is the option that does not
-          transfer a 25.4/100k mortality risk onto its rider.
+          Nobody's claiming a bus beats a car on the open road. But that's not the actual choice a tourist
+          faces here. Without a bus, it's Grab at monopoly prices, a motorbike you've never ridden on roads
+          you don't know, or a rental car in a country with the region's worst safety record. The bus is
+          the one option that doesn't hand you a share of that 25.4-per-100,000 death rate.
         </p>
       </ResearchPanel>
 
@@ -742,11 +726,9 @@ export function PhuketContext() {
         citations={AIRPORT_CITATIONS}
       >
         <p>
-          17.4 million passengers in 2025 (96.44% of the 2019 pre-pandemic
-          peak) is the headline. The compound: <strong>10.0 million
-          international</strong> and <strong>6.6 million domestic</strong>,
-          over 106,581 aircraft movements, both directions. By 2025 the
-          airport is the second-busiest in Thailand, after Bangkok Don Mueang.
+          17.4 million passengers in 2025 — 96.4% of the 2019 record, split <strong>10.0 million
+          international</strong> to <strong>6.6 million domestic</strong>, over 106,581 flights both
+          ways. Second-busiest airport in Thailand now, after Bangkok Don Mueang.
         </p>
         <p>
           The nationalities (immigration data, 2025) are the basis for the

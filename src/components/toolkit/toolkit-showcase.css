@@ -1572,25 +1572,37 @@ html.toolkit-site-mode #root {
   right: 18px;
   bottom: 18px;
   z-index: 30;
+  font-family: var(--font-body);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.lst.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .lst { transition: opacity 0.01ms; }
+}
+
+/* Collapsed pill — the default state. Small on purpose: a floating badge
+   this size covers a word or two of whatever's underneath, not a card. */
+.lst__pill {
   display: flex;
-  align-items: stretch;
-  gap: 0;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
   background: rgba(17, 24, 32, 0.96);
   color: #fff;
-  padding: 0;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-  max-width: 320px;
-  z-index: 30;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  font: 700 0.8rem/1 var(--font-mono);
 }
+.lst__pill:hover, .lst__pill:focus-visible { border-color: rgba(255, 255, 255, 0.4); }
 .lst__pulse {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
   background: #16a574;
   border-radius: 50%;
   box-shadow: 0 0 0 0 rgba(22, 165, 116, 0.6);
@@ -1598,10 +1610,38 @@ html.toolkit-site-mode #root {
 }
 @keyframes lst-pulse {
   0% { box-shadow: 0 0 0 0 rgba(22, 165, 116, 0.5); }
-  100% { box-shadow: 0 0 0 12px rgba(22, 165, 116, 0); }
+  100% { box-shadow: 0 0 0 10px rgba(22, 165, 116, 0); }
+}
+.lst__pill-missed { color: rgba(255, 255, 255, 0.55); }
+.lst__pill-missed.is-alert { color: #ff8b75; }
+
+/* Expanded detail — a popover above the pill, shown on hover/focus/tap.
+   Absolutely positioned so it never affects layout or reserves space. */
+.lst__detail {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: flex;
+  align-items: stretch;
+  background: rgba(17, 24, 32, 0.96);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  max-width: 320px;
+  font-size: 0.85rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+.lst:hover .lst__detail,
+.lst.is-expanded .lst__detail {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 .lst__clock, .lst__metric {
-  padding: 12px 16px 12px 28px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1616,7 +1656,7 @@ html.toolkit-site-mode #root {
   color: rgba(255, 255, 255, 0.55);
   font-family: var(--font-mono);
 }
-.lst strong {
+.lst__detail strong {
   font-family: var(--font-mono);
   font-size: 1.4rem;
   font-weight: 700;
@@ -1624,20 +1664,16 @@ html.toolkit-site-mode #root {
   line-height: 1;
   color: #fff;
 }
-.lst strong.is-alert { color: #ff8b75; }
-.lst small {
+.lst__detail strong.is-alert { color: #ff8b75; }
+.lst__detail small {
   font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.65);
   line-height: 1.35;
 }
 
 @media (max-width: 720px) {
-  .lst {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-    max-width: none;
-  }
+  .lst { right: 12px; bottom: 12px; }
+  .lst__detail { max-width: calc(100vw - 24px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lst__pulse { animation: none; }

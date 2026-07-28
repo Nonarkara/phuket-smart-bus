@@ -1,11 +1,10 @@
 /**
  * Legal Framework — PPP, concession contracts and the politics of approach.
  *
- * This chapter is for the professors at USL Transport Institute who say
- * "you can't have cake and eat it too." The response: you can, if the
- * contract joins the ledgers. This section lays out the Thai PPP framework,
- * the concession structure, the risk allocation matrix, and the political
- * pathway from Governor to DLT.
+ * The skeptic's line is "you can't have cake and eat it too." The response:
+ * you can, if the contract joins the ledgers. This section lays out the Thai
+ * PPP framework, the concession structure, the risk allocation matrix, and
+ * the political pathway from Governor to DLT.
  */
 
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
@@ -213,10 +212,10 @@ export function LegalFramework() {
         <p className="tk-kicker">PPP, concessions and the politics of approach</p>
         <h2 id="legal-title">Can you have cake and eat it too? Yes — if the contract joins the ledgers.</h2>
         <p className="lf-section__standfirst">
-          The professors who say "you can't" are right about one thing: a farebox-only deal structure is a bet
-          against the last decade of transit finance. The operator sells rides; the city receives safety, emissions
-          reductions and access. If government wants those benefits, and banks want a credible repayment story,
-          the contract has to join the two ledgers. That is not a slogan. It is a structure.
+          The skeptics are right about one thing: a farebox-only deal is a bet against the last decade of
+          transit finance. The operator sells rides; the city gets safety, cleaner air and less congestion for free.
+          If government wants those benefits and the bank wants a repayment story, the contract has to join
+          both ledgers. That's not a slogan — it's a structure, and it's spelled out below.
         </p>
       </header>
 

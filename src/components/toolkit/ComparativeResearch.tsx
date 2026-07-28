@@ -223,9 +223,8 @@ export function ComparativeResearch() {
       <div className="cr-rebuttal">
         <h3 className="cr-subhead">"You can't have cake and eat it too" — five claims, five responses</h3>
         <p className="cr-intro-note">
-          This is the direct engagement with the skeptical position. Each claim a professor at USL Transport Institute
-          might make, followed by the evidence that either confirms, qualifies or overturns it. The goal is not to
-          win an argument — it is to show where the argument's premises break down.
+          Five things a skeptic says about tourist-transit economics, and what actually happens when you check.
+          Not to win the argument — to find out which parts of it are true.
         </p>
         <div className="cr-rebuttal-grid">
           {CAKE_REBUTTAL.map((item, index) => (
