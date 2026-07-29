@@ -32,6 +32,8 @@ import "./toolkit-hub.css";
 
 const BUS_URL = "https://bus.nonarkara.org/";
 
+const PARTNERS = ["Volpe Center", "USC", "Chulalongkorn University"];
+
 type TabId = "overview" | "phuket" | "evidence" | "build" | "fieldnotes";
 
 const TABS: { id: TabId; label: string; short: string; kicker: string }[] = [
@@ -107,10 +109,42 @@ export default function ToolkitHub() {
       <header className="hub-nav" role="banner">
         <div className="hub-nav__brand-row">
           <a className="hub-nav__brand" href="#overview" aria-label="Home" onClick={(e) => { e.preventDefault(); selectTab("overview"); }}>
-            <span className="hub-nav__logo">NON</span>
+            <span className="hub-nav__hosts" aria-label="Hosted by depa, Smart City Thailand Office and the U.S. Department of Transportation">
+              <img
+                className="hub-nav__host-logo hub-nav__host-logo--depa"
+                src={`${import.meta.env.BASE_URL}brand/depa.jpg`}
+                alt="Digital Economy Promotion Agency (depa)"
+                width={118}
+                height={80}
+              />
+              <span className="hub-nav__hosts-rule" aria-hidden="true" />
+              <img
+                className="hub-nav__host-logo hub-nav__host-logo--sct"
+                src={`${import.meta.env.BASE_URL}brand/smart-city-thailand.jpg`}
+                alt="Smart City Thailand Office"
+                width={80}
+                height={80}
+              />
+              <span className="hub-nav__hosts-rule" aria-hidden="true" />
+              <img
+                className="hub-nav__host-logo hub-nav__host-logo--usdot"
+                src={`${import.meta.env.BASE_URL}brand/usdot.svg`}
+                alt="U.S. Department of Transportation"
+                width={80}
+                height={80}
+              />
+            </span>
             <div className="hub-nav__title-group">
               <strong>How to Build a Public Transit System</strong>
-              <small>The Case of Phuket Smart Bus · depa × USDOT</small>
+              <small>The Case of Phuket Smart Bus</small>
+              <span className="hub-nav__partners" aria-label="With Volpe Center, USC and Chulalongkorn University">
+                {PARTNERS.map((p, i) => (
+                  <span key={p}>
+                    {i > 0 && <b aria-hidden="true">·</b>}
+                    {p}
+                  </span>
+                ))}
+              </span>
             </div>
           </a>
           <a className="hub-nav__live" href={BUS_URL}>Live system ↗</a>
