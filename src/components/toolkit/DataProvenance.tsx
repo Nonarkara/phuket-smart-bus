@@ -167,11 +167,13 @@ export function DataProvenance() {
         </table>
       </div>
       <p className="dp-cite">
-        <strong>How to cite this toolkit.</strong>{" "}
+        <strong>How to cite this system.</strong>{" "}
         Arkaraprasertkul, N. <em>How to Build a Public Transit System: The Case of Phuket Smart Bus</em>,
         depa × USASCP, 2026.{" "}
         <a href="https://depa-usdot.nonarkara.org/">https://depa-usdot.nonarkara.org/</a>{" "}
-        (accessed <time dateTime="2026-07-26">26 July 2026</time>).
+        (accessed <time dateTime="2026-07-26">26 July 2026</time>). This is a citation for the working
+        system, not a substitute for citing the research behind it — see{" "}
+        <a href="#toolkit-document">the toolkit itself</a>, in Field Notes, for the original.
       </p>
     </section>
   );

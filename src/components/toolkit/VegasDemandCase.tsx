@@ -462,12 +462,12 @@ export function VegasDemandCase() {
       <div className="vc-problem" role="group" aria-label="The Vegas Strip problem">
         <figure className="vc-problem__photo">
           <img
-            src={`${import.meta.env.BASE_URL}toolkit/vegas/deuce-strip.jpg`}
-            alt="A double-decker RTC Deuce bus running on the Las Vegas Strip, the corridor that once had a 4.2 per 100,000 pedestrian death rate"
+            src={`${import.meta.env.BASE_URL}toolkit/vegas/deuce-portrait.jpg`}
+            alt="A double-decker RTC Deuce bus on the Las Vegas Strip, the corridor that once had a 4.2 per 100,000 pedestrian death rate"
             loading="lazy"
           />
           <figcaption>
-            <span>Photo: Eric Fischer · CC BY 2.0 · Wikimedia Commons</span>
+            <span>Photo: Julian Lupyan · CC0 · Wikimedia Commons</span>
           </figcaption>
         </figure>
         <div className="vc-problem__text">
@@ -539,15 +539,14 @@ export function VegasDemandCase() {
       {/* PROFIT AND RIDE-HAIL ----------------------------------------- */}
       <ProfitChart />
 
-      <div className="vc-spread">
-        <ResearchPanel
-          title="The financial trajectory — what the Strip corridor earned, then lost"
-          stats={PROFIT_STATS}
-          citations={PROFIT_CITATIONS}
-          defaultOpen={false}
-        />
-        <VegasFile vegasCase={VEGAS_CASES.financing} />
-      </div>
+      <VegasFile vegasCase={VEGAS_CASES.financing} />
+
+      <ResearchPanel
+        title="The financial trajectory — what the Strip corridor earned, then lost"
+        stats={PROFIT_STATS}
+        citations={PROFIT_CITATIONS}
+        defaultOpen={false}
+      />
 
       {/* THE PHUKET TRANSFER ------------------------------------------ */}
       <div className="vc-section__divider">

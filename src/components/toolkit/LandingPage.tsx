@@ -238,10 +238,11 @@ export function LandingPage() {
           <p className="tk-kicker">The full research</p>
           <h2 id="lp-handover-title">That was the front door. The evidence room is downstairs.</h2>
           <p>
-            The long read keeps the Phuket context, Las Vegas comparison,
-            fieldwork, method, causal tests, live model, feasibility study and
-            the people who made the work possible. Dense material gets room to
-            breathe. The argument above tells you why each chapter exists.
+            This whole site is a working translation of one real document — a 23-page USASCP toolkit written by
+            the U.S. Department of Transportation, METRANS Transportation Consortium and Chulalongkorn University,
+            after four years of fieldwork pairing Phuket with Las Vegas. The long read below keeps the Phuket
+            context, the Las Vegas comparison, the method, the working model, the feasibility study, and — in
+            Field Notes — the people who did the work and the toolkit itself, downloadable in full.
           </p>
         </div>
         <div className="lp-handover__buttons">
@@ -249,12 +250,10 @@ export function LandingPage() {
           <a className="lp-btn" href="https://bus.nonarkara.org/ops">Run the operations console <span>↗</span></a>
         </div>
         <ol className="lp-handover__chapters" role="list" aria-label="Full research chapters">
-          <li><span>01</span><div><strong>Phuket</strong><em>the place and the problem</em></div></li>
-          <li><span>02</span><div><strong>Vegas</strong><em>the comparison and its limits</em></div></li>
-          <li><span>03</span><div><strong>Brief</strong><em>the conditional recommendation</em></div></li>
-          <li><span>04</span><div><strong>Method</strong><em>how findings become instruments</em></div></li>
-          <li><span>05</span><div><strong>Proof</strong><em>the working system and ledger</em></div></li>
-          <li><span>06</span><div><strong>Feasibility</strong><em>the pilot, finance and exit doors</em></div></li>
+          <li><span>01</span><div><strong>Phuket</strong><em>the island and its transit landscape</em></div></li>
+          <li><span>02</span><div><strong>Evidence</strong><em>Las Vegas, and how the case compares</em></div></li>
+          <li><span>03</span><div><strong>Build &amp; Finance</strong><em>method, prototype, feasibility and the deal</em></div></li>
+          <li><span>04</span><div><strong>Field Notes</strong><em>the people, the history, the toolkit itself</em></div></li>
         </ol>
       </section>
     </section>

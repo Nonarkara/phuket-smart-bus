@@ -502,7 +502,7 @@ export function PhuketContext() {
       </header>
 
       <div className="pc-hero" role="group" aria-label="Headline numbers for Phuket">
-        <div className="pc-hero__photo" role="img" aria-label="Phuket field photo, 2024" style={{ backgroundImage: "url(/toolkit/field-notes/phuket-2024.jpg)" }} />
+        <div className="pc-hero__photo" role="img" aria-label="Phuket field photo, 2024" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}toolkit/field-notes/phuket-2024.jpg)` }} />
         <ul className="pc-hero__stats" role="list">
           {HEADLINE_STATS.map((s) => (
             <li key={s.label}>

@@ -9,7 +9,7 @@
  *   2. Phuket     — island context + bus systems + regulatory landscape
  *   3. Evidence   — Vegas case + global benchmarks
  *   4. Build      — method + prototype + feasibility + law
- *   5. Field notes — collaboration history + sources
+ *   5. Field notes — collaboration history + the source toolkit itself + sources
  */
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -23,6 +23,7 @@ import { LegalFramework } from "./LegalFramework";
 import { FeasibilityStudy, DesignThinkingStudy, TryLiveSystem } from "./ToolkitStudy";
 import { AbcdefFramework, ProgramArchive } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
+import { ToolkitDocument } from "./ToolkitDocument";
 import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
 import "./toolkit-showcase.css";
@@ -51,7 +52,7 @@ function getTabFromHash(): TabId {
   if (hash === "phuket" || hash === "bus-systems" || hash === "system-map") return "phuket";
   if (hash === "evidence" || hash === "comparative" || hash === "vegas-demand") return "evidence";
   if (hash === "build" || hash === "brief" || hash === "method" || hash === "proof" || hash === "pain-map" || hash === "abcdef" || hash === "feasibility" || hash === "legal" || hash === "deal" || hash === "finance") return "build";
-  if (hash === "fieldnotes" || hash === "history" || hash === "programme" || hash === "field-notes" || hash === "references") return "fieldnotes";
+  if (hash === "fieldnotes" || hash === "history" || hash === "programme" || hash === "field-notes" || hash === "references" || hash === "toolkit-document") return "fieldnotes";
   return "overview";
 }
 
@@ -256,6 +257,7 @@ function FieldNotesTab() {
   return (
     <>
       <CollaborationHistory />
+      <ToolkitDocument />
       <ProgramArchive />
       <ReferencesTab />
     </>

@@ -38,19 +38,98 @@ const HISTORY_CITATIONS: Citation[] = [
   }
 ];
 
-const PEOPLE_EXPANDED: { name: string; role: string; org: string; phase: string }[] = [
-  { name: "Roshan Desai", role: "Programme leadership", org: "U.S. Department of Transportation", phase: "2021–2025" },
-  { name: "Stephanie Fischer", role: "Programme coordination", org: "U.S. Department of Transportation", phase: "2022–2024" },
-  { name: "Anthony Jones", role: "Programme coordination", org: "U.S. Department of Transportation", phase: "2023–2024" },
-  { name: "Joseph Traini", role: "Programme coordination", org: "U.S. Department of Transportation", phase: "2023–2025" },
-  { name: "Prof. Marlon Boarnet", role: "Research and knowledge translation", org: "USC · METRANS Transportation Consortium", phase: "2023–2025" },
-  { name: "Andre Comandon", role: "University Partnership Programme", org: "METRANS Transportation Consortium", phase: "2024–2026" },
-  { name: "Dr. Non Arkaraprasertkul", role: "Phuket partnership lead, system translation", org: "Digital Economy Promotion Agency (depa)", phase: "2021–present" },
-  { name: "Pracha Asawateera", role: "Phuket stakeholder coordination", org: "Digital Economy Promotion Agency (depa)", phase: "2022–2024" },
-  { name: "Passakon Prathombutr", role: "Smart-city strategy", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
-  { name: "Supakorn Siddhichai", role: "Smart-city technology", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
-  { name: "Ton Jaitrong", role: "Colleague, capacity builder and friend", org: "Thailand · in memoriam", phase: "2022–2024" }
+type PersonEntry = { name: string; org?: string; note?: string };
+type TeamGroup = { team: string; caveat?: string; people: PersonEntry[] };
+
+const PEOPLE_BY_TEAM: TeamGroup[] = [
+  {
+    team: "USDOT · Programme management",
+    people: [
+      { name: "Joseph Traini", org: "USDOT OST" },
+      { name: "Stephanie Fischer", org: "Volpe" },
+      { name: "Roshan Desai", org: "USDOT OST" },
+      { name: "Anthony Jones", org: "Volpe" },
+      { name: "Kate Casey", org: "OST" },
+      { name: "Jonathan Robison", org: "Volpe" },
+      { name: "Hoamy Tran", org: "Volpe" },
+      { name: "Steven Wagner", org: "OST" }
+    ]
+  },
+  {
+    team: "Phuket, Thailand",
+    people: [
+      { name: "Non Arkaraprasertkul", org: "depa · Phuket partnership lead" },
+      { name: "Pracha Asawateera" },
+      { name: "Supakorn Siddhichai" },
+      { name: "Ton Jaitrong", note: "colleague and friend · in memoriam" },
+      { name: "Rutchanee Gullayanon" }
+    ]
+  },
+  {
+    team: "Las Vegas, USA",
+    people: [
+      { name: "Andrew Kjellman" },
+      { name: "David Swallow" },
+      { name: "Scott Mazick" }
+    ]
+  },
+  {
+    team: "Johor Bahru, Malaysia",
+    people: [
+      { name: "Nizam", org: "IRDA" },
+      { name: "Maimunah", org: "IRDA" },
+      { name: "Suhaimi Mohd Salleh", org: "IRDA" }
+    ]
+  },
+  {
+    team: "Jakarta, Indonesia",
+    people: [
+      { name: "Naya Pandya", org: "JakLingko" },
+      { name: "Yasmin Hadi", org: "JSC Lab" },
+      { name: "Agus Mubarok", org: "JSC Lab" }
+    ]
+  },
+  {
+    team: "Phnom Penh, Cambodia",
+    caveat: "City affiliation inferred from distribution-list grouping — not stated directly in the source records.",
+    people: [
+      { name: "Vannak Seng" },
+      { name: "Martin Saram" },
+      { name: "Theam Deka" },
+      { name: "Kimchhuon Man" },
+      { name: "Phanin Ch" },
+      { name: "Chanseka" }
+    ]
+  },
+  {
+    team: "Portland, USA",
+    people: [
+      { name: "Malu Wilkinson", org: "Metro" },
+      { name: "April Bertelsen", org: "City of Portland" },
+      { name: "Kelly Betteridge", org: "Metro" }
+    ]
+  },
+  {
+    team: "Los Angeles, USA",
+    people: [
+      { name: "Andrew Shavit", org: "Metro" },
+      { name: "R. Chavez", org: "Metro" },
+      { name: "Rubina Ghazarian", org: "City of Los Angeles" },
+      { name: "Shirin Sadrpour", org: "City of Los Angeles" }
+    ]
+  },
+  {
+    team: "Boston · Research & university partners",
+    people: [
+      { name: "Marlon Boarnet", org: "USC" },
+      { name: "Andre Comandon", org: "USC" },
+      { name: "Tom O'Brien", org: "CSULB" },
+      { name: "Tyler Reeb", org: "CSULB" }
+    ]
+  }
 ];
+
+const PEOPLE_COUNT = PEOPLE_BY_TEAM.reduce((sum, t) => sum + t.people.length, 0);
 
 type Phase = {
   id: string;
@@ -346,8 +425,10 @@ export function CollaborationHistory() {
           {EVOLUTION_STAGES.map((stage) => (
             <li key={stage.year}>
               <span>{stage.year}</span>
-              <strong>{stage.role}</strong>
-              <p>{stage.note}</p>
+              <div>
+                <strong>{stage.role}</strong>
+                <p>{stage.note}</p>
+              </div>
             </li>
           ))}
         </ol>
@@ -358,18 +439,32 @@ export function CollaborationHistory() {
         <div className="th-people__intro">
           <span className="tk-kicker">The people</span>
           <h3>Programmes are made by people who answer the next email.</h3>
-          <p>The named programme stewards in the records available to this site. Not a logo wall — actual humans who showed up, more than once, and did the work.</p>
+          <p>{PEOPLE_COUNT} names across nine teams, compiled from programme correspondence and workshop distribution
+          lists. Not a logo wall — actual humans who showed up, more than once, and did the work.</p>
         </div>
-        <div className="th-people__grid">
-          {PEOPLE_EXPANDED.map((person) => (
-            <article key={person.name}>
-              <h4>{person.name}</h4>
-              <p>{person.role}</p>
-              <small>{person.org}</small>
-              <span>{person.phase}</span>
+        <div className="th-people__teams">
+          {PEOPLE_BY_TEAM.map((team) => (
+            <article key={team.team} className="th-team">
+              <h4>{team.team}</h4>
+              <ul>
+                {team.people.map((p) => (
+                  <li key={p.name}>
+                    <strong>{p.name}</strong>
+                    {p.org && <span>{p.org}</span>}
+                    {p.note && <small>{p.note}</small>}
+                  </li>
+                ))}
+              </ul>
+              {team.caveat && <p className="th-team__caveat">{team.caveat}</p>}
             </article>
           ))}
         </div>
+        <p className="th-people__gap">
+          <strong>What's still missing.</strong> No formal participant roster, no registration spreadsheet, no
+          single document mapping every city pair to every name. This list is what actually survived in programme
+          correspondence — complete enough to credit real people, not complete enough to call final. If you were
+          in the room and aren't here, tell us.
+        </p>
       </div>
 
       <ResearchPanel
