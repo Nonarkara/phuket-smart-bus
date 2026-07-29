@@ -52,7 +52,7 @@ const PEOPLE_EXPANDED: { name: string; role: string; org: string; phase: string 
   { name: "Prof. Marlon Boarnet", role: "Research and knowledge translation", org: "USC · METRANS Transportation Consortium", phase: "2023–2025" },
   { name: "Andre Comandon", role: "University Partnership Programme", org: "METRANS Transportation Consortium", phase: "2024–2026" },
   { name: "Dr. Non Arkaraprasertkul", role: "Phuket partnership lead, system translation", org: "Digital Economy Promotion Agency (depa)", phase: "2021–present" },
-  { name: "Pracha Asawateera", role: "Phuket stakeholder coordination", org: "Digital Economy Promotion Agency (depa)", phase: "2022–2024" },
+  { name: "Pracha Asawateera", role: "Phuket coordination", org: "Digital Economy Promotion Agency (depa)", phase: "2022–2024" },
   { name: "Passakon Prathombutr", role: "Smart-city strategy", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
   { name: "Supakorn Siddhichai", role: "Smart-city technology", org: "Digital Economy Promotion Agency (depa)", phase: "2021–2024" },
   { name: "Ton Jaitong", role: "Team Leader, depa Southern Office · colleague and friend", org: "Thailand · in memoriam", phase: "2022–2024" }

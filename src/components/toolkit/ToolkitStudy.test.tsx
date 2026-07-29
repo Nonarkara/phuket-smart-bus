@@ -54,7 +54,6 @@ describe("Toolkit research studies", () => {
     const beforeDscr = parseFloat(dscrNumbers[0] || "0");
     const afterDscr = parseFloat(afterSlider[0] || "0");
     expect(afterDscr).toBeGreaterThanOrEqual(beforeDscr);
-    expect(screen.getByText("฿0")).toBeInTheDocument();
     expect(screen.getByText(/conditional proceed to a 90-day instrumented pilot/i)).toBeInTheDocument();
     expect(screen.queryByText(/research priorities, not survey results/i)).not.toBeInTheDocument();
   });

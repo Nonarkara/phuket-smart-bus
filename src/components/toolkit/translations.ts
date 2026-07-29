@@ -95,10 +95,10 @@ export const HUB: Record<string, Entry> = {
 
   // Footer
   footerCredit: e(
-    "The City Systems Toolkit · depa × USDOT learning journey · built in Phuket",
-    "ชุดเครื่องมือระบบเมือง · การเดินทางเรียนรู้ depa × USDOT · สร้างในภูเก็ต",
-    "城市系统工具包 · depa × USDOT 学习之旅 · 在普吉创建",
-    "시티 시스템 툴킷 · depa × USDOT 학습 여정 · 푸껫에서 구축"
+    "The City Systems Toolkit · depa × USDOT · built in Phuket",
+    "ชุดเครื่องมือระบบเมือง · depa × USDOT · สร้างในภูเก็ต",
+    "城市系统工具包 · depa × USDOT · 在普吉创建",
+    "시티 시스템 툴킷 · depa × USDOT · 푸껫에서 구축"
   ),
   footerTagline: e("Research asks why. Building finds out.", "งานวิจัยถามว่าทำไม การสร้างค้นพบคำตอบ", "研究问为什么。建设找出答案。", "연구는 왜라고 묻습니다. 구축은 답을 찾습니다."),
   footerSeeRunning: e("See what is already running", "ดูสิ่งที่กำลังทำงานอยู่", "查看正在运行的系统", "이미 운영 중인 시스템 보기"),
@@ -156,16 +156,16 @@ export const LANDING: Record<string, Entry> = {
   // Signal chain
   signalKicker: e("One screen · five consequences", "หน้าจอเดียว · ห้าผลกระทบ", "一个屏幕 · 五个后果", "하나의 화면 · 다섯 가지 결과"),
   signalTitle: e(
-    "A ticket is not the end of the journey. It is the first useful signal.",
-    "ตั๋วไม่ใช่จุดสิ้นสุดของการเดินทาง แต่เป็นสัญญาณแรกที่มีประโยชน์",
-    "车票不是旅程的终点。它是第一个有用的信号。",
-    "티켓은 여정의 끝이 아닙니다. 그것은 첫 번째 유용한 신호입니다."
+    "A ticket is not the end. It is the first useful signal.",
+    "ตั๋วไม่ใช่จุดจบ แต่เป็นสัญญาณแรกที่มีประโยชน์",
+    "车票不是终点。它是第一个有用的信号。",
+    "티켓은 끝이 아닙니다. 첫 번째 유용한 신호입니다."
   ),
   signalBody: e(
-    "The design stays simple because the machinery behind it is explicit. Each handoff creates a record, and each record answers a different decision.",
-    "การออกแบบยังคงเรียบง่ายเพราะกลไกเบื้องหลังชัดเจน การส่งมอบแต่ละครั้งสร้างบันทึก และบันทึกแต่ละรายการตอบการตัดสินใจที่แตกต่างกัน",
-    "设计保持简洁，因为背后的机制是明确的。每次交接都创建一条记录，每条记录回答一个不同的决策。",
-    "디자인은 그 뒤의 기계 장치가 명시적이기 때문에 단순하게 유지됩니다. 각 인계는 기록을 생성하고, 각 기록은 다른 결정에 답합니다."
+    "Each handoff creates a record. Each record answers a different decision. The screen stays simple because the machinery is named.",
+    "การส่งมอบแต่ละครั้งสร้างบันทึก บันทึกแต่ละรายการตอบการตัดสินใจที่ต่างกัน หน้าจอยังเรียบง่ายเพราะกลไกถูกตั้งชื่อไว้",
+    "每次交接都留下记录。每条记录回答一个不同的决定。屏幕保持简单，因为机器已被点名。",
+    "각 인계는 기록을 만듭니다. 각 기록은 다른 결정에 답합니다. 기계 장치가 이름 붙여져 있기에 화면은 단순합니다."
   ),
 
   // Signal chain actors
@@ -270,10 +270,10 @@ export const LANDING: Record<string, Entry> = {
   beat02Label: e("02 · Justify", "02 · เหตุผล", "02 · 论证", "02 · 정당화"),
   beat02Title: e("What does not building cost — accidents, congestion, carbon, health?", "การไม่สร้างมีต้นทุนอะไร — อุบัติเหตุ รถติด คาร์บอน สุขภาพ?", "不建设的代价是什么——事故、拥堵、碳、健康？", "만들지 않을 때의 비용은? — 사고·혼잡·탄소·건강"),
   beat02Body: e(
-    "Before feasibility, show the public cost of single-occupancy vehicles: crashes per year, money lost in congestion, CO₂ and CO burden, and the cardiovascular load that follows dirty air. That is why a transit system earns the right to exist.",
-    "ก่อนความเป็นไปได้ แสดงต้นทุนสาธารณะของรถส่วนบุคคล: อุบัติเหตุต่อปี เงินที่หายในรถติด ภาระ CO₂ และ CO และภาระหัวใจที่ตามมลพิษ นั่นคือเหตุผลว่าระบบขนส่งมีสิทธิ์มีอยู่",
-    "在可行性之前，先展示单人驾车的公共成本：年事故、拥堵损失、CO₂与CO负担，以及脏空气带来的心血管负荷。这是公交系统有权存在的理由。",
-    "타당성 전에 1인 승용차의 공공 비용을 보여 주십시오: 연간 사고, 혼잡 손실, CO₂·CO 부담, 그리고 더러운 공기가 뒤따르는 심혈관 부하. 그것이 대중교통이 존재할 권리를 얻는 이유입니다."
+    "Doing nothing has a bill: crashes each year, money burned in congestion, CO₂ and CO in the air, and the hearts that pay for that air. Name that bill before you talk feasibility. That is why a transit system gets to exist.",
+    "การไม่ทำอะไรมีบิล: อุบัติเหตุต่อปี เงินที่ไหม้ในรถติด CO₂ และ CO ในอากาศ และหัวใจที่จ่ายราคาอากาศนั้น ตั้งชื่อบิลนั้นก่อนพูดความเป็นไปได้ นั่นคือเหตุผลว่าระบบขนส่งมีสิทธิ์มีอยู่",
+    "什么都不做也有账单：每年事故、堵在拥堵里的钱、空气里的CO₂和CO，以及为那空气付钱的心脏。先点名那张账单，再谈可行性。那就是公交系统有权存在的原因。",
+    "아무것도 하지 않는 데도 청구서가 있습니다: 연간 사고, 혼잡에 태워진 돈, 공기 속 CO₂와 CO, 그리고 그 공기에 값을 치르는 심장. 타당성을 말하기 전에 그 청구서를 이름 붙이십시오. 그것이 대중교통이 존재할 이유입니다."
   ),
   beat02Proof: e(
     "Impact and ROI chapters model avoided vehicle-km and CO₂; crash and congestion figures still need sourced local baselines.",
@@ -366,10 +366,10 @@ export const LANDING: Record<string, Entry> = {
   beat08Label: e("08 · Digital safety", "08 · ความปลอดภัยดิจิทัล", "08 · 数字安全", "08 · 디지털 안전"),
   beat08Title: e("Open-loop payment. Cameras that count — and watch for fatigue.", "จ่ายเปิดลูป กล้องที่นับ — และเฝ้าความเหนื่อยล้า", "开环支付。能计数——并盯住疲劳——的摄像。", "오픈루프 결제. 세고 — 피로를 보는 — 카메라."),
   beat08Body: e(
-    "Open-loop fare collection removes friction. Closed-circuit cameras with AI help count boardings and alightings, protect riders, and flag sleepy drivers. Digital encapsulation of safety is not decoration — it is how public transit earns trust.",
-    "เก็บค่าโดยสารเปิดลูปลดแรงเสียดทาน กล้องวงจรปิดพร้อม AI ช่วยนับขึ้นลง ปกป้องผู้โดยสาร และเตือนคนขับง่วง การห่อความปลอดภัยด้วยดิจิทัลไม่ใช่ของตกแต่ง — เป็นวิธีที่ขนส่งสาธารณะได้ความไว้ใจ",
-    "开环收费减少摩擦。带AI的闭路摄像帮助统计上下车、保护乘客、发现困倦司机。用数字方式封装安全不是装饰——这是公交换取信任的方式。",
-    "오픈루프 요금은 마찰을 줄입니다. AI 폐쇄회로 카메라는 승하차를 세고, 승객을 지키며, 졸린 운전기사를 표시합니다. 안전을 디지털로 감싸는 것은 장식이 아닙니다 — 대중교통이 신뢰를 얻는 방식입니다."
+    "Take payment without inventing a new wallet. Put cameras on the door that count who gets on and off — and that catch a driver falling asleep. That is how a bus system earns trust, not by promising safety in a brochure.",
+    "รับเงินโดยไม่สร้างกระเป๋าใหม่ ติดกล้องที่ประตูเพื่อนับใครขึ้นลง — และจับคนขับที่เผลอง่วง นั่นคือวิธีที่ระบบรถบัสได้ความไว้ใจ ไม่ใช่การสัญญาในโบรชัวร์",
+    "收钱而不发明新钱包。在车门装上能数上下车——也能发现司机打瞌睡——的摄像。公交系统靠这个换信任，不靠宣传册里的安全承诺。",
+    "새 지갑을 만들지 않고 결제하십시오. 문에 카메라를 달아 누가 타고 내리는지를 세고 — 졸고 있는 운전기사도 잡으십시오. 그것이 버스 시스템이 신뢰를 얻는 방식이지, 브로슈어의 안전 약속이 아닙니다."
   ),
   beat08Proof: e(
     "Payment mock + seat/passenger-flow/driver-attention types and ingest endpoints already exist; vendor PDPA proof still owed.",
@@ -444,13 +444,13 @@ export const LANDING: Record<string, Entry> = {
 
 export const PB: Record<string, Entry> = {
   // Section header
-  pbKicker: e("The transit landscape", "ภูมิทัศน์การขนส่ง", "交通格局", "교통 환경"),
+  pbKicker: e("What already runs", "สิ่งที่วิ่งอยู่แล้ว", "已经在跑的", "이미 운행 중인 것"),
   pbTitle: e("What buses already run in Phuket.", "ภูเก็ตมีรถบัสอะไรวิ่งอยู่แล้ว", "普吉已经有哪些巴士在运行。", "푸껫에서 이미 운행 중인 버스."),
   pbStandfirst: e(
-    "The answer is messier than visitors expect. Three formal operators, a government competitor on the airport corridor, an informal songthaew network, and a ride-hailing monopoly. The regulatory regime forbids buses from stopping at hotels \u2014 a structural capture suppressor that taxis exploit. Understanding the landscape is step zero before any expansion argument.",
-    "คำตอบซับซ้อนกว่าที่นักท่องเที่ยวคาดไว้ มีผู้ประกอบการทางการสามราย คู่แข่งของรัฐบาลในเส้นทางสนามบิน เครือข่ายสองแถวนอกระบบ และผูกขาดการเรียกรถ ระเบียบห้ามรถบัสจอดที่โรงแรม \u2014 ตัวยับยั้งการดึงผู้โดยสารเชิงโครงสร้างที่แท็กซี่ใช้ประโยชน์ การทำความเข้าใจภูมิทัศน์คือขั้นตอนที่ศูนย์ก่อนข้อโต้แย้งการขยายใดๆ",
-    "答案比游客预期的更复杂。三家正式运营商、机场走廊上的政府竞争对手、非正式的双条车网络，以及打车垄断。监管制度禁止巴士在酒店停靠——这是出租车利用的结构性客流抑制因素。了解这一格局是任何扩展论证之前的第零步。",
-    "답은 방문객이 예상하는 것보다 복잡합니다. 세 곳의 공식 운영사, 공항 복도의 정부 경쟁사, 비공식 송태우 네트워크, 그리고 차량 호출 독점. 규제 체제는 버스가 호텔에 정차하는 것을 금지합니다 \u2014 택시가 이용하는 구조적 승객 유치 억제 요인입니다. 이 환경을 이해하는 것이 어떤 확장 논증 이전의 출발점입니다."
+    "The answer is messier than visitors expect. Three formal operators, a government competitor on the airport corridor, an informal songthaew network, and a ride-hailing monopoly. The rules forbid buses from stopping at hotels — which hands the door-to-door advantage to taxis by law, not only by market. Understanding that mess is step zero before any expansion argument.",
+    "คำตอบซับซ้อนกว่าที่นักท่องเที่ยวคาดไว้ มีผู้ประกอบการทางการสามราย คู่แข่งของรัฐบาลในเส้นทางสนามบิน เครือข่ายสองแถวนอกระบบ และผูกขาดการเรียกรถ กฎห้ามรถบัสจอดที่โรงแรม — ซึ่งมอบความได้เปรียบถึงประตูให้แท็กซี่ด้วยกฎหมาย ไม่ใช่แค่ตลาด การทำความเข้าใจความยุ่งนั้นคือขั้นตอนที่ศูนย์ก่อนข้อโต้แย้งการขยายใดๆ",
+    "答案比游客预期的更乱。三家正式运营商、机场走廊上的政府竞争对手、非正式双条车网络，以及打车垄断。规则禁止巴士在酒店停靠——从法律上把门到门优势交给出租车，不只是市场。弄清这团乱麻，是任何扩展论证之前的第零步。",
+    "답은 방문객이 예상하는 것보다 지저분합니다. 세 곳의 공식 운영사, 공항 복도의 정부 경쟁사, 비공식 송태우 네트워크, 그리고 차량 호출 독점. 규칙은 버스가 호텔에 정차하는 것을 금합니다 — 문 앞 이점을 시장만이 아니라 법으로 택시에 넘깁니다. 그 난장을 이해하는 것이 어떤 확장 논증 이전의 출발점입니다."
   ),
 
   // Operator stats
@@ -501,7 +501,7 @@ export const PB: Record<string, Entry> = {
   pbDtStatus: e("Status", "สถานะ", "状态", "상태"),
 
   // Competitors
-  pbCompetitorsSubhead: e("The substitute ecosystem", "ระบบนิเวศทดแทน", "替代生态系统", "대체 생태계"),
+  pbCompetitorsSubhead: e("What tourists use instead", "สิ่งที่นักท่องเที่ยวใช้แทน", "游客改用什么", "관광객이 대신 쓰는 것"),
   pbCompetitorsIntro: e(
     "The bus does not compete in an empty market. It competes against six modes, each with a different price, convenience and risk profile. The \u0e32100 bus wins on price; it loses on door-to-door convenience. The question the USASCP toolkit asked: can service quality close the gap?",
     "รถบัสไม่ได้แข่งในตลาดว่าง แต่แข่งกับหกโหมด แต่ละโหมดมีราคา ความสะดวก และความเสี่ยงต่างกัน รถบัส \u0e32100 ชนะเรื่องราคา แพ้เรื่องความสะดวกถึงประตู คำถามที่ชุดเครื่องมือ USASCP ถาม: คุณภาพบริการปิดช่องว่างนี้ได้ไหม?",

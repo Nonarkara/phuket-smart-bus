@@ -261,9 +261,9 @@ export function ReferencesTab({ lang = "en" }: { lang?: Lang }) {
         <p className="tk-kicker">{tr("rtKicker", lang)}</p>
         <h2 id="references-title">{tr("rtTitle", lang)}</h2>
         <p className="rt-section__standfirst">
-          Every citation in this research hub, consolidated and categorised. Filter by type to find peer-reviewed
-          literature, government reports, open data sources, programme records or legal-financial references.
-          If a claim in this site doesn't trace back to one of these, it's our synthesis — said plainly.
+          Open the cupboard. Every citation used on this site is here — peer-reviewed papers,
+          government reports, open data, programme records, legal and finance sources. If a claim
+          does not point back to one of these, it is our synthesis — and we say so.
         </p>
       </header>
 

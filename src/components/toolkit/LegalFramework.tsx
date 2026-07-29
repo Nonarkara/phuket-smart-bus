@@ -219,10 +219,10 @@ export function LegalFramework({ lang = "en" }: { lang?: Lang }) {
         <p className="tk-kicker">{tr("lfKicker", lang)}</p>
         <h2 id="legal-title">{tr("lfTitle", lang)}</h2>
         <p className="lf-section__standfirst">
-          The professors who say "you can't" are right about one thing: a farebox-only deal structure is a bet
-          against the last decade of transit finance. The operator sells rides; the city receives safety, emissions
-          reductions and access. If government wants those benefits, and banks want a credible repayment story,
-          the contract has to join the two ledgers. That is not a slogan. It is a structure.
+          Thailand&apos;s PPP Act (2019) is on the books. The professors who say you can&apos;t
+          have cake and eat it are still right about farebox-only deals. The operator sells rides.
+          The city wants safer roads, cleaner air and access. Banks want repayment they can believe.
+          Join those two ledgers in one contract — or the deal is a slogan.
         </p>
       </header>
 

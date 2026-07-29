@@ -185,7 +185,7 @@ const LESSONS = [
   ["02", "Name the stubborn problem", "Peer learning became productive when each city pair stopped discussing ‘smart mobility’ in general and chose one shared problem."],
   ["03", "Mix the room", "Operators, regulators, universities, tourism businesses and civic organisations each hold a different piece of the same trip."],
   ["04", "Do not worship the survey", "A questionnaire can measure an answer without understanding it. Observation, interviews and operational data explain the why."],
-  ["05", "Local knowledge is data", "Rules on hotel stops, informal services and institutional relationships change what is feasible. A generic best practice cannot see them."],
+  ["05", "Local knowledge is data", "Rules on hotel stops, informal services and who actually answers the phone change what is feasible. A generic playbook cannot see them."],
   ["06", "Co-design before the conclusion", "Stakeholders should shape the question, test the personas and rank the actions—not clap politely at the final slide."],
   ["07", "Universities are bridges", "They supplied method, continuity and the useful habit of documenting why a decision was made."],
   ["08", "Leave an instrument behind", "Toolkits and webinars extend memory. A working simulator goes further: it lets the next team challenge the assumptions directly."],
@@ -215,7 +215,7 @@ function AbcdefFramework() {
   return (
     <section className="tk-section tk-abcdef" id="abcdef">
       <div className="tk-section__intro">
-        <span className="tk-kicker">The project’s mode-choice framework</span>
+        <span className="tk-kicker">The project’s mode-choice test</span>
         <h2>ABCDEF: six tests before anyone chooses your bus.</h2>
         <p>This is our practical lens—not a USDOT acronym and not a magic formula. Each letter turns a vague promise into a question a passenger can answer. G and H are useful extensions; they cannot rescue a service that fails A to F.</p>
       </div>
@@ -274,7 +274,7 @@ function AbcdefFramework() {
 function ProgramArchive({ lang = "en" }: { lang?: Lang }) {
   const [activeTab, setActiveTab] = useState<ArchiveTab>("journey");
   const tabs: { id: ArchiveTab; label: string }[] = [
-    { id: "journey", label: "The journey" },
+    { id: "journey", label: "The years" },
     { id: "lessons", label: "What changed" },
     { id: "people", label: "People + network" },
   ];
@@ -284,7 +284,7 @@ function ProgramArchive({ lang = "en" }: { lang?: Lang }) {
       <header className="tk-program__header">
         <span className="tk-kicker">{tr("paKicker", lang)}</span>
         <h2 id="programme-title">{tr("paTitle", lang)}</h2>
-        <p>The public record gives the programme’s structure. This archive adds the view from inside the email chains, workshops and living documents—where continuity, disagreement and quiet follow-through turned introductions into practical tools.</p>
+        <p>Workshops get the official record. Email chains get this archive — the continuity and disagreement that turned introductions into tools that still run.</p>
         <div className="tk-program__links">
           <a href={PROGRAM_URL}>Official programme record ↗</a>
           <a href={UPP_URL}>Four published toolkits ↗</a>
