@@ -9,7 +9,7 @@
  *   2. Phuket     — island context + bus systems + regulatory landscape
  *   3. Evidence   — Vegas case + global benchmarks
  *   4. Build      — method + prototype + feasibility + law
- *   5. Field notes — collaboration history + the source toolkit itself + sources
+ *   5. Field notes — one chronological chronicle (journey, toolkit, system, people) + sources
  */
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -18,12 +18,11 @@ import { PhuketContext } from "./PhuketContext";
 import { PhuketBusSystems } from "./PhuketBusSystems";
 import { VegasDemandCase } from "./VegasDemandCase";
 import { ComparativeResearch } from "./ComparativeResearch";
-import { CollaborationHistory } from "./CollaborationHistory";
+import { FieldChronicle } from "./FieldChronicle";
 import { LegalFramework } from "./LegalFramework";
 import { FeasibilityStudy, DesignThinkingStudy, TryLiveSystem } from "./ToolkitStudy";
-import { AbcdefFramework, ProgramArchive } from "./ProgramArchive";
+import { AbcdefFramework } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
-import { ToolkitDocument } from "./ToolkitDocument";
 import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
 import "./toolkit-showcase.css";
@@ -290,9 +289,7 @@ function BuildTab() {
 function FieldNotesTab() {
   return (
     <>
-      <CollaborationHistory />
-      <ToolkitDocument />
-      <ProgramArchive />
+      <FieldChronicle />
       <ReferencesTab />
     </>
   );
