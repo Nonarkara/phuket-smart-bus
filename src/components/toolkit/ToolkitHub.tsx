@@ -25,6 +25,8 @@ import { AbcdefFramework } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
 import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
+import { CriticalReading } from "./CriticalReading";
+import { Glossary } from "./Glossary";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
 import "./toolkit-hub.css";
@@ -220,6 +222,7 @@ function OverviewTab() {
     <>
       <LandingPage />
       <DataProvenance />
+      <CriticalReading />
       <section className="hub-section hub-section--intro">
         <div className="hub-section__intro-pad">
           <p className="tk-kicker">Start here · use the tabs above to go deeper</p>
@@ -290,6 +293,7 @@ function FieldNotesTab() {
   return (
     <>
       <FieldChronicle />
+      <Glossary />
       <ReferencesTab />
     </>
   );
