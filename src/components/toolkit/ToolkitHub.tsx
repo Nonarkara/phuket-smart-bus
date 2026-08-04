@@ -27,6 +27,7 @@ import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
 import { CriticalReading } from "./CriticalReading";
 import { Glossary } from "./Glossary";
+import { RejectedAlternatives } from "./RejectedAlternatives";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
 import "./toolkit-hub.css";
@@ -279,6 +280,7 @@ function BuildTab() {
           </p>
         </div>
       </section>
+      <RejectedAlternatives />
       <DesignThinkingStudy />
       <AbcdefFramework />
       <TryLiveSystem busUrl={BUS_URL} />

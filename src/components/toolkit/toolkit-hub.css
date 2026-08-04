@@ -969,3 +969,116 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 @media (max-width: 720px) {
   .gl-item { grid-template-columns: 1fr; gap: 8px; }
 }
+
+/* ===========================================================================
+ * RejectedAlternatives — the road not taken. Same register as CriticalReading,
+ * but each item is a 3-column decision card (pitch / sounded-good / kills-it)
+ * with the source line below. The "kills it" column is highlighted so the
+ * decision rule is the first thing the eye lands on.
+ * ========================================================================= */
+
+.ra-section {
+  --ra-pad: clamp(20px, 3.6vw, 56px);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(60px, 9vw, 120px) var(--ra-pad) clamp(40px, 6vw, 80px);
+  border-top: 1px solid var(--tk-ink);
+}
+.ra-section__head { max-width: 78ch; margin-bottom: 40px; }
+.ra-section__head h2 {
+  font-size: clamp(1.8rem, 3.6vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 12px 0 20px;
+  text-wrap: balance;
+}
+.ra-section__head p {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #1c252e;
+  max-width: 70ch;
+}
+
+.ra-list { list-style: none; padding: 0; margin: 0; }
+.ra-item {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--tk-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ra-item:first-child { border-top: 1px solid var(--tk-ink); }
+
+.ra-item__head {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.ra-item__num {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tk-red);
+  min-width: 36px;
+}
+.ra-item h3 {
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--tk-ink);
+  text-wrap: balance;
+}
+
+.ra-item__body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 4px;
+}
+.ra-item__col { display: flex; flex-direction: column; gap: 6px; }
+.ra-item__col .tk-kicker { color: var(--tk-muted); }
+.ra-item__col p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--tk-ink);
+  margin: 0;
+  max-width: 38ch;
+}
+.ra-item__col--kill {
+  background: rgba(217, 64, 42, 0.06);
+  border-left: 3px solid var(--tk-red);
+  padding: 12px 16px;
+  margin-left: -16px;
+}
+.ra-item__col--kill .tk-kicker { color: var(--tk-red); }
+
+.ra-item__source {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--tk-muted);
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--tk-paper);
+  border-left: 2px solid var(--tk-ink);
+  display: inline-block;
+  align-self: flex-start;
+}
+.ra-item__source .tk-kicker { display: block; margin-bottom: 2px; }
+
+.ra-signoff {
+  margin-top: 36px;
+  padding: 20px 24px;
+  background: var(--tk-ink);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 78ch;
+}
+.ra-signoff strong { color: #fff; }
+
+@media (max-width: 920px) {
+  .ra-item__body { grid-template-columns: 1fr; gap: 16px; }
+  .ra-item__col--kill { margin-left: 0; }
+}
