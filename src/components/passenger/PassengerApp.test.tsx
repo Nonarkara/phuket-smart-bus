@@ -6,7 +6,11 @@ import { PassengerApp } from "./PassengerApp";
 
 vi.mock("../../engine/fleetSimulator", () => ({
   getAirportDepartures: () => [780],
-  getSimulatedMinutes: () => 750
+  getPublishedTravelMinutesFromAirport: () => 70
+}));
+
+vi.mock("../../engine/time", () => ({
+  getBangkokNowFractionalMinutes: () => 750
 }));
 
 vi.mock("../../engine/adsbFlights", () => ({
@@ -20,7 +24,7 @@ describe("PassengerApp", () => {
 
     expect(screen.getByText("Next scheduled bus leaves in")).toBeInTheDocument();
     expect(screen.getByText("30:00")).toBeInTheDocument();
-    expect(screen.getByText(/about 100 min to Patong/i)).toBeInTheDocument();
+    expect(screen.getByText(/70 min to Patong on the published timetable/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Buy single ride/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Buy 3-day pass/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Will the terminal get busy?" })).toBeInTheDocument();

@@ -11,7 +11,7 @@
 .tk-hero__photo-controls button[aria-pressed="true"] { color: var(--tk-ink); background: var(--tk-yellow); }
 .tk-hero__photo-controls button:hover { color: #fff; background: var(--tk-red); }
 
-.tk-try-system { padding: clamp(90px, 10vw, 170px) clamp(24px, 6.5vw, 110px); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); }
+.tk-try-system { padding: clamp(48px, 5vw, 80px) clamp(20px, 4vw, 64px); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); }
 .tk-try-system__intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); gap: clamp(52px, 8vw, 140px); align-items: end; }
 .tk-try-system__intro h2 { max-width: 11ch; margin-top: 28px; }
 .tk-try-system__intro p { max-width: 48ch; color: var(--tk-muted); font-size: 18px; }
@@ -23,17 +23,18 @@
 .tk-try-system__door:hover { color: var(--tk-ink) !important; background: var(--tk-yellow); }
 .tk-try-system__door:hover span { color: rgba(17,24,32,0.62); }
 
-.tk-try-system__experiments { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: clamp(72px, 8vw, 120px); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
-.tk-try-system__experiments a { display: flex; min-height: 320px; flex-direction: column; padding: 27px; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); text-decoration: none; }
+.tk-try-system__experiments { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: clamp(36px, 4vw, 64px); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
+.tk-try-system__experiments a { display: flex; min-height: 220px; flex-direction: column; padding: 22px; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); text-decoration: none; transition: background 0.15s ease, color 0.15s ease; }
+.tk-try-system__experiments a:active { transform: scale(0.97); }
 .tk-try-system__experiments a > span { color: var(--tk-red); font: 700 11px/1 var(--font-mono); }
-.tk-try-system__experiments h3 { max-width: 10ch; margin-top: 55px; }
+.tk-try-system__experiments h3 { max-width: 10ch; margin-top: 28px; }
 .tk-try-system__experiments p { max-width: 39ch; margin-top: 20px; color: var(--tk-muted); }
 .tk-try-system__experiments a > strong { margin-top: auto; padding-top: 28px; }
 .tk-try-system__experiments a:hover { color: #fff; background: var(--tk-ink); }
 .tk-try-system__experiments a:hover p { color: rgba(255,255,255,0.68); }
 .tk-try-system__experiments a:hover > strong { color: var(--tk-yellow); }
 
-.tk-live-console { margin-top: clamp(110px, 13vw, 210px); }
+.tk-live-console { margin-top: clamp(48px, 5vw, 80px); }
 .tk-live-console > header { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: clamp(48px, 8vw, 130px); align-items: end; margin-bottom: 58px; }
 .tk-live-console > header h2 { max-width: 12ch; margin-top: 26px; }
 .tk-live-console > header p { max-width: 50ch; color: var(--tk-muted); font-size: 18px; }
@@ -47,17 +48,17 @@
 .tk-live-console__bar strong { overflow: hidden; color: rgba(255,255,255,0.58); text-overflow: ellipsis; white-space: nowrap; }
 .tk-live-console__bar a { color: #fff; text-decoration: none; }
 .tk-live-console__bar a:hover { color: var(--tk-yellow); }
-.tk-live-console iframe { display: block; width: 100%; height: min(78vh, 860px); min-height: 680px; border: 0; background: var(--tk-paper); }
+.tk-live-console iframe { display: block; width: 100%; height: min(70vh, 720px); min-height: 420px; border: 0; background: var(--tk-paper); }
 .tk-live-console > footer { display: grid; grid-template-columns: auto 1fr auto auto 1fr auto auto 1fr; gap: 16px; align-items: center; min-height: 86px; padding: 18px 22px; color: var(--tk-ink); background: var(--tk-yellow); }
 .tk-live-console > footer span { color: rgba(17,24,32,0.58); font: 700 10px/1 var(--font-mono); text-transform: uppercase; }
 .tk-live-console > footer strong { font: 700 1.05rem/1.1 var(--font-display); }
 .tk-live-console > footer b { color: var(--tk-red); font-size: 24px; }
 
-.tk-machine { margin-top: clamp(120px, 14vw, 220px); color: #fff; background: var(--tk-ink); }
+.tk-machine { margin-top: clamp(48px, 5vw, 80px); color: #fff; background: var(--tk-ink); }
 .tk-machine__heading { display: grid; grid-template-columns: 0.34fr 1fr 0.6fr; gap: 48px; align-items: start; padding: clamp(32px, 5vw, 74px); border-bottom: 1px solid rgba(255,255,255,0.35); }
 .tk-machine__heading p { color: rgba(255,255,255,0.64); }
 .tk-machine__drawings { display: grid; grid-template-columns: repeat(3, 1fr); }
-.tk-machine__drawings article { display: grid; min-width: 0; min-height: 610px; grid-template-rows: auto auto auto 1fr; padding: 0 28px 32px; border-right: 1px solid rgba(255,255,255,0.35); }
+.tk-machine__drawings article { display: grid; min-width: 0; min-height: 420px; grid-template-rows: auto auto auto 1fr; padding: 0 24px 28px; border-right: 1px solid rgba(255,255,255,0.35); }
 .tk-machine__drawings article:last-child { border-right: 0; }
 .tk-machine__drawings article > div { margin: 0 -28px 28px; border-bottom: 1px solid rgba(255,255,255,0.35); background: var(--tk-paper); }
 .tk-machine__drawings svg { display: block; width: 100%; height: auto; }
@@ -140,7 +141,7 @@
 .tk-feasibility-bridge__step h3 { margin-top: 10px; }
 .tk-feasibility-bridge__step small { margin-top: auto; color: rgba(255,255,255,0.58); }
 .tk-feasibility-bridge__step > b { position: absolute; z-index: 2; top: 50%; right: -17px; display: grid; width: 34px; height: 34px; place-items: center; color: var(--tk-ink); border-radius: 50%; background: var(--tk-yellow); transform: translateY(-50%); }
-.tk-feasibility__intro { display: grid; grid-template-columns: 0.3fr 1fr 0.7fr; gap: 50px; align-items: start; margin: clamp(120px, 14vw, 220px) 0 65px; }
+.tk-feasibility__intro { display: grid; grid-template-columns: 0.3fr 1fr 0.7fr; gap: 36px; align-items: start; margin: clamp(48px, 5vw, 80px) 0 40px; }
 .tk-feasibility__intro p { color: rgba(255,255,255,0.65); }
 
 .tk-finance-lab { border: 1px solid rgba(255,255,255,0.4); }
@@ -173,7 +174,7 @@
 .tk-dscr-sensitivity > b { position: absolute; right: 4%; left: 4%; border-top: 2px dashed var(--tk-yellow); color: var(--tk-yellow); font: 700 10px/1 var(--font-mono); transform: translateY(50%); }
 .tk-finance-lab > .tk-study-note { padding: 20px 26px; border-top: 1px solid rgba(255,255,255,0.4); }
 
-.tk-credit-memo { margin-top: clamp(100px, 12vw, 180px); color: var(--tk-ink); background: var(--tk-paper); }
+.tk-credit-memo { margin-top: clamp(48px, 5vw, 80px); color: var(--tk-ink); background: var(--tk-paper); }
 .tk-credit-memo header { display: grid; grid-template-columns: 0.6fr 1.5fr auto; gap: 30px; align-items: center; padding: 28px; border-bottom: 4px solid var(--tk-ink); }
 .tk-credit-memo header span { color: var(--tk-muted); font: 700 11px/1.2 var(--font-mono); text-transform: uppercase; }
 .tk-credit-memo header strong { font: 700 clamp(1.8rem, 3.2vw, 3.5rem)/1 var(--font-display); }
@@ -234,8 +235,8 @@
   .tk-try-system__intro p { margin-top: 30px; }
   .tk-try-system__door { margin-top: 30px; }
   .tk-try-system__experiments { grid-template-columns: 1fr; }
-  .tk-try-system__experiments a { min-height: 270px; }
-  .tk-live-console { margin-top: 110px; }
+  .tk-try-system__experiments a { min-height: 200px; }
+  .tk-live-console { margin-top: 48px; }
   .tk-live-console > header { display: block; }
   .tk-live-console > header h2 { margin-top: 24px; }
   .tk-live-console > header > div:last-child { margin-top: 30px; }
@@ -243,7 +244,7 @@
   .tk-live-console__frame { margin-inline: -20px; border-inline: 0; }
   .tk-live-console__bar { grid-template-columns: 1fr auto; min-height: 68px; padding-inline: 20px; }
   .tk-live-console__bar strong { display: none; }
-  .tk-live-console iframe { height: 720px; min-height: 0; }
+  .tk-live-console iframe { height: 560px; min-height: 0; }
   .tk-live-console > footer { grid-template-columns: auto 1fr; gap: 8px 14px; margin-inline: -20px; padding: 24px 20px; }
   .tk-live-console > footer b { display: none; }
   .tk-machine { margin-right: -20px; margin-left: -20px; }

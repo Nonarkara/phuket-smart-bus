@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Lang, RouteId, Stop, PriceComparison, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
-import { getSimulatedMinutes } from "../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
 import { getScheduledServices } from "../engine/scheduleService";
 import { getInjuriesForLocale, THAIRSC_2026_FOREIGNERS } from "../engine/safetyData";
@@ -24,7 +23,7 @@ function getNextBusEta(
   if (moving.length === 0) {
     const services = getScheduledServices(routeId);
     if (services.length > 0) {
-      const nowMin = getSimulatedMinutes();
+      const nowMin = getBangkokNowFractionalMinutes();
       let nextDeparture = Infinity;
       let nextDirection = "destination";
       for (const svc of services) {

@@ -52,6 +52,11 @@ export function useToolkitLang(): {
     } catch {
       // best effort
     }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", next);
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
   }, []);
 
   // Sync with localStorage changes from other tabs

@@ -159,7 +159,7 @@ const PHASES = [
     verb: "Test",
     title: "Research met local reality",
     city: "Phuket ↔ Las Vegas · Boston workshop",
-    summary: "Phuket and Las Vegas chose tourism travel behaviour and mode choice, then worked through sampling, stakeholder engagement and research design.",
+    summary: "Phuket and Las Vegas chose tourism travel behaviour and mode choice, then worked through sampling, talking to operators and hotels, and research design.",
     detail: "The useful disagreement was methodological: surveys produce comparability, but fatigue and polite answers can hide motivation. Local partners pushed qualitative observation and lived experience back into the design."
   },
   {

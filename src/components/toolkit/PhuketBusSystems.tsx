@@ -1,5 +1,5 @@
 /**
- * Phuket Bus Systems — the actual transit landscape.
+ * Phuket Bus Systems — who runs buses on the island.
  *
  * This is the chapter that answers: "What buses already run in Phuket?"
  * The answer is messier than visitors expect. Three formal operators, a
@@ -176,7 +176,7 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
         ))}
       </div>
 
-      {/* Competitor landscape */}
+      {/* What tourists use instead */}
       <div className="pb-competitors">
         <h3 className="pb-subhead">{tr("pbCompetitorsSubhead", lang)}</h3>
         <p className="pb-intro-note">
@@ -198,7 +198,7 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
         </div>
       </div>
 
-      {/* Regulatory landscape */}
+      {/* Who licenses routes */}
       <div className="pb-regulatory">
         <h3 className="pb-subhead">{tr("pbRegSubhead", lang)}</h3>
         <p className="pb-intro-note">

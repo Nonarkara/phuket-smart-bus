@@ -126,7 +126,7 @@ const POLITICAL_PATHWAY = [
   {
     step: "1",
     actor: "Phuket Governor",
-    action: "Convene the stakeholders",
+    action: "Get operators, DLT and the Governor in one room",
     detail: "The Governor's Office coordinates DLT, OTP, PAO, PKCD, hotel associations and depa. The Governor cannot grant route authority but can make the room where it gets discussed.",
     timeline: "Phase 0 — before financing"
   },

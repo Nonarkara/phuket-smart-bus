@@ -90,7 +90,12 @@ export default function ToolkitHub() {
       return () => cancelAnimationFrame(frame);
     }
     const frame = requestAnimationFrame(() => {
-      document.getElementById(hash)?.scrollIntoView({ block: "start" });
+      const el = document.getElementById(hash);
+      if (!el) return;
+      const nav = document.querySelector(".hub-nav") as HTMLElement | null;
+      const offset = (nav?.offsetHeight ?? 82) + 8;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
     });
     return () => cancelAnimationFrame(frame);
   }, [activeTab]);
@@ -173,7 +178,7 @@ export default function ToolkitHub() {
         aria-labelledby={`tab-${activeTab}`}
         className="hub-panel"
       >
-        <TabContent tabId={activeTab} lang={lang} />
+        <TabContent tabId={activeTab} lang={lang} onSelectTab={selectTab} />
       </main>
 
       {/* Footer */}
@@ -192,10 +197,10 @@ export default function ToolkitHub() {
   );
 }
 
-  function TabContent({ tabId, lang }: { tabId: TabId; lang: Lang }): ReactNode {
+  function TabContent({ tabId, lang, onSelectTab }: { tabId: TabId; lang: Lang; onSelectTab: (tab: TabId) => void }): ReactNode {
   switch (tabId) {
     case "overview":
-      return <OverviewTab lang={lang} />;
+      return <OverviewTab lang={lang} onSelectTab={onSelectTab} />;
     case "phuket":
       return <PhuketTab lang={lang} />;
     case "evidence":
@@ -205,12 +210,12 @@ export default function ToolkitHub() {
     case "fieldnotes":
       return <FieldNotesTab lang={lang} />;
     default:
-      return <OverviewTab lang={lang} />;
+      return <OverviewTab lang={lang} onSelectTab={onSelectTab} />;
   }
 }
 
 /* ── OVERVIEW ─────────────────────────────────────────────────────────── */
-function OverviewTab({ lang }: { lang: Lang }) {
+function OverviewTab({ lang, onSelectTab }: { lang: Lang; onSelectTab: (tab: TabId) => void }) {
   return (
     <>
       <LandingPage lang={lang} />
@@ -223,10 +228,10 @@ function OverviewTab({ lang }: { lang: Lang }) {
           </p>
         </div>
         <nav className="hub-tab-nav" aria-label="Jump to section">
-          <button onClick={() => window.location.hash = "phuket"}><span>01</span><strong>{tr("tabPhuket", lang)}</strong><small>{tr("navPhuketLabel", lang)}</small></button>
-          <button onClick={() => window.location.hash = "evidence"}><span>02</span><strong>{tr("tabEvidence", lang)}</strong><small>{tr("navEvidenceLabel", lang)}</small></button>
-          <button onClick={() => window.location.hash = "build"}><span>03</span><strong>{tr("tabBuild", lang)}</strong><small>{tr("navBuildLabel", lang)}</small></button>
-          <button onClick={() => window.location.hash = "fieldnotes"}><span>04</span><strong>{tr("tabFieldNotes", lang)}</strong><small>{tr("navFieldNotesLabel", lang)}</small></button>
+          <button type="button" onClick={() => onSelectTab("phuket")}><span>01</span><strong>{tr("tabPhuket", lang)}</strong><small>{tr("navPhuketLabel", lang)}</small></button>
+          <button type="button" onClick={() => onSelectTab("evidence")}><span>02</span><strong>{tr("tabEvidence", lang)}</strong><small>{tr("navEvidenceLabel", lang)}</small></button>
+          <button type="button" onClick={() => onSelectTab("build")}><span>03</span><strong>{tr("tabBuild", lang)}</strong><small>{tr("navBuildLabel", lang)}</small></button>
+          <button type="button" onClick={() => onSelectTab("fieldnotes")}><span>04</span><strong>{tr("tabFieldNotes", lang)}</strong><small>{tr("navFieldNotesLabel", lang)}</small></button>
         </nav>
       </section>
     </>

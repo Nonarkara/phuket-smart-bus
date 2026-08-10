@@ -112,6 +112,22 @@ function parseTimeToMinutes(t: string | null): number | null {
   return h * 60 + m;
 }
 
+/**
+ * Some early northbound trips omit Rawai/Sai Yuan (null) and join mid-route.
+ * Back-calculate a virtual origin departure so polyline motion still starts
+ * at the correct stop when the first published time fires.
+ */
+function virtualOriginDepartureMinutes(
+  times: (string | null)[],
+  stopOffsets: number[]
+): number | null {
+  const parsed = times.map(parseTimeToMinutes);
+  const idx = parsed.findIndex((t) => t !== null);
+  if (idx < 0) return null;
+  const offset = stopOffsets[idx] ?? 0;
+  return parsed[idx]! - offset;
+}
+
 /** Build a lightweight Stop object from timetable data. */
 function buildTimetableStop(
   tStop: DetailedTimetableStop,
@@ -166,9 +182,9 @@ function buildAirportLineProfile(timetable: DetailedTimetable, directionLabel: s
   // Trip duration = offset of last stop
   const tripDurationMinutes = stopOffsets[stopOffsets.length - 1]!;
 
-  // Departures = first-stop times from all trips
+  // Departures = virtual origin times (handles mid-route joiners with null early stops)
   const departures = timetable.departures
-    .map(d => parseTimeToMinutes(d.times[0]))
+    .map((d) => virtualOriginDepartureMinutes(d.times, stopOffsets))
     .filter((t): t is number => t !== null)
     .sort((a, b) => a - b);
 
@@ -410,20 +426,90 @@ export function getAirportDepartures(): number[] {
   return airportProfile?.departures ?? [];
 }
 
-/** Northbound (Rawai → Airport) trips: when each departs its origin and when
- *  it reaches the airport curb. This is the RETURN-leg supply — the buses a
- *  departing passenger can ride to make their flight (arrive ≥ 1h before
- *  takeoff). Derived from the same published PKSB timetable as everything else. */
+/** Northbound (Rawai → Airport) trips: when each departs its first published
+ *  stop and when it reaches the airport curb. Early trips that join mid-route
+ *  (null Rawai times) still count — first/last non-null from the PKSB JSON. */
 export type AirportboundTrip = { originDepMin: number; airportArriveMin: number };
 
 export function getAirportboundTrips(): AirportboundTrip[] {
-  const profiles = profilesByRoute["rawai-airport"];
-  if (!profiles) return [];
-  const p = profiles.find((x) => x.directionLabel === "Bus to Airport");
-  if (!p) return [];
-  return p.departures
-    .map((d) => ({ originDepMin: d, airportArriveMin: d + p.tripDurationMinutes }))
+  const timetable = rawaiToAirportTimetable as DetailedTimetable;
+  return timetable.departures
+    .map((dep) => {
+      const times = dep.times.map(parseTimeToMinutes);
+      const first = times.find((t) => t !== null);
+      const last = [...times].reverse().find((t) => t !== null);
+      if (first == null || last == null) return null;
+      return { originDepMin: first, airportArriveMin: last };
+    })
+    .filter((t): t is AirportboundTrip => t !== null)
     .sort((a, b) => a.originDepMin - b.originDepMin);
+}
+
+/** Published stop ids on Airport → Rawai that the rider UI can name. */
+const PUBLISHED_SOUTHBOUND_STOP: Record<string, string> = {
+  Airport: "phuket-airport",
+  Patong: "pea-patong",
+  Karon: "karon-circle",
+  Kata: "kata-night-plaza",
+  Rawai: "rawai-beach"
+};
+
+/**
+ * Next published arrival at a named corridor stop, using the official PKSB
+ * per-stop times (not invented hourly grids). `nowMin` should be Bangkok
+ * wall-clock minutes when answering a real rider.
+ */
+export function getNextPublishedStopArrival(
+  dest: string,
+  nowMin: number
+): { arriveMin: number; waitMin: number } | null {
+  const dayMin = ((nowMin % 1440) + 1440) % 1440;
+
+  if (dest === "Airport") {
+    const next = getAirportboundTrips().find((t) => t.airportArriveMin > dayMin);
+    if (!next) {
+      const first = getAirportboundTrips()[0];
+      if (!first) return null;
+      const arriveMin = first.airportArriveMin + 1440;
+      return { arriveMin, waitMin: arriveMin - dayMin };
+    }
+    return { arriveMin: next.airportArriveMin, waitMin: next.airportArriveMin - dayMin };
+  }
+
+  const stopId = PUBLISHED_SOUTHBOUND_STOP[dest];
+  if (!stopId) return null;
+  const timetable = airportToRawaiTimetable as DetailedTimetable;
+  const stopIdx = timetable.stops.findIndex((s) => s.id === stopId);
+  if (stopIdx < 0) return null;
+
+  const arrivals = timetable.departures
+    .map((d) => parseTimeToMinutes(d.times[stopIdx] ?? null))
+    .filter((t): t is number => t !== null)
+    .sort((a, b) => a - b);
+
+  const next = arrivals.find((t) => t > dayMin);
+  if (next == null) {
+    const first = arrivals[0];
+    if (first == null) return null;
+    const arriveMin = first + 1440;
+    return { arriveMin, waitMin: arriveMin - dayMin };
+  }
+  return { arriveMin: next, waitMin: next - dayMin };
+}
+
+/** Minutes from HKT curb to a named southbound stop on the published timetable. */
+export function getPublishedTravelMinutesFromAirport(dest: string): number | null {
+  const stopId = PUBLISHED_SOUTHBOUND_STOP[dest];
+  if (!stopId || dest === "Airport") return 0;
+  const timetable = airportToRawaiTimetable as DetailedTimetable;
+  const stopIdx = timetable.stops.findIndex((s) => s.id === stopId);
+  if (stopIdx < 0) return null;
+  for (const dep of timetable.departures) {
+    const origin = parseTimeToMinutes(dep.times[0] ?? null);
+    const atStop = parseTimeToMinutes(dep.times[stopIdx] ?? null);
+    if (origin != null && atStop != null) return forwardDiff(origin, atStop);
+  }
+  return null;
 }
 
 export function getFleetAnalysis(): FleetAnalysis[] {
@@ -742,9 +828,9 @@ function patchAirportProfiles(profiles: DirectionProfile[]): DirectionProfile[] 
       finalOffsets.push(finalOffsets.length === 0 ? 0 : Math.max(finalOffsets[finalOffsets.length - 1]!, v));
     }
 
-    // 7. Update departures from timetable
+    // 7. Update departures from timetable (virtual origin for mid-route joiners)
     const departures = timetable.departures
-      .map((d) => parseTimeToMinutes(d.times[0]))
+      .map((d) => virtualOriginDepartureMinutes(d.times, timetableOffsets))
       .filter((t): t is number => t !== null)
       .sort((a, b) => a - b);
 

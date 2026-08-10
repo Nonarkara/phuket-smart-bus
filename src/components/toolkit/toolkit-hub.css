@@ -2,7 +2,25 @@
  * Toolkit Hub — tabbed research hub navigation + new section styles.
  * ========================================================================= */
 
-.toolkit-hub { display: flex; flex-direction: column; min-height: 100vh; }
+.toolkit-hub {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  --tk-section-y: clamp(36px, 4vw, 64px);
+  --tk-section-x: clamp(20px, 4vw, 64px);
+  --tk-block-gap: clamp(28px, 3vw, 48px);
+  --font-section: "Source Sans 3", "Helvetica Neue", system-ui, sans-serif;
+}
+.toolkit-hub h2,
+.toolkit-hub .pc-section__head h2,
+.toolkit-hub .hub-section__intro-pad h2,
+.toolkit-hub .th-section__head h2,
+.toolkit-hub .pb-section__head h2,
+.toolkit-hub .cr-section__head h2,
+.toolkit-hub .lf-section__head h2,
+.toolkit-hub .rt-section__head h2 {
+  font-family: var(--font-section);
+}
 
 .hub-nav { position: sticky; top: 0; z-index: 50; background: var(--tk-paper); border-bottom: 1px solid var(--tk-ink); }
 .hub-nav__brand-row { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 12px clamp(20px, 4vw, 48px); border-bottom: 1px solid var(--tk-line); }
@@ -64,14 +82,15 @@
 .hub-tab__short { display: none; font-size: 12px; }
 
 .hub-panel { flex: 1; }
-.hub-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
+.hub-section { padding: var(--tk-section-y) var(--tk-section-x); border-bottom: 1px solid var(--tk-ink); }
 .hub-section--intro { background: var(--tk-white); }
-.hub-section__intro-pad { max-width: 72ch; margin-bottom: 48px; }
+.hub-section__intro-pad { max-width: 72ch; margin-bottom: var(--tk-block-gap); }
 .hub-section__intro-pad h2 { font-size: clamp(2rem, 4vw, 3.6rem); margin: 16px 0 20px; letter-spacing: -0.04em; }
 .hub-section__intro-pad p { font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.5; color: var(--tk-muted); }
 
 .hub-tab-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
-.hub-tab-nav button { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; min-height: 120px; padding: 20px; border: 0; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); text-align: left; cursor: pointer; }
+.hub-tab-nav button { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; min-height: 80px; padding: 16px 18px; border: 0; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); text-align: left; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+.hub-tab-nav button:active { transform: scale(0.97); }
 .hub-tab-nav button:hover { background: var(--tk-ink); color: #fff; }
 .hub-tab-nav span { grid-row: span 2; color: var(--tk-red); font: 700 11px/1 var(--font-mono); }
 .hub-tab-nav strong { font: 700 1.1rem/1 var(--font-display); }
@@ -85,8 +104,8 @@
 .hub-footer__inner a { color: #fff; text-decoration: none; }
 .hub-footer__inner a:hover { color: var(--tk-yellow); }
 
-.th-section, .pb-section, .cr-section, .lf-section, .rt-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
-.th-section__head, .pb-section__head, .cr-section__head, .lf-section__head, .rt-section__head { max-width: 900px; margin: 0 auto 48px; }
+.th-section, .pb-section, .cr-section, .lf-section, .rt-section { padding: var(--tk-section-y) var(--tk-section-x); border-bottom: 1px solid var(--tk-ink); }
+.th-section__head, .pb-section__head, .cr-section__head, .lf-section__head, .rt-section__head { max-width: 900px; margin: 0 auto var(--tk-block-gap); }
 .th-section__head h2, .pb-section__head h2, .cr-section__head h2, .lf-section__head h2, .rt-section__head h2 { font-size: clamp(2rem, 4.5vw, 4rem); letter-spacing: -0.045em; line-height: 1; margin: 14px 0 20px; text-wrap: balance; }
 .th-section__standfirst, .pb-section__standfirst, .cr-section__standfirst, .lf-section__standfirst, .rt-section__standfirst { max-width: 72ch; font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.5; color: var(--tk-muted); }
 
@@ -171,7 +190,7 @@
 .pb-operator dd { margin: 0; font-size: 14px; line-height: 1.45; }
 .pb-operator__notes { padding: 16px 24px; font-size: 14px; color: var(--tk-muted); border-top: 1px solid var(--tk-line); }
 
-.pb-competitors, .pb-regulatory, .pb-gap { margin-bottom: 60px; }
+.pb-competitors, .pb-regulatory, .pb-gap { margin-bottom: var(--tk-block-gap); }
 .pb-competitor-table, .pb-regulatory-grid { border-top: 1px solid var(--tk-ink); }
 .pb-competitor-row { display: grid; grid-template-columns: 160px 140px 1fr; gap: 20px; align-items: start; padding: 16px 0; border-bottom: 1px solid var(--tk-line); }
 .pb-competitor-row--head { font: 700 11px/1.2 var(--font-mono); text-transform: uppercase; color: var(--tk-muted); border-bottom: 1px solid var(--tk-ink); }
@@ -246,21 +265,21 @@
  * Phuket chapter — editorial evidence, not a generic content stack.
  * ----------------------------------------------------------------------- */
 .pc-section {
-  --pc-pad: clamp(20px, 5vw, 80px);
-  padding-bottom: clamp(72px, 9vw, 140px);
+  --pc-pad: clamp(20px, 4vw, 64px);
+  padding-bottom: var(--tk-block-gap);
   background: var(--tk-paper);
 }
 
 .pc-section__head {
   max-width: 1280px;
   margin: 0 auto;
-  padding: clamp(64px, 8vw, 120px) var(--pc-pad) 48px;
+  padding: var(--tk-section-y) var(--pc-pad) var(--tk-block-gap);
 }
 
 .pc-section__head h2 {
   max-width: 1100px;
   margin: 16px 0 28px;
-  font-size: clamp(3rem, 7.5vw, 7.8rem);
+  font-size: clamp(2.4rem, 5.5vw, 4.8rem);
   line-height: 0.91;
   letter-spacing: -0.065em;
 }
@@ -277,7 +296,7 @@
   grid-template-columns: 1.35fr 0.65fr;
   max-width: 1280px;
   min-height: 520px;
-  margin: 0 auto 72px;
+  margin: 0 auto var(--tk-block-gap);
   border: 1px solid var(--tk-ink);
 }
 
@@ -315,13 +334,13 @@
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr);
   gap: 24px;
   max-width: 1280px;
-  margin: 0 auto 72px;
+  margin: 0 auto var(--tk-block-gap);
   padding: 0 var(--pc-pad);
   align-items: stretch;
 }
 .pc-spread--climate { display: block; }
 .pc-spread--climate .pc-figure { min-height: 520px; }
-.pc-map-spread { max-width: 1280px; margin: 0 auto 72px; padding: 0 var(--pc-pad); }
+.pc-map-spread { max-width: 1280px; margin: 0 auto var(--tk-block-gap); padding: 0 var(--pc-pad); }
 
 .pc-figure {
   margin: 0;
@@ -370,7 +389,7 @@
 .pc-system-map__legend .is-local { border-color: var(--tk-blue); border-width: 2px; }
 .pc-system-map__legend .is-water { border-color: #497e9b; border-top-style: dotted; border-width: 2px; }
 
-.pc-timeline, .pc-next { max-width: 1280px; margin: 72px auto; padding-inline: var(--pc-pad); }
+.pc-timeline, .pc-next { max-width: 1280px; margin: var(--tk-block-gap) auto; padding-inline: var(--pc-pad); }
 .pc-section__sub { margin-bottom: 10px; font-size: clamp(2rem, 4vw, 4rem); }
 .pc-section__sub-note { max-width: 65ch; margin-bottom: 30px; color: var(--tk-muted); }
 .pc-timeline__list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--tk-ink); }

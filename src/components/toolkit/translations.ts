@@ -84,13 +84,13 @@ export const HUB: Record<string, Entry> = {
   navFieldNotesLabel: e("People + history + sources", "บุคคล + ประวัติ + แหล่งข้อมูล", "人物 + 历史 + 来源", "사람 + 역사 + 출처"),
 
   // Build tab intro
-  buildKicker: e("Method · how findings become instruments", "วิธีการ · สิ่งที่ค้นพบกลายเป็นเครื่องมือ", "方法 · 发现如何成为工具", "방법론 · 발견이 도구가 되는 방법"),
+  buildKicker: e("Method · turn findings into tools", "วิธีการ · เปลี่ยนสิ่งที่ค้นพบเป็นเครื่องมือ", "方法 · 把发现变成工具", "방법론 · 발견을 도구로"),
   buildTitle: e("Observe → Frame → Trace → Build → Operate → Learn.", "สังเกต → กำหนดกรอบ → ติดตาม → สร้าง → ดำเนินการ → เรียนรู้", "观察 → 定义 → 追踪 → 建设 → 运营 → 学习。", "관찰 → 정의 → 추적 → 구축 → 운영 → 학습."),
   buildBody: e(
-    "The toolkit's method is a loop, not a line. Each step produces evidence the next step uses. The sections below trace the full chain: from the pain map through personas, causal tests, the working system and the feasibility study.",
-    "วิธีการของชุดเครื่องมือเป็นวงวน ไม่ใช่เส้นตรง แต่ละขั้นตอนสร้างหลักฐานที่ขั้นตอนถัดไปใช้ ส่วนต่างๆ ด้านล่างติดตามห่วงโซ่ทั้งหมด: จากแผนที่ความเจ็บปวดผ่านบุคลิกภัณฑ์ การทดสอบเชิงสาเหตุ ระบบที่ใช้งานได้ และการศึกษาความเป็นไปได้",
-    "工具包的方法是一个循环，不是一条直线。每一步都产生下一步使用的证据。以下各节追踪完整链条：从痛点图到用户画像、因果测试、可用系统和可行性研究。",
-    "툴킷의 방법론은 순환이며 선이 아닙니다. 각 단계는 다음 단계가 사용하는 증거를 생산합니다. 아래 섹션들은 전체 체인을 추적합니다: 페인 맵부터 페르소나, 인과 테스트, 작동하는 시스템, 타당성 조사까지."
+    "The method is a loop, not a line. Each step leaves evidence the next step needs. Below: the pain map, personas, causal tests, the running system, then the feasibility study.",
+    "วิธีการเป็นวงวน ไม่ใช่เส้นตรง แต่ละขั้นทิ้งหลักฐานที่ขั้นถัดไปต้องใช้ ด้านล่าง: แผนที่ความเจ็บปวด บุคลิก การทดสอบเชิงสาเหตุ ระบบที่วิ่งอยู่ แล้วการศึกษาความเป็นไปได้",
+    "方法是循环，不是直线。每一步留下下一步需要的证据。下面：痛点图、用户画像、因果测试、运行中的系统，然后是可行性研究。",
+    "방법론은 순환이지 선이 아닙니다. 각 단계는 다음 단계가 쓸 증거를 남깁니다. 아래: 페인 맵, 페르소나, 인과 테스트, 돌아가는 시스템, 그다음 타당성 조사."
   ),
 
   // Footer
@@ -203,10 +203,10 @@ export const LANDING: Record<string, Entry> = {
   // Journey / love story
   journeyKicker: e("Jakarta → Johor Bahru", "จาการ์ตา → โจโฮร์บาห์รู", "雅加达 → 新山", "자카르타 → 조호르바루"),
   journeyTitle: e(
-    "The workshops were not a tour. They were a relationship.",
-    "เวิร์กช็อปไม่ใช่ทัวร์ แต่เป็นความสัมพันธ์",
-    "工作坊不是观光。那是一段关系。",
-    "워크숍은 관광이 아니었습니다. 관계였습니다."
+    "Same people. Harder questions. Five years.",
+    "คนกลุ่มเดิม คำถามที่ยากขึ้น ห้าปี",
+    "同一群人。更难的问题。五年。",
+    "같은 사람들. 더 어려운 질문. 오 년."
   ),
   journeyBody: e(
     "From Jakarta 2022 through Los Angeles, Phuket and Boston, to the Johor Bahru reunion — the same people kept showing up with harder questions. That is how a toolkit becomes a running system on an island.",
@@ -228,10 +228,10 @@ export const LANDING: Record<string, Entry> = {
     "이 핸드북은 작년 예상치 못하게 세상을 떠난 친구이자 동료, depa 남부 사무소 팀장 Ton Jaitong에게 헌정합니다."
   ),
   tonBody: e(
-    "Ton was at the first Jakarta workshop in 2022 and kept helping quietly afterwards — including capacity work with farmers in remote communities. The standard he left is simple: technology should leave someone more capable than before.",
-    "ต้นอยู่ที่เวิร์กช็อปแรกที่จาการ์ตาปี 2022 และช่วยอย่างเงียบ ๆ ต่อมา — รวมงานสร้างศักยภาพกับเกษตรกรในชุมชนห่างไกล มาตรฐานที่เขาทิ้งไว้เรียบง่าย: เทคโนโลยีควรทำให้คนเก่งขึ้นกว่าเดิม",
-    "Ton参加了2022年雅加达首次工作坊，之后一直默默帮忙——包括在偏远社区与农民一起做能力建设。他留下的标准很简单：技术应让人比以前更有能力。",
-    "Ton은 2022년 자카르타 첫 워크숍에 있었고 이후에도 조용히 도왔습니다 — 외딴 지역 농민과의 역량 강화 포함. 그가 남긴 기준은 단순합니다: 기술은 사람을 이전보다 더 유능하게 남겨야 합니다."
+    "Ton was at the first Jakarta workshop in 2022 and kept helping quietly afterwards — including teaching remote farming communities how to use tools themselves. The standard he left is simple: technology should leave someone more capable than before.",
+    "ต้นอยู่ที่เวิร์กช็อปแรกที่จาการ์ตาปี 2022 และช่วยเงียบๆ ต่อมา — รวมถึงสอนชุมชนเกษตรห่างไกลให้ใช้เครื่องมือเอง มาตรฐานที่เขาทิ้งไว้เรียบง่าย: เทคโนโลยีควรทำให้คนเก่งขึ้นกว่าเดิม",
+    "Ton参加了2022雅加达首次工作坊，之后一直默默帮忙——包括教偏远农区社区自己用工具。他留下的标准很简单：技术应让人比以前更有能力。",
+    "Ton은 2022 자카르타 첫 워크숍에 있었고 이후에도 조용히 도왔습니다 — 외딴 농업 공동체가 도구를 스스로 쓰도록 돕는 일을 포함해. 그가 남긴 기준은 단순합니다: 기술은 사람을 전보다 더 능숙하게 남겨야 합니다."
   ),
 
   // Five-minute argument

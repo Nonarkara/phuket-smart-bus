@@ -20,7 +20,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { getAirportDepartures, getSimulatedMinutes } from "../../engine/fleetSimulator";
+import { getAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
+import { getBangkokNowFractionalMinutes } from "../../engine/time";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
 import { ADSB_POLL_MS, fetchAdsbAroundHkt } from "../../engine/adsbFlights";
 
@@ -45,20 +46,22 @@ const QUICK_DESTINATIONS = [
  * ----------------------------------------------------------------------- */
 
 function useNextBusCountdown() {
-  const [now, setNow] = useState(() => getSimulatedMinutes());
+  const [now, setNow] = useState(() => getBangkokNowFractionalMinutes());
   useEffect(() => {
-    const id = setInterval(() => setNow(getSimulatedMinutes()), 250);
+    const id = setInterval(() => setNow(getBangkokNowFractionalMinutes()), 250);
     return () => clearInterval(id);
   }, []);
   return useMemo(() => {
+    const dayMin = now % 1440;
     const departures = getAirportDepartures().slice().sort((a, b) => a - b);
-    const firstToday = departures.find((d) => d > now);
+    const firstToday = departures.find((d) => d > dayMin);
     const next = firstToday ?? (departures[0] ?? 0) + 24 * 60; // wraps tomorrow
-    const deltaMin = next - now;
+    const deltaMin = next - dayMin;
     const totalSec = Math.max(0, Math.round(deltaMin * 60));
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
-    return { mm: m, ss: s, depMin: next };
+    const patongMin = getPublishedTravelMinutesFromAirport("Patong");
+    return { mm: m, ss: s, depMin: next % 1440, patongMin };
   }, [now]);
 }
 
@@ -70,11 +73,11 @@ function formatClock(min: number): string {
 
 function FlightWatch() {
   const [kind, setKind] = useState<"arr" | "dep">("arr");
-  const [now, setNow] = useState(() => getSimulatedMinutes());
+  const [now, setNow] = useState(() => getBangkokNowFractionalMinutes());
   const [aircraft, setAircraft] = useState<{ count: number; status: "live" | "stale" | "empty" }>({ count: 0, status: "empty" });
 
   useEffect(() => {
-    const clock = window.setInterval(() => setNow(getSimulatedMinutes()), 2_000);
+    const clock = window.setInterval(() => setNow(getBangkokNowFractionalMinutes()), 2_000);
     let cancelled = false;
     const ctrl = new AbortController();
     const refresh = async () => {
@@ -91,15 +94,16 @@ function FlightWatch() {
     };
   }, []);
 
+  const dayMin = now % 1440;
   const flights = useMemo(() => getOpsFlightSchedule()
-    .filter((flight) => flight.mode === "flight" && flight.type === kind && flight.schedMin >= now - 15)
-    .slice(0, 4), [kind, now]);
+    .filter((flight) => flight.mode === "flight" && flight.type === kind && flight.schedMin >= dayMin - 15)
+    .slice(0, 4), [kind, dayMin]);
 
   return (
     <section className="pa-flights" aria-labelledby="pa-flight-title">
       <header className="pa-flights__head">
         <div>
-          <span className="pa-flights__kicker">HKT flight watch</span>
+          <span className="pa-flights__kicker">HKT flight watch · model day</span>
           <h2 id="pa-flight-title">Will the terminal get busy?</h2>
         </div>
         <span className={`pa-flights__radar pa-flights__radar--${aircraft.status}`}>
@@ -121,7 +125,7 @@ function FlightWatch() {
         ))}
       </div>
       <p className="pa-flights__truth">
-        Amber aircraft are live ADS-B observations. Times above run with this research simulation—not airport status.
+        Amber aircraft are live ADS-B near HKT. The board below is a peak-day model filtered to Bangkok time now — not AOT status.
         For gates, delays and the official live board, use AOT.
       </p>
       <a className="pa-flights__official" href="https://phuket.airportthai.co.th/flight" target="_blank" rel="noreferrer">
@@ -361,7 +365,10 @@ function HomeStep({
           {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
         </strong>
         <span className="pa-countdown__sub">
-          From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong> · about 100 min to Patong
+          From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong>
+          {countdown.patongMin != null
+            ? ` · ${countdown.patongMin} min to Patong on the published timetable`
+            : " · published PKSB airport timetable"}
         </span>
       </section>
 

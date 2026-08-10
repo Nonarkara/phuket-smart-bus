@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Lang, PriceComparison, Stop, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
-import { getSimulatedMinutes } from "../engine/fleetSimulator";
+import { getNextPublishedStopArrival } from "../engine/fleetSimulator";
+import { getBangkokNowFractionalMinutes } from "../engine/time";
 
 type SheetStep = "ask" | "result" | "booked" | "pass";
 
@@ -103,24 +104,10 @@ interface WelcomeSheetProps {
   onNavigateToStop: (stopId: string) => void;
 }
 
-/* ── Estimate next bus time per destination ── */
-const DEST_SCHEDULE: Record<string, number[]> = {
-  "Patong": [375,435,495,555,615,675,735,795,855,915,975,1035,1095,1155,1215,1275],
-  "Old Town": [360,390,420,450,480,510,540,570,600,630,660,690,720,750,780,810,840,870,900,930,960,990,1020,1050,1080,1110,1140,1170,1200,1230,1260,1290,1320,1350,1380],
-  "Airport": [360,420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
-  "Rawai": [360,420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
-  "Kata": [390,450,510,570,630,690,750,810,870,930,990,1050,1110,1170,1230,1290,1350],
-  "Karon": [400,460,520,580,640,700,760,820,880,940,1000,1060,1120,1180,1240,1300,1360],
-  "Central": [370,400,430,460,490,520,550,580,610,640,670,700,730,760,790,820,850,880,910,940,970,1000,1030,1060,1090,1120,1150,1180,1210,1240,1270,1300,1330,1360,1390],
-  "Chalong": [420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380],
-};
-
+/* ── Next bus from published PKSB corridor times (Bangkok wall clock) ── */
 function getNextBusMin(dest: string): number | null {
-  const nowMin = getSimulatedMinutes() % 1440;
-  const sched = DEST_SCHEDULE[dest];
-  if (!sched) return null;
-  const next = sched.find((m) => m > nowMin);
-  return next ? Math.round(next - nowMin) : null;
+  const next = getNextPublishedStopArrival(dest, getBangkokNowFractionalMinutes());
+  return next ? Math.round(next.waitMin) : null;
 }
 
 export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNavigateToStop }: WelcomeSheetProps) {
@@ -182,19 +169,18 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   }
 
   // --- Step 1: Collapsed = "Next bus" teaser, Expanded = full search ---
-  // Live ticking countdown — updates every 200ms for visible seconds ticking
+  // Live ticking countdown — published PKSB times vs Bangkok clock
   const [tickingDisplay, setTickingDisplay] = useState({ text: "", dest: "Patong", cls: "" });
   useEffect(() => {
     function refresh() {
-      const simMin = getSimulatedMinutes() % 1440;
-      const pSched = DEST_SCHEDULE["Patong"];
-      const aSched = DEST_SCHEDULE["Airport"];
-      const pNext = pSched?.find((m) => m > simMin);
-      const aNext = aSched?.find((m) => m > simMin);
-      const pDiff = pNext ? pNext - simMin : null;
-      const aDiff = aNext ? aNext - simMin : null;
-      const diff = pDiff ?? aDiff;
-      const dest = pDiff !== null ? "Patong" : "Airport";
+      const nowMin = getBangkokNowFractionalMinutes();
+      const pNext = getNextPublishedStopArrival("Patong", nowMin);
+      const aNext = getNextPublishedStopArrival("Airport", nowMin);
+      const pDiff = pNext?.waitMin ?? null;
+      const aDiff = aNext?.waitMin ?? null;
+      const preferPatong = pDiff !== null && (aDiff === null || pDiff <= aDiff);
+      const diff = preferPatong ? pDiff : aDiff;
+      const dest = preferPatong ? "Patong" : "Airport";
 
       if (diff === null) {
         setTickingDisplay({ text: "Resumes 06:00", dest, cls: "welcome-sheet__next-time--dim" });
