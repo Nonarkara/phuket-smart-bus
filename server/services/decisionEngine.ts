@@ -255,7 +255,7 @@ export function buildDecisionSummary(
       en: "Bus status unavailable",
       th: "สถานะรถไม่พร้อมใช้งาน",
       zh: "巴士状态不可用",
-      ko: "Bus status unavailable",
+      ko: "버스 상태 확인 불가",
       de: "Busstatus nicht verfügbar",
       fr: "Statut bus indisponible",
       es: "Estado del bus no disponible"

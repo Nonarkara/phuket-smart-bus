@@ -4,6 +4,13 @@ export function localize(value: LocalizedText, lang: Lang) {
   return value[lang];
 }
 
+// ko has no parameter here (unlike src/engine/i18n.ts's text(), which takes a
+// real 4th ko arg) — server/config.ts alone has 40+ existing 6-arg calls with
+// de/fr/es positional in slots 4-6, so adding ko there would silently
+// misassign every one of them. Every server-built LocalizedText.ko is
+// therefore an English placeholder, not a translation. Korean is a live,
+// fully-translated UI language client-side (see LanguageToggle) — give the
+// server real ko copy before it ever serves a rider, not just this signature.
 export function text(en: string, th: string, zh?: string, de?: string, fr?: string, es?: string): LocalizedText {
   return { en, th, zh: zh ?? en, ko: en, de: de ?? en, fr: fr ?? en, es: es ?? en };
 }
