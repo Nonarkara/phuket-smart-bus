@@ -5,7 +5,7 @@ export function localize(value: LocalizedText, lang: Lang) {
 }
 
 export function text(en: string, th: string, zh?: string, de?: string, fr?: string, es?: string): LocalizedText {
-  return { en, th, zh: zh ?? en, de: de ?? en, fr: fr ?? en, es: es ?? en };
+  return { en, th, zh: zh ?? en, ko: en, de: de ?? en, fr: fr ?? en, es: es ?? en };
 }
 
 export function routeDestinationLabel(routeId: RouteId, target: string) {
