@@ -24,6 +24,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { OpsFlight } from "../../engine/opsFlightSchedule";
 import { captureRateFor } from "../../engine/travelBehavior";
+import { FARE_THB } from "../../engine/demandSupplyEngine";
 import { Counter } from "./V2Shared";
 
 interface FlightTimelineProps {
@@ -77,7 +78,7 @@ function buildHourCols(flights: OpsFlight[]): HourCol[] {
       ? Math.round(flight.pax * captureRateFor(flight.city))
       : 0
     col.capturePax += capture
-    col.captureThb += capture * 100  // ฿100/boarding
+    col.captureThb += capture * FARE_THB
     col.flights.push(flight)
   }
   // Active flights = any flight within 30 min of the hour
@@ -86,8 +87,6 @@ function buildHourCols(flights: OpsFlight[]): HourCol[] {
   }
   return cols
 }
-
-const FARE_THB = 100
 
 export function FlightTimeline({ flights, simMinutes }: FlightTimelineProps) {
   const cols = buildHourCols(flights)
