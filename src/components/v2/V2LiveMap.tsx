@@ -22,9 +22,24 @@ export type V2MapHandle = { syncNow: (vehicles: SimState["vehicles"]) => void };
 
 export type MapLayerId = "buses" | "flights" | "rain" | "incidents";
 
+/** Where the default frame lives. `corridor` is the Airport Line road at zoom
+ *  12 (~38 m/px) — the only frame where a 30 km/h bus visibly travels. `island`
+ *  is the old zoom-10 view that also fits the ferry lanes (~151 m/px, buses
+ *  crawl at 0.5 px/s). Corridor is the default; island is one chip away. */
+export type MapFrame = "corridor" | "island";
+
+const FRAMES: Record<MapFrame, { center: [number, number]; zoom: number }> = {
+  corridor: { center: [7.945, 98.335], zoom: 12 },
+  island: { center: [7.88, 98.49], zoom: 10 },
+};
+
 type V2LiveMapProps = {
   layers?: Partial<Record<MapLayerId, boolean>>;
   onLayersChange?: (layers: Record<MapLayerId, boolean>) => void;
+  /** Called with a vehicle id on hover/click, null on leave. The parent owns
+   *  the plan panel; the map only reports focus. */
+  onFocusVehicle?: (id: string | null, pinned: boolean) => void;
+  focusedVehicleId?: string | null;
 };
 
 const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
@@ -35,16 +50,25 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
 };
 
 const FERRY_ROUTES = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
+const BUS_CAP = 25;
 
 // ---------------------------------------------------------------------------
-// Bus Marker Icon Builder
+// Vehicle instrument — a bus you can read from across the room.
+//
+// The marker is a small vehicle silhouette. Its FILL height is the load
+// (empty = hairline outline, full = solid). A wedge marks the front, rotated
+// to heading. Amber is reserved for the bus that is at the curb loading right
+// now (`isBoarding`) — every other bus is ink on the dark tile, so the one
+// thing that deserves the eye is the only thing that gets the accent.
+// No transition on the icon: the engine repaints per frame, so paint the
+// truth per frame — a CSS ease on top of that is smear, not motion.
 // ---------------------------------------------------------------------------
 function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
   if (FERRY_ROUTES.has(vehicle.route)) {
     return L.divIcon({
       className: "v2-boat-icon",
-      iconSize: [28, 28],
-      iconAnchor: [14, 14],
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
       html: `<div class="v2-boat ${vehicle.status === "moving" ? "is-moving" : ""}" style="--heading:${vehicle.heading}deg">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 7 11H5l2.3 7h9.4l2.3-7h-2L12 2Zm-2.4 9L12 6l2.4 5H9.6Z"/></svg>
       </div>`,
@@ -52,45 +76,56 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
   }
   return L.divIcon({
     className: "v2-bus-icon",
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    html: `<div class="v2-bus ${vehicle.status === "moving" ? "is-moving" : ""}" style="--heading: ${vehicle.heading}deg">
-      <div class="v2-bus__arrow"></div>
-      <div class="v2-bus__body">${vehicle.pax}</div>
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    html: `<div class="v2-bus" style="--heading:${vehicle.heading}deg;--fill:${Math.min(1, vehicle.pax / BUS_CAP)}">
+      <span class="v2-bus__wedge" aria-hidden="true"></span>
+      <span class="v2-bus__hull"><span class="v2-bus__load"></span></span>
     </div>`
   });
 }
 
-function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number]) {
-  marker.setLatLng([vehicle.lat, vehicle.lng]);
+function busTooltip(vehicle: SimState["vehicles"][number]) {
   const isFerry = FERRY_ROUTES.has(vehicle.route);
-  marker.setTooltipContent(`${vehicle.plate} · ${isFerry ? "scheduled vessel" : `${vehicle.pax}/25 pax`} · ${vehicle.route}`);
+  return isFerry ? `${vehicle.plate} · scheduled vessel` : `${vehicle.plate} · ${vehicle.pax}/${BUS_CAP}`;
+}
+
+function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], focused: boolean) {
+  marker.setLatLng([vehicle.lat, vehicle.lng]);
+  marker.setTooltipContent(busTooltip(vehicle));
 
   const element = marker.getElement();
   if (!element) return;
 
   const bus = element.querySelector<HTMLElement>(".v2-bus");
-  const body = element.querySelector<HTMLElement>(".v2-bus__body");
   const boat = element.querySelector<HTMLElement>(".v2-boat");
   if (bus) {
     bus.classList.toggle("is-moving", vehicle.status === "moving");
+    bus.classList.toggle("is-boarding", Boolean(vehicle.isBoarding));
+    bus.classList.toggle("is-focused", focused);
     bus.style.setProperty("--heading", `${vehicle.heading}deg`);
-  }
-  if (body) {
-    body.textContent = String(vehicle.pax);
+    bus.style.setProperty("--fill", String(Math.min(1, vehicle.pax / BUS_CAP)));
   }
   if (boat) {
     boat.classList.toggle("is-moving", vehicle.status === "moving");
     boat.style.setProperty("--heading", `${vehicle.heading}deg`);
   }
+  marker.setZIndexOffset(focused ? 900 : vehicle.isBoarding ? 600 : 0);
 }
 
 // ---------------------------------------------------------------------------
 // Vehicle Layer — imperative Leaflet markers, driven per frame via syncNow().
 // ---------------------------------------------------------------------------
-const VehicleLayer = forwardRef<V2MapHandle, { enabled: boolean }>(function VehicleLayer({ enabled }, ref) {
+const VehicleLayer = forwardRef<
+  V2MapHandle,
+  { enabled: boolean; focusedId: string | null; onFocus?: (id: string | null, pinned: boolean) => void }
+>(function VehicleLayer({ enabled, focusedId, onFocus }, ref) {
   const map = useMap();
   const markers = useRef<Map<string, L.Marker>>(new Map());
+  const focusedRef = useRef<string | null>(focusedId);
+  focusedRef.current = focusedId;
+  const onFocusRef = useRef(onFocus);
+  onFocusRef.current = onFocus;
 
   useImperativeHandle(ref, () => ({
     syncNow(vehicles) {
@@ -110,11 +145,16 @@ const VehicleLayer = forwardRef<V2MapHandle, { enabled: boolean }>(function Vehi
         let marker = markers.current.get(vehicle.id);
         if (!marker) {
           marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
-          const isFerry = FERRY_ROUTES.has(vehicle.route);
-          marker.bindTooltip(`${vehicle.plate} · ${isFerry ? "scheduled vessel" : `${vehicle.pax}/25 pax`} · ${vehicle.route}`, { direction: "top" });
+          marker.bindTooltip(busTooltip(vehicle), { direction: "top", className: "v2-bus-tip" });
+          if (!FERRY_ROUTES.has(vehicle.route)) {
+            const id = vehicle.id;
+            marker.on("mouseover", () => onFocusRef.current?.(id, false));
+            marker.on("mouseout", () => onFocusRef.current?.(null, false));
+            marker.on("click", () => onFocusRef.current?.(id, true));
+          }
           markers.current.set(vehicle.id, marker);
         }
-        syncBusMarker(marker, vehicle);
+        syncBusMarker(marker, vehicle, focusedRef.current === vehicle.id);
       }
     },
   }), [map, enabled]);
@@ -295,53 +335,56 @@ function HktMarker() {
 // ---------------------------------------------------------------------------
 // Route polyline
 // ---------------------------------------------------------------------------
-const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string; marine?: boolean }[] = [
-  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#16b8b0" },
-  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#ffcc33" },
-  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#db0000" },
-  { routeId: "rassada-phi-phi", firstStop: [7.8557, 98.4013], color: "#168aad", marine: true },
-  { routeId: "rassada-ao-nang", firstStop: [7.8557, 98.4013], color: "#6c63a8", marine: true },
-  { routeId: "bang-rong-koh-yao", firstStop: [8.0133, 98.4186], color: "#d97706", marine: true },
-  { routeId: "chalong-racha", firstStop: [7.8281, 98.3613], color: "#db2777", marine: true },
+// On the dark tile the road geometry is context, not data (design.md §VII:
+// "active data in amber, context geometry in hairline"). The Airport Line is
+// the hero corridor and gets a heavier ink line; local lines and ferry lanes
+// are lighter/dashed. Vehicles carry the accent, the roads don't compete.
+const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string; weight: number; marine?: boolean }[] = [
+  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#c8d1db", weight: 3.5 },
+  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#8b97a4", weight: 2 },
+  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#8b97a4", weight: 2 },
+  { routeId: "rassada-phi-phi", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
+  { routeId: "rassada-ao-nang", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
+  { routeId: "bang-rong-koh-yao", firstStop: [8.0133, 98.4186], color: "#5f7d95", weight: 1.5, marine: true },
+  { routeId: "chalong-racha", firstStop: [7.8281, 98.3613], color: "#5f7d95", weight: 1.5, marine: true },
 ];
 
 function RoutePolylines() {
-  const polylines: { poly: LatLngTuple[]; color: string; marine?: boolean; routeId: string }[] = [];
+  const polylines: { poly: LatLngTuple[]; color: string; weight: number; marine?: boolean; routeId: string }[] = [];
   for (const cfg of ROUTE_POLYLINES) {
     try {
       const poly = getDirectionPolyline(cfg.routeId as never, cfg.firstStop);
-      if (poly.length >= 2) polylines.push({ poly, color: cfg.color, marine: cfg.marine, routeId: cfg.routeId });
+      if (poly.length >= 2) polylines.push({ poly, color: cfg.color, weight: cfg.weight, marine: cfg.marine, routeId: cfg.routeId });
     } catch { /* */ }
   }
 
   return (
     <>
-      {polylines.map(({ poly, color, marine, routeId }) => (
+      {polylines.map(({ poly, color, weight, marine, routeId }) => (
         <Polyline
           key={routeId}
           positions={poly}
-          pathOptions={{ color, weight: marine ? 2.5 : 4, opacity: marine ? 0.78 : 0.85, dashArray: marine ? "4 9" : undefined }}
+          pathOptions={{ color, weight, opacity: marine ? 0.7 : 0.9, dashArray: marine ? "3 8" : undefined, lineCap: "round" }}
         />
       ))}
     </>
   );
 }
 
-function SyncMapView() {
+function SyncMapView({ frame }: { frame: MapFrame }) {
   const map = useMap();
   useEffect(() => {
     let raf = 0;
     const fix = () => {
       map.invalidateSize();
-      // Phuket plus the ferry destinations: the operational geography is an
-      // island network, not only the airport road corridor.
-      map.setView([7.88, 98.49], 10);
+      const { center, zoom } = FRAMES[frame];
+      map.setView(center, zoom, { animate: false });
     };
     raf = requestAnimationFrame(() => {
       raf = requestAnimationFrame(fix);
     });
     return () => cancelAnimationFrame(raf);
-  }, [map]);
+  }, [map, frame]);
   return null;
 }
 
@@ -389,9 +432,13 @@ function IncidentOverlay({ enabled }: { enabled: boolean }) {
 function LayerToggles({
   layers,
   onChange,
+  frame,
+  onFrame,
 }: {
   layers: Record<MapLayerId, boolean>;
   onChange: (next: Record<MapLayerId, boolean>) => void;
+  frame: MapFrame;
+  onFrame: (next: MapFrame) => void;
 }) {
   const items: { id: MapLayerId; label: string }[] = [
     { id: "buses", label: "Buses" },
@@ -400,7 +447,26 @@ function LayerToggles({
     { id: "incidents", label: "Incidents" },
   ];
   return (
-    <div className="v2-map__layers" role="toolbar" aria-label="Map layers">
+    <div className="v2-map__layers" role="toolbar" aria-label="Map layers and frame">
+      <button
+        type="button"
+        className={`v2-map__layer-btn v2-map__layer-btn--frame ${frame === "corridor" ? "is-active" : ""}`}
+        aria-pressed={frame === "corridor"}
+        onClick={() => onFrame("corridor")}
+        title="Frame the Airport Line corridor"
+      >
+        Corridor
+      </button>
+      <button
+        type="button"
+        className={`v2-map__layer-btn v2-map__layer-btn--frame ${frame === "island" ? "is-active" : ""}`}
+        aria-pressed={frame === "island"}
+        onClick={() => onFrame("island")}
+        title="Frame the whole island + ferry lanes"
+      >
+        Island
+      </button>
+      <span className="v2-map__layer-rule" aria-hidden="true" />
       {items.map(({ id, label }) => (
         <button
           key={id}
@@ -420,13 +486,14 @@ function LayerToggles({
 // V2LiveMap
 // ---------------------------------------------------------------------------
 export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(function V2LiveMap(
-  { layers: layersProp, onLayersChange },
+  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null },
   ref
 ) {
   const [layers, setLayers] = useState<Record<MapLayerId, boolean>>(() => ({
     ...DEFAULT_LAYERS,
     ...layersProp,
   }));
+  const [frame, setFrame] = useState<MapFrame>("corridor");
   const [flightInfo, setFlightInfo] = useState<{ liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }>({
     liveCount: 0,
     modelCount: 0,
@@ -444,7 +511,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
 
   return (
     <div className="v2-map__frame">
-      <LayerToggles layers={layers} onChange={setAndNotify} />
+      <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} />
       {layers.flights && (
         <div className="v2-map__flight-badge" aria-live="polite">
           {flightInfo.liveCount} live aircraft · {flightInfo.modelCount} timetable ·{" "}
@@ -452,14 +519,16 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         </div>
       )}
       <div className="v2-map__legend" aria-label="Map key">
+        <span><i className="is-bus-empty" /> empty</span>
+        <span><i className="is-bus-full" /> full</span>
+        <span><i className="is-bus-boarding" /> boarding now</span>
         <span><i className="is-road" /> bus route</span>
-        <span><i className="is-ferry" /> ferry route</span>
+        <span><i className="is-ferry" /> ferry</span>
         <span><i className="is-live-plane" /> live aircraft</span>
-        <span><i className="is-model-plane" /> timetable</span>
       </div>
       <MapContainer
-        center={[7.88, 98.49]}
-        zoom={10}
+        center={FRAMES.corridor.center}
+        zoom={FRAMES.corridor.zoom}
         minZoom={6}
         className="v2-map__canvas"
         zoomControl={false}
@@ -467,16 +536,21 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         worldCopyJump={false}
       >
         <TileLayer
-          attribution="&copy; OSM"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution="&copy; OSM &copy; CARTO"
+          url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+        />
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+          opacity={0.75}
+          zIndex={650}
         />
         <RainOverlay enabled={layers.rain} />
         <IncidentOverlay enabled={layers.incidents} />
         <RoutePolylines />
         <HktMarker />
-        <VehicleLayer ref={ref} enabled={layers.buses} />
+        <VehicleLayer ref={ref} enabled={layers.buses} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
-        <SyncMapView />
+        <SyncMapView frame={frame} />
       </MapContainer>
     </div>
   );

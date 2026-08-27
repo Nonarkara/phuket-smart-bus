@@ -42,7 +42,7 @@ export const BUS_CAPACITY = 25;
 /** After this long in the queue, a tourist gives up and takes Grab. */
 export const ABANDON_AFTER_MIN = 60;
 /** Flat fare. */
-const FARE_THB = 100;
+export const FARE_THB = 100;
 /** Passengers alight progressively from first major stop to terminus. */
 const FIRST_ALIGHT_MIN = 20;
 const LAST_ALIGHT_MIN = 95;

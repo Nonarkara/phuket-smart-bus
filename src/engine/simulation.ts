@@ -249,7 +249,12 @@ export type SimState = {
   destBreakdown: { name: string; served: number; revenue: number; grabSaved: number }[];
 
   // Vehicle positions for the map
-  vehicles: { id: string; lat: number; lng: number; heading: number; status: "moving" | "dwelling"; route: string; pax: number; plate: string }[];
+  vehicles: {
+    id: string; lat: number; lng: number; heading: number; status: "moving" | "dwelling"; route: string; pax: number; plate: string;
+    /** True for the airport-line bus at the curb boarding the queue right now.
+     *  The one vehicle that earns the accent colour on the map. */
+    isBoarding?: boolean;
+  }[];
 };
 
 // ---------------------------------------------------------------------------
