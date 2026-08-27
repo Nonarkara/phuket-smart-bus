@@ -44,6 +44,7 @@ import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
 import { DemandSupplyGapRail } from "./components/v2/DemandSupplyGapRail";
+import { FlightTimeline } from "./components/v2/FlightTimeline";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
@@ -51,6 +52,7 @@ import { InsightsSummaryPanel } from "./components/v2/InsightsSummaryPanel";
 import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 import { OpsBriefing } from "./components/v2/OpsBriefing";
 import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
+import { BusPlanPanel } from "./components/v2/BusPlanPanel";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
 
@@ -101,7 +103,17 @@ function formatClockLabel(min: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} BKK`;
 }
 
-function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
+/** The one bus that earns amber: the airport-line vehicle at the curb, dwelling
+ *  at the airport end, at the START of its trip. That is where the queue boards
+ *  and where the operator's eye should rest. Everything else is ink. */
+function isBoardingAtCurb(v: VehiclePosition, nowMin: number): boolean {
+  if (v.routeId !== "rawai-airport" || v.tripStartMin == null) return false;
+  if (v.directionLabel !== "Bus to Rawai") return false;
+  const age = nowMin - v.tripStartMin;
+  return v.status !== "moving" && age >= -3 && age <= 3;
+}
+
+function toMapVehicle(v: VehiclePosition, nowMin: number): SimState["vehicles"][number] {
   return {
     id: v.vehicleId,
     lat: v.coordinates[0],
@@ -110,7 +122,8 @@ function toMapVehicle(v: VehiclePosition): SimState["vehicles"][number] {
     status: v.status === "moving" ? "moving" : "dwelling",
     route: v.routeId,
     pax: vehiclePax(v),
-    plate: v.licensePlate
+    plate: v.licensePlate,
+    isBoarding: isBoardingAtCurb(v, nowMin),
   };
 }
 
@@ -196,6 +209,18 @@ export default function DashboardV2() {
   // Per-vehicle operations panel rows
   const operatorRows = getOperatorFleet();
 
+  // Bus plan panel: which vehicle the operator is looking at. Hover sets it,
+  // click pins it (hover-out no longer clears), × or clicking empty map unpins.
+  const [focus, setFocus] = useState<{ id: string | null; pinned: boolean }>({ id: null, pinned: false });
+  const handleFocusVehicle = (id: string | null, pinned: boolean) => {
+    setFocus((prev) => {
+      if (pinned) return { id, pinned: true };
+      if (prev.pinned) return prev; // hover doesn't override a pin
+      return { id, pinned: false };
+    });
+  };
+  const focusedRow = focus.id ? operatorRows.find((r) => r.vehicleId === focus.id) ?? null : null;
+
   // Queue timeline snapshots
   const queueTimeline = getQueueTimeline();
 
@@ -246,7 +271,7 @@ export default function DashboardV2() {
 
     const writeFrame = (t: number) => {
       const totals = getLiveTotals(t);
-      const vehicles = getVehiclesNow(undefined, t).map(toMapVehicle);
+      const vehicles = getVehiclesNow(undefined, t).map((v) => toMapVehicle(v, t));
       mapRef.current?.syncNow(vehicles);
       const moving = vehicles.filter((v) => v.status === "moving").length;
 
@@ -438,6 +463,7 @@ export default function DashboardV2() {
       ) : (
         // OPERATIONS view — one decision rail, one geographic truth
         <main className="v2-body v2-body--operations">
+          <FlightTimeline flights={dailyFlights} simMinutes={state.simMinutes} />
           <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
 
           <section className="v2-map">
@@ -459,7 +485,14 @@ export default function DashboardV2() {
                 <span className="v2-map__hero-detail">gave up after 60 min queue</span>
               </div>
             </div>
-            <V2LiveMap ref={mapRef} />
+            <div className="v2-map__stage">
+              <V2LiveMap ref={mapRef} onFocusVehicle={handleFocusVehicle} focusedVehicleId={focus.id} />
+              <BusPlanPanel
+                row={focusedRow}
+                pinned={focus.pinned}
+                onClose={() => setFocus({ id: null, pinned: false })}
+              />
+            </div>
             <div className="v2-map__overlay">
               <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>
               <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>

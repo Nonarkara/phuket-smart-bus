@@ -5678,6 +5678,135 @@ a { color: var(--tint); }
 /* This flight's contribution to the bus queue — the demand trace. */
 .v2-schedule__busdemand { font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 500; color: var(--amber); text-align: right; }
 
+/* ── Flight timeline (FlightTimeline.tsx) ──────────────────────────────────
+ * 24-hour bar chart of arrivals + departures + bus-catchable pax. The "now"
+ * cursor tracks the sim clock, the current-hour column enlarges and lists
+ * the real flight numbers below the chart. Counter component shows the day
+ * total pax / capture / ฿. */
+.v2-flights {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line);
+  padding: 14px 18px 10px;
+  position: relative;
+}
+.v2-flights__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.v2-flights__eyebrow { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ax-ink-3); font-family: var(--font-display); }
+.v2-flights__h { font-size: 18px; font-weight: 800; margin: 4px 0 4px; color: var(--ax-ink); letter-spacing: -0.01em; }
+.v2-flights__lede { font-size: var(--t-micro); color: var(--ax-ink-2); margin: 0; }
+.v2-flights__captureval { font-family: var(--font-mono); font-weight: 700; color: var(--ax-accent); }
+.v2-flights__legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.v2-flights__legend-item { display: inline-flex; align-items: center; gap: 4px; font-size: var(--t-micro); color: var(--ax-ink-2); font-family: var(--font-mono); }
+.v2-flights__swatch { width: 10px; height: 10px; display: inline-block; border: 1px solid transparent; }
+.v2-flights__swatch--arr { background: var(--amber); }
+.v2-flights__swatch--dep { background: var(--ax-ink-3); }
+.v2-flights__swatch--capture { background: var(--ax-accent); }
+.v2-flights__rail { overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; border-bottom: 1px solid var(--ax-line); }
+.v2-flights__hours { display: flex; position: relative; height: 180px; }
+.v2-flights__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  border-left: 1px solid var(--ax-line-2);
+  position: relative;
+  padding: 18px 0 0;
+  height: 100%;
+}
+.v2-flights__col:last-child { border-right: 1px solid var(--ax-line-2); }
+.v2-flights__col.is-current { background: var(--ax-paper); }
+.v2-flights__col.is-current .v2-flights__hourlabel { color: var(--ax-accent); font-weight: 800; }
+.v2-flights__col.is-peak .v2-flights__hourlabel::after { content: "★"; color: var(--amber); margin-left: 2px; font-size: 9px; }
+.v2-flights__hourlabel { font-family: var(--font-mono); font-size: 10px; color: var(--ax-ink-3); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.v2-flights__bars { position: relative; flex: 1; width: 22px; display: flex; flex-direction: column-reverse; gap: 1px; }
+.v2-flights__bar { width: 100%; min-height: 2px; transition: height 0.3s ease; }
+.v2-flights__bar--arr { background: var(--amber); opacity: 0.85; }
+.v2-flights__bar--dep { background: var(--ax-ink-3); opacity: 0.6; }
+.v2-flights__bar--capture { background: var(--ax-accent); }
+.v2-flights__pax { font-family: var(--font-mono); font-size: 9px; color: var(--ax-ink); font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1; font-weight: 600; }
+.v2-flights__flights { font-family: var(--font-mono); font-size: 8px; color: var(--ax-ink-3); font-variant-numeric: tabular-nums; line-height: 1; margin-top: 2px; }
+.v2-flights__capture { font-family: var(--font-mono); font-size: 9px; color: var(--ax-accent); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.v2-flights__cursor {
+  position: absolute;
+  top: 0;
+  bottom: -4px;
+  width: 2px;
+  background: var(--ax-accent);
+  pointer-events: none;
+  transform: translateX(-1px);
+  box-shadow: 0 0 6px var(--ax-accent);
+}
+.v2-flights__cursor-label {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ax-accent);
+  background: var(--ax-panel);
+  padding: 1px 4px;
+  border: 1px solid var(--ax-accent);
+  white-space: nowrap;
+}
+.v2-flights__callout {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding-top: 8px;
+  font-size: var(--t-micro);
+}
+.v2-flights__callout.is-empty { opacity: 0.5; }
+.v2-flights__callout-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  border-right: 1px solid var(--ax-line);
+  padding-right: 12px;
+}
+.v2-flights__callout-clock { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+.v2-flights__callout-hr { font-size: 9px; color: var(--ax-ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
+.v2-flights__callout-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  align-items: center;
+}
+.v2-flights__callout-item {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto auto auto;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--ax-line);
+  background: var(--ax-paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.v2-flights__callout-item--arr { border-left: 3px solid var(--amber); }
+.v2-flights__callout-item--dep { border-left: 3px solid var(--ax-ink-3); }
+.v2-flights__callout-fno { font-weight: 700; color: var(--ax-ink); }
+.v2-flights__callout-type { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; padding: 1px 4px; }
+.v2-flights__callout-item--arr .v2-flights__callout-type { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+.v2-flights__callout-item--dep .v2-flights__callout-type { background: rgba(31, 110, 67, 0.15); color: var(--ax-accent); }
+.v2-flights__callout-time-rel { color: var(--ax-ink-3); font-size: 10px; }
+.v2-flights__callout-route { color: var(--ax-ink-2); }
+.v2-flights__callout-aircraft { color: var(--ax-ink-3); font-size: 10px; }
+.v2-flights__callout-pax { color: var(--ax-ink); font-weight: 600; }
+.v2-flights__callout-load { color: var(--ax-ink-3); font-weight: 400; font-size: 9px; margin-left: 2px; }
+.v2-flights__callout-capture { color: var(--ax-accent); font-weight: 700; }
+.v2-flights__callout-empty { color: var(--ax-ink-3); font-style: italic; padding: 6px 0; }
+
 /* What-if: extra buses → extra capture. The engine's re-run, not a guess. */
 .v2-whatif { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--amber); background: rgba(245, 158, 11, 0.06); }
 .v2-whatif__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); margin: 0; font-family: var(--font-display); }
@@ -5764,7 +5893,10 @@ a { color: var(--tint); }
 }
 
 /* Bus markers */
-.v2-bus-icon { background: transparent; border: 0; transition: transform 1s linear; will-change: transform; }
+/* Legacy circle marker rules — superseded by the vehicle instrument in the
+   "Vehicle instrument" block below. Kept minimal so nothing else that still
+   references .v2-bus__arrow/__body breaks; the map no longer emits them. */
+.v2-bus-icon { background: transparent; border: 0; }
 .v2-bus { width: 28px; height: 28px; position: relative; display: flex; align-items: center; justify-content: center; }
 .v2-bus__arrow {
   position: absolute;
@@ -9465,6 +9597,112 @@ a { color: var(--tint); }
 .v2-boat svg { width: 19px; height: 19px; fill: #38bdf8; }
 .v2-plane svg { display: block; }
 
+/* ── Vehicle instrument ─────────────────────────────────────────────────────
+   A bus you can read from across the room. The hull's fill height IS the
+   load (--fill 0..1). Ink on the dark tile; amber only for the one bus
+   boarding at the curb; a wedge marks the front. NO transition on the icon:
+   the engine repaints the exact road position every frame, and a CSS ease on
+   top of per-frame truth is smear, not motion (design.md §XXVIII / §XVI). */
+.v2-bus-icon { transition: none; will-change: auto; }
+.v2-bus {
+  --ink: #e6edf3;
+  --hull: rgba(230, 237, 243, 0.14);
+  width: 30px; height: 30px; position: relative;
+  display: grid; place-items: center;
+  transform: rotate(var(--heading, 0deg));
+  transform-origin: 50% 50%;
+}
+.v2-bus__hull {
+  position: relative; display: block;
+  width: 12px; height: 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px 2px 1px 1px;
+  background: var(--hull);
+  overflow: hidden;
+}
+.v2-bus__load {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(var(--fill, 0) * 100%);
+  background: var(--ink);
+}
+.v2-bus__wedge {
+  position: absolute; top: 1px; left: 50%;
+  width: 0; height: 0; transform: translateX(-50%);
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-bottom: 5px solid var(--ink);
+}
+.v2-bus:not(.is-moving) .v2-bus__hull { border-style: dashed; }
+.v2-bus.is-boarding { --ink: var(--amber); --hull: rgba(245, 158, 11, 0.16); }
+.v2-bus.is-focused .v2-bus__hull { outline: 2px solid var(--ink); outline-offset: 2px; }
+.v2-bus.is-focused.is-boarding .v2-bus__hull { outline-color: var(--amber); }
+.v2-bus-tip.leaflet-tooltip {
+  background: rgba(10, 14, 20, 0.94); color: #e6edf3; border: 1px solid #303a45; border-radius: 0;
+  box-shadow: none; font: 700 10px/1 var(--font-mono); letter-spacing: 0.06em; padding: 5px 8px;
+}
+.v2-bus-tip.leaflet-tooltip-top::before { border-top-color: #303a45; }
+
+/* Legend swatches for the instrument. */
+.v2-map__legend i.is-bus-empty,
+.v2-map__legend i.is-bus-full,
+.v2-map__legend i.is-bus-boarding { width: 6px; height: 10px; border: 1px solid #e6edf3; border-radius: 1px; background: transparent; }
+.v2-map__legend i.is-bus-full { background: #e6edf3; }
+.v2-map__legend i.is-bus-boarding { border-color: var(--amber); background: var(--amber); }
+.v2-map__legend i.is-road { border-top-color: #c8d1db; }
+.v2-map__legend i.is-ferry { border-top: 2px dashed #5f7d95; }
+
+/* Layer toolbar: frame chips + a hairline rule before the layer chips. */
+.v2-map__layer-btn--frame { color: rgba(255,255,255,0.86); }
+.v2-map__layer-rule { width: 1px; align-self: stretch; margin: 6px 2px; background: rgba(255,255,255,0.18); }
+
+/* ── Map stage + bus plan panel ────────────────────────────────────────────
+   The stage is a positioning context so the plan card can sit ON the map
+   (inset, hairline, panel-dark) instead of beside it. */
+.v2-map__stage { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 320px; }
+.v2-map__stage .v2-map__frame { flex: 1; }
+.v2-plan {
+  position: absolute; right: 12px; top: 56px; z-index: 1001;
+  width: 264px; padding: 14px 16px 12px;
+  background: rgba(15, 20, 29, 0.96); color: #e6edf3;
+  border: 1px solid #303a45; border-radius: 0; box-shadow: none;
+  font-size: var(--t-body);
+  pointer-events: none;
+}
+.v2-plan.is-pinned { pointer-events: auto; border-color: rgba(230,237,243,0.42); }
+.v2-plan__head { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 10px; align-items: start; margin-bottom: 12px; }
+.v2-plan__kicker { display: block; font: 700 10px/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__plate { display: block; margin-top: 3px; font: 700 18px/1 var(--font-mono); letter-spacing: -0.01em; }
+.v2-plan__status { align-self: center; padding: 3px 7px; border: 1px solid #303a45; font: 700 10px/1 var(--font-mono); letter-spacing: 0.06em; color: #aeb7c0; }
+.v2-plan__status--moving { color: #e6edf3; border-color: #4a5664; }
+.v2-plan__status--pre_trip { color: var(--amber); border-color: rgba(245,158,11,0.55); }
+.v2-plan__close { align-self: center; width: 24px; height: 24px; border: 1px solid #303a45; background: transparent; color: #aeb7c0; font: 700 14px/1 var(--font-mono); cursor: pointer; }
+.v2-plan__close:hover { color: #fff; border-color: #fff; }
+.v2-plan__label { display: block; font: 700 10px/1.3 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__load { margin-bottom: 12px; }
+.v2-plan__load-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.v2-plan__num { font: 700 22px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.v2-plan__num small { font-size: 11px; color: #8b97a4; }
+.v2-plan__seats { display: grid; grid-template-columns: repeat(25, 1fr); gap: 2px; }
+.v2-plan__seats i { display: block; height: 10px; border: 1px solid #4a5664; background: transparent; }
+.v2-plan__seats i.is-taken { background: #e6edf3; border-color: #e6edf3; }
+.v2-plan__facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0 0 12px; padding: 0; border-top: 1px solid #303a45; border-bottom: 1px solid #303a45; }
+.v2-plan__facts > div { padding: 8px 8px 8px 0; border-right: 1px solid #303a45; }
+.v2-plan__facts > div:last-child { border-right: 0; }
+.v2-plan__facts > div + div { padding-left: 8px; }
+.v2-plan__facts dt { font: 700 9px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__facts dd { margin: 3px 0 0; font: 700 14px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.v2-plan__ahead { margin-bottom: 8px; }
+.v2-plan__ruler { position: relative; height: 14px; margin-top: 6px; }
+.v2-plan__ruler-track { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #4a5664; }
+.v2-plan__ruler i { position: absolute; top: 3px; width: 1px; height: 7px; margin-left: -0.5px; background: #8b97a4; }
+.v2-plan__ruler i.is-now { width: 3px; height: 11px; top: 1px; margin-left: -1.5px; background: #e6edf3; }
+.v2-plan__ruler i.is-end { background: #e6edf3; height: 11px; top: 1px; }
+.v2-plan__ruler-ends { display: flex; justify-content: space-between; margin-top: 2px; font: 700 9px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__flag { margin: 8px 0 0; padding: 6px 8px; border-left: 2px solid var(--amber); color: #f0bd68; font-size: 12px; line-height: 1.35; }
+.v2-plan__hint { margin: 8px 0 0; font: 700 9px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: #5f6b78; }
+@media (max-width: 1180px) {
+  .v2-plan { position: static; width: auto; margin-top: 8px; pointer-events: auto; }
+}
+
 /* Phuket conditions strip */
 .v2-conditions {
   display: grid;
@@ -10123,7 +10361,7 @@ a { color: var(--tint); }
   max-width: none;
   width: 100%;
   margin: 0;
-  padding: 40px clamp(16px, 2.5vw, 40px) 80px;
+  padding: 24px clamp(16px, 2.5vw, 32px) 48px;
 }
 .v2 .tk-eyebrow {
   display: block;
@@ -10138,17 +10376,17 @@ a { color: var(--tint); }
   font-size: var(--t-body);
   line-height: 1.65;
   color: var(--ax-ink);
-  max-width: 68ch;
-  margin: 0 0 14px;
+  max-width: 78ch;
+  margin: 0 0 12px;
 }
-.v2 .tk-hero { padding-bottom: 28px; border-bottom: 1px solid var(--ax-line-2); }
-.v2 .tk-section { padding: 28px 0; border-bottom: 1px solid var(--ax-line); }
+.v2 .tk-hero { padding-bottom: 16px; border-bottom: 1px solid var(--ax-line-2); }
+.v2 .tk-section { padding: 14px 0; border-bottom: 1px solid var(--ax-line); }
 .v2 .tk-body {
   font-size: var(--t-body);
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--ax-ink-2);
-  max-width: 68ch;
-  margin: 0 0 12px;
+  max-width: 78ch;
+  margin: 0 0 8px;
 }
 .v2 .tk-body strong { color: var(--ax-ink); }
 .v2 .tk-note {
@@ -10683,7 +10921,7 @@ a { color: var(--tint); }
   max-width: none;
   width: 100%;
   margin: 0;
-  padding: 0 clamp(16px, 2.5vw, 40px) 96px;
+  padding: 0 clamp(16px, 2.5vw, 32px) 56px;
 }
 .v2 .tk-columns {
   display: grid;
@@ -10930,7 +11168,7 @@ a { color: var(--tint); }
   text-transform: uppercase;
 }
 .v2 .tk-section {
-  padding: 72px 0;
+  padding: 24px 0;
   scroll-margin-top: 52px;
 }
 .v2 .tk-section-title--small { max-width: 26ch; font-size: 30px; line-height: 1.12; }
