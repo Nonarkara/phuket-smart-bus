@@ -399,11 +399,17 @@ export default function DashboardV2() {
             aria-selected={viewMode === 'toolkit'}
           >TOOLKIT</button>
         </nav>
-        <div className="v2-header__clock">
-          <span className="v2-header__live">●</span>
+        {/* One clock, one state — the audit's §4D. Day + time + speed + play/pause
+            in a single chip. No more four-row decode; one read, one truth. */}
+        <div className="v2-header__clock" role="status" aria-live="off">
+          <span className="v2-header__live" aria-hidden="true" />
           <span className="v2-header__day">{getDayInfo().label}</span>
+          <span className="v2-header__sep" aria-hidden="true">·</span>
           <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
-          <span className="v2-header__speed">{clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}</span>
+          <span className="v2-header__sep" aria-hidden="true">·</span>
+          <span className="v2-header__speed">
+            {clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}
+          </span>
         </div>
 
         {/* Time Bar & Simulation controls */}
