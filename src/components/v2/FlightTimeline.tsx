@@ -244,7 +244,7 @@ function ActiveHourCallout({ col, hour, minutesIntoHour }: { col: HourCol; hour:
             const capture = f.type === "arr"
               ? Math.round(f.pax * captureRateFor(f.city))
               : 0
-            const delta = f.schedMin - nowMin
+            const delta = Math.round(f.schedMin - nowMin)
             const sign = delta >= 0 ? "+" : "−"
             return (
               <li key={`${f.flightNo}-${f.schedMin}-${f.type}`} className={`v2-flights__callout-item v2-flights__callout-item--${f.type}`}>

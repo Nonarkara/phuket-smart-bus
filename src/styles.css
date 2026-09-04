@@ -8643,7 +8643,7 @@ a { color: var(--tint); }
    the complete second column. Explicit areas prevent a newly inserted panel
    from auto-flowing the map into a second row and leaving a blank quadrant. */
 .v2 .v2-body--operations {
-  grid-template-columns: clamp(360px, 28vw, 500px) minmax(0, 1fr);
+  grid-template-columns: minmax(400px, 32fr) minmax(0, 68fr);
   grid-template-rows: minmax(250px, 0.78fr) minmax(0, 1.22fr);
   grid-template-areas:
     "flights map"
@@ -8655,6 +8655,39 @@ a { color: var(--tint); }
   min-height: 0;
   overflow: auto;
   border: 0;
+}
+.v2 .v2-body--operations .v2-flights__hours { height: 124px; }
+.v2 .v2-body--operations .v2-flights__callout {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+}
+.v2 .v2-body--operations .v2-flights__callout-time {
+  min-width: 0;
+  padding-right: 10px;
+}
+.v2 .v2-body--operations .v2-flights__callout-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  min-width: 0;
+}
+.v2 .v2-body--operations .v2-flights__callout-item {
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  white-space: normal;
+  min-width: 0;
+}
+.v2 .v2-body--operations .v2-flights__callout-route {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v2 .v2-body--operations .v2-flights__callout-aircraft {
+  grid-column: 1 / 4;
+}
+.v2 .v2-body--operations .v2-flights__callout-pax {
+  grid-column: 4 / 6;
+  text-align: right;
 }
 .v2 .v2-body--operations > .v2-decision-rail { grid-area: decision; }
 .v2 .v2-body--operations > .v2-map { grid-area: map; }
@@ -8907,7 +8940,7 @@ a { color: var(--tint); }
 .v2 .v2-map__canvas .v2-basemap-tile {
   /* OSM is the keyless, durable fallback. Tone it to the operations room
      palette without filtering route, vehicle, aircraft or weather layers. */
-  filter: grayscale(1) invert(1) brightness(.52) contrast(1.18);
+  filter: grayscale(1) invert(1) brightness(.72) contrast(1.08);
 }
 
 /* Map status chips at bottom */
@@ -10611,12 +10644,39 @@ a { color: var(--tint); }
   --ax-panel:  #0f141d;
   --ax-ink:    #f3f6f8;
   --ax-ink-2:  #aeb7c0;
-  --ax-ink-3:  #707b87;
+  --ax-ink-3:  #929eaa;
   --ax-line:   #202832;
   --ax-line-2: #303a45;
   --ax-accent: #46b986;
   --ax-neg:    #ff8a7a;
   --ax-warn:   #e0a243;
+  --t-micro:   14px;
+  --t-body:    16px;
+}
+.v2--operations .v2-decision-rail__head > span,
+.v2--operations .v2-decision-rail__source > strong,
+.v2--operations .v2-hour-plan > header span,
+.v2--operations .v2-hour-plan > header small,
+.v2--operations .v2-hour-plan__legend,
+.v2--operations .v2-flights__hourlabel,
+.v2--operations .v2-flights__pax,
+.v2--operations .v2-flights__capture,
+.v2--operations .v2-map__legend,
+.v2--operations .v2-map__flight-badge,
+.v2--operations .v2-map__layer-btn,
+.v2--operations .v2-fleet__row--header,
+.v2--operations .v2-fleet__plate,
+.v2--operations .v2-fleet__route-tag,
+.v2--operations .v2-fleet__status,
+.v2--operations .v2-fleet__problem-pill {
+  font-size: 11px;
+}
+.v2--operations .v2-hour-plan button,
+.v2--operations .v2-fleet__driver-name,
+.v2--operations .v2-fleet__route-dir,
+.v2--operations .v2-fleet__load-num,
+.v2--operations .v2-fleet__eta {
+  font-size: 12px;
 }
 .v2--operations .v2-flight-row:hover,
 .v2--operations .v2-week__row:hover { background: #151b24; }
@@ -11366,4 +11426,50 @@ a { color: var(--tint); }
   .v2 .tk-recs-mobile strong { color: var(--ax-ink); font-size: 13px; }
   .v2 .tk-recs-mobile small { color: var(--ax-ink-3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
   .v2 .tk-program .tk-logo { height: 42px; max-width: 140px; padding: 12px; }
+}
+
+/* Operations-room displays need viewing-distance type, not laptop microcopy.
+   These selectors intentionally affect only the dark live console; editorial
+   Toolkit and Insights typography keeps its own reading rhythm. */
+@media (min-width: 2200px) {
+  .v2--operations {
+    --t-micro: 15px;
+    --t-body: 17px;
+    --t-display: 32px;
+  }
+
+  .v2--operations .v2-decision-rail__head > span,
+  .v2--operations .v2-decision-rail__source > strong,
+  .v2--operations .v2-hour-plan > header span,
+  .v2--operations .v2-fleet__row--header,
+  .v2--operations .v2-fleet__plate,
+  .v2--operations .v2-fleet__route-tag,
+  .v2--operations .v2-fleet__status,
+  .v2--operations .v2-fleet__problem-pill,
+  .v2--operations .v2-map__flight-badge,
+  .v2--operations .v2-map__layer-btn {
+    font-size: 12px;
+  }
+
+  .v2--operations .v2-hour-plan > header small,
+  .v2--operations .v2-hour-plan__legend,
+  .v2--operations .v2-map__legend,
+  .v2--operations .v2-flights__hourlabel,
+  .v2--operations .v2-flights__pax,
+  .v2--operations .v2-flights__capture,
+  .v2--operations .v2-fleet__full-tag {
+    font-size: 11px;
+  }
+
+  .v2--operations .v2-hour-plan button,
+  .v2--operations .v2-fleet__row,
+  .v2--operations .v2-fleet__driver-name,
+  .v2--operations .v2-fleet__route-dir,
+  .v2--operations .v2-fleet__load-num,
+  .v2--operations .v2-fleet__eta {
+    font-size: 13px;
+  }
+
+  .v2--operations .v2-hour-plan button { min-height: 44px; }
+  .v2--operations .v2-fleet__row { min-height: 44px; }
 }
