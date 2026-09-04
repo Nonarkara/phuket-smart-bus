@@ -577,32 +577,35 @@ body.passenger-site-mode #root {
   .pa-promise h2 { margin-top: 14px; }
 }
 
-/* DESKTOP — keep the rider task compact and reveal the operator handoff. */
-@media (min-width: 768px) {
+/* DESKTOP — the rider and operator stories split the actual viewport. The
+   previous fixed 1,360px wrapper collapsed into a postage stamp on 4K and
+   zoomed-out displays. */
+@media (min-width: 960px) {
   .pa-shell {
     display: grid;
-    grid-template-columns: minmax(400px, 460px) minmax(420px, 1fr);
-    gap: clamp(40px, 7vw, 112px);
-    align-items: start;
-    max-width: 1360px;
-    margin: 0 auto;
-    padding: 48px clamp(32px, 5vw, 72px);
+    grid-template-columns: minmax(0, 48vw) minmax(0, 1fr);
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
   }
   .pa-app {
-    min-height: calc(100vh - 96px);
-    min-height: calc(100dvh - 96px);
-    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
     width: 100%;
-    border: 1px solid var(--pa-line);
+    border-right: 1px solid var(--pa-line);
   }
   .pa-console-invite {
     color: #fff;
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-top: clamp(44px, 10vh, 110px);
-    position: sticky;
-    top: 48px;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: clamp(48px, 10vh, 120px) clamp(42px, 7vw, 144px);
   }
   .pa-console-invite__kicker {
     color: #f2c84b;
@@ -656,5 +659,30 @@ body.passenger-site-mode #root {
     border-top: 1px solid rgba(255, 255, 255, 0.28);
     color: rgba(255, 255, 255, 0.72);
     padding: 14px 0;
+  }
+}
+
+/* Once the rider pane itself is wider than a laptop, use that room to make
+   the task scannable instead of simply stretching a phone column. */
+@media (min-width: 1800px) {
+  .pa-home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "countdown countdown"
+      "flights cards"
+      "flights promise";
+    align-content: start;
+    gap: clamp(24px, 2vw, 44px);
+    padding: 0 clamp(28px, 3vw, 64px) clamp(28px, 3vw, 64px);
+  }
+  .pa-home > .pa-countdown { grid-area: countdown; }
+  .pa-home > .pa-flights { grid-area: flights; align-self: start; }
+  .pa-home > .pa-cards { grid-area: cards; }
+  .pa-home > .pa-promise { grid-area: promise; }
+  .pa-form,
+  .pa-ticket {
+    width: min(100%, 920px);
+    align-self: center;
   }
 }

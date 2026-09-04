@@ -536,13 +536,9 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         worldCopyJump={false}
       >
         <TileLayer
-          attribution="&copy; OSM &copy; CARTO"
-          url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-        />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
-          opacity={0.75}
-          zIndex={650}
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className="v2-basemap-tile"
         />
         <RainOverlay enabled={layers.rain} />
         <IncidentOverlay enabled={layers.incidents} />

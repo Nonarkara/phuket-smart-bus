@@ -8639,8 +8639,25 @@ a { color: var(--tint); }
   overflow: hidden;
 }
 
-/* Operations: one readable decision rail beside one large map. */
-.v2 .v2-body--operations { grid-template-columns: 330px minmax(0, 1fr); }
+/* Operations: flights + demand/supply share one evidence rail; the map owns
+   the complete second column. Explicit areas prevent a newly inserted panel
+   from auto-flowing the map into a second row and leaving a blank quadrant. */
+.v2 .v2-body--operations {
+  grid-template-columns: clamp(360px, 28vw, 500px) minmax(0, 1fr);
+  grid-template-rows: minmax(250px, 0.78fr) minmax(0, 1.22fr);
+  grid-template-areas:
+    "flights map"
+    "decision map";
+}
+.v2 .v2-body--operations > .v2-flights {
+  grid-area: flights;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+}
+.v2 .v2-body--operations > .v2-decision-rail { grid-area: decision; }
+.v2 .v2-body--operations > .v2-map { grid-area: map; }
 .v2-decision-rail {
   min-height: 0;
   overflow-y: auto;
@@ -8886,6 +8903,11 @@ a { color: var(--tint); }
   width: 100%;
   height: 100%;
   background: #eef0eb;
+}
+.v2 .v2-map__canvas .v2-basemap-tile {
+  /* OSM is the keyless, durable fallback. Tone it to the operations room
+     palette without filtering route, vehicle, aircraft or weather layers. */
+  filter: grayscale(1) invert(1) brightness(.52) contrast(1.18);
 }
 
 /* Map status chips at bottom */
