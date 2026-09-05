@@ -10,6 +10,7 @@ import { parseScheduleEntries } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG, ROUTE_DEFINITIONS } from "./config";
+import { getLiveTelemetryVehicles, normalizeVehicleKey } from "./liveGpsReceiver";
 
 // Detailed timetables — imported from src/data/timetables (copied from server/)
 import airportToRawaiTimetable from "../data/timetables/airport-to-rawai.json";
@@ -1303,7 +1304,40 @@ export function getVehiclesNow(now = new Date(), overrideMin?: number): VehicleP
   const nowMin = overrideMin ?? getSimulatedMinutes();
   const smart = routeIds.flatMap((id) => buildVehiclesForRoute(id, nowMin, now));
   const orange = buildOrangeLineVehicles(nowMin, now);
-  return [...smart, ...orange];
+  const base = [...smart, ...orange];
+
+  // Merge direct GPS telemetry if available
+  const liveMap = getLiveTelemetryVehicles(now.getTime());
+  if (!liveMap || liveMap.size === 0) {
+    return base;
+  }
+
+  const merged = new Map<string, VehiclePosition>();
+  for (const v of base) {
+    const key = normalizeVehicleKey(v.vehicleId || v.licensePlate);
+    const live = liveMap.get(key);
+    if (live) {
+      merged.set(key, {
+        ...v,
+        ...live,
+        routeId: live.routeId || v.routeId,
+        destination: live.destination || v.destination,
+        tripStartMin: v.tripStartMin,
+        directionLabel: v.directionLabel,
+        telemetrySource: "direct_gps",
+      });
+    } else {
+      merged.set(key, v);
+    }
+  }
+
+  for (const [key, live] of liveMap.entries()) {
+    if (!merged.has(key)) {
+      merged.set(key, live);
+    }
+  }
+
+  return Array.from(merged.values());
 }
 
 /** One scheduled leg assigned to a land bus — used for driver day records. */

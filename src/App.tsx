@@ -765,8 +765,16 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
               {/* Weather pill */}
               {environment ? (
                 <div className="map-weather">
-                  {environment.tempC}°C · AQI {environment.aqi}
-                  {environment.rainProb > 20 ? ` · Rain ${environment.rainProb}%` : ""}
+                  <span>{environment.tempC}°C · AQI {environment.aqi}</span>
+                  {environment.rainProb > 20 ? <span> · Rain {environment.rainProb}%</span> : null}
+                  {environment.waveHeightM ? (
+                    <span
+                      className={`map-sea-pill is-${environment.maritimeFlag ?? "green"}`}
+                      title={environment.smallBoatsAllowed ? "Small boats cleared" : "Marine Dept: Small boats barred from shore"}
+                    >
+                      · Sea {environment.waveHeightM}m {environment.maritimeFlag === "red" ? "⚠️ No Boats" : ""}
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
               {/* Next bus badge — the single most useful piece of info */}

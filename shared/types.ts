@@ -318,6 +318,11 @@ export interface EnvironmentSnapshot {
   pm25: number;
   conditionLabel: string;
   updatedAt: string;
+  waveHeightM?: number;
+  maritimeFlag?: "green" | "yellow" | "red";
+  smallBoatsAllowed?: boolean;
+  roadFrictionFactor?: number;
+  roadConditionLabel?: string;
 }
 
 export interface FlightInfo {
@@ -358,11 +363,23 @@ export interface WeatherForecastHour {
 }
 
 export interface WeatherIntelligence {
-  current: { tempC: number; rainProb: number; precipMm: number; windKph: number; aqi: number; pm25: number };
+  current: {
+    tempC: number;
+    rainProb: number;
+    precipMm: number;
+    windKph: number;
+    aqi: number;
+    pm25: number;
+    waveHeightM?: number;
+    maritimeFlag?: "green" | "yellow" | "red";
+  };
   forecast: WeatherForecastHour[];
   monsoonSeason: boolean;
   monsoonNote: string;
   driverAlerts: string[];
+  maritimeAdvisories?: string[];
+  smallBoatsAllowed?: boolean;
+  roadFrictionFactor?: number;
 }
 
 export interface PriceComparison {

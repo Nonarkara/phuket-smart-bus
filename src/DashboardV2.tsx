@@ -53,6 +53,8 @@ import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 import { OpsBriefing } from "./components/v2/OpsBriefing";
 import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 import { BusPlanPanel } from "./components/v2/BusPlanPanel";
+import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
+import { isLiveGpsActive, getLiveTelemetryVehicles } from "./engine/liveGpsReceiver";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
 
@@ -242,6 +244,20 @@ export default function DashboardV2() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState(false);
+  const [isGpsActive, setIsGpsActive] = useState(() => isLiveGpsActive());
+  const [liveGpsCount, setLiveGpsCount] = useState(0);
+
+  useEffect(() => {
+    const checkGps = () => {
+      setIsGpsActive(isLiveGpsActive());
+      setLiveGpsCount(getLiveTelemetryVehicles().size);
+    };
+    checkGps();
+    const interval = setInterval(checkGps, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleViewModeChange = (next: Exclude<ViewMode, "live">) => {
     setViewMode(next);
     const url = new URL(window.location.href);
@@ -412,6 +428,17 @@ export default function DashboardV2() {
           </span>
         </div>
 
+        {/* Live GPS Telemetry Status Pill */}
+        <button
+          type="button"
+          className={`v2-header__telemetry-pill ${isGpsActive ? "is-live" : "is-sim"}`}
+          onClick={() => setIsTelemetryModalOpen(true)}
+          title="Click to inspect Live GPS Telemetry Console or test live hardware ingestion"
+        >
+          <span className="v2-telemetry-dot" />
+          <span>{isGpsActive ? `LIVE GPS (${liveGpsCount})` : "TIMETABLE SIM"}</span>
+        </button>
+
         {/* Time Bar & Simulation controls */}
         <SimulationControls
           clockState={clockState}
@@ -492,7 +519,12 @@ export default function DashboardV2() {
               </div>
             </div>
             <div className="v2-map__stage">
-              <V2LiveMap ref={mapRef} onFocusVehicle={handleFocusVehicle} focusedVehicleId={focus.id} />
+              <V2LiveMap
+                ref={mapRef}
+                onFocusVehicle={handleFocusVehicle}
+                focusedVehicleId={focus.id}
+                onOpenTelemetryModal={() => setIsTelemetryModalOpen(true)}
+              />
               <BusPlanPanel
                 row={focusedRow}
                 pinned={focus.pinned}
@@ -558,6 +590,11 @@ export default function DashboardV2() {
           </div>
         </div>
       </footer>
+
+      <TelemetryStatusModal
+        isOpen={isTelemetryModalOpen}
+        onClose={() => setIsTelemetryModalOpen(false)}
+      />
     </div>
   );
 }

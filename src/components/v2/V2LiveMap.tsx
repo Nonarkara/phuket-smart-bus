@@ -13,6 +13,9 @@ import {
 } from "../../engine/adsbFlights";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
 import { getSimulatedMinutes } from "../../engine/fleetSimulator";
+import { getEnvironmentSnapshot } from "../../engine/environmentSimulator";
+import { getMaritimeOverview } from "../../engine/maritimeData";
+import { isLiveGpsActive, getLiveTelemetryVehicles } from "../../engine/liveGpsReceiver";
 
 /** Imperative handle: the parent's per-frame rAF loop calls syncNow() with the
  *  vehicles it sampled for THIS frame's minute. No prop-driven tweening — the
@@ -20,7 +23,7 @@ import { getSimulatedMinutes } from "../../engine/fleetSimulator";
  *  frame's exact position traces the road at any speed with zero interpolation. */
 export type V2MapHandle = { syncNow: (vehicles: SimState["vehicles"]) => void };
 
-export type MapLayerId = "buses" | "flights" | "rain" | "incidents";
+export type MapLayerId = "buses" | "flights" | "piers" | "rain" | "incidents";
 
 /** Where the default frame lives. `corridor` is the Airport Line road at zoom
  *  12 (~38 m/px) — the only frame where a 30 km/h bus visibly travels. `island`
@@ -40,11 +43,13 @@ type V2LiveMapProps = {
    *  the plan panel; the map only reports focus. */
   onFocusVehicle?: (id: string | null, pinned: boolean) => void;
   focusedVehicleId?: string | null;
+  onOpenTelemetryModal?: () => void;
 };
 
 const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   buses: true,
   flights: true,
+  piers: true,
   rain: false,
   incidents: false,
 };
@@ -349,24 +354,82 @@ const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string;
   { routeId: "chalong-racha", firstStop: [7.8281, 98.3613], color: "#5f7d95", weight: 1.5, marine: true },
 ];
 
-function RoutePolylines() {
+function RoutePolylines({ maritimeFlag }: { maritimeFlag?: string }) {
   const polylines: { poly: LatLngTuple[]; color: string; weight: number; marine?: boolean; routeId: string }[] = [];
   for (const cfg of ROUTE_POLYLINES) {
     try {
       const poly = getDirectionPolyline(cfg.routeId as never, cfg.firstStop);
-      if (poly.length >= 2) polylines.push({ poly, color: cfg.color, weight: cfg.weight, marine: cfg.marine, routeId: cfg.routeId });
+      if (poly.length >= 2) {
+        const isRestrictedMarine = cfg.marine && maritimeFlag === "red";
+        const color = isRestrictedMarine ? "#ff7875" : cfg.color;
+        polylines.push({
+          poly,
+          color,
+          weight: cfg.weight,
+          marine: cfg.marine,
+          routeId: cfg.routeId,
+        });
+      }
     } catch { /* */ }
   }
 
   return (
     <>
-      {polylines.map(({ poly, color, weight, marine, routeId }) => (
-        <Polyline
-          key={routeId}
-          positions={poly}
-          pathOptions={{ color, weight, opacity: marine ? 0.7 : 0.9, dashArray: marine ? "3 8" : undefined, lineCap: "round" }}
-        />
-      ))}
+      {polylines.map(({ poly, color, weight, marine, routeId }) => {
+        const isRedFlag = marine && maritimeFlag === "red";
+        return (
+          <Polyline
+            key={routeId}
+            positions={poly}
+            pathOptions={{
+              color,
+              weight,
+              opacity: marine ? 0.75 : 0.9,
+              dashArray: isRedFlag ? "4 6" : marine ? "3 8" : undefined,
+              lineCap: "round",
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/** Pier markers showing Marine Department flag status and small boat clearance */
+function PiersLayer({ enabled }: { enabled: boolean }) {
+  if (!enabled) return null;
+  const env = getEnvironmentSnapshot();
+  const marine = getMaritimeOverview(env.waveHeightM, env.windKph);
+
+  return (
+    <>
+      {marine.piers.map((pier) => {
+        const flagColor = pier.flag === "red" ? "#ff4d4f" : pier.flag === "yellow" ? "#faad14" : "#52c41a";
+        return (
+          <CircleMarker
+            key={pier.pierId}
+            center={pier.coordinates}
+            radius={7}
+            pathOptions={{
+              color: flagColor,
+              fillColor: flagColor,
+              fillOpacity: 0.9,
+              weight: 2,
+            }}
+          >
+            <Tooltip direction="top" offset={[0, -6]}>
+              <div className="v2-pier-tip">
+                <strong>{pier.nameEn} ({pier.nameTh})</strong>
+                <span className={`v2-pier-flag-badge is-${pier.flag}`}>
+                  {pier.flag.toUpperCase()} FLAG · {pier.smallBoatsAllowed ? "DEPARTURES PERMITTED" : "SMALL BOATS PROHIBITED"}
+                </span>
+                <span className="v2-pier-stat">Waves: {pier.waveHeightM}m · Wind: {pier.windSpeedKph} km/h</span>
+                <span className="v2-pier-dests">Destinations: {pier.destinations.join(", ")}</span>
+              </div>
+            </Tooltip>
+          </CircleMarker>
+        );
+      })}
     </>
   );
 }
@@ -443,6 +506,7 @@ function LayerToggles({
   const items: { id: MapLayerId; label: string }[] = [
     { id: "buses", label: "Buses" },
     { id: "flights", label: "Flights" },
+    { id: "piers", label: "Piers & Sea" },
     { id: "rain", label: "Rain" },
     { id: "incidents", label: "Incidents" },
   ];
@@ -486,7 +550,7 @@ function LayerToggles({
 // V2LiveMap
 // ---------------------------------------------------------------------------
 export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(function V2LiveMap(
-  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null },
+  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null, onOpenTelemetryModal },
   ref
 ) {
   const [layers, setLayers] = useState<Record<MapLayerId, boolean>>(() => ({
@@ -500,6 +564,19 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
     status: "empty",
   });
 
+  const [isGpsActive, setIsGpsActive] = useState(() => isLiveGpsActive());
+  const [liveGpsCount, setLiveGpsCount] = useState(0);
+
+  useEffect(() => {
+    const check = () => {
+      setIsGpsActive(isLiveGpsActive());
+      setLiveGpsCount(getLiveTelemetryVehicles().size);
+    };
+    check();
+    const interval = setInterval(check, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (layersProp) setLayers((prev) => ({ ...prev, ...layersProp }));
   }, [layersProp]);
@@ -509,21 +586,45 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
     onLayersChange?.(next);
   };
 
+  const env = getEnvironmentSnapshot();
+
   return (
     <div className="v2-map__frame">
-      <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} />
+      <div className="v2-map__top-controls">
+        <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} />
+        {onOpenTelemetryModal && (
+          <button
+            type="button"
+            className={`v2-map__telemetry-badge ${isGpsActive ? "is-live" : "is-sim"}`}
+            onClick={onOpenTelemetryModal}
+            title="Click to view Live GPS Telemetry Console & Ingestion Settings"
+          >
+            <span className="v2-telemetry-dot" />
+            {isGpsActive ? `LIVE GPS (${liveGpsCount} BUSES)` : "TIMETABLE SIMULATION"}
+          </button>
+        )}
+      </div>
+
       {layers.flights && (
         <div className="v2-map__flight-badge" aria-live="polite">
           {flightInfo.liveCount} live aircraft · {flightInfo.modelCount} timetable ·{" "}
           {flightInfo.status === "live" ? "ADS-B current" : flightInfo.status === "stale" ? "ADS-B last seen" : "model only"}
         </div>
       )}
+
+      {env.maritimeFlag === "red" && (
+        <div className="v2-map__maritime-banner is-red" role="alert">
+          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore (ห้ามเรือเล็กออกจากฝั่ง)
+        </div>
+      )}
+
       <div className="v2-map__legend" aria-label="Map key">
         <span><i className="is-bus-empty" /> empty</span>
         <span><i className="is-bus-full" /> full</span>
         <span><i className="is-bus-boarding" /> boarding now</span>
         <span><i className="is-road" /> bus route</span>
-        <span><i className="is-ferry" /> ferry</span>
+        <span><i className="is-ferry" /> ferry lane</span>
+        <span><i className="is-pier" /> pier/harbor</span>
         <span><i className="is-live-plane" /> live aircraft</span>
       </div>
       <MapContainer
@@ -542,7 +643,8 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         />
         <RainOverlay enabled={layers.rain} />
         <IncidentOverlay enabled={layers.incidents} />
-        <RoutePolylines />
+        <RoutePolylines maritimeFlag={env.maritimeFlag} />
+        <PiersLayer enabled={layers.piers} />
         <HktMarker />
         <VehicleLayer ref={ref} enabled={layers.buses} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />

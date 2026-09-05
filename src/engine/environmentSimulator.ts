@@ -2,6 +2,7 @@ import type { Advisory, AdvisorySeverity, DataSourceStatus, EnvironmentSnapshot,
 import { text } from "./i18n";
 import { getBangkokNowMinutes } from "./time";
 import trafficFixture from "../data/fixtures/traffic_advisories.json";
+import { evaluateMaritimeSafety, getMaritimeOverview, type MaritimeFlag } from "./maritimeData";
 
 // --- Deterministic seeded random ---
 function seededRandom(seed: number) {
@@ -51,6 +52,33 @@ export function isHighSeason(month: number): boolean {
   return month >= 11 || month <= 4;
 }
 
+/**
+ * Road surface friction factor for Phuket's steep coastal roads and highways.
+ * Reflects physical braking distance and vehicular crawl on Highway 4029 (Patong Hill),
+ * Highway 4030 (Kamala switchbacks), and Highway 402 (Airport corridor).
+ */
+export function getRoadFrictionFactor(precipMm: number): number {
+  if (precipMm >= 7.5) return 1.35; // +35% transit time (speed ~74%)
+  if (precipMm >= 2.5) return 1.25; // +25% transit time (speed ~80%)
+  if (precipMm >= 0.5) return 1.10; // +10% transit time (speed ~91%)
+  return 1.0;                       // Dry pavement, normal schedule
+}
+
+/**
+ * Expected weather-induced transit delay in minutes for bus routes.
+ */
+export function getWeatherDelayMinutes(routeId: string, precipMm: number): number {
+  if (routeId.includes("patong")) {
+    // Patong Hill steep switchbacks (14% gradient) suffer heavy crawl in rain
+    return precipMm >= 7.5 ? 14 : precipMm >= 2.5 ? 9 : precipMm >= 0.5 ? 4 : 0;
+  }
+  if (routeId.includes("airport") || routeId.includes("rawai")) {
+    // 95 min full island spine with Heroines Monument underpass water pooling
+    return precipMm >= 7.5 ? 18 : precipMm >= 2.5 ? 11 : precipMm >= 0.5 ? 5 : 0;
+  }
+  return precipMm >= 7.5 ? 10 : precipMm >= 2.5 ? 6 : precipMm >= 0.5 ? 2 : 0;
+}
+
 export function getEnvironmentSnapshot(now = new Date()): EnvironmentSnapshot {
   const month = now.getMonth() + 1;
   const hour = getBangkokNowMinutes(now) / 60;
@@ -70,6 +98,22 @@ export function getEnvironmentSnapshot(now = new Date()): EnvironmentSnapshot {
   const aqi = Math.round(params.aqiBase + seededRandom(seed + 5) * params.aqiRange);
   const pm25 = Math.round(aqi * 0.45);
 
+  // Sea State & Wave Height calculation
+  const baseWaveM = params.monsoon
+    ? Math.round((1.5 + (windKph / 25) * 0.9 + (precipMm >= 3 ? 0.4 : 0)) * 10) / 10
+    : Math.round((0.7 + (windKph / 35) * 0.5) * 10) / 10;
+
+  const maritime = evaluateMaritimeSafety(baseWaveM, windKph, params.monsoon && precipMm >= 3.5);
+  const roadFrictionFactor = getRoadFrictionFactor(precipMm);
+  const roadConditionLabel =
+    precipMm >= 7.5
+      ? "Torrential rain · Flooding risk (Speed −35%)"
+      : precipMm >= 2.5
+        ? "Heavy rain · Wet switchbacks (Speed −25%)"
+        : precipMm >= 0.5
+          ? "Damp roads · Caution on curves (Speed −10%)"
+          : "Dry pavement · Normal flow";
+
   const conditionLabel = precipMm >= 3 ? "Rain" : precipMm >= 1 ? "Light rain" : rainProb > 60 ? "Cloudy" : tempC > 33 ? "Hot & humid" : "Clear skies";
 
   return {
@@ -80,6 +124,11 @@ export function getEnvironmentSnapshot(now = new Date()): EnvironmentSnapshot {
     aqi,
     pm25,
     conditionLabel,
+    waveHeightM: baseWaveM,
+    maritimeFlag: maritime.flag,
+    smallBoatsAllowed: maritime.smallBoatsAllowed,
+    roadFrictionFactor,
+    roadConditionLabel,
     updatedAt: now.toISOString()
   };
 }
@@ -109,16 +158,39 @@ export function getWeatherIntelligence(now = new Date()): WeatherIntelligence {
   }
 
   const driverAlerts: string[] = [];
-  if (env.precipMm >= 3) driverAlerts.push("Heavy rain — reduce speed on hills");
-  if (env.windKph >= 25) driverAlerts.push("High wind advisory — caution on exposed roads");
-  if (env.rainProb >= 70) driverAlerts.push("Rain likely — activate headlights");
+  if (env.precipMm >= 3) driverAlerts.push("Heavy rain — Patong Hill crawl alert, reduce speed on switchbacks");
+  else if (env.precipMm >= 1) driverAlerts.push("Light rain — roads wet, reduce speed on hills");
+  if (env.windKph >= 25) driverAlerts.push("High wind advisory — caution on exposed coastal bridges");
+  if (env.rainProb >= 70) driverAlerts.push("Rain likely — headlights required");
+
+  // Maritime shore clearance advisories
+  const maritimeAdvisories: string[] = [];
+  if (env.maritimeFlag === "red") {
+    maritimeAdvisories.push("Marine Dept Order: RED FLAG · Small boats strictly prohibited from leaving shore (Waves >2.0m)");
+  } else if (env.maritimeFlag === "yellow") {
+    maritimeAdvisories.push("Marine Advisory: YELLOW FLAG · Caution on Andaman crossings, life jackets mandatory");
+  } else {
+    maritimeAdvisories.push("Marine Status: GREEN FLAG · Normal sea state, all vessels cleared to depart");
+  }
 
   return {
-    current: { tempC: env.tempC, rainProb: env.rainProb, precipMm: env.precipMm, windKph: env.windKph, aqi: env.aqi, pm25: env.pm25 },
+    current: {
+      tempC: env.tempC,
+      rainProb: env.rainProb,
+      precipMm: env.precipMm,
+      windKph: env.windKph,
+      aqi: env.aqi,
+      pm25: env.pm25,
+      waveHeightM: env.waveHeightM,
+      maritimeFlag: env.maritimeFlag,
+    },
     forecast,
     monsoonSeason: params.monsoon,
-    monsoonNote: params.monsoon ? "Southwest monsoon active — expect afternoon showers" : "Dry season — generally clear conditions",
-    driverAlerts
+    monsoonNote: params.monsoon ? "Southwest monsoon active — expect afternoon squalls & sea swell" : "Dry season — calm waters & clear conditions",
+    driverAlerts,
+    maritimeAdvisories,
+    smallBoatsAllowed: env.smallBoatsAllowed,
+    roadFrictionFactor: env.roadFrictionFactor,
   };
 }
 
@@ -136,7 +208,7 @@ export function getWeatherAdvisories(now = new Date()): { advisories: Advisory[]
       severity: "warning",
       title: text("Heavy rain alert", "เตือนฝนตกหนัก"),
       message: text(`Precipitation ${env.precipMm}mm with ${env.rainProb}% probability.`, `ปริมาณน้ำฝน ${env.precipMm} มม. โอกาสฝน ${env.rainProb}%`),
-      recommendation: text("Allow extra travel time and wait under cover.", "เผื่อเวลาเดินทางเพิ่มและรอในที่กำบัง"),
+      recommendation: text(`Allow extra travel time (wet roads add +${getWeatherDelayMinutes("phuket-smart-bus-airport", env.precipMm)}m on Patong switchbacks) and wait under cover.`, `เผื่อเวลาเดินทางเพิ่ม (ถนนลื่นเพิ่มเวลา +${getWeatherDelayMinutes("phuket-smart-bus-airport", env.precipMm)} นาทีช่วงเขาป่าตอง) และรอในที่กำบัง`),
       updatedAt: now.toISOString(),
       active: true,
       tags: ["weather", "rain"]
@@ -154,6 +226,21 @@ export function getWeatherAdvisories(now = new Date()): { advisories: Advisory[]
       updatedAt: now.toISOString(),
       active: true,
       tags: ["weather"]
+    });
+  }
+
+  if (env.maritimeFlag === "red") {
+    advisories.push({
+      id: "maritime-red-flag-prohibition",
+      routeId: "all",
+      source: "operations",
+      severity: "warning",
+      title: text("Marine Dept: Small Boats Barred From Leaving Shore", "คำสั่งกรมเจ้าท่า: ห้ามเรือเล็กออกจากฝั่ง"),
+      message: text(`Andaman wave heights ${env.waveHeightM}m. Small boats and speedboats strictly prohibited from leaving Phuket shores.`, `คลื่นลมอันดามันสูง ${env.waveHeightM} ม. สปีดโบ๊ตและเรือเล็กห้ามออกจากฝั่งโดยเด็ดขาด`),
+      recommendation: text("Rassada, Chalong, and Bang Rong island crossings restricted. Seek shelter.", "ท่าเรือรัษฎา ฉลอง บางโรง ระงับการเดินเรือเล็ก ติดตามประกาศกรมเจ้าท่า"),
+      updatedAt: now.toISOString(),
+      active: true,
+      tags: ["maritime", "safety", "sea-state"]
     });
   }
 

@@ -1099,6 +1099,11 @@ a { color: var(--tint); }
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
+}
+.map-sea-pill { margin-left: 6px; }
+.map-sea-pill.is-green  { color: #4ea760; }
+.map-sea-pill.is-yellow { color: #e0a243; font-weight: 600; }
+.map-sea-pill.is-red    { color: #c0392b; font-weight: 700; }
   white-space: nowrap;
 }
 
@@ -12668,4 +12673,458 @@ a { color: var(--tint); }
 
   .v2--operations .v2-hour-plan button { min-height: 44px; }
   .v2--operations .v2-fleet__row { min-height: 44px; }
+}
+
+/* ── TELEMETRY & HARDWARE INGESTION STYLES ───────────────────────────────── */
+.v2-header__telemetry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line-2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.v2-header__telemetry-pill:hover {
+  border-color: var(--ax-accent);
+  color: var(--ax-ink);
+}
+.v2-header__telemetry-pill.is-live {
+  border-color: rgba(70, 185, 134, 0.4);
+  background: rgba(70, 185, 134, 0.08);
+  color: var(--ax-accent);
+}
+.v2-header__telemetry-pill.is-sim {
+  border-color: var(--ax-line-2);
+}
+
+.v2-telemetry-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ax-ink-3);
+}
+.is-live .v2-telemetry-dot {
+  background: var(--ax-accent);
+  box-shadow: 0 0 6px var(--ax-accent);
+  animation: v2-pulse 2s infinite;
+}
+.is-sim .v2-telemetry-dot {
+  background: #92aae0;
+}
+
+/* Modal Backdrop & Container */
+.v2-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.v2-modal {
+  background: var(--ax-paper);
+  border: 1px solid var(--ax-line-2);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 880px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.v2-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--ax-line);
+  background: var(--ax-panel);
+}
+.v2-modal__eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-accent);
+  margin-bottom: 2px;
+}
+.v2-modal__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ax-ink);
+  letter-spacing: -0.02em;
+}
+.v2-modal__close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.v2-modal__close:hover {
+  color: var(--ax-ink);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.v2-telemetry-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.v2-telemetry-hud {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.v2-telemetry-hud__stat {
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v2-telemetry-hud__stat span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2-telemetry-hud__stat strong {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--ax-ink);
+}
+.v2-telemetry-hud__stat small {
+  font-size: 11px;
+  color: var(--ax-ink-2);
+}
+
+.v2-telemetry-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v2-telemetry-section h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink);
+}
+
+.v2-telemetry-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.v2-telemetry-mode-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.v2-btn-mode {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid var(--ax-line-2);
+  background: var(--ax-panel);
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.v2-btn-mode:hover {
+  color: var(--ax-ink);
+  border-color: var(--ax-ink-3);
+}
+.v2-btn-mode.is-active {
+  background: var(--ax-accent);
+  color: #0a0e14;
+  border-color: var(--ax-accent);
+}
+
+.v2-telemetry-sim-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.v2-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+.v2-btn--primary {
+  background: var(--ax-accent);
+  color: #0a0e14;
+}
+.v2-btn--primary:hover {
+  filter: brightness(1.1);
+}
+.v2-btn--warn {
+  background: var(--ax-warn, #e0a243);
+  color: #0a0e14;
+}
+.v2-btn--ghost {
+  background: transparent;
+  color: var(--ax-ink);
+  border: 1px solid var(--ax-line-2);
+}
+.v2-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.v2-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v2-form-group label {
+  font-size: 12px;
+  color: var(--ax-ink-2);
+}
+.v2-form-input-row {
+  display: flex;
+  gap: 8px;
+}
+.v2-form-input-row input {
+  flex: 1;
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line-2);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--ax-ink);
+  font-family: var(--font-mono);
+}
+.v2-telemetry-docs {
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--ax-ink-2);
+}
+.v2-telemetry-docs p { margin: 0 0 6px; }
+.v2-telemetry-docs code {
+  display: block;
+  background: var(--ax-paper);
+  padding: 6px 10px;
+  border-radius: 4px;
+  color: var(--ax-accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.v2-telemetry-table-wrap {
+  border: 1px solid var(--ax-line);
+  border-radius: 6px;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.v2-telemetry-source-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.v2-telemetry-empty {
+  text-align: center;
+  padding: 24px 12px !important;
+  color: var(--ax-ink-3);
+  font-style: italic;
+}
+.v2-btn-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-left: 4px;
+  font: inherit;
+  color: var(--ax-accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.v2-telemetry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+.v2-telemetry-table th {
+  background: var(--ax-panel);
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ax-ink-3);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2-telemetry-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ax-line);
+  color: var(--ax-ink-2);
+}
+.v2-telemetry-table tr.is-live-gps td {
+  background: rgba(70, 185, 134, 0.05);
+}
+.v2-telemetry-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.v2-telemetry-tag--live {
+  background: rgba(70, 185, 134, 0.18);
+  color: var(--ax-accent);
+}
+.v2-telemetry-tag--sim {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ax-ink-3);
+}
+.v2-freshness-pill {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+.v2-freshness-pill.is-fresh { color: var(--ax-accent); }
+.v2-freshness-pill.is-stale { color: var(--ax-warn, #e0a243); }
+
+/* ── MARITIME & SEA STATE STYLES ─────────────────────────────────────────── */
+.v2-marine-flag-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.v2-marine-flag-dot.is-green { background: #52c41a; box-shadow: 0 0 6px #52c41a; }
+.v2-marine-flag-dot.is-yellow { background: #faad14; box-shadow: 0 0 6px #faad14; }
+.v2-marine-flag-dot.is-red { background: #ff4d4f; box-shadow: 0 0 6px #ff4d4f; animation: v2-pulse 1.5s infinite; }
+
+.v2-conditions__item--marine-green { border-left: 3px solid #52c41a; }
+.v2-conditions__item--marine-yellow { border-left: 3px solid #faad14; }
+.v2-conditions__item--marine-red {
+  border-left: 3px solid #ff4d4f;
+  background: rgba(255, 77, 79, 0.08);
+}
+
+.v2-map__top-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 400;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.v2-map__telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 14, 20, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--ax-line-2);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.v2-map__telemetry-badge:hover {
+  border-color: var(--ax-accent);
+  color: var(--ax-ink);
+}
+.v2-map__telemetry-badge.is-live {
+  color: var(--ax-accent);
+  border-color: rgba(70, 185, 134, 0.5);
+}
+
+.v2-map__maritime-banner {
+  position: absolute;
+  top: 50px;
+  left: 12px;
+  right: 12px;
+  z-index: 400;
+  background: rgba(255, 77, 79, 0.92);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(255, 77, 79, 0.4);
+}
+
+.v2-pier-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+.v2-pier-flag-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+.v2-pier-flag-badge.is-green { background: rgba(82, 196, 26, 0.2); color: #52c41a; }
+.v2-pier-flag-badge.is-yellow { background: rgba(250, 173, 20, 0.2); color: #faad14; }
+.v2-pier-flag-badge.is-red { background: rgba(255, 77, 79, 0.2); color: #ff4d4f; }
+
+.v2-map__legend span i.is-pier {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #52c41a;
+  border: 1px solid #ffffff;
+  display: inline-block;
 }
