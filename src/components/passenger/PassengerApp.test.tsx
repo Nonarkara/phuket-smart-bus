@@ -6,11 +6,27 @@ import { PassengerApp } from "./PassengerApp";
 
 vi.mock("../../engine/fleetSimulator", () => ({
   getAirportDepartures: () => [780],
-  getPublishedTravelMinutesFromAirport: () => 70
+  getPublishedTravelMinutesFromAirport: () => 70,
+  // headlineMetrics reads getVehiclesNow + getSimulatedMinutes; the test
+  // doesn't exercise the operator pane, so empty values are fine.
+  getVehiclesNow: () => [],
+  getSimulatedMinutes: () => 750,
+  // simulation.computeSimState pulls these; empty array keeps the engine
+  // a no-op for the chrome-only assertions this file makes.
+  getAirportboundTrips: () => []
 }));
 
 vi.mock("../../engine/time", () => ({
-  getBangkokNowFractionalMinutes: () => 750
+  getBangkokNowFractionalMinutes: () => 750,
+  // The headline-metrics engine pulls in fleetSimulator → which loads
+  // parseScheduleEntries from this module. The PassengerApp test only
+  // checks the chrome (countdown, decision panel, ticket copy), not the
+  // engine's internal math, so the timetable parser can be a no-op stub.
+  parseScheduleEntries: () => [],
+  buildTimetableSummary: () => ({}),
+  getBangkokNowMinutes: () => 750,
+  formatClockLabel: (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`,
+  parseClockMinutes: () => 0
 }));
 
 vi.mock("../../engine/adsbFlights", () => ({

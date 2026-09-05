@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../../engine/time";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
+import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
 import { ADSB_POLL_MS, fetchAdsbAroundHkt } from "../../engine/adsbFlights";
 
 /* -------------------------------------------------------------------------
@@ -63,6 +64,26 @@ function useNextBusCountdown() {
     const patongMin = getPublishedTravelMinutesFromAirport("Patong");
     return { mm: m, ss: s, depMin: next % 1440, patongMin };
   }, [now]);
+}
+
+/**
+ * Operator metrics — the same SSOT every other surface reads.
+ * Tick at 1s; that's the cadence the operator console shows.
+ */
+function useOperatorMetrics(): HeadlineMetrics {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => (n + 1) | 0), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return getHeadlineMetrics();
+}
+
+/** ฿4,300 → "฿4,300"  ·  1,247 → "1,247"  ·  28.4 → "28.4"  (no thousands sep) */
+function fmt(n: number): string {
+  if (n >= 1000) return `฿${Math.round(n).toLocaleString("en-US")}`;
+  if (n >= 10) return Math.round(n).toLocaleString("en-US");
+  return n.toFixed(1);
 }
 
 function formatClock(min: number): string {
@@ -199,6 +220,7 @@ type Step = "home" | "destination" | "payment" | "ticket";
 
 export function PassengerApp() {
   const countdown = useNextBusCountdown();
+  const operator = useOperatorMetrics();
   const [step, setStep] = useState<Step>("home");
   const [passType, setPassType] = useState<"single" | "3day" | null>(null);
   const [destination, setDestination] = useState<string>("");
@@ -322,15 +344,44 @@ export function PassengerApp() {
       </footer>
       </div>
 
-      {/* Desktop-only: investor/ops is a different job — never the phone tourist chrome. */}
+      {/* Desktop-only: the right pane is the operator's view of the same
+          system. It earns its 50% of the screen by showing live KPIs from
+          the engine — not a marketing pitch. The numbers come straight from
+          getHeadlineMetrics() (the same SSOT the /ops console reads) so a
+          rider can see what the operator sees, ticking. */}
       <aside className="pa-console-invite" aria-label="Operations console preview">
-        <span className="pa-console-invite__kicker">Same system · another job</span>
+        <span className="pa-console-invite__kicker">Live · {operator.clockLabel} · ICT</span>
         <h2>The passenger sees one bus. The operator sees the whole day.</h2>
-        <p>
-          Every destination request can become a demand signal. GPS shows the duty.
-          Anonymous boarding counts show the load. The console joins them before
-          anybody buys another bus.
+
+        <div className="pa-console-kpis" role="group" aria-label="Operator view, live now">
+          <div className="pa-console-kpi">
+            <span className="pa-console-kpi__num">{operator.fleet.movingBuses}<small>/{operator.fleet.totalBuses}</small></span>
+            <span className="pa-console-kpi__lab">Buses now</span>
+            <span className="pa-console-kpi__sub">{operator.fleet.dwellingBuses} dwelling</span>
+          </div>
+          <div className="pa-console-kpi">
+            <span className="pa-console-kpi__num">{operator.now.paxAtAirport}</span>
+            <span className="pa-console-kpi__lab">At airport curb</span>
+            <span className="pa-console-kpi__sub">{operator.now.activeBuses} active</span>
+          </div>
+          <div className="pa-console-kpi">
+            <span className="pa-console-kpi__num">{operator.today.paxDelivered.toLocaleString("en-US")}</span>
+            <span className="pa-console-kpi__lab">Pax delivered · today</span>
+            <span className="pa-console-kpi__sub">฿{operator.today.revenueThb.toLocaleString("en-US")} earned</span>
+          </div>
+          <div className="pa-console-kpi">
+            <span className="pa-console-kpi__num">{Math.round(operator.today.co2SavedKg).toLocaleString("en-US")}<small>kg</small></span>
+            <span className="pa-console-kpi__lab">CO₂ saved · today</span>
+            <span className="pa-console-kpi__sub">{operator.today.kmDriven.toLocaleString("en-US")} km driven</span>
+          </div>
+        </div>
+
+        <p className="pa-console-narrative">
+          Every destination request on the left is a demand signal. GPS shows the duty.
+          Boarding counts show the load. The console joins them before anybody buys
+          another bus.
         </p>
+
         <div className="pa-console-invite__chain" aria-label="Passenger request becomes an operating decision">
           <span>Destination</span><b>→</b><span>Boarding</span><b>→</b><span>Dispatch</span><b>→</b><span>Evidence</span>
         </div>
