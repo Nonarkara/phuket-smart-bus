@@ -75,11 +75,97 @@ export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelec
       .slice(0, 5);
   }, [mode, rows]);
 
-  return (
-    <div className={`v2-hourly ${mode === "priority" ? "v2-hourly--priority" : ""}`}>
-      <div className="v2-hourly__title">
-        {mode === "priority" ? "Five Hours To Fix First" : "Missed Money · Hour by Hour"}
+  if (mode === "priority") {
+    const totalPriorityMissed = visibleRows.reduce((sum, r) => sum + r.missedThb, 0);
+
+    return (
+      <div className="v2-hourly v2-hourly--priority">
+        <header className="v2-priority-header">
+          <div>
+            <span className="v2-insights__eyebrow">Priority Intervention Ranking</span>
+            <h4 className="v2-priority-title">Five Hours To Fix First · Top Bottlenecks</h4>
+          </div>
+          <div className="v2-priority-summary-badge">
+            <span>Potential Revenue Recovery:</span>
+            <strong>{fmtThb(totalPriorityMissed)}</strong>
+          </div>
+        </header>
+
+        <div className="v2-priority-grid">
+          {visibleRows.map((row, idx) => {
+            const isCurrent = row.hour === currentHour;
+            const totalDemand = row.busEligiblePax + row.outEligiblePax;
+            const totalSeats = row.busSeats + row.outSeats;
+            const coveragePct = totalDemand > 0 ? Math.min(100, Math.round((totalSeats / totalDemand) * 100)) : 100;
+            const busesNeeded = Math.max(1, Math.ceil(row.gapPax / 25));
+
+            return (
+              <div
+                key={row.hour}
+                className={`v2-priority-card ${isCurrent ? "is-current" : ""}`}
+                role="button"
+                tabIndex={0}
+                title={`Click to inspect ${fmtClock(row.hour)} simulation`}
+                onClick={() => {
+                  onHourSelect?.(row.hour);
+                  scrubToHour(row.hour);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    onHourSelect?.(row.hour);
+                    scrubToHour(row.hour);
+                  }
+                }}
+              >
+                <div className="v2-priority-card__top">
+                  <div className="v2-priority-rank">
+                    <span className="v2-priority-rank__num">#{idx + 1}</span>
+                    <strong className="v2-priority-rank__time">{fmtClock(row.hour)}</strong>
+                    {isCurrent && <span className="v2-current-tag">NOW</span>}
+                  </div>
+                  <div className="v2-priority-deficit">
+                    <span className="v2-priority-gap text-neg">−{row.gapPax} pax deficit</span>
+                    <strong className="v2-priority-cash">{fmtThb(row.missedThb)} lost</strong>
+                  </div>
+                </div>
+
+                <div className="v2-priority-bar-wrap">
+                  <div className="v2-priority-bar-label">
+                    <span>Demand: {totalDemand} pax ({row.busEligiblePax} in · {row.outEligiblePax} out)</span>
+                    <span>Seats: {totalSeats} ({coveragePct}% covered)</span>
+                  </div>
+                  <div className="v2-priority-track">
+                    <div className="v2-priority-track__demand" style={{ width: "100%" }}>
+                      <div className="v2-priority-track__seats" style={{ width: `${coveragePct}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="v2-priority-card__footer">
+                  <span className="v2-priority-fix">
+                    <strong>Action:</strong> Stage <strong>+{busesNeeded} buses</strong> ({busesNeeded * 25} seats) to absorb arrival wave
+                  </span>
+                  <span className="v2-priority-inspect">Inspect hour ↳</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <footer className="v2-hourly__footer">
+          <span className="v2-hourly__footer-earned"><strong>{fmtThb(totals.earned)}</strong> earned today</span>
+          <span className="v2-hourly__footer-missed"><strong>{fmtThb(totals.missed)}</strong> missed day-wide</span>
+          <span>
+            <strong>{totals.shortHours}</strong> hrs need buses · <strong>{totals.lightHours}</strong> hrs light ({totals.emptySeats.toLocaleString()} empty seats)
+          </span>
+        </footer>
       </div>
+    );
+  }
+
+  return (
+    <div className="v2-hourly">
+      <div className="v2-hourly__title">Missed Money · Hour by Hour</div>
       <div className="v2-hourly__legend">
         <span className="v2-hourly__legend-item v2-hourly__legend-item--arr">IN → island</span>
         <span className="v2-hourly__legend-item v2-hourly__legend-item--out">OUT → airport</span>
