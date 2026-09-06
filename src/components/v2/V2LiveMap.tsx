@@ -1,9 +1,10 @@
-import React, { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap, CircleMarker, Tooltip } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
 import { getDirectionPolyline } from "../../engine/routes";
 import type { SimState } from "../../engine/simulation";
+import { getMapVehicles } from "../../engine/mapVehicleSnapshot";
 import {
   ADSB_POLL_MS,
   fetchAdsbAroundHkt,
@@ -44,6 +45,9 @@ type V2LiveMapProps = {
   onFocusVehicle?: (id: string | null, pinned: boolean) => void;
   focusedVehicleId?: string | null;
   onOpenTelemetryModal?: () => void;
+  /** Embedded maps own their animation loop. The operations console leaves
+   * this false because its single heartbeat drives map, money and clock. */
+  autonomous?: boolean;
 };
 
 const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
@@ -123,8 +127,8 @@ function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], 
 // ---------------------------------------------------------------------------
 const VehicleLayer = forwardRef<
   V2MapHandle,
-  { enabled: boolean; focusedId: string | null; onFocus?: (id: string | null, pinned: boolean) => void }
->(function VehicleLayer({ enabled, focusedId, onFocus }, ref) {
+  { enabled: boolean; autonomous: boolean; focusedId: string | null; onFocus?: (id: string | null, pinned: boolean) => void }
+>(function VehicleLayer({ enabled, autonomous, focusedId, onFocus }, ref) {
   const map = useMap();
   const markers = useRef<Map<string, L.Marker>>(new Map());
   const focusedRef = useRef<string | null>(focusedId);
@@ -132,37 +136,66 @@ const VehicleLayer = forwardRef<
   const onFocusRef = useRef(onFocus);
   onFocusRef.current = onFocus;
 
+  const syncVehicles = useCallback((vehicles: SimState["vehicles"]) => {
+    if (!enabled) {
+      for (const [, marker] of markers.current) map.removeLayer(marker);
+      markers.current.clear();
+      return;
+    }
+    const seen = new Set(vehicles.map((v) => v.id));
+    for (const [key, marker] of markers.current) {
+      if (!seen.has(key)) {
+        map.removeLayer(marker);
+        markers.current.delete(key);
+      }
+    }
+    for (const vehicle of vehicles) {
+      let marker = markers.current.get(vehicle.id);
+      if (!marker) {
+        marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
+        marker.bindTooltip(busTooltip(vehicle), { direction: "top", className: "v2-bus-tip" });
+        if (!FERRY_ROUTES.has(vehicle.route)) {
+          const id = vehicle.id;
+          marker.on("mouseover", () => onFocusRef.current?.(id, false));
+          marker.on("mouseout", () => onFocusRef.current?.(null, false));
+          marker.on("click", () => onFocusRef.current?.(id, true));
+        }
+        markers.current.set(vehicle.id, marker);
+      }
+      syncBusMarker(marker, vehicle, focusedRef.current === vehicle.id);
+    }
+  }, [enabled, map]);
+
   useImperativeHandle(ref, () => ({
     syncNow(vehicles) {
-      if (!enabled) {
-        for (const [, marker] of markers.current) map.removeLayer(marker);
-        markers.current.clear();
-        return;
-      }
-      const seen = new Set(vehicles.map((v) => v.id));
-      for (const [key, marker] of markers.current) {
-        if (!seen.has(key)) {
-          map.removeLayer(marker);
-          markers.current.delete(key);
-        }
-      }
-      for (const vehicle of vehicles) {
-        let marker = markers.current.get(vehicle.id);
-        if (!marker) {
-          marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
-          marker.bindTooltip(busTooltip(vehicle), { direction: "top", className: "v2-bus-tip" });
-          if (!FERRY_ROUTES.has(vehicle.route)) {
-            const id = vehicle.id;
-            marker.on("mouseover", () => onFocusRef.current?.(id, false));
-            marker.on("mouseout", () => onFocusRef.current?.(null, false));
-            marker.on("click", () => onFocusRef.current?.(id, true));
-          }
-          markers.current.set(vehicle.id, marker);
-        }
-        syncBusMarker(marker, vehicle, focusedRef.current === vehicle.id);
-      }
+      syncVehicles(vehicles);
     },
-  }), [map, enabled]);
+  }), [syncVehicles]);
+
+  useEffect(() => {
+    if (!enabled || !autonomous) return;
+
+    let frame = 0;
+    let lastPaint = -Infinity;
+    let stopped = false;
+    const paint = (timestamp: number) => {
+      if (stopped) return;
+      // 30fps is visually continuous at corridor scale and avoids asking the
+      // demand engine for 60 identical snapshots on slower travel laptops.
+      if (timestamp - lastPaint >= 33) {
+        const minute = getSimulatedMinutes();
+        syncVehicles(getMapVehicles(minute));
+        lastPaint = timestamp;
+      }
+      frame = requestAnimationFrame(paint);
+    };
+    frame = requestAnimationFrame(paint);
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [autonomous, enabled, syncVehicles]);
 
   useEffect(() => {
     if (!enabled) {
@@ -550,7 +583,7 @@ function LayerToggles({
 // V2LiveMap
 // ---------------------------------------------------------------------------
 export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(function V2LiveMap(
-  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null, onOpenTelemetryModal },
+  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null, onOpenTelemetryModal, autonomous = false },
   ref
 ) {
   const [layers, setLayers] = useState<Record<MapLayerId, boolean>>(() => ({
@@ -589,7 +622,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
   const env = getEnvironmentSnapshot();
 
   return (
-    <div className="v2-map__frame">
+    <div className={`v2-map__frame ${autonomous ? "v2-map__frame--autonomous" : ""}`}>
       <div className="v2-map__top-controls">
         <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} />
         {onOpenTelemetryModal && (
@@ -646,7 +679,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <RoutePolylines maritimeFlag={env.maritimeFlag} />
         <PiersLayer enabled={layers.piers} />
         <HktMarker />
-        <VehicleLayer ref={ref} enabled={layers.buses} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
+        <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
         <SyncMapView frame={frame} />
       </MapContainer>

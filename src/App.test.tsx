@@ -88,13 +88,13 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
   });
 
-  it("uses the toolkit as the branch landing page", () => {
+  it("uses the toolkit as the branch landing page", async () => {
     window.history.replaceState({}, "", "/");
     render(<App />);
 
     // The landing is the rehearsal handbook — demand → justify → feasibility…
     expect(
-      screen.getByRole("heading", {
+      await screen.findByRole("heading", {
         name: /how do you build a transit system from scratch/i
       })
     ).toBeInTheDocument();

@@ -31,7 +31,8 @@ vi.mock("../../engine/time", () => ({
 
 vi.mock("../../engine/adsbFlights", () => ({
   ADSB_POLL_MS: 45_000,
-  fetchAdsbAroundHkt: () => new Promise(() => {})
+  fetchAdsbAroundHkt: () => new Promise(() => {}),
+  buildScheduleFlightBeads: () => []
 }));
 
 describe("PassengerApp", () => {

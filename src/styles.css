@@ -103,6 +103,17 @@ body {
 
 a { color: var(--tint); }
 
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0a0e14;
+  color: rgba(255, 255, 255, 0.72);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 button, input, a { font: inherit; }
 a { color: var(--tint); }
 
@@ -1100,12 +1111,10 @@ a { color: var(--tint); }
   font-size: 12px;
   font-weight: 500;
 }
-.map-sea-pill { margin-left: 6px; }
+.map-sea-pill { margin-left: 6px; white-space: nowrap; }
 .map-sea-pill.is-green  { color: #4ea760; }
 .map-sea-pill.is-yellow { color: #e0a243; font-weight: 600; }
 .map-sea-pill.is-red    { color: #c0392b; font-weight: 700; }
-  white-space: nowrap;
-}
 
 /* More panel sub-tabs */
 .more-tabs {
@@ -8429,7 +8438,7 @@ a { color: var(--tint); }
  * Laws: zero shadow · zero gradient · zero border-radius · one accent
  * ============================================================================ */
 
-/* ── Axiom tokens + root surface ─────────────────────────────────────────── */
+/* ── Axiom tokens + root surface — light editorial default ───────────────── */
 .v2 {
   --ax-paper:   #faf9f7;
   --ax-panel:   #ffffff;
@@ -8456,24 +8465,20 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Wall-screen scale: DashboardV2 fits a 1440×900 design canvas to the
-     available width AND height (clamped 1–2.5). Every size in this block is
-     fixed px so zoom is the ONLY scale mechanism — vw units would ignore
-     zoom (standardized Chrome) and double-scale. */
 }
 
 /* ── Alert strip ─────────────────────────────────────────────────────────── */
 .v2 .v2-alert-banner {
-  background: #fff3cd !important;   /* force over original var(--amber) */
+  background: #fff3cd !important;
   border-bottom: 1px solid #e8d49a !important;
   color: #7a5700 !important;
   font-size: var(--t-micro);
-  padding: 5px 20px;
+  padding: 8px 20px;
   gap: 10px;
   flex-shrink: 0;
   backdrop-filter: none !important;
 }
-.v2 .v2-alert-banner__icon { color: var(--ax-warn) !important; }
+.v2 .v2-alert-banner__icon { color: var(--ax-warn) !important; font-size: 16px; }
 .v2 .v2-alert-banner strong { color: #5a3d00 !important; font-weight: 700; }
 .v2 .v2-alert-banner span { color: #7a5700 !important; }
 .v2 .v2-coordination-banner { display: none; } /* redundant with alert strip */
@@ -8498,7 +8503,7 @@ a { color: var(--tint); }
   gap: 0;
   padding: 0;
 }
-.v2 h1 { display: none; }
+.v2 .v2-header h1 { display: none; }
 .v2 .v2-header__sub { display: none; }
 .v2 .v2-header__eyebrow {
   font-size: var(--t-micro);
@@ -8564,7 +8569,7 @@ a { color: var(--tint); }
   cursor: pointer;
   font-family: inherit;
 }
-.v2 .v2-mode-btn.is-active { background: var(--ax-ink); color: var(--ax-paper); }
+.v2 .v2-mode-btn.is-active { background: var(--ax-accent); color: #fff; font-weight: 800; }
 
 /* Timebar — row 2 of header grid */
 .v2 .v2-timebar {
@@ -10875,6 +10880,17 @@ a { color: var(--tint); }
   gap: 56px;
 }
 
+/* ToolkitPanel renders its chapters directly under .tk-briefing. Keep the
+   readable measure and gutter even when the optional body wrapper is absent. */
+.v2 .tk-briefing > .tk-hero-block,
+.v2 .tk-briefing > .tk-section-box {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  padding-inline: 24px;
+  box-sizing: border-box;
+}
+.v2 .tk-briefing > .tk-section-box { padding-top: 48px; }
+
 /* 01 · Hero Section */
 .v2 .tk-hero-block {
   display: grid;
@@ -10885,11 +10901,38 @@ a { color: var(--tint); }
   border-bottom: 1px solid var(--ax-line-2);
 }
 
-.v2 .tk-hero-content {
+.v2 .tk-hero-content,
+.v2 .tk-hero-block__content {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
+.v2 .tk-hero-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.v2 .tk-tag {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink-2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.v2 .tk-tag--green { border-color: var(--ax-accent); color: var(--ax-accent); }
+.v2 .tk-hero-desc {
+  max-width: 66ch;
+  margin: 0;
+  color: var(--ax-ink-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.v2 .tk-hero-desc strong { color: var(--ax-ink); }
+.v2 .tk-hero-actions { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 8px; }
 
 .v2 .tk-badge {
   display: inline-flex;
@@ -11194,16 +11237,16 @@ a { color: var(--tint); }
 }
 
 .v2 .tk-lens-card__question {
-  font-size: 12px;
+  font-size: 13px;
   font-style: italic;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--ax-ink-2);
   margin: 0;
   flex: 1;
 }
 
 .v2 .tk-lens-card__fact {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--ax-ink-2);
   padding-top: 8px;
@@ -11229,7 +11272,7 @@ a { color: var(--tint); }
 
 .v2 .tk-comparison-box h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--ax-ink);
   letter-spacing: -0.01em;
@@ -11245,13 +11288,13 @@ a { color: var(--tint); }
 
 .v2 .tk-comparison-tr {
   display: grid;
-  grid-template-columns: 180px 1fr 1fr;
-  gap: 14px;
-  padding: 12px 16px;
+  grid-template-columns: 200px 1fr 1fr;
+  gap: 16px;
+  padding: 14px 18px;
   background: var(--ax-paper);
   border-bottom: 1px solid var(--ax-line);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--ax-ink-2);
   align-items: center;
 }
@@ -11834,8 +11877,8 @@ a { color: var(--tint); }
  * RESPONSIVE PRODUCT AUDIT — phone, laptop and wall-screen roles
  *
  * OPS is a dark, glanceable operating surface. INSIGHTS and TOOLKIT remain
- * light editorial surfaces. Below 1180px the wall grid becomes a focused
- * briefing instead of shrinking three columns until they are unreadable.
+ * light editorial surfaces. Short or narrow laptop viewports get a focused
+ * briefing instead of shrinking the wall console until it is unreadable.
  * ========================================================================== */
 
 /* Operations wall: honour the dark-room design rule without changing the
@@ -11854,6 +11897,14 @@ a { color: var(--tint); }
   --t-micro:   14px;
   --t-body:    16px;
 }
+.v2--operations .v2-alert-banner {
+  background: #231f14 !important;
+  border-bottom-color: #5e4a20 !important;
+  color: #f2d28a !important;
+}
+.v2--operations .v2-alert-banner strong { color: #fff7e5 !important; }
+.v2--operations .v2-alert-banner span { color: #d5c399 !important; }
+.v2--operations .v2-flight-row--next { background: rgba(70, 185, 134, 0.08); }
 .v2--operations .v2-decision-rail__head > span,
 .v2--operations .v2-decision-rail__source > strong,
 .v2--operations .v2-hour-plan > header span,
@@ -11926,6 +11977,13 @@ a { color: var(--tint); }
   background: var(--ax-line);
 }
 .v2-brief > section { background: var(--ax-panel); }
+.v2-brief > .v2-conditions {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-self: start;
+}
+.v2-brief__map { grid-column: 1; }
+.v2-brief__evidence { grid-column: 2; }
 .v2-brief__decision {
   grid-column: 1 / -1;
   padding: 20px 22px;
@@ -12066,7 +12124,7 @@ a { color: var(--tint); }
 .v2-brief__hours button > span:first-child { color: var(--ax-ink); font-weight: 700; }
 .v2-brief__hours strong { color: var(--ax-warn); font-size: var(--t-micro); }
 
-@media (max-width: 1179px) {
+@media (max-width: 1359px), (max-height: 819px) {
   .v2 { zoom: 1 !important; }
   .v2 .v2-alert-banner { display: none; }
   .v2 .v2-header {
@@ -12132,6 +12190,7 @@ a { color: var(--tint); }
   .v2-brief__totals strong { font-size: 20px; }
   .v2-brief__hours { grid-template-columns: 1fr; }
   .v2-brief__hours button { min-height: 58px; }
+  .v2-brief > .v2-conditions { grid-template-columns: 1fr; }
 
   .v2 .v2-body--insights { padding: 0; gap: 1px; }
   .v2 .v2-insights-main { padding: 8px; }

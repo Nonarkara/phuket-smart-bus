@@ -42,7 +42,9 @@ const vehicles: VehiclePosition[] = [
     id: "1",
     routeId: "rawai-airport",
     licensePlate: "10-1148",
-    vehicleId: "008800B133",
+    // Unique across test files: seatProvider.test exercises camera telemetry
+    // in parallel and shares the test SQLite database.
+    vehicleId: "decision-engine-bus-1",
     deviceId: null,
     coordinates: [8.099, 98.2995] as [number, number],
     heading: 50,

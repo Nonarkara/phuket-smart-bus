@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useEffectEvent, useRef, useState } from "react";
+import { lazy, Suspense, startTransition, useDeferredValue, useEffect, useEffectEvent, useRef, useState } from "react";
 import type {
   Advisory,
   DecisionSummary,
@@ -25,8 +25,6 @@ import {
 import { getVehiclesNow } from "./engine/fleetSimulator";
 import { getDayInfo } from "./engine/simulation";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
-import DashboardV2 from "./DashboardV2";
-import ToolkitHub from "./components/toolkit/ToolkitHub";
 import { ui, pick } from "./lib/i18n";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { LiveMap } from "./components/LiveMap";
@@ -41,11 +39,16 @@ import { DriverTablet } from "./components/DriverTablet";
 import { RoiCalculator } from "./components/RoiCalculator";
 import { GovernorDashboard } from "./components/GovernorDashboard";
 import { DemoCaption, buildTuesdayDemoClock } from "./components/DemoCaption";
-import { PassengerApp } from "./components/passenger/PassengerApp";
 import "./components/passenger/PassengerApp.css";
 import { setClockOverride } from "./engine/fleetSimulator";
 import { haversineDistanceMeters } from "./lib/geo";
 import { appPath, routePath } from "./lib/paths";
+
+const DashboardV2 = lazy(() => import("./DashboardV2"));
+const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
+const PassengerApp = lazy(() =>
+  import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
+);
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = [
@@ -53,6 +56,10 @@ const PRIMARY_ROUTE_IDS: RouteId[] = [
   "rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"
 ];
 const NEARBY_STOP_RADIUS_METERS = 700;
+
+function RouteLoading() {
+  return <div className="route-loading" role="status">Loading the system…</div>;
+}
 
 // `?demo=tuesday` — install a scripted sim clock that loops through a full
 // day in 5 real minutes. The caption overlay reads the same clock and
@@ -214,20 +221,20 @@ export default function App() {
     (window.location.hostname === "bus.nonarkara.org" ||
       window.location.hostname.startsWith("bus."));
   if (isRiderDomain && (pathname === "/" || pathname === "")) {
-    return <PassengerApp />;
+    return <Suspense fallback={<RouteLoading />}><PassengerApp /></Suspense>;
   }
 
   // This branch is the research-and-development hub — a tabbed research page
   // that replaced the single-scroll ToolkitShowcase. The existing
   // operational surfaces remain available at /ops, /v2, /ride.
   if (pathname === "/" || pathname.startsWith("/toolkit")) {
-    return <ToolkitHub />;
+    return <Suspense fallback={<RouteLoading />}><ToolkitHub /></Suspense>;
   }
 
   // v2 dashboard at /v2 path
   if (pathname.startsWith("/v2")) {
     return <>
-      <DashboardV2 />
+      <Suspense fallback={<RouteLoading />}><DashboardV2 /></Suspense>
       {DEMO_MODE && <DemoCaption />}
     </>;
   }
@@ -235,7 +242,7 @@ export default function App() {
   // Full-screen ops dashboard — DashboardV2 with Axiom styling
   if (isOps) {
     return <>
-      <DashboardV2 />
+      <Suspense fallback={<RouteLoading />}><DashboardV2 /></Suspense>
       {DEMO_MODE && <DemoCaption />}
     </>;
   }

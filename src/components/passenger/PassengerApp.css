@@ -577,172 +577,425 @@ body.passenger-site-mode #root {
   .pa-promise h2 { margin-top: 14px; }
 }
 
-/* DESKTOP — the rider and operator stories split the actual viewport. The
-   previous fixed 1,360px wrapper collapsed into a postage stamp on 4K and
-   zoomed-out displays. */
-@media (min-width: 960px) {
-  .pa-shell {
-    display: grid;
-    grid-template-columns: minmax(0, 48vw) minmax(0, 1fr);
-    align-items: stretch;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-  }
-  .pa-app {
-    min-height: 100vh;
-    min-height: 100dvh;
-    margin: 0;
-    width: 100%;
-    border-right: 1px solid var(--pa-line);
-  }
-  .pa-console-invite {
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    justify-content: center;
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: clamp(48px, 10vh, 120px) clamp(42px, 7vw, 144px);
-  }
-  .pa-console-invite__kicker {
-    color: #f2c84b;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .pa-console-invite h2 {
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: clamp(2.3rem, 4vw, 4.5rem);
-    line-height: 0.98;
-    letter-spacing: -0.04em;
-    margin: 0;
-    max-width: 12ch;
-  }
-  .pa-console-invite p {
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 1.05rem;
-    line-height: 1.55;
-    margin: 0;
-    max-width: 54ch;
-  }
-  .pa-console-invite__chain {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    color: rgba(255, 255, 255, 0.78);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-  }
-  .pa-console-invite__chain b { color: #ef442f; }
-  .pa-console-invite > a {
-    align-items: center;
-    background: #ef442f;
-    color: #fff;
-    display: flex;
-    font-weight: 700;
-    justify-content: space-between;
-    max-width: 440px;
-    padding: 18px 20px;
-    text-decoration: none;
-  }
-  .pa-console-invite > a:hover { text-decoration: none; transform: translateY(-1px); }
-  .pa-console-invite > .pa-console-invite__research {
-    background: transparent;
-    border-top: 1px solid rgba(255, 255, 255, 0.28);
-    color: rgba(255, 255, 255, 0.72);
-    padding: 14px 0;
-  }
+/* ===========================================================================
+ * TRANSIT PORTAL HEADER (Desktop ≥ 960px)
+ * ========================================================================= */
+.pa-portal-header {
+  display: none;
 }
 
-/* Once the rider pane itself is wider than a laptop, use that room to make
-   the task scannable instead of simply stretching a phone column. */
-@media (min-width: 1800px) {
-  .pa-home {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "countdown countdown"
-      "flights cards"
-      "flights promise";
-    align-content: start;
-    gap: clamp(24px, 2vw, 44px);
-    padding: 0 clamp(28px, 3vw, 64px) clamp(28px, 3vw, 64px);
+.pa-stage {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .pa-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #0a0e14;
   }
-  .pa-home > .pa-countdown { grid-area: countdown; }
-  .pa-home > .pa-flights { grid-area: flights; align-self: start; }
-  .pa-home > .pa-cards { grid-area: cards; }
-  .pa-home > .pa-promise { grid-area: promise; }
-  .pa-form,
-  .pa-ticket {
-    width: min(100%, 920px);
-    align-self: center;
+
+  /* Sticky Top Portal Bar */
+  .pa-portal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    background: #0d121b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    flex-shrink: 0;
+    z-index: 30;
+  }
+
+  .pa-portal-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pa-portal-header__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pa-portal-header__name {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  .pa-portal-header__sub {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.04em;
+  }
+
+  .pa-portal-header__status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pa-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .pa-status-chip__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+  .pa-status-chip__dot.is-live {
+    animation: live-breathe 2s ease-in-out infinite;
+  }
+
+  .pa-status-chip--marine.is-red {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    font-weight: 600;
+  }
+
+  .pa-status-chip--marine.is-yellow {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+  }
+
+  .pa-portal-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pa-portal-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .pa-portal-btn--phone {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+  .pa-portal-btn--phone:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .pa-portal-btn--ops {
+    background: var(--pa-red);
+    border: 1px solid var(--pa-red);
+    color: #fff;
+  }
+  .pa-portal-btn--ops:hover {
+    background: #d63824;
+    text-decoration: none;
+  }
+
+  .pa-portal-link {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+  }
+  .pa-portal-link:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+
+  /* Two-column Layout */
+  .pa-portal-layout {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 58px);
+    overflow: hidden;
+  }
+
+  .pa-app-column {
+    width: 440px;
+    min-width: 400px;
+    max-width: 460px;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--pa-bg);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .pa-app-column .pa-app {
+    min-height: 100%;
+    width: 100%;
+  }
+
+  /* Right: Live Interactive Transit Stage */
+  .pa-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #0a0e14;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .pa-stage__banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(13, 18, 27, 0.94);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    z-index: 5;
+  }
+
+  .pa-stage__banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pa-stage__banner-info strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .pa-stage__banner-info span {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: var(--font-mono);
+  }
+
+  .pa-stage__banner-badges {
+    display: flex;
+    gap: 6px;
+  }
+
+  .pa-badge {
+    display: inline-flex;
+    padding: 3px 8px;
+    background: rgba(239, 68, 47, 0.15);
+    border: 1px solid rgba(239, 68, 47, 0.4);
+    color: #ff8a7a;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    border-radius: 3px;
+  }
+
+  .pa-stage__map-wrapper {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+
+  .pa-stage__map-loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: #111722;
+    color: rgba(255, 255, 255, 0.62);
+    font: 700 11px/1 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .pa-stage__map-wrapper .v2-map__frame {
+    height: 100% !important;
+    position: absolute;
+    inset: 0;
+  }
+
+  /* V2LiveMap normally inherits these from the dark operations root. The
+     passenger portal is deliberately not a nested operations console, so its
+     embedded map declares the same cartographic treatment explicitly. */
+  .pa-stage .v2-map__canvas.leaflet-container {
+    height: 100%;
+    min-height: 0;
+    background: #111722;
+  }
+  .pa-stage .v2-basemap-tile {
+    filter: grayscale(1) invert(1) brightness(.68) contrast(1.12);
+  }
+  .pa-stage .v2-map__top-controls {
+    z-index: 1001;
+  }
+  .pa-stage .v2-map__layers {
+    position: static;
+  }
+
+  .pa-stage__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: #0d121b;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11.5px;
+    font-family: var(--font-mono);
+    z-index: 5;
+  }
+
+  .pa-stage__stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pa-stage__stats strong {
+    color: #fff;
+  }
+  .pa-sep {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  .pa-stage__ops-link {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .pa-stage__ops-link:hover {
+    text-decoration: underline;
   }
 }
 
 /* ===========================================================================
- * Operator KPI strip — 2x2 grid of live numbers that fills the right pane.
- * The right pane's whole purpose is to show the operator's view; a marketing
- * pitch is replaced with live engine data (same SSOT the /ops console reads).
- * The strip works on any desktop width: collapses to 1 column under 1100px.
+ * PHONE FRAME PREVIEW MODE (when user clicks 'Phone View' on desktop)
  * ========================================================================= */
-.pa-console-kpis {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-.pa-console-kpi {
+.pa-preview-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0a0e14;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: clamp(14px, 1.6vw, 22px) clamp(16px, 1.8vw, 24px);
-  background: #0e1115;
-}
-.pa-console-kpi__num {
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 2.6vw, 2.6rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-}
-.pa-console-kpi__num small {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.55em;
-  font-weight: 600;
-  margin-left: 2px;
-  letter-spacing: 0;
-}
-.pa-console-kpi__lab {
-  color: rgba(255, 255, 255, 0.86);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.pa-console-kpi__sub {
-  color: rgba(255, 255, 255, 0.5);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-}
-.pa-console-narrative {
-  color: rgba(255, 255, 255, 0.72) !important;
-  font-size: 0.95rem !important;
-  line-height: 1.55;
-  margin: 0;
-  max-width: 60ch;
+  align-items: center;
+  padding-bottom: 30px;
 }
 
-@media (max-width: 1099px) {
-  .pa-console-kpis { grid-template-columns: 1fr; }
+@media (min-width: 960px) and (max-width: 1199px) {
+  .pa-portal-header { padding-inline: 14px; gap: 10px; }
+  .pa-portal-header__sub,
+  .pa-portal-link { display: none; }
+  .pa-portal-header__status { margin-left: auto; }
+  .pa-status-chip { padding-inline: 7px; }
+  .pa-status-chip--marine span {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pa-app-column { width: 400px; min-width: 380px; }
+  .pa-stage__banner-badges .pa-badge:not(:first-child) { display: none; }
+}
+
+.pa-preview-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(10, 14, 20, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.pa-preview-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pa-preview-topbar__brand strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pa-preview-toggle-btn {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pa-preview-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pa-phone-frame {
+  width: 390px;
+  height: 844px;
+  max-height: calc(100vh - 90px);
+  margin: 18px auto;
+  border: 12px solid #1a222e;
+  border-radius: 44px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+  background: #fafaf7;
+  display: flex;
+  flex-direction: column;
+}
+
+.pa-phone-frame__notch {
+  width: 120px;
+  height: 22px;
+  background: #1a222e;
+  border-radius: 0 0 14px 14px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+.pa-phone-frame__screen {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.pa-phone-frame__screen::-webkit-scrollbar {
+  display: none;
+}
+
+.pa-phone-frame__home {
+  width: 120px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 2px;
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
 }

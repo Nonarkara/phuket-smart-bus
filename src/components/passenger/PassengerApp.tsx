@@ -19,12 +19,17 @@
  * should never require the rider to think about the operator.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { getAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
-import { getBangkokNowFractionalMinutes } from "../../engine/time";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { getAirportDepartures, getPublishedTravelMinutesFromAirport, getSimulatedMinutes } from "../../engine/fleetSimulator";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
 import { ADSB_POLL_MS, fetchAdsbAroundHkt } from "../../engine/adsbFlights";
+import { getEnvironmentSnapshot } from "../../engine/environmentSimulator";
+import { isLiveGpsActive } from "../../engine/liveGpsReceiver";
+
+const PassengerRouteMap = lazy(() =>
+  import("../v2/V2LiveMap").then((module) => ({ default: module.V2LiveMap }))
+);
 
 /* -------------------------------------------------------------------------
  * Ticket options
@@ -46,12 +51,16 @@ const QUICK_DESTINATIONS = [
  * Live bus time — pure functions of the engine, ticking every 250ms
  * ----------------------------------------------------------------------- */
 
-function useNextBusCountdown() {
-  const [now, setNow] = useState(() => getBangkokNowFractionalMinutes());
+function useSimulatedMinute() {
+  const [now, setNow] = useState(() => getSimulatedMinutes());
   useEffect(() => {
-    const id = setInterval(() => setNow(getBangkokNowFractionalMinutes()), 250);
+    const id = setInterval(() => setNow(getSimulatedMinutes()), 250);
     return () => clearInterval(id);
   }, []);
+  return now;
+}
+
+function useNextBusCountdown(now: number) {
   return useMemo(() => {
     const dayMin = now % 1440;
     const departures = getAirportDepartures().slice().sort((a, b) => a - b);
@@ -79,6 +88,23 @@ function useOperatorMetrics(): HeadlineMetrics {
   return getHeadlineMetrics();
 }
 
+function useDesktopPortal(): boolean {
+  const [desktop, setDesktop] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia?.("(min-width: 960px)").matches
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(min-width: 960px)");
+    if (!media) return;
+    const update = () => setDesktop(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return desktop;
+}
+
 /** ฿4,300 → "฿4,300"  ·  1,247 → "1,247"  ·  28.4 → "28.4"  (no thousands sep) */
 function fmt(n: number): string {
   if (n >= 1000) return `฿${Math.round(n).toLocaleString("en-US")}`;
@@ -92,13 +118,11 @@ function formatClock(min: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function FlightWatch() {
+function FlightWatch({ simMinutes }: { simMinutes: number }) {
   const [kind, setKind] = useState<"arr" | "dep">("arr");
-  const [now, setNow] = useState(() => getBangkokNowFractionalMinutes());
   const [aircraft, setAircraft] = useState<{ count: number; status: "live" | "stale" | "empty" }>({ count: 0, status: "empty" });
 
   useEffect(() => {
-    const clock = window.setInterval(() => setNow(getBangkokNowFractionalMinutes()), 2_000);
     let cancelled = false;
     const ctrl = new AbortController();
     const refresh = async () => {
@@ -110,12 +134,11 @@ function FlightWatch() {
     return () => {
       cancelled = true;
       ctrl.abort();
-      window.clearInterval(clock);
       window.clearInterval(poll);
     };
   }, []);
 
-  const dayMin = now % 1440;
+  const dayMin = simMinutes % 1440;
   const flights = useMemo(() => getOpsFlightSchedule()
     .filter((flight) => flight.mode === "flight" && flight.type === kind && flight.schedMin >= dayMin - 15)
     .slice(0, 4), [kind, dayMin]);
@@ -219,12 +242,21 @@ function MockQR({ payload }: { payload: string }) {
 type Step = "home" | "destination" | "payment" | "ticket";
 
 export function PassengerApp() {
-  const countdown = useNextBusCountdown();
+  const simMinutes = useSimulatedMinute();
+  const countdown = useNextBusCountdown(simMinutes);
   const operator = useOperatorMetrics();
   const [step, setStep] = useState<Step>("home");
   const [passType, setPassType] = useState<"single" | "3day" | null>(null);
   const [destination, setDestination] = useState<string>("");
   const [ticketId, setTicketId] = useState<string>("");
+  const [phonePreview, setPhonePreview] = useState(false);
+  const [env, setEnv] = useState(() => getEnvironmentSnapshot());
+  const desktopPortal = useDesktopPortal();
+
+  useEffect(() => {
+    const id = setInterval(() => setEnv(getEnvironmentSnapshot()), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   // The static index.html is built for the toolkit research surface
   // (different title, different meta description). Override on mount so
@@ -279,9 +311,8 @@ export function PassengerApp() {
     setTicketId("");
   }
 
-  return (
-    <div className="pa-shell">
-      <div className="pa-app" data-step={step}>
+  const appContent = (
+    <div className="pa-app" data-step={step}>
       <header className="pa-header">
         <div className="pa-header__brand">
           <span className="pa-header__logo" aria-hidden="true">PSKB</span>
@@ -295,6 +326,7 @@ export function PassengerApp() {
       {step === "home" && (
         <HomeStep
           countdown={countdown}
+          simMinutes={simMinutes}
           onPickSingle={startSingle}
           onPickThreeDay={startThreeDay}
         />
@@ -342,54 +374,128 @@ export function PassengerApp() {
           How this system was built
         </a>
       </footer>
+    </div>
+  );
+
+  // On a phone, render only the passenger task. The earlier CSS-only hiding
+  // still mounted Leaflet and ran the fleet animation behind the page.
+  if (!desktopPortal) return appContent;
+
+  if (phonePreview) {
+    return (
+      <div className="pa-preview-shell">
+        <div className="pa-preview-topbar">
+          <div className="pa-preview-topbar__brand">
+            <span className="pa-header__logo" aria-hidden="true">PSKB</span>
+            <strong>Phuket Smart Bus · Smartphone App Preview</strong>
+          </div>
+          <button
+            type="button"
+            className="pa-preview-toggle-btn"
+            onClick={() => setPhonePreview(false)}
+          >
+            Back to desktop portal
+          </button>
+        </div>
+        <div className="pa-phone-frame">
+          <div className="pa-phone-frame__notch" />
+          <div className="pa-phone-frame__screen">
+            {appContent}
+          </div>
+          <div className="pa-phone-frame__home" />
+        </div>
       </div>
+    );
+  }
 
-      {/* Desktop-only: the right pane is the operator's view of the same
-          system. It earns its 50% of the screen by showing live KPIs from
-          the engine — not a marketing pitch. The numbers come straight from
-          getHeadlineMetrics() (the same SSOT the /ops console reads) so a
-          rider can see what the operator sees, ticking. */}
-      <aside className="pa-console-invite" aria-label="Operations console preview">
-        <span className="pa-console-invite__kicker">Live · {operator.clockLabel} · ICT</span>
-        <h2>The passenger sees one bus. The operator sees the whole day.</h2>
-
-        <div className="pa-console-kpis" role="group" aria-label="Operator view, live now">
-          <div className="pa-console-kpi">
-            <span className="pa-console-kpi__num">{operator.fleet.movingBuses}<small>/{operator.fleet.totalBuses}</small></span>
-            <span className="pa-console-kpi__lab">Buses now</span>
-            <span className="pa-console-kpi__sub">{operator.fleet.dwellingBuses} dwelling</span>
-          </div>
-          <div className="pa-console-kpi">
-            <span className="pa-console-kpi__num">{operator.now.paxAtAirport}</span>
-            <span className="pa-console-kpi__lab">At airport curb</span>
-            <span className="pa-console-kpi__sub">{operator.now.activeBuses} active</span>
-          </div>
-          <div className="pa-console-kpi">
-            <span className="pa-console-kpi__num">{operator.today.paxDelivered.toLocaleString("en-US")}</span>
-            <span className="pa-console-kpi__lab">Pax delivered · today</span>
-            <span className="pa-console-kpi__sub">฿{operator.today.revenueThb.toLocaleString("en-US")} earned</span>
-          </div>
-          <div className="pa-console-kpi">
-            <span className="pa-console-kpi__num">{Math.round(operator.today.co2SavedKg).toLocaleString("en-US")}<small>kg</small></span>
-            <span className="pa-console-kpi__lab">CO₂ saved · today</span>
-            <span className="pa-console-kpi__sub">{operator.today.kmDriven.toLocaleString("en-US")} km driven</span>
+  return (
+    <div className="pa-shell">
+      {/* Desktop Portal Header */}
+      <header className="pa-portal-header">
+        <div className="pa-portal-header__brand">
+          <span className="pa-header__logo" aria-hidden="true">PSKB</span>
+          <div className="pa-portal-header__titles">
+            <span className="pa-portal-header__name">Phuket Smart Bus</span>
+            <span className="pa-portal-header__sub">Island Transit · Airport (HKT) to Rawai via Patong Beach</span>
           </div>
         </div>
 
-        <p className="pa-console-narrative">
-          Every destination request on the left is a demand signal. GPS shows the duty.
-          Boarding counts show the load. The console joins them before anybody buys
-          another bus.
-        </p>
-
-        <div className="pa-console-invite__chain" aria-label="Passenger request becomes an operating decision">
-          <span>Destination</span><b>→</b><span>Boarding</span><b>→</b><span>Dispatch</span><b>→</b><span>Evidence</span>
+        <div className="pa-portal-header__status">
+          <span className="pa-status-chip">
+            <span className="pa-status-chip__dot is-live" />
+            <span>{operator.clockLabel} ICT</span>
+          </span>
+          <span className="pa-status-chip">
+            <span>{operator.fleet.movingBuses}/{operator.fleet.totalBuses} buses active</span>
+          </span>
+          {env && (
+            <span className={`pa-status-chip pa-status-chip--marine is-${env.maritimeFlag || "green"}`}>
+              <span>Sea {env.waveHeightM || 0.8}m · {env.smallBoatsAllowed ? "Small boats cleared" : "Boats barred (ห้ามเรือเล็ก)"}</span>
+            </span>
+          )}
         </div>
-        <a href="/ops">Open the live operations console <span aria-hidden="true">↗</span></a>
-        <a className="pa-console-invite__research" href="https://depa-usdot.nonarkara.org/">
-          Read the research behind it
-        </a>
-      </aside>
+
+        <div className="pa-portal-header__actions">
+          <button
+            type="button"
+            className="pa-portal-btn pa-portal-btn--phone"
+            onClick={() => setPhonePreview(true)}
+            title="Preview phone screen layout"
+          >
+            Preview phone
+          </button>
+          <a className="pa-portal-btn pa-portal-btn--ops" href="/ops">
+            Ops Console ↗
+          </a>
+          <a className="pa-portal-link" href="https://depa-usdot.nonarkara.org/">
+            Research ↗
+          </a>
+        </div>
+      </header>
+
+      {/* Main Content Layout */}
+      <div className="pa-portal-layout">
+        {/* Left: Passenger Booking Card */}
+        <div className="pa-app-column">
+          {appContent}
+        </div>
+
+        {/* Right: Live Interactive Transit Map Stage */}
+        <aside className="pa-stage" aria-label="Phuket Island Live Transit Stage">
+          <div className="pa-stage__banner">
+            <div className="pa-stage__banner-info">
+              <strong>Phuket Coastal Corridor — {isLiveGpsActive() ? "Live GPS" : "Timetable simulation"}</strong>
+              <span>{operator.clockLabel} ICT · published duties on 3,944-point road geometry · GPS-ready</span>
+            </div>
+            <div className="pa-stage__banner-badges">
+              <span className="pa-badge">Flat ฿100</span>
+              <span className="pa-badge">Air-Conditioned</span>
+              <span className="pa-badge">Luggage Space</span>
+            </div>
+          </div>
+
+          <div className="pa-stage__map-wrapper">
+            <Suspense fallback={<div className="pa-stage__map-loading">Loading the corridor…</div>}>
+              <PassengerRouteMap autonomous />
+            </Suspense>
+          </div>
+
+          <div className="pa-stage__footer">
+            <div className="pa-stage__stats">
+              <span><strong>{operator.fleet.movingBuses}</strong> buses moving</span>
+              <span className="pa-sep">·</span>
+              <span><strong>{operator.today.paxDelivered.toLocaleString()}</strong> riders today</span>
+              <span className="pa-sep">·</span>
+              <span><strong>฿{operator.today.revenueThb.toLocaleString()}</strong> earned</span>
+              <span className="pa-sep">·</span>
+              <span><strong>{Math.round(operator.today.co2SavedKg).toLocaleString()} kg</strong> CO₂ saved</span>
+            </div>
+            <a href="/ops" className="pa-stage__ops-link">
+              Open operations console ↗
+            </a>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -400,10 +506,12 @@ export function PassengerApp() {
 
 function HomeStep({
   countdown,
+  simMinutes,
   onPickSingle,
   onPickThreeDay
 }: {
   countdown: ReturnType<typeof useNextBusCountdown>;
+  simMinutes: number;
   onPickSingle: () => void;
   onPickThreeDay: () => void;
 }) {
@@ -423,7 +531,7 @@ function HomeStep({
         </span>
       </section>
 
-      <FlightWatch />
+      <FlightWatch simMinutes={simMinutes} />
 
       <section className="pa-cards" aria-label="Ticket options">
         <button className="pa-card" type="button" onClick={onPickSingle}>

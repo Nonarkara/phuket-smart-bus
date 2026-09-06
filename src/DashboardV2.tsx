@@ -14,15 +14,12 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { VehiclePosition } from "@shared/types";
 import {
   computeSimState,
   getDayInfo,
   getHourlyDemandSupply,
-  getLiveTotals,
-  type SimState
+  getLiveTotals
 } from "./engine/simulation";
-import { getVehiclesNow } from "./engine/dataProvider";
 import {
   getClockState,
   getSimulatedMinutes,
@@ -38,7 +35,7 @@ import {
   setSimulationDay
 } from "./engine/opsFlightSchedule";
 import { getHeadlineMetrics } from "./engine/headlineMetrics";
-import { getDayModel, getReturnTripLoad } from "./engine/demandSupplyEngine";
+import { getMapVehicles } from "./engine/mapVehicleSnapshot";
 import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } from "./engine/v2OpsPanel";
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
@@ -64,31 +61,6 @@ function getInitialViewMode(): ViewMode {
   return requested === "insights" || requested === "toolkit" ? requested : "operations";
 }
 
-/** Join a fleet vehicle to the demand-supply engine's per-trip boarding count.
- *
- *  Airport-bound trips ("Bus to Rawai" departs FROM the airport) carry the
- *  engine's exact FIFO-queue load for that departure. Other directions and
- *  the local lines carry a deterministic local-ridership estimate (they don't
- *  serve the airport queue). No more plate-matching fallbacks. */
-function vehiclePax(v: VehiclePosition): number {
-  if (v.routeId === "rawai-airport" && v.tripStartMin != null) {
-    if (v.directionLabel === "Bus to Rawai") {
-      // Southbound: the engine's exact FIFO-queue load for this departure.
-      const fromCache = getDayModel().trips.find((t) => Math.abs(t.depMin - v.tripStartMin!) <= 2);
-      if (fromCache) return fromCache.boarded;
-    } else if (v.directionLabel === "Bus to Airport") {
-      // Northbound: departing pax the return-leg engine put on this trip.
-      const load = getReturnTripLoad(v.tripStartMin);
-      if (load !== null) return load;
-    }
-  }
-  // Local lines: deterministic estimate from the trip hash
-  const cap = v.routeId === "dragon-line" ? 15 : 25;
-  const occ = v.routeId === "patong-old-bus-station" ? 0.42 : v.routeId === "dragon-line" ? 0.31 : 0.35;
-  const seed = (v.tripStartMin ?? 0) % 7; // -3..+3 pax variation per trip
-  return Math.max(0, Math.round(cap * occ) + (seed - 3));
-}
-
 /** 1440×900 is the design reference; wall screens scale up, never down.
  * Width-only scaling clipped the body on common 16:9 displays because the
  * header/footer consumed more than their share of the zoomed height. */
@@ -99,34 +71,16 @@ function computeOpsScale(): number {
   return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
 }
 
+/** A laptop should get the focused briefing, not a cropped wall console. */
+function shouldUseCompactOps(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 1360 || window.innerHeight < 820;
+}
+
 function formatClockLabel(min: number): string {
   const h = Math.floor(min / 60) % 24;
   const m = Math.floor(min % 60);
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} BKK`;
-}
-
-/** The one bus that earns amber: the airport-line vehicle at the curb, dwelling
- *  at the airport end, at the START of its trip. That is where the queue boards
- *  and where the operator's eye should rest. Everything else is ink. */
-function isBoardingAtCurb(v: VehiclePosition, nowMin: number): boolean {
-  if (v.routeId !== "rawai-airport" || v.tripStartMin == null) return false;
-  if (v.directionLabel !== "Bus to Rawai") return false;
-  const age = nowMin - v.tripStartMin;
-  return v.status !== "moving" && age >= -3 && age <= 3;
-}
-
-function toMapVehicle(v: VehiclePosition, nowMin: number): SimState["vehicles"][number] {
-  return {
-    id: v.vehicleId,
-    lat: v.coordinates[0],
-    lng: v.coordinates[1],
-    heading: v.heading,
-    status: v.status === "moving" ? "moving" : "dwelling",
-    route: v.routeId,
-    pax: vehiclePax(v),
-    plate: v.licensePlate,
-    isBoarding: isBoardingAtCurb(v, nowMin),
-  };
 }
 
 export default function DashboardV2() {
@@ -146,7 +100,7 @@ export default function DashboardV2() {
     const t = getSimulatedMinutes();
     return {
       tot: getLiveTotals(t),
-      moving: getVehiclesNow(undefined, t).filter((v) => v.status === "moving").length,
+      moving: getMapVehicles(t).filter((v) => v.status === "moving").length,
       clock: formatClockLabel(t),
     };
   });
@@ -232,13 +186,11 @@ export default function DashboardV2() {
   // factor on a normal element is honored everywhere. All fonts inside the
   // Axiom block are fixed px, so zoom is the single scale mechanism.
   const [opsScale, setOpsScale] = useState(() => computeOpsScale());
-  const [isCompact, setIsCompact] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth < 1180
-  );
+  const [isCompact, setIsCompact] = useState(() => shouldUseCompactOps());
   useEffect(() => {
     const onResize = () => {
       setOpsScale(computeOpsScale());
-      setIsCompact(window.innerWidth < 1180);
+      setIsCompact(shouldUseCompactOps());
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -287,7 +239,7 @@ export default function DashboardV2() {
 
     const writeFrame = (t: number) => {
       const totals = getLiveTotals(t);
-      const vehicles = getVehiclesNow(undefined, t).map((v) => toMapVehicle(v, t));
+      const vehicles = getMapVehicles(t);
       mapRef.current?.syncNow(vehicles);
       const moving = vehicles.filter((v) => v.status === "moving").length;
 
@@ -354,8 +306,8 @@ export default function DashboardV2() {
     <div className={`v2 v2--${viewMode}`} style={{ zoom: opsScale }}>
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
       {serviceGap > 25 && (
-        <div className="v2-alert-banner" style={{ background: '#fff3cd', color: '#7a5700', borderBottom: '1px solid #e8d49a' }}>
-          <span className="v2-alert-banner__icon" style={{ color: '#c47a0f' }}>⚠</span>
+        <div className="v2-alert-banner">
+          <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
             <strong>
               {serviceGap.toLocaleString()} pax in the airport queue now
