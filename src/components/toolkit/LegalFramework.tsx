@@ -1,20 +1,13 @@
 /**
  * Legal Framework — PPP, concession contracts and the politics of approach.
  *
- * This chapter is for the professors at USL Transport Institute who say
- * "you can't have cake and eat it too." The response: you can, if the
- * contract joins the ledgers. This section lays out the Thai PPP framework,
- * the concession structure, the risk allocation matrix, and the political
- * pathway from Governor to DLT.
+ * The skeptic's line is "you can't have cake and eat it too." The response:
+ * you can, if the contract joins the ledgers. This section lays out the Thai
+ * PPP framework, the concession structure, the risk allocation matrix, and
+ * the political pathway from Governor to DLT.
  */
 
-import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
-import { LF } from "./translations";
-
-function tr(key: string, lang: Lang): string {
-  return LF[key]?.[lang] ?? LF[key]?.en ?? key;
-}
 
 const PPP_CITATIONS: Citation[] = [
   {
@@ -126,7 +119,7 @@ const POLITICAL_PATHWAY = [
   {
     step: "1",
     actor: "Phuket Governor",
-    action: "Get operators, DLT and the Governor in one room",
+    action: "Convene the stakeholders",
     detail: "The Governor's Office coordinates DLT, OTP, PAO, PKCD, hotel associations and depa. The Governor cannot grant route authority but can make the room where it gets discussed.",
     timeline: "Phase 0 — before financing"
   },
@@ -212,17 +205,17 @@ const CONTRACT_TYPES = [
   }
 ];
 
-export function LegalFramework({ lang = "en" }: { lang?: Lang }) {
+export function LegalFramework() {
   return (
     <section className="lf-section" id="legal" aria-labelledby="legal-title">
       <header className="lf-section__head">
-        <p className="tk-kicker">{tr("lfKicker", lang)}</p>
-        <h2 id="legal-title">{tr("lfTitle", lang)}</h2>
+        <p className="tk-kicker">PPP, concessions and the politics of approach</p>
+        <h2 id="legal-title">Can you have cake and eat it too? Yes — if the contract joins the ledgers.</h2>
         <p className="lf-section__standfirst">
-          Thailand&apos;s PPP Act (2019) is on the books. The professors who say you can&apos;t
-          have cake and eat it are still right about farebox-only deals. The operator sells rides.
-          The city wants safer roads, cleaner air and access. Banks want repayment they can believe.
-          Join those two ledgers in one contract — or the deal is a slogan.
+          The skeptics are right about one thing: a farebox-only deal is a bet against the last decade of
+          transit finance. The operator sells rides; the city gets safety, cleaner air and less congestion for free.
+          If government wants those benefits and the bank wants a repayment story, the contract has to join
+          both ledgers. That's not a slogan — it's a structure, and it's spelled out below.
         </p>
       </header>
 

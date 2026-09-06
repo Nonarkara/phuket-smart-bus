@@ -92,10 +92,10 @@ describe("App", () => {
     window.history.replaceState({}, "", "/");
     render(<App />);
 
-    // The landing is the rehearsal handbook — demand → justify → feasibility…
+    // The landing starts with the passenger decision, then follows it through the system.
     expect(
       await screen.findByRole("heading", {
-        name: /how do you build a transit system from scratch/i
+        name: /what if an airport passenger can find the bus/i
       })
     ).toBeInTheDocument();
     expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
@@ -103,8 +103,7 @@ describe("App", () => {
       /Observed.*cited or published record/i
     );
     expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
-    expect(screen.getByRole("heading", { name: /The work continues with him in it/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/Ton Jaitong/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
   });
 
   it("switches between Map and More tabs", async () => {

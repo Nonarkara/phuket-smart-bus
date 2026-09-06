@@ -6,13 +6,16 @@ type Bucket = {
   resetAt: number;
 };
 
-const buckets = new Map<string, Bucket>();
-
 function getClientKey(request: Request) {
   return request.ip || request.headers["x-forwarded-for"]?.toString().split(",")[0]?.trim() || "unknown";
 }
 
 export function createRateLimit(options: { max: number; windowMs: number; prefix: string }) {
+  // Keep limiter state scoped to the middleware instance. Multiple app
+  // instances (tests, workers, hot reloads) must not consume one another's
+  // request budget.
+  const buckets = new Map<string, Bucket>();
+
   return function rateLimit(request: Request, response: Response, next: NextFunction) {
     const key = `${options.prefix}:${getClientKey(request)}`;
     const now = Date.now();

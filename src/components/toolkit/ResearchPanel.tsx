@@ -59,7 +59,7 @@ export function ResearchPanel({
             <span className="tk-kicker">Cited</span>
             <ol>
               {citations.map((c) => (
-                <li key={c.href}>
+                <li key={`${c.href}-${c.text}`}>
                   <a href={c.href} target="_blank" rel="noreferrer">
                     {c.text} <b>↗</b>
                   </a>
