@@ -36,3 +36,13 @@
 - **What went wrong:** /ops used `html.ops-mode { zoom: clamp(1, 100vw/1920, 3) }` for wall-screen scaling. Standardized CSS zoom (Chrome 128+) ignores zoom on the root element, so the rule did nothing and the dashboard rendered microscopic on big displays — through THREE "fix" deploys.
 - **Correct behaviour:** compute scale in JS (`innerWidth / designWidth`, clamped) and set inline `zoom` on a normal element (`.v2`). Keep every size inside fixed px — standardized zoom does not scale vw units, so px+vw mixes double-scale.
 - **How to recognise:** any viewport-conditional CSS (zoom, clamp, media queries) verified only at a width where the condition is inert is UNVERIFIED. Test the branch that fires: preview_resize to 2560/3440 before shipping wall-screen code. "Looks fine at my width" is the trap.
+
+## 2026-09-07 · The lit control must be the engine's truth (ops speed bar)
+- **What went wrong:** `SPEED_OPTIONS = [1, 5, 15, 30]` while `SIM_SPEED = 10`. The console opened with no speed chip lit; DAY·60s set 1020× which also had no chip. Users read the bar as broken.
+- **Correct behaviour:** every reachable engine state has exactly one lit control (10× chip added, sweep lights its own chip, LIVE is a mode). Labelled groups — MODE · DAY · CLOCK · SPEED — so the row reads left to right.
+- **How to recognise:** a toggle group where `options.includes(defaultValue)` is false, or a state (`sweep`, `live`) that only the engine knows about.
+
+## 2026-09-07 · Measure layout, don't eyeball it
+- **What went wrong:** `.v2-map__hero` was `position:absolute`, so the map toolbar painted over the hero numbers; the country name column collapsed to 60px because the demand column is 432 css px, not 478 (element zoom 1.2 fooled the arithmetic).
+- **Correct behaviour:** in headless Chromium, `getBoundingClientRect()` + `getComputedStyle(el).gridTemplateColumns` + `scrollHeight/clientHeight` for every column, then size tracks to the measured width.
+- **How to recognise:** truncated labels ("Th…"), overlapping badges, a column that scrolls on a wall screen.

@@ -189,7 +189,19 @@ export function getOpsFlightScheduleFor(dow: number): OpsFlight[] {
 // picker switches it. Everything downstream keys its memo on this value.
 // ---------------------------------------------------------------------------
 
-let activeDow = new Date().getDay();
+/** Weekday in Bangkok (0 = SUN … 6 = SAT). Computed locally rather than via
+ *  ./time so component tests that mock the time module still load this file. */
+function bangkokDayOfWeek(): number {
+  try {
+    const name = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Bangkok", weekday: "short" }).format(new Date());
+    const idx = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(name);
+    return idx >= 0 ? idx : new Date().getDay();
+  } catch {
+    return new Date().getDay();
+  }
+}
+
+let activeDow = bangkokDayOfWeek();
 
 export function getSimulationDay(): number {
   return activeDow;

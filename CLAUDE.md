@@ -51,7 +51,8 @@ src/
 │   ├── travelBehavior.ts      # Region-based bus-capture heuristics (Europeans rent cars, …)
 │   ├── opsFlightSchedule.ts   # Per-dow fuzzed schedule (190+ base flights, 5% cancel, ±15% pax)
 │   ├── aircraftData.ts        # Airline→aircraft assignments, seat counts, load factor
-│   ├── fleetSimulator.ts      # Bus positions, sim clock, DAY·60s sweep, polyline math
+│   ├── fleetSimulator.ts      # Bus positions, sim clock (LIVE + replay), DAY·60s sweep, arrival board, polyline math
+│   ├── flightsByCountry.ts    # City → country; per-weekday flights/pax by country (the wall's "who is flying in")
 │   ├── v2OpsPanel.ts          # Hourly balance rows, operator fleet panel, peaks
 │   ├── headlineMetrics.ts     # Hero-strip math
 │   ├── dataProvider.ts        # Thin adapter; legacy tourist-app chain (kept for /)
@@ -70,6 +71,8 @@ src/
 ├── components/
 │   ├── LiveMap.tsx             # Leaflet map (tourist view)
 │   ├── v2/                     # The /ops dashboard split
+│   │   ├── ArrivalsBoard.tsx   # /ops left column: today's flights, by country (7-day strip), 24h shape
+│   │   ├── NextBusBoard.tsx    # /ops right column: next bus at 7 landmark stops, both directions
 │   │   ├── DemandPanel.tsx     # Flights + region chart + HourlyBalanceChart
 │   │   ├── SupplyPanel.tsx
 │   │   ├── HourlyBalanceChart.tsx # "Missed Money · Hour by Hour" — both directions
@@ -77,7 +80,7 @@ src/
 │   │   ├── InsightsTimeline.tsx
 │   │   ├── V2LiveMap.tsx       # Wall-screen map (imperative markers)
 │   │   ├── V2Shared.tsx        # Counter, InsightCard, helpers
-│   │   └── SimulationControls.tsx # Speed, DAY·60s, day picker
+│   │   └── SimulationControls.tsx # MODE (LIVE/REPLAY) · DAY · CLOCK · SPEED — four labelled groups
 │   ├── WelcomeSheet.tsx        # Tourist bottom sheet
 │   ├── DecisionPanel.tsx       # "Go now" advice card
 │   ├── GovernorDashboard.tsx   # /governor — AI decision picture
@@ -155,10 +158,16 @@ The hour-by-hour MISSED MONEY diagram (the basic diagram, in `HourlyBalanceChart
 
 Conservation: `demand = boarded + lost` at every minute for both directions; `getLiveTotals(t).paxDelivered = inbound.deliveredCum[t] + outbound.deliveredCum[t]` at every minute, asserted by tests.
 
-### Time Acceleration
+### Time: LIVE vs REPLAY
 
-- `SIM_SPEED = 30` → 1 real second = 30 simulated seconds
-- Service window wraps within 06:00–22:30 so buses are always running
+- The clock has three modes (`getClockState().mode`): `live`, `playing`, `paused`.
+- **LIVE** follows the Bangkok wall clock at 1× on the Bangkok weekday. Buses sit where the
+  published PKSB timetable puts them right now, so `NextBusBoard` is a real wait-time
+  projection (`getAirportLineArrivalBoard`) — the thing a GPS feed will sharpen, not replace.
+  /ops opens in LIVE during service hours (05:30–23:30 BKK) and in replay at 12:00 otherwise.
+- **REPLAY** is any weekday at 1×/10×/30×/60× (`SIM_SPEED = 10` default) or the DAY·60s sweep.
+  Picking a day, a speed or scrubbing leaves LIVE; the lit chip is always the engine's truth.
+- Replay wraps within 05:30–24:00 so buses are always running; LIVE never wraps.
 - `getSimulatedMinutes()` is the single source of simulated time
 
 ### Vehicle Positioning
@@ -293,6 +302,14 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 
 ---
 
+### 12. A control that defaults to a value with no chip is a broken control
+The speed bar offered 1/5/15/30× while the engine opened at 10×, so nothing was lit and the
+whole bar read as random. Every state the engine can be in must have exactly one lit control
+(`SPEED_OPTIONS` includes `SIM_SPEED`; the DAY sweep lights its own chip; LIVE is a mode chip,
+not a speed). Same rule for the map: `.v2-map__hero` was `position:absolute` over the map, so
+the layer toolbar painted on top of the hero numbers — measure `getBoundingClientRect()` in a
+headless browser before trusting a layout, don't eyeball a screenshot.
+
 ## Deployment
 
 - **Platform**: Cloudflare Pages (Production environment, project `phuket-smart-bus`) — this is what actually serves `bus.nonarkara.org`. Confirm with `curl -sI https://bus.nonarkara.org/` — the `server: cloudflare` header is the tell.
@@ -318,7 +335,10 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 3. **Dead CSS** — ~15% of CSS unused (drift). The legacy v1 `dataProvider.ts` chain is preserved for `/` (tourist app) and `/v2` (reference); not dead, but a candidate for slimming.
 4. **Component tests** — the engine has 130 unit tests (conservation, regression, heuristics, combined reconciliation) but the React components have only 2. A `<HourlyBalanceChart>` snapshot test would catch the next "verdict chip reads the wrong gap" regression.
 5. **Heuristic calibration** — `travelBehavior.ts` is the weakest link in the chain. The day PKSB shares a week of real boarding counts, those 8 numbers become calibrated facts and every ฿ figure sharpens with them.
-6. **`/v2` and `/ops` are now the same view** — the /ops route renders DashboardV2, but the `/v2` URL still exists for reference (legacy v1 dashboard, same engine, different styling). Long-term, retire `/v2` and keep `/ops` as the single operations surface.
+6. **Dead CSS from the ops redesign** — `DemandSupplyGapRail`/`FlightTimeline` were removed from
+   /ops; their `.v2-decision-rail*`, `.v2-equation*`, `.v2-hour-plan*`, `.v2-flights*` rules in
+   `styles.css` are now unused (the Axiom OPS block at the end of the file is the live one).
+7. **`/v2` and `/ops` are now the same view** — the /ops route renders DashboardV2, but the `/v2` URL still exists for reference (legacy v1 dashboard, same engine, different styling). Long-term, retire `/v2` and keep `/ops` as the single operations surface.
 
 ---
 

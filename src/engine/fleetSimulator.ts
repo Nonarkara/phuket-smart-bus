@@ -6,7 +6,7 @@ import type {
 } from "@shared/types";
 import { haversineDistanceMeters } from "./geo";
 import { routeDestinationLabel } from "./i18n";
-import { parseScheduleEntries } from "./time";
+import { parseScheduleEntries, getBangkokNowFractionalMinutes } from "./time";
 import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG, ROUTE_DEFINITIONS } from "./config";
@@ -1183,8 +1183,13 @@ export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1020× → 60.0s swe
 // All consumers (map, panels, analytics) read from the same source.
 // ---------------------------------------------------------------------------
 
+export type SimClockMode = 'live' | 'playing' | 'paused';
+
 type SimClockState = {
-  mode: 'playing' | 'paused';
+  /** `live` follows the Bangkok wall clock at 1× — buses are where the
+   *  published timetable puts them RIGHT NOW, so the board can project real
+   *  waits. `playing`/`paused` are replay: any weekday, any speed, scrubbable. */
+  mode: SimClockMode;
   currentMinutes: number;
   speed: number;
   lastRealTime: number;
@@ -1194,13 +1199,27 @@ type SimClockState = {
   runOnce: boolean;
 };
 
-const simClock: SimClockState = {
-  mode: 'playing',
-  currentMinutes: SIM_OPEN_MIN,
-  speed: SIM_SPEED,
-  lastRealTime: Date.now(),
-  runOnce: false,
-};
+/** Bus service runs 05:30 → ~23:30 in Bangkok. Outside that the live clock
+ *  is truthful (no buses) but a wall screen opening at 03:00 would show an
+ *  empty island, so the console opens in replay at midday instead. */
+export function isWithinServiceHours(min: number): boolean {
+  const m = ((min % 1440) + 1440) % 1440;
+  return m >= SERVICE_START && m < SERVICE_END - 30;
+}
+
+function initialClockState(): SimClockState {
+  const bkk = getBangkokNowFractionalMinutes();
+  const live = isWithinServiceHours(bkk);
+  return {
+    mode: live ? 'live' : 'playing',
+    currentMinutes: live ? bkk : SIM_OPEN_MIN,
+    speed: live ? 1 : SIM_SPEED,
+    lastRealTime: Date.now(),
+    runOnce: false,
+  };
+}
+
+const simClock: SimClockState = initialClockState();
 
 // Optional override for scripted demos / tests. When set, getSimulatedMinutes
 // returns clockOverride.fn() instead of the state-derived value.
@@ -1214,6 +1233,14 @@ export function setClockOverride(fn: (() => number) | null): void {
 
 export function getSimulatedMinutes(): number {
   if (clockOverride.fn) return clockOverride.fn();
+
+  if (simClock.mode === 'live') {
+    // Wall clock, fractional minutes. Never wraps, never accelerates — the
+    // point of LIVE is that 14:32 on the screen is 14:32 at the curb.
+    simClock.currentMinutes = getBangkokNowFractionalMinutes();
+    simClock.lastRealTime = Date.now();
+    return simClock.currentMinutes;
+  }
 
   if (simClock.mode === 'playing') {
     const now = Date.now();
@@ -1232,7 +1259,7 @@ export function getSimulatedMinutes(): number {
         simClock.runOnce = false;
       }
     } else if (simClock.currentMinutes >= SERVICE_END) {
-      // Normal chips (1/5/15/30×): loop the service window forever.
+      // Normal chips (1/10/30/60×): loop the service window forever.
       simClock.currentMinutes = SERVICE_START + (simClock.currentMinutes - SERVICE_END) % SERVICE_WINDOW;
     }
   }
@@ -1240,8 +1267,32 @@ export function getSimulatedMinutes(): number {
   return simClock.currentMinutes;
 }
 
+/** Leave LIVE for replay without a visible jump: replay starts from the
+ *  minute the wall clock was showing. */
+function leaveLive(): void {
+  if (simClock.mode !== 'live') return;
+  simClock.currentMinutes = Math.max(SERVICE_START, Math.min(SERVICE_END, getBangkokNowFractionalMinutes()));
+  simClock.mode = 'playing';
+  simClock.speed = SIM_SPEED;
+  simClock.lastRealTime = Date.now();
+}
+
+/** Follow the Bangkok wall clock: 1×, real weekday, no wrap. */
+export function goLive(): void {
+  simClock.mode = 'live';
+  simClock.speed = 1;
+  simClock.runOnce = false;
+  simClock.currentMinutes = getBangkokNowFractionalMinutes();
+  simClock.lastRealTime = Date.now();
+}
+
+export function isLiveClock(): boolean {
+  return simClock.mode === 'live';
+}
+
 /** Set the simulated time directly (e.g. when user scrubs the time bar). */
 export function setSimulatedMinutes(min: number): void {
+  leaveLive();
   simClock.currentMinutes = Math.max(SERVICE_START, Math.min(SERVICE_END, min));
   simClock.lastRealTime = Date.now();
   simClock.runOnce = false; // scrubbing exits the one-shot sweep
@@ -1264,34 +1315,37 @@ export function startDaySweep(): void {
   play();
 }
 
-/** Pause the simulation clock. */
+/** Pause the simulation clock. From LIVE this freezes the wall-clock minute. */
 export function pause(): void {
+  if (simClock.mode === 'live') simClock.currentMinutes = getBangkokNowFractionalMinutes();
   simClock.mode = 'paused';
   simClock.lastRealTime = Date.now();
 }
 
-/** Resume the simulation clock. */
+/** Resume the simulation clock (replay). */
 export function play(): void {
   simClock.mode = 'playing';
   simClock.lastRealTime = Date.now();
 }
 
-/** Toggle between playing and paused. */
+/** Toggle between playing and paused. LIVE pauses like any other mode. */
 export function togglePlayPause(): void {
-  if (simClock.mode === 'playing') pause();
-  else play();
+  if (simClock.mode === 'paused') play();
+  else pause();
 }
 
 /** Set playback speed (1× to 1200×). The 1200 ceiling admits the DAY·60s
- *  preset (1020×); 60× was the old cap that made a full day take 18.5 min. */
+ *  preset (1020×); 60× was the old cap that made a full day take 18.5 min.
+ *  Picking a speed is a replay action — it leaves LIVE. */
 export function setSpeed(s: number): void {
+  leaveLive();
   simClock.speed = Math.max(1, Math.min(1200, s));
   simClock.lastRealTime = Date.now();
   simClock.runOnce = false; // picking a manual speed exits the one-shot sweep
 }
 
-export function getClockState(): { mode: SimClockState['mode']; speed: number } {
-  return { mode: simClock.mode, speed: simClock.speed };
+export function getClockState(): { mode: SimClockMode; speed: number; sweep: boolean } {
+  return { mode: simClock.mode, speed: simClock.speed, sweep: simClock.runOnce };
 }
 
 /** All vehicles including orange line competitor, at the simulated instant. */
@@ -1338,6 +1392,139 @@ export function getVehiclesNow(now = new Date(), overrideMin?: number): VehicleP
   }
 
   return Array.from(merged.values());
+}
+
+// ---------------------------------------------------------------------------
+// Airport Line arrival board — "when is the next bus at this stop, and where
+// is it right now?" Both directions, from the same profiles + occurrences
+// that position the buses, so the projected minute and the marker on the map
+// can never disagree. In LIVE mode nowMin is the Bangkok wall clock, which
+// makes this a real wait-time projection off the published PKSB timetable.
+// ---------------------------------------------------------------------------
+
+export type StopArrivalProjection = {
+  stopId: string;
+  stopName: string;
+  /** Published timetable minute (virtual origin departure + averaged offset). */
+  scheduledMin: number;
+  /** Minute the engine's bus actually reaches the stop (per-trip variation). */
+  projectedMin: number;
+  /** projectedMin − nowMin, floored at 0. */
+  waitMin: number;
+  tripStartMin: number;
+  /** Assigned vehicle when the trip is in the active window; null before. */
+  plate: string | null;
+  vehicleId: string | null;
+  /** True once the bus has left its origin stop. */
+  departed: boolean;
+  /** Road metres between the bus and this stop; null before departure. */
+  distanceM: number | null;
+  /** True when this is the last bus of the day at this stop. */
+  lastBus: boolean;
+  /** True when the wrap to tomorrow's first bus was needed. */
+  tomorrow: boolean;
+};
+
+export type ArrivalBoardRow = {
+  key: string;
+  stopName: string;
+  south: StopArrivalProjection | null; // Bus to Rawai
+  north: StopArrivalProjection | null; // Bus to Airport
+};
+
+function projectNextArrival(
+  profile: DirectionProfile,
+  stopIdx: number,
+  nowMin: number,
+  vehicles: VehiclePosition[],
+  stopName?: string
+): StopArrivalProjection | null {
+  const stop = profile.stops[stopIdx];
+  const offset = profile.stopOffsets[stopIdx];
+  if (!stop || offset == null) return null;
+  const dayMin = ((nowMin % 1440) + 1440) % 1440;
+
+  const candidates = profile.departures.map((dep) => {
+    const variation = 0.92 + ((tripHash(profile.routeId, profile.directionLabel, dep) % 16) / 100);
+    return { dep, scheduled: dep + offset, projected: dep + offset * variation };
+  });
+  let next = candidates.find((c) => c.projected > dayMin);
+  let tomorrow = false;
+  if (!next) {
+    const first = candidates[0];
+    if (!first) return null;
+    next = { dep: first.dep + 1440, scheduled: first.scheduled + 1440, projected: first.projected + 1440 };
+    tomorrow = true;
+  }
+  const lastBus = !tomorrow && candidates[candidates.length - 1]!.dep === next.dep;
+  const departed = !tomorrow && dayMin >= next.dep;
+  const vehicle = tomorrow
+    ? undefined
+    : vehicles.find((v) => v.directionLabel === profile.directionLabel && v.tripStartMin === next!.dep);
+  const stopMeters = profile.stopPolylineMeters[stopIdx] ?? null;
+  const distanceM = departed && vehicle && vehicle.polylineMeters != null && stopMeters != null
+    ? Math.max(0, Math.round(stopMeters - vehicle.polylineMeters))
+    : null;
+
+  return {
+    stopId: stop.id,
+    stopName: stopName ?? stop.name.en,
+    scheduledMin: next.scheduled,
+    projectedMin: next.projected,
+    waitMin: Math.max(0, next.projected - dayMin),
+    tripStartMin: next.dep,
+    plate: vehicle?.licensePlate ?? null,
+    vehicleId: vehicle?.vehicleId ?? null,
+    departed,
+    distanceM,
+    lastBus,
+    tomorrow,
+  };
+}
+
+/** Next bus at each requested stop, both directions. `stops` pairs a display
+ *  name with the southbound / northbound stop ids (Patong is served by two
+ *  different curbs: PEA southbound, Bangla police box northbound). */
+export function getAirportLineArrivalBoard(
+  nowMin: number,
+  stops: { key: string; label: string; southId: string; northId: string }[]
+): ArrivalBoardRow[] {
+  const profiles = profilesByRoute["rawai-airport"] ?? [];
+  const south = profiles.find((p) => p.directionLabel === "Bus to Rawai");
+  const north = profiles.find((p) => p.directionLabel === "Bus to Airport");
+  const vehicles = buildVehiclesForRoute("rawai-airport", nowMin, new Date());
+
+  // The profiles carry GeoJSON stop ids; the published timetable carries its
+  // own. Bridge them the way patchAirportProfiles does — by coordinates.
+  const resolve = (profile: DirectionProfile | undefined, timetable: DetailedTimetable, id: string): number => {
+    if (!profile) return -1;
+    const tStop = timetable.stops.find((st) => st.id === id);
+    if (!tStop) return -1;
+    let bestIdx = -1;
+    let bestDist = Infinity;
+    for (let pi = 0; pi < profile.stops.length; pi++) {
+      const d = haversineDistanceMeters([tStop.lat, tStop.lng], profile.stops[pi]!.coordinates);
+      if (d < bestDist) { bestDist = d; bestIdx = pi; }
+    }
+    if (bestDist < 2000) return bestIdx;
+    // The route's two termini can sit a few km from the published curb
+    // (airport terminal vs. the GeoJSON turnaround). A terminus is a terminus.
+    const tIdx = timetable.stops.findIndex((st) => st.id === id);
+    if (tIdx === 0) return 0;
+    if (tIdx === timetable.stops.length - 1) return profile.stops.length - 1;
+    return -1;
+  };
+
+  return stops.map((s) => {
+    const sIdx = resolve(south, airportToRawaiTimetable as DetailedTimetable, s.southId);
+    const nIdx = resolve(north, rawaiToAirportTimetable as DetailedTimetable, s.northId);
+    return {
+      key: s.key,
+      stopName: s.label,
+      south: south && sIdx >= 0 ? projectNextArrival(south, sIdx, nowMin, vehicles, s.label) : null,
+      north: north && nIdx >= 0 ? projectNextArrival(north, nIdx, nowMin, vehicles, s.label) : null,
+    };
+  });
 }
 
 /** One scheduled leg assigned to a land bus — used for driver day records. */

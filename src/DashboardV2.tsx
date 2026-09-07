@@ -26,8 +26,12 @@ import {
   setSimulatedMinutes,
   resetClockAnchor,
   startDaySweep,
+  goLive,
+  play,
   SERVICE_START,
 } from "./engine/fleetSimulator";
+import { getBangkokDayOfWeek } from "./engine/time";
+import { getEnvironmentSnapshot } from "./engine/environmentSimulator";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -40,15 +44,14 @@ import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } fr
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
-import { DemandSupplyGapRail } from "./components/v2/DemandSupplyGapRail";
-import { FlightTimeline } from "./components/v2/FlightTimeline";
+import { ArrivalsBoard } from "./components/v2/ArrivalsBoard";
+import { NextBusBoard } from "./components/v2/NextBusBoard";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
 import { InsightsTimeline } from "./components/v2/InsightsTimeline";
 import { InsightsSummaryPanel } from "./components/v2/InsightsSummaryPanel";
 import { ToolkitPanel } from "./components/v2/ToolkitPanel";
 import { OpsBriefing } from "./components/v2/OpsBriefing";
-import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 import { BusPlanPanel } from "./components/v2/BusPlanPanel";
 import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
 import { isLiveGpsActive, getLiveTelemetryVehicles } from "./engine/liveGpsReceiver";
@@ -128,7 +131,19 @@ export default function DashboardV2() {
   const handleDayChange = (dow: number) => {
     setSimulationDay(dow);
     setSimulatedMinutes(SERVICE_START);
+    play();
     setSimDayState(dow);
+    setState(computeSimState());
+    setClockState(getClockState());
+  };
+
+  // LIVE: Bangkok wall clock, Bangkok weekday. Buses sit where the published
+  // timetable puts them right now; the wait board projects from that.
+  const handleGoLive = () => {
+    const today = getBangkokDayOfWeek();
+    if (today !== getSimulationDay()) setSimulationDay(today);
+    goLive();
+    setSimDayState(today);
     setState(computeSimState());
     setClockState(getClockState());
   };
@@ -139,8 +154,6 @@ export default function DashboardV2() {
     setClockState(getClockState());
   };
 
-  const arrivalsToday = dailyFlights.filter((flight) => flight.type === "arr");
-  const departuresToday = dailyFlights.filter((flight) => flight.type === "dep");
   const currentHourBucket = hourlyFlights[Math.floor(state.simMinutes / 60) % 24] ?? hourlyFlights[0];
   const responsePct = state.paxWantBus > 0 ? Math.round((state.paxBoarded / state.paxWantBus) * 100) : 100;
   // Honest split: "waiting" is the queue RIGHT NOW; "walked away" is
@@ -149,7 +162,6 @@ export default function DashboardV2() {
   const serviceGap = state.paxAtAirport;
   const standbyBusesNeeded = Math.ceil(serviceGap / 25);
   const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
-  const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
 
   // Hourly demand-supply balance rows. Memoized by the engine.
   const hourlyBalance = getHourlyBalance();
@@ -309,11 +321,11 @@ export default function DashboardV2() {
         <div className="v2-alert-banner">
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
-            <strong>
-              {serviceGap.toLocaleString()} pax in the airport queue now
-              {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today (฿${state.lostRevenueThb.toLocaleString()} lost)`}.
-            </strong>
-            <span>Next departure absorbs 25. Dispatching {standbyBusesNeeded} standby buses would clear the current queue.</span>
+            <strong>{serviceGap.toLocaleString()} people in the airport queue now.</strong>
+            <span>
+              {standbyBusesNeeded} standby {standbyBusesNeeded === 1 ? "bus" : "buses"} would clear it
+              {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today, ฿${state.lostRevenueThb.toLocaleString()} lost to Grab`}.
+            </span>
           </div>
         </div>
       )}
@@ -328,23 +340,33 @@ export default function DashboardV2() {
           <span className="v2-header__sub">Fund the right hour · cut SOVs · bank avoided CO₂ as evidence</span>
         </div>
         <div className="v2-header__story">
-          <span className="v2-header__story-label">Right now</span>
-          <strong className="v2-header__story-value">
-            {currentDemandPax.toLocaleString()} arriving pax this hour
-          </strong>
-          <span className="v2-header__story-detail">
-            {currentBalance
-              ? <>Bus pool {currentBalance.busEligiblePax} · seats {currentBalance.busSeats} · <span className={`v2-header__story-status v2-header__story-status--${currentBalance.status}`}>
-                  {currentBalance.status.toUpperCase()}
-                  {currentBalance.gapPax !== 0 && (currentBalance.gapPax > 0 ? ` −${currentBalance.gapPax}` : ` +${-currentBalance.gapPax}`)}
+          {currentBalance ? (
+            <>
+              <span className="v2-header__story-row">
+                <span className="v2-header__story-label">This hour</span>
+                <strong className="v2-header__story-value">
+                  {(currentBalance.busEligiblePax + currentBalance.outEligiblePax).toLocaleString()} riders want a bus
+                </strong>
+                <span className={`v2-header__story-status v2-header__story-status--${currentBalance.status}`}>
+                  {currentBalance.busesToAdd > 0
+                    ? `ADD ${currentBalance.busesToAdd} BUS${currentBalance.busesToAdd === 1 ? "" : "ES"}`
+                    : currentBalance.status === "surplus" ? "SEATS TO SPARE" : "COVERED"}
                 </span>
-              </>
-              : `${state.paxAtAirport} waiting · ${responsePct}% capture`}
-          </span>
-          {hourPeaks.worstShortfallHour != null && hourPeaks.worstShortfallGap > 0 && (
-            <span className="v2-header__story-detail">
-              Peak shortfall {hourPeaks.worstShortfallGap} pax @ {String(hourPeaks.worstShortfallHour).padStart(2, "0")}:00
-            </span>
+              </span>
+              <span className="v2-header__story-row">
+                <span className="v2-header__story-detail">
+                  {(currentBalance.busSeats + currentBalance.outSeats).toLocaleString()} seats on the timetable
+                  {" · "}{currentBalance.busEligiblePax.toLocaleString()} leaving the airport, {currentBalance.outEligiblePax.toLocaleString()} heading to it
+                </span>
+                {hourPeaks.worstShortfallHour != null && hourPeaks.worstShortfallGap > 0 && (
+                  <span className="v2-header__story-detail v2-header__story-peak">
+                    · worst hour {String(hourPeaks.worstShortfallHour).padStart(2, "0")}:00, {hourPeaks.worstShortfallGap} short
+                  </span>
+                )}
+              </span>
+            </>
+          ) : (
+            <strong className="v2-header__story-value">{state.paxAtAirport} waiting · {responsePct}% capture</strong>
           )}
         </div>
         <nav className="v2-mode-toggle" aria-label="Dashboard views" role="tablist">
@@ -369,14 +391,13 @@ export default function DashboardV2() {
         </nav>
         {/* One clock, one state — the audit's §4D. Day + time + speed + play/pause
             in a single chip. No more four-row decode; one read, one truth. */}
-        <div className="v2-header__clock" role="status" aria-live="off">
+        <div className={`v2-header__clock ${clockState.mode === "live" ? "is-live" : ""}`} role="status" aria-live="off">
           <span className="v2-header__live" aria-hidden="true" />
+          <span className="v2-header__mode">{clockState.mode === "live" ? "LIVE" : "REPLAY"}</span>
           <span className="v2-header__day">{getDayInfo().label}</span>
-          <span className="v2-header__sep" aria-hidden="true">·</span>
           <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
-          <span className="v2-header__sep" aria-hidden="true">·</span>
           <span className="v2-header__speed">
-            {clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}
+            {clockState.mode === "live" ? "real time" : clockState.mode === "paused" ? "paused" : clockState.sweep ? "whole day" : `${clockState.speed}×`}
           </span>
         </div>
 
@@ -398,6 +419,7 @@ export default function DashboardV2() {
           simDay={simDay}
           onDayChange={handleDayChange}
           onStartDaySweep={handleStartDaySweep}
+          onGoLive={handleGoLive}
         />
       </header>
 
@@ -446,28 +468,36 @@ export default function DashboardV2() {
           hourlyBalance={hourlyBalance}
         />
       ) : (
-        // OPERATIONS view — one decision rail, one geographic truth
-        <main className="v2-body v2-body--operations">
-          <FlightTimeline flights={dailyFlights} simMinutes={state.simMinutes} />
-          <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+        // OPERATIONS view — demand | map | supply. Three columns, three questions:
+        // who is landing, where are the buses, how long is the wait.
+        <main className="v2-body v2-body--operations ax-ops">
+          <section className="ax-col ax-col--demand">
+            <ArrivalsBoard
+              flights={dailyFlights}
+              simMinutes={state.simMinutes}
+              simDay={simDay}
+              live={clockState.mode === "live"}
+            />
+          </section>
 
-          <section className="v2-map">
-            <PhuketConditionsStrip />
+          <section className="ax-col ax-col--map v2-map">
             <div className="v2-map__hero">
               <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Demand Queue</span>
+                <span className="v2-map__hero-label">Waiting at the airport curb</span>
                 <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">waiting at airport curb</span>
+                <span className="v2-map__hero-detail">
+                  {state.nextDeparture !== null ? `next bus boards in ${state.nextDeparture} min · takes 25` : "no more departures today"}
+                </span>
               </div>
               <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Supply Rolling</span>
+                <span className="v2-map__hero-label">Buses on the road</span>
                 <strong className="v2-map__hero-value" ref={supplyRollingRef}>{initFrame.moving.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">buses moving now</span>
+                <span className="v2-map__hero-detail">of {metrics.fleet.totalBuses} in service · {metrics.now.avgLoadPct}% average load</span>
               </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Walked Away</span>
+              <div className="v2-map__hero-card v2-map__hero-card--warn">
+                <span className="v2-map__hero-label">Walked away today</span>
                 <strong className="v2-map__hero-value" ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">gave up after 60 min queue</span>
+                <span className="v2-map__hero-detail">gave up after 60 min · ฿{state.lostRevenueThb.toLocaleString()} to Grab</span>
               </div>
             </div>
             <div className="v2-map__stage">
@@ -483,18 +513,18 @@ export default function DashboardV2() {
                 onClose={() => setFocus({ id: null, pinned: false })}
               />
             </div>
-            <div className="v2-map__overlay">
-              <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>
-              <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
-              {state.nextDeparture !== null && (
-                <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
-              )}
-            </div>
-            {/* The operator fleet table — sits under the map so operators
-                see WHERE every bus is while reading the table below. */}
-            <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />
+            <ConditionsLine />
           </section>
 
+          <section className="ax-col ax-col--supply">
+            <NextBusBoard
+              simMinutes={state.simMinutes}
+              live={clockState.mode === "live"}
+              focusedVehicleId={focus.id}
+              onFocusVehicle={handleFocusVehicle}
+            />
+            <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />
+          </section>
         </main>
       )}
 
@@ -547,6 +577,22 @@ export default function DashboardV2() {
         isOpen={isTelemetryModalOpen}
         onClose={() => setIsTelemetryModalOpen(false)}
       />
+    </div>
+  );
+}
+
+/** One quiet line of context under the map: weather, sea flag, air. The full
+ *  conditions strip lives in the phone briefing; on the wall it was fighting
+ *  the map for attention. */
+function ConditionsLine() {
+  const env = useMemo(() => getEnvironmentSnapshot(), []);
+  const flag = (env.maritimeFlag ?? "green").toUpperCase();
+  return (
+    <div className="ax-conditions" role="status">
+      <span><b>{env.tempC.toFixed(0)}°C</b> {env.conditionLabel} · rain {env.rainProb}%</span>
+      <span className={`ax-conditions__sea is-${env.maritimeFlag ?? "green"}`}><i /> Sea {flag} FLAG · waves {env.waveHeightM ?? 1.1} m</span>
+      <span>AQI <b>{env.aqi}</b></span>
+      <span className="ax-conditions__road">{env.roadConditionLabel ?? "Roads normal"}</span>
     </div>
   );
 }

@@ -13187,3 +13187,741 @@ a { color: var(--tint); }
   border: 1px solid #ffffff;
   display: inline-block;
 }
+
+/* ============================================================================
+ * AXIOM OPS · COMMUNICATION PASS
+ *
+ * The wall was 50% cool, 50% legible. This block is the legibility half.
+ *   · One design canvas (1440×900), scaled up by element zoom — every size in
+ *     px, so a 50" wall gets the same proportions, only bigger.
+ *   · Three columns, three questions: who is landing | where are the buses |
+ *     how long is the wait. Each column has ONE headline number you can read
+ *     from the door, then the proof under it.
+ *   · The map is a map: dark navy sea, near-black land, one bright road. The
+ *     panels are a different surface (blue-grey), so the eye finds the edge.
+ *   · Time controls are four labelled groups; whatever is lit is the truth.
+ *   · Laws kept: zero shadow · zero gradient · zero radius · one accent
+ *     (green = live/good), one warning (amber), one negative (red).
+ * ========================================================================== */
+
+.v2--operations {
+  --ax-paper:  #070b10;
+  --ax-panel:  #121a25;
+  --ax-panel-2:#182231;
+  --ax-ink:    #f5f8fb;
+  --ax-ink-2:  #bcc7d2;
+  --ax-ink-3:  #8797a6;
+  --ax-line:   #253243;
+  --ax-line-2: #34445a;
+  --ax-accent: #4cc48e;
+  --ax-accent-ink: #06170f;
+  --ax-neg:    #ff8f7d;
+  --ax-warn:   #f0b24a;
+  --ax-sea:    #0b1a26;
+  --t-micro:   13px;
+  --t-body:    16px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ── Shared type primitives ──────────────────────────────────────────────── */
+.v2--operations .ax-eyebrow {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  line-height: 1.2;
+}
+.v2--operations .ax-h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ax-ink);
+  line-height: 1.15;
+}
+.v2--operations .ax-num {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ax-ink);
+}
+.v2--operations .ax-num--xl { font-size: 46px; }
+.v2--operations .ax-num--md { font-size: 32px; }
+.v2--operations .ax-num--dim { color: var(--ax-ink-3); }
+.v2--operations .ax-accent { color: var(--ax-accent); }
+.v2--operations .ax-flag { display: inline-block; margin-right: 6px; font-size: 15px; line-height: 1; }
+
+/* ── Header: brand · this-hour sentence · views · clock ─────────────────── */
+.v2--operations .v2-alert-banner {
+  padding: 7px 24px;
+  font-size: 14px;
+  gap: 12px;
+}
+.v2--operations .v2-alert-banner strong { font-size: 15px; }
+.v2--operations .v2-header {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: 62px 70px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--ax-line-2);
+}
+.v2--operations .v2-header__eyebrow { font-size: 14px; letter-spacing: 0.16em; }
+.v2--operations .v2-header__telemetry-pill { display: none; } /* duplicated on the map */
+.v2--operations .v2-header__story {
+  gap: 14px;
+  padding: 0 28px;
+  justify-content: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.v2--operations .v2-header__story-label { font-size: 12px; letter-spacing: 0.14em; }
+.v2--operations .v2-header__story-value { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.v2--operations .v2-header__story-detail { font-size: 15px; color: var(--ax-ink-2); }
+.v2--operations .v2-header__story-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--ax-accent);
+}
+.v2--operations .v2-header__story-status--shortfall,
+.v2--operations .v2-header__story-status--tight { color: var(--ax-warn); background: rgba(240, 178, 74, 0.10); }
+.v2--operations .v2-header__story-status--surplus { color: var(--ax-ink-3); }
+.v2--operations .v2-header__story-peak { color: var(--ax-ink-3); font-size: 13px; }
+
+.v2--operations .v2-mode-toggle { align-self: center; border-color: var(--ax-line-2); }
+.v2--operations .v2-mode-btn {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+}
+
+.v2--operations .v2-header__clock {
+  align-self: center;
+  margin-left: 16px;
+  padding: 0 16px;
+  min-height: 42px;
+  gap: 10px;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink-2);
+  font-size: 13px;
+}
+.v2--operations .v2-header__clock.is-live { border-color: var(--ax-accent); }
+.v2--operations .v2-header__live {
+  width: 8px; height: 8px;
+  background: var(--ax-ink-3);
+  display: inline-block;
+}
+.v2--operations .v2-header__clock.is-live .v2-header__live {
+  background: var(--ax-accent);
+  animation: ax-lamp 1.6s ease-in-out infinite;
+}
+.v2--operations .v2-header__mode { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; }
+.v2--operations .v2-header__clock.is-live .v2-header__mode { color: var(--ax-accent); }
+.v2--operations .v2-header__day { color: var(--ax-ink-2); font-weight: 700; }
+.v2--operations .v2-header__time { font-size: 22px; font-weight: 800; }
+.v2--operations .v2-header__speed { font-size: 13px; color: var(--ax-ink-3); }
+@keyframes ax-lamp { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ── Time controls: MODE · DAY · CLOCK · SPEED ───────────────────────────── */
+.v2--operations .ax-time {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: var(--ax-paper);
+  border-top: 1px solid var(--ax-line);
+}
+.v2--operations .ax-time__group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 18px;
+  border-right: 1px solid var(--ax-line);
+}
+.v2--operations .ax-time__group:first-child { padding-left: 0; }
+.v2--operations .ax-time__group:last-child { border-right: 0; padding-right: 0; }
+.v2--operations .ax-time__group--clock { flex: 1; min-width: 0; }
+.v2--operations .ax-time__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  line-height: 1;
+}
+.v2--operations .ax-time__row { display: flex; align-items: center; gap: 6px; }
+.v2--operations .ax-time__chip,
+.v2--operations .ax-time__live,
+.v2--operations .ax-time__play {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--ax-line-2);
+  background: transparent;
+  color: var(--ax-ink-2);
+  font: 800 14px/1 inherit;
+  font-family: inherit;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.v2--operations .ax-time__chip:hover,
+.v2--operations .ax-time__play:hover { border-color: var(--ax-ink-2); color: var(--ax-ink); }
+.v2--operations .ax-time__chip.is-active {
+  background: var(--ax-ink);
+  border-color: var(--ax-ink);
+  color: var(--ax-paper);
+}
+.v2--operations .ax-time__chip--sweep { margin-left: 8px; color: var(--ax-accent); border-color: rgba(76, 196, 142, 0.5); }
+.v2--operations .ax-time__chip--sweep:hover { border-color: var(--ax-accent); color: var(--ax-accent); }
+.v2--operations .ax-time__chip--sweep.is-active { background: var(--ax-accent); border-color: var(--ax-accent); color: var(--ax-accent-ink); }
+.v2--operations .ax-time__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ax-ink);
+  letter-spacing: 0.14em;
+}
+.v2--operations .ax-time__live.is-active {
+  background: var(--ax-accent);
+  border-color: var(--ax-accent);
+  color: var(--ax-accent-ink);
+}
+.v2--operations .ax-time__lamp { width: 9px; height: 9px; background: var(--ax-ink-3); display: inline-block; }
+.v2--operations .ax-time__live.is-active .ax-time__lamp { background: var(--ax-accent-ink); animation: ax-lamp 1.6s ease-in-out infinite; }
+.v2--operations .ax-time__replay {
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--ax-line-2);
+}
+.v2--operations .ax-time__replay.is-active { color: var(--ax-warn); }
+.v2--operations .ax-time__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  color: var(--ax-ink);
+  font-size: 15px;
+}
+.v2--operations .ax-time__play.is-paused { border-color: var(--ax-warn); color: var(--ax-warn); }
+.v2--operations .ax-time__play-word { font-size: 12px; letter-spacing: 0.14em; }
+.v2--operations .ax-time__slider {
+  flex: 1;
+  min-width: 120px;
+  height: 22px;
+  accent-color: var(--ax-accent);
+  cursor: pointer;
+}
+.v2--operations .ax-time.is-replay .ax-time__slider { accent-color: var(--ax-warn); }
+.v2--operations .ax-time__clock {
+  min-width: 68px;
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--ax-ink);
+  text-align: right;
+}
+.v2--operations .v2-timebar__days { display: flex; }
+
+/* ── Body: demand | map | supply ────────────────────────────────────────── */
+.v2--operations .v2-body.ax-ops {
+  display: grid;
+  grid-template-columns: minmax(400px, 27fr) minmax(0, 46fr) minmax(400px, 27fr);
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "demand map supply";
+  gap: 1px;
+  background: var(--ax-line-2);
+}
+.v2--operations .ax-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ax-panel);
+  overflow: hidden;
+}
+.v2--operations .ax-col--demand { grid-area: demand; overflow-y: auto; }
+.v2--operations .ax-col--map { grid-area: map; background: var(--ax-paper); }
+.v2--operations .ax-col--supply { grid-area: supply; }
+
+/* ── Demand column: arrivals board ──────────────────────────────────────── */
+.v2--operations .ax-arr { display: flex; flex-direction: column; min-height: 0; }
+.v2--operations .ax-arr__head { padding: 16px 20px 14px; border-bottom: 1px solid var(--ax-line); }
+.v2--operations .ax-arr__headline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.v2--operations .ax-arr__headline-word {
+  margin-right: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ax-ink-2);
+}
+.v2--operations .ax-arr__lede {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ax-ink-2);
+}
+.v2--operations .ax-arr__lede b { color: var(--ax-ink); font-weight: 800; }
+.v2--operations .ax-arr__lede b.ax-accent { color: var(--ax-accent); }
+.v2--operations .ax-arr__source {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ax-ink-3);
+}
+.v2--operations .ax-arr__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px 8px;
+}
+.v2--operations .ax-arr__count { font-size: 13px; font-weight: 700; color: var(--ax-ink-2); white-space: nowrap; }
+.v2--operations .ax-arr__count--week { color: var(--ax-ink-3); font-weight: 600; }
+.v2--operations .ax-arr__now { border-bottom: 1px solid var(--ax-line); }
+.v2--operations .ax-arr__empty { margin: 0; padding: 4px 20px 14px; font-size: 14px; color: var(--ax-ink-3); }
+
+.v2--operations .ax-flightlist { list-style: none; margin: 0; padding: 0 0 6px; }
+.v2--operations .ax-flight {
+  display: grid;
+  grid-template-columns: 52px 54px 82px minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "time dir no city pax eta"
+    "time dir meta meta bus bus";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  padding: 7px 20px;
+  border-top: 1px solid var(--ax-line);
+  font-size: 14px;
+}
+.v2--operations .ax-flight__time { grid-area: time; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ax-ink); }
+.v2--operations .ax-flight__dir {
+  grid-area: dir;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--ax-ink-3);
+}
+.v2--operations .ax-flight__dir--arr { color: var(--ax-accent); }
+.v2--operations .ax-flight__no { grid-area: no; font-size: 16px; font-weight: 800; letter-spacing: 0.02em; color: var(--ax-ink); }
+.v2--operations .ax-flight__city { grid-area: city; font-size: 15px; color: var(--ax-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2--operations .ax-flight__meta { grid-area: meta; font-size: 12px; color: var(--ax-ink-3); }
+.v2--operations .ax-flight__pax { grid-area: pax; font-size: 14px; font-weight: 700; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.v2--operations .ax-flight__eta { grid-area: eta; min-width: 54px; text-align: right; font-size: 14px; font-weight: 800; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
+.v2--operations .ax-flight__bus { grid-area: bus; justify-self: end; font-size: 12px; font-weight: 800; color: var(--ax-accent); letter-spacing: 0.04em; }
+
+.v2--operations .ax-arr__countries { border-bottom: 1px solid var(--ax-line); }
+.v2--operations .ax-country { list-style: none; margin: 0; padding: 0 0 6px; }
+.v2--operations .ax-country__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) 78px minmax(40px, 1fr) 74px auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 20px;
+  border-top: 1px solid var(--ax-line);
+}
+.v2--operations .ax-country__row--rest { color: var(--ax-ink-3); }
+.v2--operations .ax-country__name { font-size: 15px; font-weight: 700; color: var(--ax-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v2--operations .ax-country__row--rest .ax-country__name { color: var(--ax-ink-3); font-weight: 600; }
+.v2--operations .ax-country__planes { display: flex; align-items: baseline; gap: 5px; }
+.v2--operations .ax-country__planes .ax-num { font-size: 24px; }
+.v2--operations .ax-country__planes small { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-3); }
+.v2--operations .ax-country__bar { display: block; height: 8px; background: var(--ax-line); }
+.v2--operations .ax-country__bar i { display: block; height: 100%; background: var(--ax-accent); transition: width 1.5s ease; }
+.v2--operations .ax-country__row--rest .ax-country__bar i { background: var(--ax-line-2); }
+.v2--operations .ax-country__pax { font-size: 13px; font-weight: 700; text-align: right; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v2--operations .ax-country__week { display: grid; grid-template-columns: repeat(7, 18px); gap: 2px; min-width: 138px; }
+.v2--operations .ax-country__week i {
+  display: grid;
+  place-items: center;
+  height: 22px;
+  background: rgba(76, 196, 142, calc(var(--h, 0.12) * 0.55));
+  font-style: normal;
+}
+.v2--operations .ax-country__week i b { font-size: 11px; font-weight: 800; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+.v2--operations .ax-country__week i.is-today { outline: 1.5px solid var(--ax-ink); outline-offset: -1.5px; }
+
+.v2--operations .ax-arr__hours { padding-bottom: 12px; }
+.v2--operations .ax-hours {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  height: 104px;
+  margin: 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ax-line-2);
+}
+.v2--operations .ax-hours__col { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.v2--operations .ax-hours__bars { flex: 1; display: flex; align-items: flex-end; gap: 1px; }
+.v2--operations .ax-hours__bars i { display: block; flex: 1; min-height: 1px; }
+.v2--operations .ax-hours__arr { background: var(--ax-accent); }
+.v2--operations .ax-hours__dep { background: var(--ax-line-2); }
+.v2--operations .ax-hours__col.is-now .ax-hours__arr { background: var(--ax-ink); }
+.v2--operations .ax-hours__label {
+  position: absolute;
+  left: 0;
+  bottom: -16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.v2--operations .ax-hours__now {
+  position: absolute;
+  top: -4px;
+  bottom: 12px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ax-warn);
+}
+.v2--operations .ax-hours__legend {
+  display: flex;
+  gap: 16px;
+  margin: 22px 20px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ax-ink-3);
+}
+.v2--operations .ax-hours__legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+.v2--operations .ax-hours__nowkey { background: var(--ax-warn); width: 3px !important; }
+
+/* ── Map column ─────────────────────────────────────────────────────────── */
+.v2--operations .v2-map__hero { background: var(--ax-line-2); flex-shrink: 0; }
+.v2--operations .v2-map__hero-card { padding: 14px 20px 12px; gap: 6px; background: var(--ax-panel); }
+.v2--operations .v2-map__hero-label { font-size: 12px; letter-spacing: 0.14em; color: var(--ax-ink-3); }
+.v2--operations .v2-map__hero-value { font-size: 46px; font-weight: 800; letter-spacing: -0.04em; }
+.v2--operations .v2-map__hero-card--warn .v2-map__hero-value { color: var(--ax-warn); }
+.v2--operations .v2-map__hero-detail { font-size: 14px; color: var(--ax-ink-2); }
+.v2--operations .v2-map__stage {
+  min-height: 0;
+  border-top: 1px solid var(--ax-line-2);
+  border-bottom: 1px solid var(--ax-line-2);
+}
+.v2--operations .v2-map__canvas .leaflet-container { background: var(--ax-sea); }
+.v2--operations .v2-map__canvas .v2-basemap-tile {
+  /* Invert + rotate: OSM's pale-blue sea becomes deep navy, land near-black,
+     roads faint. Saturation is kept low so only OUR layers carry colour. */
+  filter: invert(1) hue-rotate(185deg) brightness(0.62) contrast(1.18) saturate(0.55);
+}
+.v2--operations .v2-map__overlay { display: none; }
+.v2--operations .v2-map__top-controls { top: 10px; left: 10px; right: 10px; gap: 8px; flex-wrap: wrap; z-index: 1000; }
+.v2--operations .v2-map__layers { position: static; border-color: var(--ax-line-2); background: rgba(7, 11, 16, 0.92); }
+.v2--operations .v2-map__layer-btn { min-height: 34px; font-size: 12px; }
+.v2--operations .v2-map__layer-btn.is-active { background: rgba(76, 196, 142, 0.16); color: var(--ax-accent); }
+.v2--operations .v2-map__telemetry-badge { font-size: 12px; min-height: 34px; }
+.v2--operations .v2-map__flight-badge { top: auto; bottom: 48px; right: 10px; font-size: 12px; }
+.v2--operations .v2-map__maritime-banner { top: auto; bottom: 48px; left: 10px; right: auto; max-width: 60%; border-radius: 0; font-size: 13px; }
+.v2--operations .v2-map__legend { font-size: 12px; padding: 9px 12px; gap: 14px; background: rgba(7, 11, 16, 0.9); color: var(--ax-ink-2); }
+.v2--operations .v2-bus { width: 36px; height: 36px; }
+.v2--operations .v2-bus__hull { width: 14px; height: 24px; border-width: 2px; }
+.v2--operations .v2-bus__wedge { border-left-width: 6px; border-right-width: 6px; border-bottom-width: 6px; }
+.v2--operations .v2-bus.is-boarding { --ink: var(--ax-accent); --hull: rgba(76, 196, 142, 0.18); }
+
+.v2--operations .ax-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  padding: 9px 20px;
+  background: var(--ax-panel);
+  font-size: 13px;
+  color: var(--ax-ink-2);
+  flex-shrink: 0;
+}
+.v2--operations .ax-conditions b { color: var(--ax-ink); font-weight: 800; }
+.v2--operations .ax-conditions__sea i { display: inline-block; width: 9px; height: 9px; margin-right: 6px; background: var(--ax-accent); }
+.v2--operations .ax-conditions__sea.is-yellow i { background: var(--ax-warn); }
+.v2--operations .ax-conditions__sea.is-red i { background: var(--ax-neg); }
+.v2--operations .ax-conditions__sea.is-red { color: var(--ax-neg); font-weight: 700; }
+.v2--operations .ax-conditions__road { margin-left: auto; color: var(--ax-ink-3); }
+
+/* ── Supply column: next-bus board + fleet ──────────────────────────────── */
+.v2--operations .ax-bus { flex-shrink: 0; border-bottom: 1px solid var(--ax-line-2); }
+.v2--operations .ax-bus__head { padding: 16px 20px 10px; }
+.v2--operations .ax-bus__note { margin: 6px 0 0; font-size: 12px; line-height: 1.4; color: var(--ax-ink-3); }
+.v2--operations .ax-bus__grid { display: flex; flex-direction: column; }
+.v2--operations .ax-bus__hrow,
+.v2--operations .ax-bus__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.05fr 1.05fr;
+  gap: 1px;
+  background: var(--ax-line);
+  border-top: 1px solid var(--ax-line);
+}
+.v2--operations .ax-bus__hrow span {
+  padding: 6px 20px 6px;
+  background: var(--ax-panel);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2--operations .ax-bus__hrow span + span { padding-left: 14px; }
+.v2--operations .ax-bus__hrow b { color: var(--ax-accent); margin-right: 4px; }
+.v2--operations .ax-bus__stop {
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 20px;
+  background: var(--ax-panel);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ax-ink);
+}
+.v2--operations .ax-bus__cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 14px;
+  border: 0;
+  background: var(--ax-panel);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  font-family: inherit;
+  cursor: default;
+}
+.v2--operations .ax-bus__cell.is-clickable { cursor: pointer; }
+.v2--operations .ax-bus__cell.is-clickable:hover,
+.v2--operations .ax-bus__cell.is-focused { background: var(--ax-panel-2); }
+.v2--operations .ax-bus__cell.is-focused { box-shadow: inset 3px 0 0 var(--ax-accent); }
+.v2--operations .ax-bus__cell--none { align-items: center; color: var(--ax-ink-3); }
+.v2--operations .ax-bus__wait { display: flex; align-items: baseline; gap: 5px; }
+.v2--operations .ax-bus__wait .ax-num { font-size: 30px; }
+.v2--operations .ax-bus__wait small { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-3); }
+.v2--operations .ax-bus__cell--soon .ax-num { color: var(--ax-accent); }
+.v2--operations .ax-bus__cell--long .ax-num { color: var(--ax-warn); }
+.v2--operations .ax-bus__cell--closed .ax-num { font-size: 20px; color: var(--ax-ink-3); }
+.v2--operations .ax-bus__proof { font-size: 12px; color: var(--ax-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.v2--operations .v2-fleet {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  gap: 8px;
+  padding: 14px 20px 10px;
+  border: 0;
+  background: var(--ax-panel);
+}
+.v2--operations .v2-fleet__eyebrow { font-size: 12px; letter-spacing: 0.14em; color: var(--ax-ink-3); font-family: inherit; }
+.v2--operations .v2-fleet__title { font-size: 20px; }
+.v2--operations .v2-fleet__sub { font-size: 12px; font-family: inherit; color: var(--ax-ink-3); letter-spacing: 0; }
+.v2--operations .v2-fleet__chip { font-size: 12px; font-family: inherit; padding: 6px 10px; }
+.v2--operations .v2-fleet__chip.is-active { background: rgba(76, 196, 142, 0.16); color: var(--ax-accent); border-color: var(--ax-accent); }
+.v2--operations .v2-fleet__row { grid-template-columns: 150px 1fr 96px 84px 54px; gap: 10px; padding: 7px 4px; font-size: 14px; }
+.v2--operations .v2-fleet__row--header { font-size: 11px; font-family: inherit; background: var(--ax-panel); }
+.v2--operations .v2-fleet__driver-name,
+.v2--operations .v2-fleet__route-dir,
+.v2--operations .v2-fleet__load-num,
+.v2--operations .v2-fleet__eta { font-size: 14px; }
+.v2--operations .v2-fleet__plate,
+.v2--operations .v2-fleet__route-tag,
+.v2--operations .v2-fleet__status,
+.v2--operations .v2-fleet__problem-pill { font-size: 11px; }
+.v2--operations .v2-fleet__face { width: 30px; height: 30px; }
+.v2--operations .v2-fleet__bar { height: 8px; }
+.v2--operations .v2-fleet__bar--mid .v2-fleet__bar-fill,
+.v2--operations .v2-fleet__route-progress-fill { background: var(--ax-accent); }
+.v2--operations .v2-fleet__bar--high .v2-fleet__bar-fill { background: var(--ax-warn); }
+.v2--operations .v2-fleet__route-tag { background: rgba(76, 196, 142, 0.14); color: var(--ax-accent); }
+.v2--operations .v2-fleet__list { padding-right: 4px; }
+
+/* ── Footer: the day's ledger ───────────────────────────────────────────── */
+.v2--operations .v2-footer { border-top: 1px solid var(--ax-line-2); }
+.v2--operations .v2-accum { background: var(--ax-line-2); }
+.v2--operations .v2-accum__item { padding: 12px 20px 11px; gap: 5px; }
+.v2--operations .v2-accum__val { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+.v2--operations .v2-accum__label { font-size: 12px; letter-spacing: 0.14em; }
+.v2--operations .v2-accum__earned { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+.v2--operations .v2-accum__lost { font-size: 14px; }
+
+/* ── Fit pass: everything on one 1440×900 canvas, no column scrolls ─────── */
+.v2--operations .v2-alert-banner { padding: 6px 24px; min-height: 0; }
+.v2--operations .v2-alert-banner__content { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.v2--operations .v2-alert-banner strong { font-size: 15px; }
+.v2--operations .v2-alert-banner span { font-size: 14px; }
+.v2--operations .v2-header { grid-template-rows: 58px 64px; }
+.v2--operations .v2-header__story { flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; }
+.v2--operations .v2-header__story-row { display: flex; align-items: baseline; gap: 12px; min-width: 0; white-space: nowrap; }
+.v2--operations .v2-header__story-detail { font-size: 13px; }
+.v2--operations .v2-header__story-status { padding: 4px 9px; font-size: 12px; }
+
+.v2--operations .v2-map__hero { position: static; }
+.v2--operations .v2-map__hero-card { padding: 12px 20px 10px; gap: 4px; }
+.v2--operations .v2-map__hero-value { font-size: 40px; }
+.v2--operations .v2-map__hero-detail { font-size: 13px; }
+.v2--operations .v2-map__stage .v2-map__canvas,
+.v2--operations .v2-map__stage .v2-map__canvas .leaflet-container,
+.v2--operations .v2-brief__map-frame .v2-map__canvas,
+.v2--operations .v2-brief__map-frame .v2-map__canvas .leaflet-container { background: var(--ax-sea); }
+
+.v2--operations .ax-arr__head { padding: 12px 20px 10px; }
+.v2--operations .ax-num--xl { font-size: 40px; }
+.v2--operations .ax-arr__headline { margin-top: 6px; }
+.v2--operations .ax-arr__lede { margin-top: 6px; font-size: 14px; line-height: 1.4; }
+.v2--operations .ax-arr__source { margin-top: 4px; font-size: 11px; }
+.v2--operations .ax-arr__section-head { padding: 9px 20px 6px; }
+.v2--operations .ax-flight {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  grid-template-areas: "when what so";
+  align-items: center;
+  column-gap: 12px;
+  padding: 6px 20px;
+  border-top: 1px solid var(--ax-line);
+}
+.v2--operations .ax-flight__when { grid-area: when; display: flex; flex-direction: column; gap: 2px; }
+.v2--operations .ax-flight__what { grid-area: what; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.v2--operations .ax-flight__line1 { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.v2--operations .ax-flight__so { grid-area: so; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.v2--operations .ax-flight__time { font-size: 16px; }
+.v2--operations .ax-flight__no { font-size: 16px; }
+.v2--operations .ax-flight__city { font-size: 14px; flex: 1; min-width: 0; }
+.v2--operations .ax-flight__meta { font-size: 12px; }
+.v2--operations .ax-flight__eta { min-width: 0; font-size: 15px; }
+.v2--operations .ax-flight__bus { font-size: 12px; }
+.v2--operations .ax-flight__bus--none { color: var(--ax-ink-3); }
+.v2--operations .ax-flightlist { padding-bottom: 2px; }
+.v2--operations .ax-country { padding-bottom: 2px; }
+.v2--operations .ax-country__row { padding: 4px 20px; gap: 8px; }
+.v2--operations .ax-country__name { font-size: 14px; }
+.v2--operations .ax-country__planes .ax-num { font-size: 20px; }
+.v2--operations .ax-country__week { grid-template-columns: repeat(7, 17px); min-width: 131px; }
+.v2--operations .ax-country__week i { height: 20px; }
+.v2--operations .ax-hours { height: 72px; margin-top: 2px; }
+.v2--operations .ax-hours__legend { margin-top: 20px; }
+.v2--operations .ax-arr__hours { padding-bottom: 8px; }
+
+.v2--operations .ax-bus__head { padding: 12px 20px 8px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.v2--operations .ax-bus__head .ax-h2 { font-size: 18px; }
+.v2--operations .ax-bus__note { margin: 0; max-width: 200px; font-size: 11px; text-align: right; }
+.v2--operations .ax-bus__hrow span { padding: 5px 20px 5px; }
+.v2--operations .ax-bus__cell { min-height: 42px; padding: 4px 14px; gap: 1px; }
+.v2--operations .ax-bus__wait .ax-num { font-size: 26px; }
+.v2--operations .ax-bus__proof { font-size: 11px; }
+.v2--operations .ax-bus__stop { font-size: 14px; }
+
+.v2--operations .v2-fleet { padding: 10px 20px 6px; gap: 6px; }
+.v2--operations .v2-fleet__head { flex-wrap: wrap; gap: 6px 12px; }
+.v2--operations .v2-fleet__title { font-size: 18px; }
+.v2--operations .v2-fleet__chip { font-size: 11px; padding: 4px 8px; }
+.v2--operations .v2-fleet__row { padding: 5px 4px; font-size: 13px; grid-template-columns: 140px 1fr 90px 76px 46px; }
+.v2--operations .v2-fleet__driver-name,
+.v2--operations .v2-fleet__route-dir,
+.v2--operations .v2-fleet__load-num,
+.v2--operations .v2-fleet__eta { font-size: 13px; }
+.v2--operations .v2-fleet__face { width: 26px; height: 26px; }
+
+.v2--operations .v2-accum__item { padding: 9px 20px 8px; gap: 3px; }
+.v2--operations .v2-accum__val,
+.v2--operations .v2-accum__earned { font-size: 28px; }
+.v2--operations .v2-accum__item--twin { gap: 2px; }
+.v2--operations .v2-accum__lost { font-size: 13px; }
+.v2--operations .v2-accum__meter { height: 3px; }
+.v2--operations .ax-conditions { padding: 7px 20px; font-size: 12px; }
+
+/* ── Fit pass 2 ─────────────────────────────────────────────────────────── */
+/* The alert strip repeated the hero cards (queue, walked away) and the
+   header verdict (ADD n BUSES). On the wall it only cost 57px of height. */
+.v2--operations > .v2-alert-banner { display: none; }
+.v2--operations .v2-map__hero-label { letter-spacing: 0.12em; }
+
+.v2--operations .ax-country__row { grid-template-columns: minmax(0, 1fr) 84px 92px 131px; }
+.v2--operations .ax-country__pax { position: relative; display: block; padding-bottom: 6px; text-align: right; }
+.v2--operations .ax-country__pax .ax-country__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--ax-line); }
+.v2--operations .ax-country__pax .ax-country__bar b { display: block; height: 100%; margin-left: auto; background: var(--ax-accent); }
+.v2--operations .ax-country__row--rest .ax-country__pax .ax-country__bar b { background: var(--ax-line-2); }
+.v2--operations .ax-country__row { padding: 3px 20px; }
+
+.v2--operations .ax-arr__head { padding: 10px 20px 8px; }
+.v2--operations .ax-num--xl { font-size: 36px; }
+.v2--operations .ax-arr__headline-word { font-size: 14px; margin-right: 10px; }
+.v2--operations .ax-arr__lede { margin-top: 4px; font-size: 13px; }
+.v2--operations .ax-arr__section-head { padding: 7px 20px 4px; }
+.v2--operations .ax-flight { padding: 5px 20px; }
+.v2--operations .ax-hours { height: 64px; }
+.v2--operations .ax-hours__legend { margin-top: 18px; font-size: 11px; }
+.v2--operations .ax-arr__hours { padding-bottom: 6px; }
+
+.v2--operations .v2-map__top-controls { justify-content: space-between; align-items: flex-start; }
+.v2--operations .v2-map__flight-badge { top: 54px; bottom: auto; right: 10px; }
+.v2--operations .v2-map__maritime-banner { max-width: 62%; bottom: 46px; }
+
+.v2--operations .ax-bus__head { padding: 10px 20px 6px; }
+.v2--operations .ax-bus__note { max-width: none; margin: 0; padding: 5px 20px 6px; font-size: 10.5px; text-align: left; color: var(--ax-ink-3); }
+.v2--operations .ax-bus__cell { min-height: 36px; padding: 3px 14px; }
+.v2--operations .ax-bus__wait .ax-num { font-size: 24px; }
+.v2--operations .ax-bus__stop { font-size: 13px; }
+.v2--operations .ax-bus__hrow span { padding: 4px 20px; font-size: 10.5px; }
+
+.v2--operations .v2-fleet { padding: 8px 20px 4px; gap: 4px; }
+.v2--operations .v2-fleet__chips { display: none; }
+.v2--operations .v2-fleet__sub { display: none; }
+.v2--operations .v2-fleet__title { font-size: 16px; }
+.v2--operations .v2-fleet__row { padding: 3px 4px; font-size: 12px; grid-template-columns: 132px 1fr 84px 70px 44px; gap: 8px; }
+.v2--operations .v2-fleet__driver-name,
+.v2--operations .v2-fleet__route-dir,
+.v2--operations .v2-fleet__load-num,
+.v2--operations .v2-fleet__eta { font-size: 12px; }
+.v2--operations .v2-fleet__face { width: 22px; height: 22px; }
+.v2--operations .v2-fleet__row--header { font-size: 10px; padding: 3px 4px; }
+
+.v2--operations .v2-accum__item { padding: 8px 20px 7px; }
+.v2--operations .v2-accum__val,
+.v2--operations .v2-accum__earned { font-size: 26px; }
+
+/* ── Fit pass 3: measured tracks (demand column is 432 css px wide) ─────── */
+.v2--operations .ax-country__row { grid-template-columns: minmax(0, 1fr) 64px 78px 117px; gap: 7px; padding: 2px 20px; }
+.v2--operations .ax-country__planes .ax-num { font-size: 19px; }
+.v2--operations .ax-country__planes small { font-size: 10px; letter-spacing: 0.04em; }
+.v2--operations .ax-country__pax { font-size: 12px; }
+.v2--operations .ax-country__week { grid-template-columns: repeat(7, 15px); min-width: 117px; }
+.v2--operations .ax-country__week i { height: 19px; }
+.v2--operations .ax-country__week i b { font-size: 10px; }
+.v2--operations .ax-arr__section-head { padding: 6px 20px 3px; }
+.v2--operations .ax-flight { padding: 4px 20px; }
+.v2--operations .ax-hours { height: 52px; }
+.v2--operations .ax-hours__legend { margin-top: 15px; }
+.v2--operations .ax-arr__hours { padding-bottom: 0; }
+.v2--operations .ax-arr__lede { font-size: 12.5px; }
+
+.v2--operations .v2-fleet__row { grid-template-columns: 112px minmax(0, 1fr) 64px 60px 36px; gap: 6px; }
+.v2--operations .v2-fleet__route-dir { display: none; }
+.v2--operations .v2-fleet__route-progress { width: 30px; }
+.v2--operations .v2-fleet__status { font-size: 10px; }
+.v2--operations .v2-fleet__full-tag { display: none; }
+.v2--operations .v2-map__hero-label { font-size: 11px; letter-spacing: 0.1em; }
+
+/* Laptop / phone: the compact briefing owns those widths; keep the new
+   time bar readable when it wraps. */
+@media (max-width: 1359px), (max-height: 819px) {
+  .v2--operations .v2-header { grid-template-rows: 44px 44px auto; }
+  .v2--operations .ax-time { flex-wrap: wrap; padding: 6px 0 8px; }
+  .v2--operations .ax-time__group { padding: 4px 12px; border-right: 0; }
+  .v2--operations .ax-time__group--clock { flex-basis: 100%; order: 3; }
+  .v2--operations .ax-time__group--speed { margin-left: auto; }
+  .v2--operations .ax-time__group--day { display: none; }
+  .v2--operations .ax-time__chip:not(.ax-time__chip--sweep) { display: none; }
+  .v2--operations .ax-time__chip--sweep { margin-left: 0; }
+}

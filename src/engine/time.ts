@@ -26,6 +26,13 @@ export function getBangkokNowMinutes(date = new Date()) {
   return hour * 60 + minute;
 }
 
+/** Day of week in Bangkok (0 = Sunday … 6 = Saturday). The browser's local
+ *  weekday is wrong for a viewer in Europe or the Americas late at night. */
+export function getBangkokDayOfWeek(date = new Date()): number {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: BANGKOK_TIME_ZONE, weekday: "short" }).format(date);
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(name);
+}
+
 /** Fractional minutes (includes seconds + ms) for smooth sub-minute animation. */
 export function getBangkokNowFractionalMinutes(date = new Date()) {
   const intMinutes = getBangkokNowMinutes(date);
