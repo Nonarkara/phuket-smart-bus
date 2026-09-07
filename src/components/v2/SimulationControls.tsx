@@ -98,7 +98,7 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
           type="button"
           className="v2-timebar__day-sweep"
           onClick={onStartDaySweep}
-          title="Replay the whole service day (05:30 → 22:30) in ~60 seconds"
+          title="Replay the whole day (05:30 → 24:00) in ~60 seconds"
         >
           ▶ DAY · 60s
         </button>

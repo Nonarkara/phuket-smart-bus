@@ -249,6 +249,17 @@ describe("return leg — departing flights → bus-to-airport demand", () => {
     expect(model.combined.lostRevenueThb).toBe(model.totals.lostRevenueThb + out.totals.lostRevenueThb);
   });
 
+  it("combined 3-term at every minute: boarded + lost + waiting = demand", () => {
+    // Outbound has no queue (lost is instantaneous), so combined waiting
+    // is the inbound curb. This is the identity the day-report prints.
+    for (let t = 0; t < 1441; t += 7) {
+      expect(
+        model.boardedCum[t] + model.abandonedCum[t] + model.waiting[t]
+        + out.boardedCum[t] + out.lostCum[t]
+      ).toBe(model.demandCum[t] + out.demandCum[t]);
+    }
+  });
+
   it("hourly corridor outbound sums reconcile with the day totals", () => {
     const hours = getHourlyCorridor();
     expect(hours.reduce((s, h) => s + h.outDemandPax, 0)).toBe(out.demandCum[END]);
@@ -455,6 +466,13 @@ describe("getLiveTotals — combined-direction reconciliation (the screen-money 
     // Same for want: demandCum is cumulative and finite at the day
     // boundary, so it must equal combined.demand.
     expect(live.paxWantBus).toBe(model.combined.demand);
+  });
+
+  it("3-term conservation on the live totals at every half-hour: boarded + lost + waiting = want", () => {
+    for (let t = 0; t <= END; t += 30) {
+      const live = getLiveTotals(t);
+      expect(live.paxBoarded + live.paxAbandoned + live.waiting, `t=${t}`).toBe(live.paxWantBus);
+    }
   });
 });
 

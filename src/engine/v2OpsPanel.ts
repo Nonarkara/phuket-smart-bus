@@ -22,7 +22,7 @@
 
 import type { VehiclePosition } from "@shared/types";
 import { getOpsFlightSchedule, getSimulationDay, getDayLabel } from "./opsFlightSchedule";
-import { getSimulatedMinutes, getVehiclesNow } from "./fleetSimulator";
+import { getSimulatedMinutes, getVehiclesNow, SERVICE_END } from "./fleetSimulator";
 import {
   atMinute,
   getDayModel,
@@ -400,7 +400,7 @@ export type DayDebrief = {
   collectedPax: number;      // boarded, both directions
   couldHavePax: number;      // demand, both directions (= collected + lost + waiting)
   lostPax: number;            // abandoned + outbound lost
-  waitingPax: number;         // inbound riders still in queue at end of day (06:00 → 22:30 sweep)
+  waitingPax: number;         // inbound riders still in queue at 24:00 (neither boarded nor abandoned)
   capturePct: number;
   shortHours: number;
   lightHours: number;
@@ -491,13 +491,11 @@ export function getDayDebrief(): DayDebrief {
 
   const collectedPax = model.combined.boarded;
   const couldHavePax = model.combined.demand;
-  // Inbound still-waiting at end of day — pax who arrived but neither boarded
-  // nor abandoned. They carry through to next day's queue (or to the
-  // last-bus-of-day slot, depending on the service window). For the
-  // conservation check: collected + lost + waiting = couldHave.
-  const waitingPax = model.waiting.length > 0
-    ? model.waiting[model.waiting.length - 1] ?? 0
-    : 0;
+  // Inbound still-waiting at 24:00 — pax who joined after 23:00 (60-min
+  // patience) and neither boarded nor abandoned. This is NOT the 22:30
+  // curb queue: that earlier crowd either boarded the 22:40/23:30 trips
+  // or took a Grab. Conservation: collected + lost + waiting = couldHave.
+  const waitingPax = model.waiting[SERVICE_END] ?? 0;
   const built: DayDebrief = {
     dayLabel: getDayLabel(dow),
     earnedThb: earned,

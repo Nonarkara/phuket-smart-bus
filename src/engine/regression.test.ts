@@ -24,6 +24,7 @@ import {
   DAY_TARGET_END,
   DAY_SPEED,
   SERVICE_START,
+  SERVICE_END,
 } from "./fleetSimulator";
 import { getHourlyDemandSupply, getLiveTotals, simNow } from "./simulation";
 import { OPS_FLIGHT_SCHEDULE } from "./opsFlightSchedule";
@@ -406,10 +407,9 @@ describe("seamless playback — pure frame sampling + money identities", () => {
 // Bug class 6: DAY·60s one-shot sweep
 //
 // startDaySweep() must reset to SERVICE_START, run at DAY_SPEED, and clamp
-// EXACTLY at DAY_TARGET_END (freezing on the payoff shot) rather than
-// overshooting into the dead post-service tail or looping past it. A manual
-// speed chip afterward must clear the one-shot flag so free exploration
-// resumes normal ambient looping.
+// EXACTLY at DAY_TARGET_END (midnight — the same close the debrief reads)
+// rather than wrapping into the next morning. A manual speed chip afterward
+// must clear the one-shot flag so free exploration resumes ambient looping.
 // ---------------------------------------------------------------------------
 
 describe("DAY·60s one-shot sweep — clamps exactly at DAY_TARGET_END", () => {
@@ -427,7 +427,7 @@ describe("DAY·60s one-shot sweep — clamps exactly at DAY_TARGET_END", () => {
     vi.setSystemTime(t0);
     startDaySweep();
     // 90s of real time at DAY_SPEED overshoots the ~60s sweep duration —
-    // the clock must clamp, not overshoot into the dead 22:30-24:00 tail.
+    // the clock must clamp at midnight, not wrap into tomorrow morning.
     vi.setSystemTime(t0 + 90_000);
     expect(getSimulatedMinutes()).toBe(DAY_TARGET_END);
     expect(getClockState().mode).toBe("paused");
@@ -457,8 +457,10 @@ describe("DAY·60s one-shot sweep — clamps exactly at DAY_TARGET_END", () => {
     play();
     vi.setSystemTime(t0 + 90_000 + 5_000); // +5s real @ 30x = +150 sim-min
     const min = getSimulatedMinutes();
-    // runOnce is now false, so the clock is free to move past DAY_TARGET_END
-    // via the ambient SERVICE_END wrap instead of staying clamped at 1350.
-    expect(min).toBeGreaterThan(DAY_TARGET_END);
+    // runOnce is now false. Freeze is midnight (= SERVICE_END), so the next
+    // tick wraps into the morning rather than staying clamped.
+    expect(min).not.toBe(DAY_TARGET_END);
+    expect(min).toBeGreaterThanOrEqual(SERVICE_START);
+    expect(min).toBeLessThan(SERVICE_END);
   });
 });

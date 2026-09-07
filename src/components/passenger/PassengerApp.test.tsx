@@ -13,7 +13,11 @@ vi.mock("../../engine/fleetSimulator", () => ({
   getSimulatedMinutes: () => 750,
   // simulation.computeSimState pulls these; empty array keeps the engine
   // a no-op for the chrome-only assertions this file makes.
-  getAirportboundTrips: () => []
+  getAirportboundTrips: () => [],
+  SERVICE_START: 330,
+  SERVICE_END: 1440,
+  DAY_TARGET_END: 1440,
+  DAY_SPEED: 1110,
 }));
 
 vi.mock("../../engine/time", () => ({
