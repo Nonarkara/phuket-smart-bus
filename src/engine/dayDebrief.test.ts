@@ -3,12 +3,18 @@ import { BUS_CAPACITY, FARE_THB, getDayModel } from "./demandSupplyEngine";
 import { getDayDebrief, getHourlyBalance, DAILY_OPEX_PER_BUS_THB } from "./v2OpsPanel";
 
 describe("end-of-day debrief", () => {
-  it("collected + lost = could-have-collected, both directions, same as the day model", () => {
+  it("collected + lost + waiting = could-have-collected, three-term conservation, same as the day model", () => {
     const d = getDayDebrief();
     const m = getDayModel();
     expect(d.collectedPax).toBe(m.combined.boarded);
     expect(d.couldHavePax).toBe(m.combined.demand);
-    expect(d.collectedPax + d.lostPax).toBe(d.couldHavePax);
+    // The 3-term conservation: boarded + abandoned/lost + still-waiting = demand.
+    // The 2-term form (boarded + lost = demand) fails on the inbound leg because
+    // pax still in the queue at end-of-day are accounted as "waiting", not "lost".
+    // The debrief exposes the waiting count so the modal can show the 10-pax
+    // tail and the test can assert the real invariant.
+    expect(d.collectedPax + d.lostPax + d.waitingPax).toBe(d.couldHavePax);
+    expect(d.waitingPax).toBeGreaterThanOrEqual(0);
     expect(d.earnedThb).toBe(m.combined.revenueThb);
     expect(d.missedThb).toBe(m.combined.lostRevenueThb);
   });
@@ -30,7 +36,7 @@ describe("end-of-day debrief", () => {
   it("only counts a LIGHT hour when a whole 25-seat trip carried nobody", () => {
     const d = getDayDebrief();
     const rows = getHourlyBalance();
-    for (const h of d.lightHours_) {
+    for (const h of d.lightHoursList) {
       const row = rows[h.hour];
       const expected = Math.floor(Math.max(0, -row.inGapPax) / BUS_CAPACITY)
         + Math.floor(Math.max(0, -row.outGapPax) / BUS_CAPACITY);

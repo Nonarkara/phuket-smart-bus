@@ -13526,6 +13526,33 @@ a { color: var(--tint); }
 .v2-report__table tbody tr:hover td { background: rgba(255, 255, 255, 0.04); }
 .v2:not(.v2--operations) .v2-report__table tbody tr:hover td { background: #f3f1ec; }
 .v2-report__empty { margin: 0; padding: 10px 0; font-size: 14px; color: var(--ax-ink-3); font-style: italic; }
+
+/* 3-term conservation line under the KPI cards. Each number is a
+   sum-part of the couldHave total: collected + lost + waiting = wanted. */
+.v2-report__conservation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: -4px 0 12px;
+  padding: 10px 14px;
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line);
+  border-left: 3px solid var(--ax-accent);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ax-ink-2);
+}
+.v2-report__conservation b {
+  color: var(--ax-ink);
+  font-weight: 700;
+  font-size: 13px;
+  margin-right: 4px;
+}
+.v2-report__conservation > span[aria-hidden="true"] {
+  color: var(--ax-ink-3);
+  font-weight: 600;
+}
 .v2-report__ladder { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--ax-line); border: 1px solid var(--ax-line); }
 .v2-report__rung { background: var(--ax-panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 .v2-report__rung b { font-size: 15px; color: var(--ax-ink); font-weight: 800; }

@@ -57,7 +57,7 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
 
   const jump = (hour: number) => { scrubToHour(hour); onClose(); };
   const addTop = report.addHours.slice(0, 6);
-  const lightTop = report.lightHours_.slice(0, 6);
+  const lightTop = report.lightHoursList.slice(0, 6);
   const best = report.bestFleet;
 
   return (
@@ -93,6 +93,19 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
               <span>bus-trips ran empty across {report.lightHours} hr{report.lightHours === 1 ? "" : "s"} · {report.emptySeats.toLocaleString()} empty seats</span>
             </div>
           </section>
+
+          {/* 1b · the conservation line — visible math so the operator sees
+                where every wanted rider ends up. 3-term: collected + lost
+                (abandoned/Grab) + waiting (still in queue at 22:30) = couldHave. */}
+          <p className="v2-report__conservation">
+            <span><b>{report.collectedPax.toLocaleString()}</b> collected</span>
+            <span aria-hidden="true">+</span>
+            <span><b>{report.lostPax.toLocaleString()}</b> took a Grab</span>
+            <span aria-hidden="true">+</span>
+            <span><b>{report.waitingPax.toLocaleString()}</b> still waiting</span>
+            <span aria-hidden="true">=</span>
+            <span><b>{report.couldHavePax.toLocaleString()}</b> wanted a bus</span>
+          </p>
 
           <div className="v2-report__grid">
             {/* 2 · add buses here */}
