@@ -398,8 +398,9 @@ export type DayDebrief = {
   earnedThb: number;
   missedThb: number;
   collectedPax: number;      // boarded, both directions
-  couldHavePax: number;      // demand, both directions (= collected + lost)
-  lostPax: number;
+  couldHavePax: number;      // demand, both directions (= collected + lost + waiting)
+  lostPax: number;            // abandoned + outbound lost
+  waitingPax: number;         // inbound riders still in queue at end of day (06:00 → 22:30 sweep)
   capturePct: number;
   shortHours: number;
   lightHours: number;
@@ -407,7 +408,7 @@ export type DayDebrief = {
   busesToPull: number;       // Σ whole empty buses across the day
   emptySeats: number;
   addHours: DebriefHour[];   // sorted by ฿ missed, desc
-  lightHours_: DebriefHour[]; // sorted by empty seats, desc
+  lightHoursList: DebriefHour[]; // sorted by empty seats, desc
   peakShortHour: number | null;
   fleet: FleetDelta[];       // −2 … +8, whole-day re-runs
   bestFleet: FleetDelta | null;
@@ -490,6 +491,13 @@ export function getDayDebrief(): DayDebrief {
 
   const collectedPax = model.combined.boarded;
   const couldHavePax = model.combined.demand;
+  // Inbound still-waiting at end of day — pax who arrived but neither boarded
+  // nor abandoned. They carry through to next day's queue (or to the
+  // last-bus-of-day slot, depending on the service window). For the
+  // conservation check: collected + lost + waiting = couldHave.
+  const waitingPax = model.waiting.length > 0
+    ? model.waiting[model.waiting.length - 1] ?? 0
+    : 0;
   const built: DayDebrief = {
     dayLabel: getDayLabel(dow),
     earnedThb: earned,
@@ -497,6 +505,7 @@ export function getDayDebrief(): DayDebrief {
     collectedPax,
     couldHavePax,
     lostPax: model.combined.lost,
+    waitingPax,
     capturePct: couldHavePax > 0 ? Math.round((collectedPax / couldHavePax) * 100) : 100,
     shortHours: addHours.length,
     lightHours: lightHours.length,
@@ -504,7 +513,7 @@ export function getDayDebrief(): DayDebrief {
     busesToPull,
     emptySeats,
     addHours,
-    lightHours_: lightHours,
+    lightHoursList: lightHours,
     peakShortHour,
     fleet,
     bestFleet: bestFleet && bestFleet.netThb > 0 ? bestFleet : null
