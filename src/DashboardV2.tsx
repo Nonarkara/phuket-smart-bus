@@ -27,6 +27,8 @@ import {
   resetClockAnchor,
   startDaySweep,
   SERVICE_START,
+  DAY_TARGET_END,
+  DAY_SPEED,
 } from "./engine/fleetSimulator";
 import {
   buildFlightHourBuckets,
@@ -51,6 +53,7 @@ import { OpsBriefing } from "./components/v2/OpsBriefing";
 import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 import { BusPlanPanel } from "./components/v2/BusPlanPanel";
 import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
+import { DayReportModal } from "./components/v2/DayReportModal";
 import { isLiveGpsActive, getLiveTelemetryVehicles } from "./engine/liveGpsReceiver";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
@@ -75,6 +78,19 @@ function computeOpsScale(): number {
 function shouldUseCompactOps(): boolean {
   if (typeof window === "undefined") return false;
   return window.innerWidth < 1360 || window.innerHeight < 820;
+}
+
+/** "boarded so far · 163 delivered · 56% of riders" — the collected card.
+ *  Money is deliberately NOT repeated here: the footer's "Money on the table"
+ *  is the one revenue figure on screen (delivered × fare). */
+function collectedDetail(t: { paxBoarded: number; paxDelivered: number; paxWantBus: number }): string {
+  const pct = t.paxWantBus > 0 ? Math.round((t.paxBoarded / t.paxWantBus) * 100) : 100;
+  return `boarded so far · ${t.paxDelivered.toLocaleString()} delivered · ${pct}% of riders`;
+}
+
+/** "1,072 walked away · 202 still waiting" — the could-have-collected card. */
+function couldHaveDetail(t: { paxAbandoned: number; waiting: number }): string {
+  return `${t.paxAbandoned.toLocaleString()} walked away (฿${(t.paxAbandoned * 100).toLocaleString()}) · ${t.waiting.toLocaleString()} still waiting`;
 }
 
 function formatClockLabel(min: number): string {
@@ -120,7 +136,16 @@ export default function DashboardV2() {
   const co2Ref = useRef<HTMLSpanElement>(null);
   const demandQueueRef = useRef<HTMLElement>(null);
   const supplyRollingRef = useRef<HTMLElement>(null);
-  const walkedRef = useRef<HTMLElement>(null);
+  const collectedRef = useRef<HTMLElement>(null);
+  const collectedDetailRef = useRef<HTMLElement>(null);
+  const couldHaveRef = useRef<HTMLElement>(null);
+  const couldHaveDetailRef = useRef<HTMLElement>(null);
+
+  // End-of-day report: opens by itself when the DAY·60s sweep freezes on
+  // 22:30 (the sweep flag is armed by the button, disarmed by any scrub),
+  // and on demand from the DAY REPORT button.
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const sweepArmedRef = useRef(false);
 
   // Day picker: switch the engine's active day and replay it from 05:30.
   // All engine memos are keyed on the day, so every panel re-derives; the rAF
@@ -135,6 +160,8 @@ export default function DashboardV2() {
 
   // One-touch cinematic: sweep the whole service day in ~60s, then freeze.
   const handleStartDaySweep = () => {
+    setIsReportOpen(false);
+    sweepArmedRef.current = true;
     startDaySweep();
     setClockState(getClockState());
   };
@@ -257,7 +284,13 @@ export default function DashboardV2() {
       if (co2Ref.current) co2Ref.current.textContent = totals.co2SavedKg.toLocaleString();
       if (demandQueueRef.current) demandQueueRef.current.textContent = totals.waiting.toLocaleString();
       if (supplyRollingRef.current) supplyRollingRef.current.textContent = moving.toLocaleString();
-      if (walkedRef.current) walkedRef.current.textContent = totals.paxAbandoned.toLocaleString();
+      // Collected vs could-have-collected: boarded so far against everyone
+      // who wanted a bus so far (= boarded + walked away + still waiting).
+      // Conservation holds per frame because all three come from one atMinute().
+      if (collectedRef.current) collectedRef.current.textContent = totals.paxBoarded.toLocaleString();
+      if (collectedDetailRef.current) collectedDetailRef.current.textContent = collectedDetail(totals);
+      if (couldHaveRef.current) couldHaveRef.current.textContent = totals.paxWantBus.toLocaleString();
+      if (couldHaveDetailRef.current) couldHaveDetailRef.current.textContent = couldHaveDetail(totals);
     };
 
     const runFrame = () => {
@@ -266,6 +299,18 @@ export default function DashboardV2() {
       if (t !== lastFrameT) {
         lastFrameT = t;
         writeFrame(t);
+        // The DAY·60s sweep clamps + pauses on DAY_TARGET_END; that freeze is
+        // the cue for the debrief. Scrubbing/speed changes clear runOnce in
+        // the engine, so a manual pause elsewhere never triggers it.
+        if (sweepArmedRef.current) {
+          const clock = getClockState();
+          if (clock.speed !== DAY_SPEED) {
+            sweepArmedRef.current = false; // a manual speed/scrub left the sweep
+          } else if (t >= DAY_TARGET_END - 0.01 && clock.mode === "paused") {
+            sweepArmedRef.current = false;
+            setIsReportOpen(true);
+          }
+        }
         if (lastFrameMs - lastCoarseMs >= 250) {
           lastCoarseMs = lastFrameMs;
           setState(computeSimState());
@@ -398,6 +443,7 @@ export default function DashboardV2() {
           simDay={simDay}
           onDayChange={handleDayChange}
           onStartDaySweep={handleStartDaySweep}
+          onOpenDayReport={() => setIsReportOpen(true)}
         />
       </header>
 
@@ -455,19 +501,24 @@ export default function DashboardV2() {
             <PhuketConditionsStrip />
             <div className="v2-map__hero">
               <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Demand Queue</span>
+                <span className="v2-map__hero-label">Waiting now</span>
                 <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">waiting at airport curb</span>
+                <span className="v2-map__hero-detail">at the airport curb · give up after 60 min</span>
+              </div>
+              <div className="v2-map__hero-card v2-map__hero-card--earned">
+                <span className="v2-map__hero-label">Collected</span>
+                <strong className="v2-map__hero-value" ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail" ref={collectedDetailRef}>{collectedDetail(initFrame.tot)}</span>
+              </div>
+              <div className="v2-map__hero-card v2-map__hero-card--missed">
+                <span className="v2-map__hero-label">Could have collected</span>
+                <strong className="v2-map__hero-value" ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail" ref={couldHaveDetailRef}>{couldHaveDetail(initFrame.tot)}</span>
               </div>
               <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Supply Rolling</span>
+                <span className="v2-map__hero-label">Buses rolling</span>
                 <strong className="v2-map__hero-value" ref={supplyRollingRef}>{initFrame.moving.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">buses moving now</span>
-              </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Walked Away</span>
-                <strong className="v2-map__hero-value" ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">gave up after 60 min queue</span>
+                <span className="v2-map__hero-detail">moving now · both directions</span>
               </div>
             </div>
             <div className="v2-map__stage">
@@ -546,6 +597,12 @@ export default function DashboardV2() {
       <TelemetryStatusModal
         isOpen={isTelemetryModalOpen}
         onClose={() => setIsTelemetryModalOpen(false)}
+      />
+      <DayReportModal
+        isOpen={isReportOpen}
+        simDay={simDay}
+        onClose={() => setIsReportOpen(false)}
+        onReplay={handleStartDaySweep}
       />
     </div>
   );

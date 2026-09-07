@@ -11894,8 +11894,8 @@ a { color: var(--tint); }
   --ax-accent: #46b986;
   --ax-neg:    #ff8a7a;
   --ax-warn:   #e0a243;
-  --t-micro:   14px;
-  --t-body:    16px;
+  --t-micro:   15px;
+  --t-body:    17px;
 }
 .v2--operations .v2-alert-banner {
   background: #231f14 !important;
@@ -11921,14 +11921,14 @@ a { color: var(--tint); }
 .v2--operations .v2-fleet__route-tag,
 .v2--operations .v2-fleet__status,
 .v2--operations .v2-fleet__problem-pill {
-  font-size: 11px;
+  font-size: 13px;
 }
 .v2--operations .v2-hour-plan button,
 .v2--operations .v2-fleet__driver-name,
 .v2--operations .v2-fleet__route-dir,
 .v2--operations .v2-fleet__load-num,
 .v2--operations .v2-fleet__eta {
-  font-size: 12px;
+  font-size: 14px;
 }
 .v2--operations .v2-flight-row:hover,
 .v2--operations .v2-week__row:hover { background: #151b24; }
@@ -12693,9 +12693,9 @@ a { color: var(--tint); }
    Toolkit and Insights typography keeps its own reading rhythm. */
 @media (min-width: 2200px) {
   .v2--operations {
-    --t-micro: 15px;
-    --t-body: 17px;
-    --t-display: 32px;
+    --t-micro: 16px;
+    --t-body: 18px;
+    --t-display: 34px;
   }
 
   .v2--operations .v2-decision-rail__head > span,
@@ -12708,7 +12708,7 @@ a { color: var(--tint); }
   .v2--operations .v2-fleet__problem-pill,
   .v2--operations .v2-map__flight-badge,
   .v2--operations .v2-map__layer-btn {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .v2--operations .v2-hour-plan > header small,
@@ -12718,7 +12718,7 @@ a { color: var(--tint); }
   .v2--operations .v2-flights__pax,
   .v2--operations .v2-flights__capture,
   .v2--operations .v2-fleet__full-tag {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .v2--operations .v2-hour-plan button,
@@ -12727,7 +12727,7 @@ a { color: var(--tint); }
   .v2--operations .v2-fleet__route-dir,
   .v2--operations .v2-fleet__load-num,
   .v2--operations .v2-fleet__eta {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .v2--operations .v2-hour-plan button { min-height: 44px; }
@@ -13187,3 +13187,632 @@ a { color: var(--tint); }
   border: 1px solid #ffffff;
   display: inline-block;
 }
+
+/* ============================================================================
+ * OPS COCKPIT — legibility pass (viewing-distance type, legible map,
+ * demand-vs-supply balance chart, collected vs could-have cards, day report)
+ *
+ * Scope: .v2--operations only (the dark wall console). INSIGHTS / TOOLKIT keep
+ * their editorial rhythm. A cockpit has many numbers; each one must still be
+ * readable from a chair. The floor is 13px for labels, 15px for data, 17px
+ * for body, 34px+ for hero figures. Zoom (set by DashboardV2) scales up.
+ * ========================================================================== */
+
+/* ── Map: a dark basemap drawn for dark rooms, no invert filter ──────────── */
+.v2 .v2-map__canvas .leaflet-container { background: #0a0e14; }
+.v2 .v2-map__canvas .v2-basemap-tile { filter: brightness(1.12) contrast(1.04) saturate(0.85); }
+.v2--operations .v2-map__frame .leaflet-container { background: #0a0e14; }
+
+/* Map chrome: same floor as the rest of the cockpit */
+.v2--operations .v2-map__layer-btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.v2--operations .v2-map__telemetry-badge { font-size: 12px; padding: 6px 10px; }
+.v2--operations .v2-map__flight-badge { font-size: 12px; padding: 7px 11px; }
+.v2--operations .v2-map__legend { font-size: 11px; gap: 12px; padding: 8px 10px; }
+.v2--operations .v2-map__legend i.is-bus-empty,
+.v2--operations .v2-map__legend i.is-bus-full,
+.v2--operations .v2-map__legend i.is-bus-boarding { width: 8px; height: 13px; }
+.v2--operations .v2-bus { width: 34px; height: 34px; }
+.v2--operations .v2-bus__hull { width: 14px; height: 24px; border-width: 2px; }
+.v2--operations .v2-bus__wedge { border-left-width: 6px; border-right-width: 6px; border-bottom-width: 6px; }
+.v2--operations .v2-bus-tip.leaflet-tooltip { font-size: 12px; padding: 6px 9px; }
+.v2--operations .v2-map__stat,
+.v2--operations .v2-map__next { font-size: 14px; padding: 9px 16px; }
+/* The layer toolbar and the telemetry badge were stacked on the same corner
+   (both absolute). Let the toolbar flow so the badge sits beside it. */
+.v2--operations .v2-map__top-controls .v2-map__layers { position: static; }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.v2--operations .v2-header { grid-template-rows: 56px 44px; }
+.v2--operations .v2-header__story-value { font-size: 20px; }
+.v2--operations .v2-header__story-detail { font-size: 14px; }
+.v2--operations .v2-header__time { font-size: 18px; }
+.v2--operations .v2-header__clock { font-size: 14px; }
+.v2--operations .v2-mode-btn { font-size: 13px; padding: 6px 14px; }
+.v2--operations .v2-header__telemetry-pill { font-size: 12px; padding: 6px 12px; }
+.v2--operations .v2-alert-banner { font-size: 14px; padding: 9px 24px; }
+.v2--operations .v2-alert-banner strong { font-size: 15px; }
+
+/* Timebar: play, days, speeds, sweep, report — one row, one size */
+.v2--operations .v2-timebar__play { width: 30px; height: 30px; font-size: 14px; }
+.v2--operations .v2-timebar__speed { font-size: 13px; padding: 5px 10px; min-height: 30px; }
+.v2--operations .v2-timebar__label { font-size: 15px; min-width: 48px; }
+.v2--operations .v2-timebar__day-sweep { font-size: 13px; min-height: 30px; padding: 4px 14px; }
+.v2 .v2-timebar__report {
+  background: none;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink);
+  padding: 4px 12px;
+  min-height: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+.v2 .v2-timebar__report:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
+
+/* ── Flight board (top-left) ─────────────────────────────────────────────── */
+.v2--operations .v2-flights__h { font-size: 21px; }
+.v2--operations .v2-flights__lede { font-size: 14px; }
+.v2--operations .v2-flights__legend-item { font-size: 13px; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 150px; }
+.v2--operations .v2-flights__hourlabel { font-size: 13px; }
+.v2--operations .v2-flights__pax { font-size: 13px; }
+.v2--operations .v2-flights__flights { font-size: 11px; }
+.v2--operations .v2-flights__capture { font-size: 13px; }
+.v2--operations .v2-flights__bars { width: 26px; }
+.v2--operations .v2-flights__cursor-label { font-size: 11px; }
+.v2--operations .v2-flights__callout { font-size: 14px; }
+.v2--operations .v2-flights__callout-clock { font-size: 22px; }
+.v2--operations .v2-flights__callout-hr { font-size: 11px; }
+.v2--operations .v2-flights__callout-item { font-size: 14px; padding: 6px 10px; gap: 4px 8px; }
+.v2--operations .v2-flights__callout-type { font-size: 11px; }
+.v2--operations .v2-flights__callout-time-rel { font-size: 13px; }
+.v2--operations .v2-flights__callout-aircraft { font-size: 12px; }
+.v2--operations .v2-flights__callout-load { font-size: 12px; }
+.v2--operations .v2-flights__callout-empty { font-size: 14px; }
+
+/* ── Decision rail (bottom-left) ─────────────────────────────────────────── */
+.v2--operations .v2-decision-rail__head h2 { font-size: 24px; }
+.v2--operations .v2-decision-rail__head p,
+.v2--operations .v2-decision-rail__source p { font-size: 14px; }
+.v2--operations .v2-equation__step { font-size: 12px; }
+.v2--operations .v2-equation__term strong { font-size: 44px; }
+.v2--operations .v2-equation__term p { font-size: 15px; }
+.v2--operations .v2-equation__term small { font-size: 12px; }
+.v2--operations .v2-equation__operator { font-size: 18px; }
+.v2--operations .v2-hour-plan > header small { font-size: 12px; }
+.v2--operations .v2-hour-plan__legend { font-size: 12px; }
+.v2--operations .v2-hour-plan button { font-size: 15px; min-height: 42px; }
+.v2--operations .v2-hour-plan button.is-now strong::after { font-size: 11px; }
+
+/* ── Demand-vs-supply balance chart ──────────────────────────────────────── */
+.v2-balance {
+  border-bottom: 1px solid var(--ax-line);
+  padding: 14px 18px 12px;
+  background: var(--ax-panel);
+}
+.v2-balance__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.v2-balance__eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2-balance__title { margin: 4px 0 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--ax-ink); line-height: 1.2; }
+.v2-balance__legend { display: flex; gap: 12px; font-family: var(--font-mono); font-size: 12px; color: var(--ax-ink-2); white-space: nowrap; }
+.v2-balance__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.v2-balance__legend i,
+.v2-balance__foot i { width: 12px; height: 12px; display: inline-block; }
+.v2-balance__legend i.is-in { background: var(--ax-warn); }
+.v2-balance__legend i.is-out { background: var(--ax-warn); opacity: 0.45; }
+.v2-balance__plot { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.v2-balance__axis {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.v2-balance__axis--up { color: var(--ax-warn); }
+.v2-balance__axis--down { color: #8fb0d8; }
+.v2-balance__cols {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 2px;
+}
+.v2-balance__col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  min-width: 0;
+}
+.v2-balance__col:hover .v2-balance__up,
+.v2-balance__col:hover .v2-balance__down { background: rgba(255, 255, 255, 0.06); }
+.v2-balance__col.is-now .v2-balance__up,
+.v2-balance__col.is-now .v2-balance__down { background: rgba(70, 185, 134, 0.12); }
+.v2-balance__col.is-now .v2-balance__hour { color: var(--ax-accent); font-weight: 800; }
+.v2-balance__up,
+.v2-balance__down {
+  display: flex;
+  gap: 1px;
+  align-items: flex-end;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.v2-balance__up { border-bottom: 2px solid var(--ax-line-2); }
+.v2-balance__down { align-items: flex-start; }
+.v2-balance__up i,
+.v2-balance__down i { flex: 1; display: block; min-height: 0; }
+.v2-balance__up i.is-in { background: var(--ax-warn); }
+.v2-balance__up i.is-out { background: var(--ax-warn); opacity: 0.45; }
+.v2-balance__down i.is-in { background: #8fb0d8; }
+.v2-balance__down i.is-out { background: #8fb0d8; opacity: 0.45; }
+.v2-balance__hour {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1;
+}
+.v2-balance__verdict {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1;
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.v2-balance__col.is-short .v2-balance__verdict { color: var(--ax-warn); }
+.v2-balance__col.is-light .v2-balance__verdict { color: #8fb0d8; }
+.v2-balance__now {
+  position: absolute;
+  top: 0;
+  bottom: 30px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ax-accent);
+  box-shadow: 0 0 6px var(--ax-accent);
+  pointer-events: none;
+}
+.v2-balance__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ax-line);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ax-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.v2-balance__foot strong { color: var(--ax-ink); font-weight: 800; }
+.v2-balance__foot .is-short strong { color: var(--ax-warn); }
+.v2-balance__foot .is-light strong { color: #8fb0d8; }
+/* Light editorial surfaces (Insights) keep the same chart, softer tints */
+.v2:not(.v2--operations) .v2-balance__down i.is-in,
+.v2:not(.v2--operations) .v2-balance__down i.is-out { background: #4f7cb5; }
+.v2:not(.v2--operations) .v2-balance__axis--down,
+.v2:not(.v2--operations) .v2-balance__col.is-light .v2-balance__verdict,
+.v2:not(.v2--operations) .v2-balance__foot .is-light strong { color: #3d67a0; }
+
+/* ── Hero cards over the map: waiting · collected · could have · rolling ─── */
+.v2--operations .v2-map__hero { grid-template-columns: repeat(4, 1fr); }
+.v2--operations .v2-map__hero-card { padding: 12px 18px 10px; }
+.v2--operations .v2-map__hero-label { font-size: 13px; }
+.v2--operations .v2-map__hero-value { font-size: 36px; }
+.v2--operations .v2-map__hero-detail { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2--operations .v2-map__hero-card--earned .v2-map__hero-value { color: var(--ax-accent); }
+.v2--operations .v2-map__hero-card--missed .v2-map__hero-value { color: var(--ax-warn); }
+.v2--operations .v2-map__hero-card--earned { box-shadow: inset 0 3px 0 var(--ax-accent); }
+.v2--operations .v2-map__hero-card--missed { box-shadow: inset 0 3px 0 var(--ax-warn); }
+
+/* ── Conditions strip ────────────────────────────────────────────────────── */
+.v2--operations .v2-conditions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v2--operations .v2-conditions__item { min-height: 0; padding: 9px 14px; }
+.v2--operations .v2-conditions__label { font-size: 11px; }
+.v2--operations .v2-conditions__value { font-size: 15px; }
+.v2--operations .v2-conditions__detail { font-size: 12px; }
+.v2--operations .v2-conditions__alerts { font-size: 13px; }
+
+/* ── Fleet table under the map ───────────────────────────────────────────── */
+.v2--operations .v2-fleet { max-height: none; flex: 1; min-height: 240px; }
+.v2--operations .v2-fleet__list { flex: 1; min-height: 0; overflow-y: auto; }
+.v2--operations .v2-fleet__eyebrow { font-size: 12px; }
+.v2--operations .v2-fleet__title { font-size: 24px; }
+.v2--operations .v2-fleet__sub { font-size: 13px; }
+.v2--operations .v2-fleet__chip { font-size: 13px; padding: 6px 12px; }
+.v2--operations .v2-fleet__problem-pill { font-size: 12px; }
+.v2--operations .v2-fleet__row { grid-template-columns: 172px 1fr 104px 92px 56px; font-size: 14px; padding: 8px 6px; }
+.v2--operations .v2-fleet__row--header { font-size: 12px; }
+.v2--operations .v2-fleet__driver-name { font-size: 14px; }
+.v2--operations .v2-fleet__plate { font-size: 12px; }
+.v2--operations .v2-fleet__route-tag { font-size: 12px; }
+.v2--operations .v2-fleet__route-dir { font-size: 14px; }
+.v2--operations .v2-fleet__load-num { font-size: 14px; }
+.v2--operations .v2-fleet__status { font-size: 12px; }
+.v2--operations .v2-fleet__eta { font-size: 15px; }
+.v2--operations .v2-fleet__face { width: 32px; height: 32px; }
+.v2--operations .v2-fleet__empty { font-size: 13px; }
+
+/* ── Bus plan card on the map ────────────────────────────────────────────── */
+.v2--operations .v2-plan { width: 300px; }
+.v2--operations .v2-plan__kicker { font-size: 12px; }
+.v2--operations .v2-plan__plate { font-size: 22px; }
+.v2--operations .v2-plan__status { font-size: 12px; }
+.v2--operations .v2-plan__label { font-size: 12px; }
+.v2--operations .v2-plan__num { font-size: 26px; }
+.v2--operations .v2-plan__num small { font-size: 13px; }
+.v2--operations .v2-plan__facts dt { font-size: 11px; }
+.v2--operations .v2-plan__facts dd { font-size: 16px; }
+.v2--operations .v2-plan__ruler-ends,
+.v2--operations .v2-plan__hint { font-size: 11px; }
+.v2--operations .v2-plan__flag { font-size: 13px; }
+
+/* ── Footer accumulator ──────────────────────────────────────────────────── */
+.v2--operations .v2-accum__item { padding: 12px 20px; }
+.v2--operations .v2-accum__val { font-size: 26px; }
+.v2--operations .v2-accum__label { font-size: 13px; }
+.v2--operations .v2-accum__earned { font-size: 30px; }
+.v2--operations .v2-accum__lost { font-size: 14px; }
+.v2--operations .v2-accum__meter { height: 5px; }
+
+/* ── Day report modal ────────────────────────────────────────────────────── */
+.v2 .v2-modal.v2-report { max-width: 1120px; border-radius: 0; }
+.v2 .v2-report__header .v2-modal__title { font-size: 20px; line-height: 1.25; }
+.v2 .v2-report__header .v2-modal__eyebrow { font-size: 12px; }
+.v2-report__body { padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+.v2-report__kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--ax-line); border: 1px solid var(--ax-line); }
+.v2-report__kpi { background: var(--ax-panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.v2-report__kpi strong { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ax-ink); }
+.v2-report__kpi span { font-size: 13px; color: var(--ax-ink-2); line-height: 1.35; }
+.v2-report__kpi.is-earned strong { color: var(--ax-accent); }
+.v2-report__kpi.is-missed strong { color: var(--ax-warn); }
+.v2-report__kpi.is-short strong { color: var(--ax-warn); }
+.v2-report__kpi.is-light strong { color: #8fb0d8; }
+.v2:not(.v2--operations) .v2-report__kpi.is-light strong { color: #3d67a0; }
+.v2-report__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.v2-report__table header,
+.v2-report__fleet header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.v2-report__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2-report__eyebrow.is-short { color: var(--ax-warn); }
+.v2-report__eyebrow.is-light { color: #8fb0d8; }
+.v2:not(.v2--operations) .v2-report__eyebrow.is-light { color: #3d67a0; }
+.v2-report__table header small,
+.v2-report__fleet header small { font-size: 12px; color: var(--ax-ink-3); }
+.v2-report__table table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.v2-report__table th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  padding: 4px 8px 6px 0;
+  border-bottom: 1px solid var(--ax-line-2);
+}
+.v2-report__table td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); }
+.v2-report__table td b { color: var(--ax-ink); font-weight: 800; }
+.v2-report__table td.is-short b { color: var(--ax-warn); }
+.v2-report__table td.is-light b { color: #8fb0d8; }
+.v2:not(.v2--operations) .v2-report__table td.is-light b { color: #3d67a0; }
+.v2-report__table td.is-missed { color: var(--ax-warn); font-weight: 700; }
+.v2-report__table tbody tr { cursor: pointer; }
+.v2-report__table tbody tr:hover td { background: rgba(255, 255, 255, 0.04); }
+.v2:not(.v2--operations) .v2-report__table tbody tr:hover td { background: #f3f1ec; }
+.v2-report__empty { margin: 0; padding: 10px 0; font-size: 14px; color: var(--ax-ink-3); font-style: italic; }
+.v2-report__ladder { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--ax-line); border: 1px solid var(--ax-line); }
+.v2-report__rung { background: var(--ax-panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.v2-report__rung b { font-size: 15px; color: var(--ax-ink); font-weight: 800; }
+.v2-report__rung strong { margin-top: 4px; font-size: 16px; font-weight: 800; color: var(--ax-ink); }
+.v2-report__rung.is-gain strong { color: var(--ax-accent); }
+.v2-report__rung.is-loss strong { color: var(--ax-neg); }
+.v2-report__rung.is-best { box-shadow: inset 0 0 0 2px var(--ax-accent); }
+.v2-report__verdict { margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: var(--ax-ink-2); }
+.v2-report__verdict b { color: var(--ax-ink); font-weight: 800; }
+.v2-report__actions { display: flex; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--ax-line); background: var(--ax-panel); flex-wrap: wrap; }
+.v2-report__btn {
+  background: none;
+  border: 1px solid var(--ax-line-2);
+  color: var(--ax-ink);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.v2-report__btn:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
+.v2-report__btn.is-primary { background: var(--ax-accent); border-color: var(--ax-accent); color: #fff; }
+.v2-report__btn.is-primary:hover { background: #17583a; border-color: #17583a; }
+@media (max-width: 900px) {
+  .v2-report__grid { grid-template-columns: 1fr; }
+  .v2-report__kpis { grid-template-columns: repeat(2, 1fr); }
+  .v2-report__ladder { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Cockpit fit: everything above the fold at the 1440×900 reference ─────
+   Zoom scales the whole console, so the budget is 900 css px of height. The
+   left column is the one that may scroll; the map column never does. */
+
+/* Alert strip: one line, not two */
+.v2--operations .v2-alert-banner { padding: 7px 24px; }
+.v2--operations .v2-alert-banner__content { flex-direction: row; align-items: baseline; gap: 12px; min-width: 0; }
+.v2--operations .v2-alert-banner__content strong,
+.v2--operations .v2-alert-banner__content span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2--operations .v2-alert-banner__content span { font-size: 14px; }
+
+/* Header story never wraps into a third line */
+.v2--operations .v2-header { grid-template-rows: 54px 42px; }
+.v2--operations .v2-header__story { gap: 12px; min-width: 0; overflow: hidden; }
+.v2--operations .v2-header__story-label,
+.v2--operations .v2-header__story-value,
+.v2--operations .v2-header__story-detail { white-space: nowrap; }
+.v2--operations .v2-header__story-value { font-size: 19px; }
+
+/* Left column: flight board takes its natural height; the decision rail
+   gets the remainder and scrolls. */
+.v2--operations .v2-body--operations {
+  grid-template-columns: minmax(420px, 33fr) minmax(0, 67fr);
+  grid-template-rows: minmax(200px, auto) minmax(0, 1fr);
+}
+.v2--operations .v2-body--operations > .v2-flights { overflow: hidden; gap: 6px; padding: 12px 18px 8px; }
+.v2--operations .v2-flights__head,
+.v2--operations .v2-flights__rail,
+.v2--operations .v2-flights__callout { flex-shrink: 0; }
+.v2--operations .v2-flights__head { gap: 8px; }
+.v2--operations .v2-flights__h { margin: 2px 0; }
+.v2--operations .v2-flights__lede { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 118px; }
+.v2--operations .v2-flights__col { padding-top: 16px; }
+/* Next-30-min callout: one row of three flights, the rest live in the rail */
+.v2--operations .v2-body--operations .v2-flights__callout { grid-template-columns: 72px minmax(0, 1fr); padding-top: 6px; }
+.v2--operations .v2-body--operations .v2-flights__callout-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.v2--operations .v2-body--operations .v2-flights__callout-item { grid-template-columns: auto auto minmax(0, 1fr) auto; padding: 5px 8px; gap: 2px 6px; }
+.v2--operations .v2-body--operations .v2-flights__callout-item:nth-child(n+4) { display: none; }
+.v2--operations .v2-body--operations .v2-flights__callout-time-rel { grid-column: 1 / 3; }
+.v2--operations .v2-body--operations .v2-flights__callout-route { grid-column: 3 / 5; }
+.v2--operations .v2-body--operations .v2-flights__callout-aircraft { display: none; }
+.v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 4 / 5; grid-row: 1; text-align: right; }
+.v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 1 / 5; }
+.v2--operations .v2-flights__callout-clock { font-size: 20px; }
+
+/* Decision rail: compact header, the equation reads left-to-right on one row */
+.v2--operations .v2-decision-rail__head { padding: 12px 18px 10px; }
+.v2--operations .v2-decision-rail__head h2 { font-size: 20px; margin: 4px 0 0; }
+.v2--operations .v2-decision-rail__head p { display: none; }
+.v2--operations .v2-equation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+}
+.v2--operations .v2-equation__term {
+  padding: 10px 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left-width: 3px;
+  min-width: 0;
+}
+.v2--operations .v2-equation__term strong { font-size: 36px; line-height: 1; margin: 2px 0 4px; }
+.v2--operations .v2-equation__term p { font-size: 13px; line-height: 1.3; }
+.v2--operations .v2-equation__term small { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2--operations .v2-equation__operator {
+  position: static;
+  height: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  font-size: 20px;
+}
+
+/* Balance chart bars: 56px each side at the reference size */
+.v2--operations .v2-balance { padding: 12px 18px 10px; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 56px; }
+.v2--operations .v2-balance__title { font-size: 15px; }
+
+/* Map column: hero cards sit in flow (not floating over the conditions
+   strip); map stage and fleet table share the remainder 3:2. */
+.v2 .v2-map__hero { position: static; top: auto; left: auto; right: auto; pointer-events: auto; z-index: auto; }
+.v2 .v2-map__hero-card { backdrop-filter: none; }
+.v2--operations .v2-map { gap: 0; }
+.v2--operations .v2-map__hero-card { padding: 10px 18px 9px; gap: 2px; }
+.v2--operations .v2-map__hero-value { font-size: 34px; }
+.v2--operations .v2-conditions { border-left: 0; border-right: 0; }
+.v2--operations .v2-conditions__item { min-height: 0; padding: 7px 14px; gap: 1px; }
+.v2--operations .v2-conditions__alerts { padding: 5px 14px; }
+.v2--operations .v2-map__stage { flex: 3 1 0; min-height: 240px; }
+.v2--operations .v2-map__frame,
+.v2--operations .v2-map__frame .v2-map__canvas,
+.v2--operations .v2-map .v2-map__canvas { min-height: 0; }
+.v2--operations .v2-fleet { flex: 2 1 0; min-height: 150px; padding: 10px 18px 8px; gap: 6px; border-left: 0; border-right: 0; border-bottom: 0; }
+.v2--operations .v2-fleet__title { font-size: 20px; }
+.v2--operations .v2-fleet__row { padding: 6px 6px; }
+/* The header already carries the TIMETABLE SIM / LIVE GPS pill; the map's
+   copy of it collided with the flight badge. One control, one place. */
+.v2--operations .v2-map__telemetry-badge { display: none; }
+.v2--operations .v2-map__layer-btn { font-size: 12px; min-height: 32px; padding: 0 11px; }
+.v2--operations .v2-map__maritime-banner { top: auto; bottom: 44px; left: 12px; right: auto; max-width: 60%; font-size: 12px; padding: 6px 12px; }
+
+/* ── Cockpit fit, second pass: chart above the fold ──────────────────────── */
+/* Header row 1: five cells — brand · story · tabs · clock · telemetry pill.
+   The pill used to wrap onto its own row and steal 40px from the body. */
+.v2--operations .v2-header { grid-template-columns: auto minmax(0, 1fr) auto auto auto; }
+.v2--operations .v2-header__telemetry-pill { grid-column: 5; grid-row: 1; align-self: center; margin-left: 10px; }
+.v2--operations .v2-timebar { grid-column: 1 / -1; grid-row: 2; }
+.v2--operations .v2-header__story { overflow: visible; flex-wrap: wrap; row-gap: 0; column-gap: 12px; align-content: center; }
+.v2--operations .v2-header__story-label { flex-basis: auto; }
+
+/* Next-30-min callout: one line per flight, three across */
+.v2--operations .v2-body--operations .v2-flights__callout-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.v2--operations .v2-body--operations .v2-flights__callout-item {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: baseline;
+  padding: 5px 8px 4px;
+  gap: 1px 6px;
+  font-size: 13px;
+}
+.v2--operations .v2-body--operations .v2-flights__callout-fno { grid-column: 1; grid-row: 1; }
+.v2--operations .v2-body--operations .v2-flights__callout-type { grid-column: 2; grid-row: 1; }
+.v2--operations .v2-body--operations .v2-flights__callout-time-rel { grid-column: 3; grid-row: 1; font-size: 12px; }
+.v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 4; grid-row: 1; white-space: nowrap; font-size: 13px; }
+.v2--operations .v2-body--operations .v2-flights__callout-route { grid-column: 1 / 4; grid-row: 2; font-size: 12px; }
+.v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 4; grid-row: 2; white-space: nowrap; font-size: 13px; }
+.v2--operations .v2-body--operations .v2-flights__callout-time { min-width: 0; padding-right: 8px; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 108px; }
+.v2--operations .v2-flights__callout-empty { padding: 4px 0; }
+
+/* Decision rail: equation then the balance chart, both visible */
+.v2--operations .v2-decision-rail__head { padding: 10px 18px 8px; }
+.v2--operations .v2-equation__term { padding: 8px 12px 8px 10px; }
+.v2--operations .v2-equation__term strong { font-size: 32px; margin: 1px 0 3px; }
+.v2--operations .v2-balance { padding: 10px 18px 8px; }
+.v2--operations .v2-balance__head { margin-bottom: 6px; align-items: center; }
+.v2--operations .v2-balance__title { display: none; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 46px; }
+.v2--operations .v2-balance__axis { font-size: 11px; }
+.v2--operations .v2-balance__foot { margin-top: 6px; padding-top: 6px; font-size: 12px; }
+.v2--operations .v2-balance__legend { font-size: 11px; }
+
+/* Map column: give the geography the larger share (map 3 : fleet 1.6) */
+.v2--operations .v2-fleet { flex: 1.6 1 0; }
+.v2--operations .v2-conditions__item { padding: 6px 14px; }
+.v2--operations .v2-conditions__detail { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Cockpit fit, third pass: flight board and equation give the chart room ─ */
+.v2--operations .v2-flights__h { display: none; }
+.v2--operations .v2-flights__head { flex-direction: row; align-items: baseline; justify-content: space-between; flex-wrap: nowrap; gap: 12px; min-width: 0; }
+.v2--operations .v2-flights__title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.v2--operations .v2-flights__legend { flex-shrink: 0; gap: 8px; }
+.v2--operations .v2-flights__legend-item { font-size: 12px; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 100px; }
+.v2--operations .v2-body--operations .v2-flights__callout-item {
+  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  gap: 1px 6px;
+}
+.v2--operations .v2-body--operations .v2-flights__callout-time-rel { grid-column: 3; grid-row: 1; }
+.v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 1 / 4; grid-row: 2; text-align: left; }
+.v2--operations .v2-body--operations .v2-flights__callout-route { grid-column: 1 / 3; grid-row: 3; }
+.v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 3; grid-row: 3; text-align: right; }
+.v2--operations .v2-body--operations .v2-flights__callout-time { justify-content: flex-start; padding-top: 2px; }
+
+.v2--operations .v2-decision-rail__head { padding: 8px 18px 6px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.v2--operations .v2-decision-rail__head h2 { font-size: 16px; margin: 0; }
+.v2--operations .v2-equation__term small { display: none; }
+.v2--operations .v2-equation__term { padding: 7px 12px 7px 10px; }
+.v2--operations .v2-equation__term strong { font-size: 30px; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 42px; }
+.v2--operations .v2-balance__hour { margin-top: 4px; }
+
+/* Fleet head on two lines, not five */
+.v2--operations .v2-fleet__head { align-items: center; gap: 10px; }
+.v2--operations .v2-fleet__head > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.v2--operations .v2-fleet__title { font-size: 18px; }
+.v2--operations .v2-fleet__sub { font-size: 12px; }
+.v2--operations .v2-fleet__problems { gap: 4px; }
+.v2--operations .v2-fleet__problem-pill { font-size: 11px; padding: 2px 7px; }
+.v2--operations .v2-fleet { flex: 2 1 0; min-height: 170px; }
+.v2--operations .v2-map__stage { flex: 2.6 1 0; }
+.v2--operations .v2-map__maritime-banner { max-width: none; width: max-content; }
+.v2-report__ladder { grid-template-columns: repeat(7, 1fr); }
+
+/* ── Cockpit fit, fourth pass ────────────────────────────────────────────── */
+/* Flight board head: eyebrow + legend on one line, the lede on the next */
+.v2--operations .v2-flights__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px; }
+.v2--operations .v2-flights__title { display: contents; }
+.v2--operations .v2-flights__eyebrow { grid-column: 1; grid-row: 1; white-space: nowrap; }
+.v2--operations .v2-flights__legend { grid-column: 2; grid-row: 1; }
+.v2--operations .v2-flights__lede { grid-column: 1 / -1; grid-row: 2; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 92px; }
+/* Next-30-min: two flights across, three lines each, nothing truncated */
+.v2--operations .v2-body--operations .v2-flights__callout-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v2--operations .v2-body--operations .v2-flights__callout-item:nth-child(n+3) { display: none; }
+.v2--operations .v2-body--operations .v2-flights__callout-item:nth-child(-n+2) { display: grid; }
+
+/* Balance chart: axis labels live in the legend row; bars 38px a side */
+.v2--operations .v2-balance__axis { display: none; }
+.v2-balance__legend-axis { font-weight: 800; }
+.v2-balance__legend-axis.is-short { color: var(--ax-warn); }
+.v2-balance__legend-axis.is-light { color: #8fb0d8; }
+.v2:not(.v2--operations) .v2-balance__legend-axis.is-light { color: #3d67a0; }
+.v2--operations .v2-balance__legend { flex-wrap: wrap; gap: 4px 10px; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 38px; }
+.v2--operations .v2-balance { padding: 8px 18px 8px; }
+.v2--operations .v2-balance__foot { margin-top: 5px; padding-top: 5px; }
+.v2--operations .v2-decision-rail__head { padding: 6px 18px 4px; }
+
+/* Fleet head: one line; chips never wrap; map : fleet = 2.4 : 2 */
+.v2--operations .v2-fleet__chips { flex-wrap: nowrap; flex-shrink: 0; }
+.v2--operations .v2-fleet__chip { padding: 5px 9px; font-size: 12px; white-space: nowrap; }
+.v2--operations .v2-fleet__head > div { flex-wrap: nowrap; overflow: hidden; }
+.v2--operations .v2-fleet__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2--operations .v2-map__stage { flex: 2.4 1 0; }
+
+/* ── Cockpit fit, fifth pass: no overlaps, no wraps ─────────────────────── */
+.v2--operations .v2-flights__head { grid-template-columns: max-content minmax(0, 1fr); }
+.v2--operations .v2-flights__legend { justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
+.v2--operations .v2-balance__legend { flex-wrap: nowrap; gap: 10px; white-space: nowrap; }
+.v2--operations .v2-balance__legend span { gap: 4px; }
+.v2--operations .v2-balance__legend i { width: 10px; height: 10px; }
+.v2--operations .v2-balance__eyebrow { white-space: nowrap; }
+.v2--operations .v2-balance__head { gap: 8px; flex-wrap: nowrap; }
+.v2--operations .v2-balance__hour { font-size: 11px; }
+.v2--operations .v2-balance__verdict { font-size: 12px; letter-spacing: -0.02em; }
+.v2--operations .v2-balance__foot { white-space: nowrap; gap: 8px; }
+.v2--operations .v2-fleet__eyebrow,
+.v2--operations .v2-fleet__title { white-space: nowrap; flex-shrink: 0; }
+
+/* ── Cockpit fit, sixth pass ─────────────────────────────────────────────── */
+.v2--operations .v2-flights__eyebrow { font-size: 12px; letter-spacing: 0.1em; }
+.v2--operations .v2-flights__legend { flex-wrap: nowrap; gap: 8px; white-space: nowrap; }
+.v2--operations .v2-flights__legend-item { font-size: 11px; gap: 3px; }
+.v2--operations .v2-flights__swatch { width: 9px; height: 9px; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 88px; }
+.v2--operations .v2-decision-rail__head h2 { display: none; }
+.v2--operations .v2-balance__head { flex-direction: column; align-items: flex-start; gap: 3px; margin-bottom: 5px; }
+.v2--operations .v2-balance__legend { font-size: 11px; gap: 9px; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 36px; }
+.v2--operations .v2-balance__foot { font-size: 11px; }
+
+/* ── Cockpit fit, seventh pass: legends get their own line ──────────────── */
+.v2--operations .v2-flights__head { grid-template-columns: minmax(0, 1fr); }
+.v2--operations .v2-flights__eyebrow { grid-column: 1; grid-row: 1; }
+.v2--operations .v2-flights__lede { grid-column: 1; grid-row: 2; }
+.v2--operations .v2-flights__legend { grid-column: 1; grid-row: 3; justify-content: flex-start; }
+.v2--operations .v2-balance__legend { flex-wrap: wrap; row-gap: 2px; }
+.v2--operations .v2-balance__up,
+.v2--operations .v2-balance__down { height: 40px; }
+.v2--operations .v2-balance__verdict { font-size: 11px; }

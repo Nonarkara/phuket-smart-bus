@@ -21,16 +21,18 @@
  */
 
 import type { VehiclePosition } from "@shared/types";
-import { getOpsFlightSchedule, getSimulationDay } from "./opsFlightSchedule";
+import { getOpsFlightSchedule, getSimulationDay, getDayLabel } from "./opsFlightSchedule";
 import { getSimulatedMinutes, getVehiclesNow } from "./fleetSimulator";
 import {
   atMinute,
   getDayModel,
+  getFleetScenario,
   getHourlyCorridor,
   getTripLoad,
   getReturnTripLoad,
   BUS_CAPACITY
 } from "./demandSupplyEngine";
+import { ROI_CONSTANTS } from "./roi";
 
 // ---------------------------------------------------------------------------
 // Hourly Demand-Supply Balance — the chart that makes over/under-supply obvious
@@ -345,4 +347,168 @@ export function getHourPeaks(): HourPeak {
     if (r.status === "shortfall") totalShortfallHours += 1;
   }
   return { worstShortfallHour, worstShortfallGap, biggestSurplusHour, biggestSurplus, totalShortfallHours };
+}
+
+// ---------------------------------------------------------------------------
+// End-of-day debrief — the operator's four answers after a day has run:
+//   1. where to ADD buses (hours short in either direction, ฿ missed there)
+//   2. where to run LIGHTER (hours with whole empty buses, opex to save)
+//   3. how many riders were collected vs could have been collected
+//   4. what ±N buses would have done to the day's money (whole-day re-run)
+// Every field is an engine fact: HourlyBalance rows, the day model's
+// combined totals, and getFleetScenario. Costs come from ROI_CONSTANTS —
+// the same ฿800k/bus/year the /roi page and the line P&L use.
+// ---------------------------------------------------------------------------
+
+/** ฿ per bus per service hour (฿800k ÷ 365 days ÷ 16 service hours ≈ ฿137). */
+export const HOURLY_OPEX_PER_BUS_THB = ROI_CONSTANTS.operatingCostPerBusYear / 365 / 16;
+/** One Airport↔Rawai trip is 95 min on the published timetable. */
+const TRIP_MIN = 95;
+/** Opex of one extra 95-min trip (both directions are separate trips). */
+export const TRIP_OPEX_THB = Math.round(HOURLY_OPEX_PER_BUS_THB * TRIP_MIN / 60);
+/** Opex of one extra bus for a full 16-hour service day. */
+export const DAILY_OPEX_PER_BUS_THB = Math.round(HOURLY_OPEX_PER_BUS_THB * 16);
+
+export type DebriefHour = {
+  hour: number;
+  /** "in" = airport → island, "out" = island → airport, "both". */
+  direction: "in" | "out" | "both";
+  inGapPax: number;
+  outGapPax: number;
+  demandPax: number;
+  seats: number;
+  /** ADD rows: whole buses short. LIGHT rows: whole buses that ran empty. */
+  buses: number;
+  /** ADD rows: ฿ missed in this hour. LIGHT rows: modelled opex of the empty trips. */
+  thb: number;
+};
+
+export type FleetDelta = {
+  deltaBuses: number;
+  deltaBoarded: number;
+  deltaRevenueThb: number;
+  /** Daily opex change: +buses cost money, −buses save it. */
+  deltaOpexThb: number;
+  /** Revenue change minus opex change — the number the owner acts on. */
+  netThb: number;
+};
+
+export type DayDebrief = {
+  dayLabel: string;
+  earnedThb: number;
+  missedThb: number;
+  collectedPax: number;      // boarded, both directions
+  couldHavePax: number;      // demand, both directions (= collected + lost)
+  lostPax: number;
+  capturePct: number;
+  shortHours: number;
+  lightHours: number;
+  busesToAdd: number;        // Σ whole buses short across the day
+  busesToPull: number;       // Σ whole empty buses across the day
+  emptySeats: number;
+  addHours: DebriefHour[];   // sorted by ฿ missed, desc
+  lightHours_: DebriefHour[]; // sorted by empty seats, desc
+  peakShortHour: number | null;
+  fleet: FleetDelta[];       // −2 … +8, whole-day re-runs
+  bestFleet: FleetDelta | null;
+};
+
+function directionOf(inGap: number, outGap: number, short: boolean): DebriefHour["direction"] {
+  const inHit = short ? inGap > 0 : inGap < 0;
+  const outHit = short ? outGap > 0 : outGap < 0;
+  if (inHit && outHit) return "both";
+  return inHit ? "in" : "out";
+}
+
+const debriefByDow = new Map<number, DayDebrief>();
+
+export function getDayDebrief(): DayDebrief {
+  const dow = getSimulationDay();
+  const hit = debriefByDow.get(dow);
+  if (hit) return hit;
+
+  const rows = getHourlyBalance();
+  const model = getDayModel();
+
+  const addHours: DebriefHour[] = [];
+  const lightHours: DebriefHour[] = [];
+  let busesToAdd = 0, busesToPull = 0, emptySeats = 0, missed = 0, earned = 0;
+  let peakShortHour: number | null = null, peakShortGap = 0;
+
+  for (const r of rows) {
+    earned += r.earnedThb;
+    missed += r.missedThb;
+    emptySeats += r.emptySeatsPax;
+    if (r.busesToAdd > 0) {
+      busesToAdd += r.busesToAdd;
+      addHours.push({
+        hour: r.hour,
+        direction: directionOf(r.inGapPax, r.outGapPax, true),
+        inGapPax: r.inGapPax,
+        outGapPax: r.outGapPax,
+        demandPax: r.busEligiblePax + r.outEligiblePax,
+        seats: r.busSeats + r.outSeats,
+        buses: r.busesToAdd,
+        thb: r.missedThb
+      });
+      const worst = Math.max(r.inGapPax, r.outGapPax);
+      if (worst > peakShortGap) { peakShortGap = worst; peakShortHour = r.hour; }
+    }
+    // Whole empty buses, per direction — a light hour is one where at least
+    // one full 25-seat trip carried nobody.
+    const pull = Math.floor(Math.max(0, -r.inGapPax) / BUS_CAPACITY)
+      + Math.floor(Math.max(0, -r.outGapPax) / BUS_CAPACITY);
+    if (pull > 0) {
+      busesToPull += pull;
+      lightHours.push({
+        hour: r.hour,
+        direction: directionOf(r.inGapPax, r.outGapPax, false),
+        inGapPax: r.inGapPax,
+        outGapPax: r.outGapPax,
+        demandPax: r.busEligiblePax + r.outEligiblePax,
+        seats: r.busSeats + r.outSeats,
+        buses: pull,
+        thb: pull * TRIP_OPEX_THB
+      });
+    }
+  }
+  addHours.sort((a, b) => b.thb - a.thb || b.buses - a.buses || a.hour - b.hour);
+  lightHours.sort((a, b) => b.buses - a.buses || a.hour - b.hour);
+
+  const fleet: FleetDelta[] = [-2, -1, 1, 2, 3, 5, 8].map((delta) => {
+    const s = getFleetScenario(delta);
+    const deltaOpexThb = delta * DAILY_OPEX_PER_BUS_THB;
+    return {
+      deltaBuses: delta,
+      deltaBoarded: s.deltaBoarded,
+      deltaRevenueThb: s.deltaRevenueThb,
+      deltaOpexThb,
+      netThb: s.deltaRevenueThb - deltaOpexThb
+    };
+  });
+  const bestFleet = fleet.reduce<FleetDelta | null>((best, f) => (best == null || f.netThb > best.netThb ? f : best), null);
+
+  const collectedPax = model.combined.boarded;
+  const couldHavePax = model.combined.demand;
+  const built: DayDebrief = {
+    dayLabel: getDayLabel(dow),
+    earnedThb: earned,
+    missedThb: missed,
+    collectedPax,
+    couldHavePax,
+    lostPax: model.combined.lost,
+    capturePct: couldHavePax > 0 ? Math.round((collectedPax / couldHavePax) * 100) : 100,
+    shortHours: addHours.length,
+    lightHours: lightHours.length,
+    busesToAdd,
+    busesToPull,
+    emptySeats,
+    addHours,
+    lightHours_: lightHours,
+    peakShortHour,
+    fleet,
+    bestFleet: bestFleet && bestFleet.netThb > 0 ? bestFleet : null
+  };
+  debriefByDow.set(dow, built);
+  return built;
 }

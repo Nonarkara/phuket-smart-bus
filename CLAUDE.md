@@ -52,7 +52,7 @@ src/
 │   ├── opsFlightSchedule.ts   # Per-dow fuzzed schedule (190+ base flights, 5% cancel, ±15% pax)
 │   ├── aircraftData.ts        # Airline→aircraft assignments, seat counts, load factor
 │   ├── fleetSimulator.ts      # Bus positions, sim clock, DAY·60s sweep, polyline math
-│   ├── v2OpsPanel.ts          # Hourly balance rows, operator fleet panel, peaks
+│   ├── v2OpsPanel.ts          # Hourly balance rows, operator fleet panel, peaks, getDayDebrief()
 │   ├── headlineMetrics.ts     # Hero-strip math
 │   ├── dataProvider.ts        # Thin adapter; legacy tourist-app chain (kept for /)
 │   ├── routes.ts              # GeoJSON route/stop loader
@@ -73,6 +73,8 @@ src/
 │   │   ├── DemandPanel.tsx     # Flights + region chart + HourlyBalanceChart
 │   │   ├── SupplyPanel.tsx
 │   │   ├── HourlyBalanceChart.tsx # "Missed Money · Hour by Hour" — both directions
+│   │   ├── DemandSupplyBalanceChart.tsx # OPS diverging chart: riders−seats per hour, IN/OUT, ▲short ▼light
+│   │   ├── DayReportModal.tsx  # End-of-day debrief: add/pull buses per hour, ±N fleet re-runs net of opex
 │   │   ├── OperatorFleetPanel.tsx # One row per in-service bus
 │   │   ├── InsightsTimeline.tsx
 │   │   ├── V2LiveMap.tsx       # Wall-screen map (imperative markers)
@@ -245,6 +247,14 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 - Flight ticker with animated pop-in as planes "land"
 - Regional origin bar chart (SE Asia, China, Russia/CIS, Europe, India, Middle East)
 - Every metric derived from the demand-supply chain, not hardcoded
+
+### The Operations Wall — what is on screen and why
+
+- Left column, top to bottom: **flight board** (24-h rail + next-30-min callout), the **operating equation** (demand − seats = buses to add, right now), the **demand-vs-supply balance chart** (24 columns, IN/OUT bars ABOVE the axis = riders without a seat → add a bus, BELOW = seats without a rider → run lighter, verdict row in whole buses), then the seven-hour table (scrolls).
+- Map column: conditions strip → four hero cards (**waiting now · collected · could have collected · buses rolling**; collected + walked away + waiting = could have, per frame, from one `atMinute()`) → map → fleet table.
+- **DAY REPORT** (timebar button, and auto-opens when DAY·60s freezes on 22:30): `getDayDebrief()` — hours to add buses (฿ missed there), hours to run lighter (whole empty trips × ฿217 opex), and −2…+8 whole-day fleet re-runs netted against ฿2,192/bus-day (฿800k/yr ÷ 365 ÷ 16 h, same constant as /roi).
+- Basemap is CARTO dark_all (keyless), no invert filter. The design reference is 1440×900 css px scaled by `zoom`; every ops surface must fit above the fold at that size — the left column may scroll, the map column never does.
+- Type floor in `.v2--operations`: 13 px labels, 14–15 px data, 17 px body, 30 px+ hero figures. Do not reintroduce 9–11 px microcopy on the wall.
 
 ### CSS Transition Rules for Animation
 
