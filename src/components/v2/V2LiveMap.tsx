@@ -378,9 +378,9 @@ function HktMarker() {
 // the hero corridor and gets a heavier ink line; local lines and ferry lanes
 // are lighter/dashed. Vehicles carry the accent, the roads don't compete.
 const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string; weight: number; marine?: boolean }[] = [
-  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#c8d1db", weight: 3.5 },
-  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#8b97a4", weight: 2 },
-  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#8b97a4", weight: 2 },
+  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#e6edf3", weight: 4.5 },
+  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#9aa8b6", weight: 2.5 },
+  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#9aa8b6", weight: 2.5 },
   { routeId: "rassada-phi-phi", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
   { routeId: "rassada-ao-nang", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
   { routeId: "bang-rong-koh-yao", firstStop: [8.0133, 98.4186], color: "#5f7d95", weight: 1.5, marine: true },
@@ -669,9 +669,15 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         scrollWheelZoom={true}
         worldCopyJump={false}
       >
+        {/* CARTO Dark Matter: a basemap drawn for dark rooms — roads, coast
+            and place names stay legible without the grayscale/invert filter
+            that used to crush OSM into a black smear. Keyless, same source
+            family as the Toolkit's light_all map. */}
         <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={19}
           className="v2-basemap-tile"
         />
         <RainOverlay enabled={layers.rain} />

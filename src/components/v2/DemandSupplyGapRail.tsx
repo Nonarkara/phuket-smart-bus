@@ -1,6 +1,7 @@
 import type { OpsFlight } from "../../engine/opsFlightSchedule";
 import type { HourlyBalance } from "../../engine/v2OpsPanel";
 import { scrubToHour } from "./DemandPanel";
+import { DemandSupplyBalanceChart } from "./DemandSupplyBalanceChart";
 
 type Props = {
   rows: HourlyBalance[];
@@ -65,6 +66,8 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
           <small>{directionLabel(now)}</small>
         </section>
       </div>
+
+      <DemandSupplyBalanceChart rows={rows} simMinutes={simMinutes} variant="rail" />
 
       <section className="v2-hour-plan">
         <header>
