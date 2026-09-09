@@ -8948,9 +8948,15 @@ a { color: var(--tint); }
   background: #eef0eb;
 }
 .v2 .v2-map__canvas .v2-basemap-tile {
-  /* OSM is the keyless, durable fallback. Tone it to the operations room
-     palette without filtering route, vehicle, aircraft or weather layers. */
-  filter: grayscale(1) invert(1) brightness(.72) contrast(1.08);
+  /* OSM is the keyless, durable fallback (CARTO's dark_all now requires an
+     API key and served an "API KEY REQUIRED" watermark tile in production).
+     "Smart invert" tones the light basemap for the dark room WITHOUT the
+     grayscale-then-invert combo that crushed it into a black smear:
+     grayscale(1) first threw away the hue that distinguished roads, water
+     and land, so inverting luminance afterward left one flat dark blob.
+     Skipping grayscale and rotating the hue back 180° after inverting
+     keeps land/water/road colors distinct, just darkened. */
+  filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.92);
 }
 
 /* Map status chips at bottom */
@@ -13198,9 +13204,11 @@ a { color: var(--tint); }
  * for body, 34px+ for hero figures. Zoom (set by DashboardV2) scales up.
  * ========================================================================== */
 
-/* ── Map: a dark basemap drawn for dark rooms, no invert filter ──────────── */
+/* ── Map: dark container behind OSM's smart-invert basemap ──────────────── */
 .v2 .v2-map__canvas .leaflet-container { background: #0a0e14; }
-.v2 .v2-map__canvas .v2-basemap-tile { filter: brightness(1.12) contrast(1.04) saturate(0.85); }
+/* No override here: the smart-invert filter (grayscale-free invert +
+   hue-rotate) lives on the base .v2-basemap-tile rule above — CARTO's keyed
+   dark_all tile is gone, so there is no longer a second tone to tune. */
 .v2--operations .v2-map__frame .leaflet-container { background: #0a0e14; }
 
 /* Map chrome: same floor as the rest of the cockpit */
