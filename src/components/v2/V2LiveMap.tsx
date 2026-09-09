@@ -669,14 +669,16 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         scrollWheelZoom={true}
         worldCopyJump={false}
       >
-        {/* CARTO Dark Matter: a basemap drawn for dark rooms — roads, coast
-            and place names stay legible without the grayscale/invert filter
-            that used to crush OSM into a black smear. Keyless, same source
-            family as the Toolkit's light_all map. */}
+        {/* CARTO's dark_all basemap now gates its raster tiles behind an API
+            key (the tiles came back as an "API KEY REQUIRED" watermark in
+            production — CARTO changed this after this map was switched to
+            it). Plain OpenStreetMap is the durable keyless fallback; the
+            .v2-basemap-tile CSS filter tones it for the dark room without
+            the old grayscale+invert combo that crushed it into a black
+            smear — see the filter rule in styles.css. */}
         <TileLayer
-          attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
           className="v2-basemap-tile"
         />

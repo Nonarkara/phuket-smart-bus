@@ -106,6 +106,33 @@ describe("App", () => {
     expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
   });
 
+  it("shows the desktop passenger shell — not the bare mobile app or the toolkit hub — for a desktop visitor on the rider domain", async () => {
+    // Regression test: isRiderDomain used to short-circuit to the bare
+    // mobile PassengerApp (or fall into the toolkit hub) for EVERY visitor
+    // to bus.nonarkara.org, desktop included. A desktop visitor must reach
+    // the phone-frame + Operator Console shell instead.
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, hostname: "bus.nonarkara.org", pathname: "/" }
+    });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1400 });
+    window.dispatchEvent(new Event("resize"));
+    window.history.replaceState({}, "", "/");
+
+    try {
+      render(<App />);
+
+      expect(await screen.findByRole("button", { name: /Operator Console/i })).toBeInTheDocument();
+      expect(screen.getByText("Explore the system")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
+      ).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
+    }
+  });
+
   it("switches between Map and More tabs", async () => {
     render(<App />);
 

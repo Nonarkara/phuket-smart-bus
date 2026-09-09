@@ -216,18 +216,26 @@ export default function App() {
 
   // bus.nonarkara.org is the passenger front door — the only screen a
   // rider sees on a phone. The operator console lives at /ops.
+  // isMobile-gated: without it, EVERY visitor to bus.nonarkara.org — desktop
+  // included — got the bare mobile PassengerApp stretched full-width with no
+  // phone frame, no hero background, no Operator Console sidebar. Desktop
+  // visitors must still fall through to the desktop-shell below.
   const isRiderDomain =
     typeof window !== "undefined" &&
     (window.location.hostname === "bus.nonarkara.org" ||
       window.location.hostname.startsWith("bus."));
-  if (isRiderDomain && (pathname === "/" || pathname === "")) {
+  if (isRiderDomain && isMobile && (pathname === "/" || pathname === "")) {
     return <Suspense fallback={<RouteLoading />}><PassengerApp /></Suspense>;
   }
 
   // This branch is the research-and-development hub — a tabbed research page
   // that replaced the single-scroll ToolkitShowcase. The existing
   // operational surfaces remain available at /ops, /v2, /ride.
-  if (pathname === "/" || pathname.startsWith("/toolkit")) {
+  // On the rider domain, "/" is the passenger front door (mobile: bare
+  // PassengerApp above; desktop: the phone-frame + Operator Console shell
+  // below) — not this research hub. Only the explicit /toolkit path opens
+  // it there; every other domain still gets the hub at "/".
+  if (pathname.startsWith("/toolkit") || (pathname === "/" && !isRiderDomain)) {
     return <Suspense fallback={<RouteLoading />}><ToolkitHub /></Suspense>;
   }
 
