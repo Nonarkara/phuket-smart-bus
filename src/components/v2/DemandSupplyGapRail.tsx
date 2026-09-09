@@ -29,7 +29,14 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
   const demand = now.busEligiblePax + now.outEligiblePax;
   const seats = now.busSeats + now.outSeats;
   const scheduledBuses = Math.round(seats / 25);
-  const windowRows = rows.filter((row) => row.hour >= hour).slice(0, 7);
+  // Every hour left in the day, not a fixed slice of 7 — a fixed count left a
+  // dead gap under the footer at midday, when a dozen hours remain, and would
+  // have overflowed near midnight when only one or two do. The list's own
+  // scroll (.v2-hour-plan__rows) absorbs whatever doesn't fit; the section
+  // itself flex-grows to fill the rail, so the footer always sits flush with
+  // the bottom instead of floating above blank space.
+  const windowRows = rows.filter((row) => row.hour >= hour);
+  const windowLabel = windowRows.length === 1 ? "Next hour" : `Next ${windowRows.length} hours`;
   const arrivals = flights.filter((flight) => flight.type === "arr").length;
   const departures = flights.length - arrivals;
 
@@ -71,30 +78,32 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
 
       <section className="v2-hour-plan">
         <header>
-          <span>Next seven hours</span>
+          <span>{windowLabel}</span>
           <small>Tap an hour to replay it</small>
         </header>
         <div className="v2-hour-plan__legend" aria-hidden="true">
           <span>Time</span><span>Riders</span><span>Buses</span><span>Add</span>
         </div>
-        {windowRows.map((row) => {
-          const rowDemand = row.busEligiblePax + row.outEligiblePax;
-          const rowSeats = row.busSeats + row.outSeats;
-          return (
-            <button
-              key={row.hour}
-              className={`${row.hour === hour ? "is-now" : ""} ${row.busesToAdd > 0 ? "is-short" : ""}`}
-              type="button"
-              onClick={() => scrubToHour(row.hour)}
-              title={`${directionLabel(row)} · ฿${row.missedThb.toLocaleString()} missed`}
-            >
-              <strong>{hourLabel(row.hour)}</strong>
-              <span>{rowDemand}</span>
-              <span>{Math.round(rowSeats / 25)}</span>
-              <b>{row.busesToAdd > 0 ? `+${row.busesToAdd}` : "OK"}</b>
-            </button>
-          );
-        })}
+        <div className="v2-hour-plan__rows">
+          {windowRows.map((row) => {
+            const rowDemand = row.busEligiblePax + row.outEligiblePax;
+            const rowSeats = row.busSeats + row.outSeats;
+            return (
+              <button
+                key={row.hour}
+                className={`${row.hour === hour ? "is-now" : ""} ${row.busesToAdd > 0 ? "is-short" : ""}`}
+                type="button"
+                onClick={() => scrubToHour(row.hour)}
+                title={`${directionLabel(row)} · ฿${row.missedThb.toLocaleString()} missed`}
+              >
+                <strong>{hourLabel(row.hour)}</strong>
+                <span>{rowDemand}</span>
+                <span>{Math.round(rowSeats / 25)}</span>
+                <b>{row.busesToAdd > 0 ? `+${row.busesToAdd}` : "OK"}</b>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <footer className="v2-decision-rail__source">
