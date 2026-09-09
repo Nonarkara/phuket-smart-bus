@@ -1167,15 +1167,17 @@ export const SERVICE_END = 1440;    // 24:00 (00:00 next day) — clock-wrap cei
 export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
 const SIM_OPEN_MIN = 720;    // 12:00 — every visit lands in the busy midday
 
-// "Watch the whole day in ~60 seconds." The operational day with real
-// flights/departures runs 05:30 → 22:30 (SVC_END in simulation.ts = 1350);
-// 22:30 → 24:00 is a dead post-service tail (no flights, no departures).
-// DAY_SPEED sweeps exactly SERVICE_START→DAY_TARGET_END in 60 real seconds:
-// speed = sim-minutes advanced per real-minute, and (1350−330)=1020 sim-min
-// in 60s = 1020 sim-min per real-minute. So the film opens on the empty
-// pre-dawn curb and lands precisely on the end-of-day earned-vs-lost totals.
-export const DAY_TARGET_END = 1350;   // 22:30 — last delivery of the service day
-export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1020× → 60.0s sweep
+// "Watch the whole day in ~60 seconds." The model day is 05:30 → 24:00 —
+// same bounds as SERVICE_START/SERVICE_END. The last 90 minutes are live:
+// two more airport-line departures (22:40, 23:30) and a 60-min patience
+// rundown that turns the 22:30 curb queue (~100+ waiting) into the
+// midnight tail the debrief reports (0–24 still waiting). Freezing at
+// 22:30 used to open the day report on different numbers than the live
+// cards. DAY_SPEED = sim-minutes advanced per real-minute, so
+// (1440−330)=1110 sim-min in 60s. Film opens on the empty pre-dawn curb
+// and lands on the same 24:00 totals the debrief uses.
+export const DAY_TARGET_END = SERVICE_END; // 24:00 — freeze = debrief close
+export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1110× → 60.0s sweep
 
 // ---------------------------------------------------------------------------
 // Controllable simulation clock — replaces the old wall-clock-only anchor.
@@ -1223,9 +1225,8 @@ export function getSimulatedMinutes(): number {
     simClock.lastRealTime = now;
 
     if (simClock.runOnce) {
-      // DAY·60s cinematic: clamp on the final delivery and freeze, so the
-      // sweep ends on the payoff shot (end-of-day earned-vs-lost totals)
-      // instead of looping past into the empty post-service tail.
+      // DAY·60s cinematic: clamp on midnight and freeze, so the sweep ends
+      // on the same 24:00 totals the debrief reads, then the report opens.
       if (simClock.currentMinutes >= DAY_TARGET_END) {
         simClock.currentMinutes = DAY_TARGET_END;
         simClock.mode = 'paused';
@@ -1254,7 +1255,7 @@ export function resetClockAnchor(): void {
   simClock.lastRealTime = Date.now();
 }
 
-/** One-touch cinematic: replay the whole service day (05:30 → 22:30) in ~60
+/** One-touch cinematic: replay the whole model day (05:30 → 24:00) in ~60
  *  real seconds, then freeze on the end-of-day totals. runOnce is set AFTER
  *  setSpeed/setSimulatedMinutes because both clear it. */
 export function startDaySweep(): void {
@@ -1283,7 +1284,7 @@ export function togglePlayPause(): void {
 }
 
 /** Set playback speed (1× to 1200×). The 1200 ceiling admits the DAY·60s
- *  preset (1020×); 60× was the old cap that made a full day take 18.5 min. */
+ *  preset (1110×); 60× was the old cap that made a full day take 18.5 min. */
 export function setSpeed(s: number): void {
   simClock.speed = Math.max(1, Math.min(1200, s));
   simClock.lastRealTime = Date.now();
