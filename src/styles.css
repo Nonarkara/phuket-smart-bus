@@ -8706,7 +8706,17 @@ a { color: var(--tint); }
   overflow-y: auto;
   background: var(--ax-panel);
   color: var(--ax-ink);
+  /* Flex column: the hour-plan section (flex:1, below) absorbs whatever
+     vertical space the equation/chart/footer don't use, so the footer
+     always sits flush at the bottom instead of floating above a blank
+     gap when the grid row is taller than the fixed-height sections. */
+  display: flex;
+  flex-direction: column;
 }
+.v2-decision-rail__head,
+.v2-equation,
+.v2-decision-rail > .v2-balance,
+.v2-decision-rail__source { flex-shrink: 0; }
 .v2-decision-rail__head,
 .v2-decision-rail__source { padding: 18px; border-bottom: 1px solid var(--ax-line); }
 .v2-decision-rail__head > span,
@@ -8733,7 +8743,23 @@ a { color: var(--tint); }
 .v2-equation__term p { margin: 2px 0 0; font-size: 13px; line-height: 1.35; font-weight: 700; }
 .v2-equation__term small { grid-column: 1 / -1; color: var(--ax-ink-3); font-size: 10px; }
 .v2-equation__operator { display: block; height: 0; position: relative; z-index: 1; left: 18px; top: -5px; font: 800 16px/1 var(--font-mono); color: var(--ax-ink-3); }
-.v2-hour-plan { border-bottom: 1px solid var(--ax-line); }
+.v2-hour-plan {
+  border-bottom: 1px solid var(--ax-line);
+  /* Grows to fill whatever the equation/chart/footer leave behind (see
+     .v2-decision-rail above); its own row list scrolls internally so a
+     short remainder (few hours left in the day) never overflows and a
+     tall one (most of the day still ahead) never leaves dead space. */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* Header + legend + exactly one row, so on a tight viewport the section
+     never collapses to "just a label" — there's always at least one hour
+     visible as a cue to scroll for the rest. */
+  min-height: 90px;
+}
+.v2-hour-plan > header,
+.v2-hour-plan__legend { flex-shrink: 0; }
+.v2-hour-plan__rows { flex: 1; overflow-y: auto; min-height: 0; }
 .v2-hour-plan > header { padding: 14px 18px 10px; display: flex; align-items: baseline; justify-content: space-between; }
 .v2-hour-plan > header small { color: var(--ax-ink-3); font-size: 9px; }
 .v2-hour-plan__legend,
