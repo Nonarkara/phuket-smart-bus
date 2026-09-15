@@ -135,34 +135,180 @@ a { color: var(--tint); }
   position: relative;
 }
 
-/* Background carousel */
+/* Background — placeholder shown only while the satellite backdrop lazy-loads. */
 .desktop-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
+  background: #05070a;
 }
 
-.desktop-bg__img {
+/* ===== Desktop satellite backdrop — live world map behind the phone mockup.
+   MoMA-ruled: flat, hairline dividers, monospace caps, no shadow/gradient/
+   radius on any control. Self-contained tokens (not the /ops --ax-* set,
+   which is scoped to .v2) so this survives independently of the ops theme. */
+.satbg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #05070a;
+  --satbg-line: rgba(255, 255, 255, 0.22);
+  --satbg-ink: rgba(255, 255, 255, 0.92);
+  --satbg-ink-2: rgba(255, 255, 255, 0.58);
+  --satbg-panel: rgba(8, 10, 14, 0.72);
+}
+
+.satbg__map {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 1.5s ease-in-out;
+  background: #05070a;
 }
 
-.desktop-bg__img.is-active {
-  opacity: 1;
-}
+.satbg__map .leaflet-tile { filter: saturate(0.92) brightness(0.86); }
 
-.desktop-bg__scrim {
+/* Vignette, not a photo scrim — keeps the map legible under the phone frame
+   and side panels without hiding what makes it worth looking at. */
+.satbg__scrim {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 65% at 50% 52%, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.28) 55%, rgba(0, 0, 0, 0) 78%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 14%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 12%);
+}
+
+/* Ambient ledger — top edge, out of the way of the phone frame and brand copy. */
+.satbg__ledger {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--satbg-line);
+  background: var(--satbg-panel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--satbg-ink-2);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.satbg__ledger-time {
+  font-weight: 700;
+  color: var(--satbg-ink);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+
+.satbg__ledger-time small,
+.satbg__ledger-item small {
+  font-weight: 400;
+  color: var(--satbg-ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-left: 4px;
+  font-size: 9px;
+}
+
+.satbg__ledger-item {
+  flex: 0 0 auto;
+  padding-left: 22px;
+  border-left: 1px solid var(--satbg-line);
+  color: var(--satbg-ink);
+}
+
+.satbg__ledger-item--flag-yellow { color: var(--amber); }
+.satbg__ledger-item--flag-red { color: #ef4444; }
+
+/* Layer switcher — bottom edge. Grouped chips, flat, no radius/shadow. */
+.satbg__layerbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 20px;
+  border-top: 1px solid var(--satbg-line);
+  background: var(--satbg-panel);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.satbg__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.satbg__group-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--satbg-ink-2);
+  flex: 0 0 auto;
+}
+
+.satbg__chips {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.satbg__chip {
+  border: 1px solid var(--satbg-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--satbg-ink-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.satbg__chip:hover {
+  border-color: var(--satbg-ink);
+  color: var(--satbg-ink);
+}
+
+.satbg__chip.is-active {
+  background: #fff;
+  border-color: #fff;
+  color: #05070a;
+  font-weight: 700;
+}
+
+.satbg__source {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--satbg-ink-2);
+  padding-left: 18px;
+  border-left: 1px solid var(--satbg-line);
+}
+
+@media (max-width: 1100px) {
+  .satbg__ledger .satbg__ledger-item:nth-last-child(-n+1) { display: none; }
+  .satbg__source { display: none; }
 }
 
 .desktop-shell__side {

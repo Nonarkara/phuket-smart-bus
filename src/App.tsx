@@ -49,6 +49,9 @@ const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
 );
+const DesktopSatelliteBackdrop = lazy(() =>
+  import("./components/DesktopSatelliteBackdrop").then((module) => ({ default: module.DesktopSatelliteBackdrop }))
+);
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = [
@@ -266,7 +269,9 @@ export default function App() {
   // Desktop: smartphone frame + side panel + background carousel
   return (
     <div className="desktop-shell">
-      <DesktopBackground />
+      <Suspense fallback={<div className="desktop-bg" />}>
+        <DesktopSatelliteBackdrop />
+      </Suspense>
       <div className="desktop-shell__side desktop-shell__side--left" />
       <div className="phone-frame">
         <div className="phone-frame__notch" />
@@ -400,43 +405,6 @@ function LiveStatsWidget() {
         <span className="live-stat__val">{co2Label}</span>
         <span className="live-stat__label">CO₂ saved</span>
       </div>
-    </div>
-  );
-}
-
-/* ── Rotating Phuket background images (Unsplash, free to use) ── */
-const PHUKET_PHOTOS = [
-  "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&q=80",  // Phi Phi aerial
-  "https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1920&q=80",  // Long-tail boats turquoise
-  "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1920&q=80",     // Phang Nga Bay karsts
-  "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=1920&q=80",  // Beach sunset
-  "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=1920&q=80",  // Thai temple sunset
-  "https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=1920&q=80",  // Tropical beach palms
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",  // Crystal clear water
-];
-
-function DesktopBackground() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % PHUKET_PHOTOS.length);
-    }, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="desktop-bg">
-      {PHUKET_PHOTOS.map((src, i) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className={`desktop-bg__img ${i === activeIndex ? "is-active" : ""}`}
-          loading={i === 0 ? "eager" : "lazy"}
-        />
-      ))}
-      <div className="desktop-bg__scrim" />
     </div>
   );
 }
