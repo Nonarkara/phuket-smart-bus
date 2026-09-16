@@ -45,12 +45,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, WMSTileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, WMSTileLayer, useMap, CircleMarker, Polyline, Tooltip } from "react-leaflet";
 import { getEnvironmentSnapshot } from "../engine/environmentSimulator";
 import { fetchPhuketPm25, giSatelliteTileUrl, giIncidentTileUrl, ANDAMAN_SST_WMS, ANDAMAN_SST_LAYER } from "../engine/gistda";
 
 const GISTDA_KEY = import.meta.env.VITE_GISTDA_API_KEY ?? "";
 const GIBS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best";
+
+// Anchor — HKT airport (the only stop the route serves at this zoom).
+// The default centre+zoom keeps the bus corridor in frame on any
+// 16:10+ viewport, so the page reads "this is the corridor the
+// system actually covers" instead of "abstract ocean."
+const HKT_AIRPORT: [number, number] = [8.1132, 98.317];
+// Default zoom increased from 7 to 10 so Phuket island fills the
+// 4K desktop frame instead of being a dot in the Andaman.
+// Max layer zoom is 9 (MODIS/VIIRS limits); zoom 10 is the OSM
+// fallback label level so the island reads even on the VIIRS layer.
+const PATONG: [number, number] = [7.8960, 98.2966];
+const PHUKET_TOWN: [number, number] = [7.8804, 98.3920];
+const BUS_CORRIDOR: [number, number][] = [HKT_AIRPORT, PHUKET_TOWN, PATONG];
 
 type LayerDef = {
   id: string;
@@ -293,10 +306,10 @@ export function DesktopSatelliteBackdrop() {
   return (
     <div className="satbg">
       <MapContainer
-        center={DEFAULT_CENTER}
-        zoom={7}
-        minZoom={2}
-        maxZoom={9}
+        center={HKT_AIRPORT}
+        zoom={10}
+        minZoom={3}
+        maxZoom={11}
         className="satbg__map"
         zoomControl={false}
         attributionControl={false}
@@ -305,8 +318,53 @@ export function DesktopSatelliteBackdrop() {
       >
         <ActiveTile layer={active} />
         {activeOverlays.map((l) => <ActiveTile key={l.id} layer={l} />)}
+        {/* Anchor markers — the airport is where every bus route in
+            this app begins. Without these the satellite view is just
+            "ocean with no story"; with them, every bus row on the
+            right has a real-world point on the map. */}
+        <Polyline
+          positions={BUS_CORRIDOR}
+          pathOptions={{
+            color: "#ffffff",
+            weight: 2.5,
+            opacity: 0.85,
+            dashArray: "6 8",
+            lineCap: "round",
+          }}
+        />
+        <CircleMarker
+          center={HKT_AIRPORT}
+          radius={9}
+          pathOptions={{ color: "#ffffff", fillColor: "#ff5b3a", fillOpacity: 1, weight: 2.5 }}
+        >
+          <Tooltip direction="top" offset={[0, -8]} permanent>
+            HKT · Phuket Airport
+          </Tooltip>
+        </CircleMarker>
+        <CircleMarker
+          center={PATONG}
+          radius={6}
+          pathOptions={{ color: "#ffffff", fillColor: "#ff5b3a", fillOpacity: 0.9, weight: 2 }}
+        >
+          <Tooltip direction="top" offset={[0, -6]} permanent={false}>
+            Patong Beach
+          </Tooltip>
+        </CircleMarker>
+        <CircleMarker
+          center={PHUKET_TOWN}
+          radius={6}
+          pathOptions={{ color: "#ffffff", fillColor: "#ff5b3a", fillOpacity: 0.9, weight: 2 }}
+        >
+          <Tooltip direction="top" offset={[0, -6]} permanent={false}>
+            Phuket Old Town
+          </Tooltip>
+        </CircleMarker>
         <FailWatcher activeId={activeId} onFail={handleFail} />
       </MapContainer>
+      {/* Big centered island label — disambiguates "this is a Phuket
+          page" at any zoom. Pure CSS, no Leaflet dependency. */}
+      <div className="satbg__label" aria-hidden="true">Phuket Island</div>
+      <div className="satbg__scrim" aria-hidden="true" />
       <div className="satbg__scrim" aria-hidden="true" />
       <AmbientLedger />
       <LayerBar activeId={activeId} overlayIds={overlayIds} onSelect={setActiveId} onToggleOverlay={toggleOverlay} />

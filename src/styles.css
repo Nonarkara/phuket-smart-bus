@@ -169,6 +169,28 @@ a { color: var(--tint); }
 
 .satbg__map .leaflet-tile { filter: saturate(0.92) brightness(0.86); }
 
+/* Big island label, centred behind everything except the vignette and
+   the phone frame. Pure CSS, no Leaflet dependency, no extra tile
+   request. Visible on any zoom; carries the location at-a-glance
+   even when the satellite fallback hasn't loaded yet. */
+.satbg__label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--font-display, "Archivo", serif);
+  font-size: clamp(96px, 11vw, 220px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.08);
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* Vignette, not a photo scrim — keeps the map legible under the phone frame
    and side panels without hiding what makes it worth looking at. */
 .satbg__scrim {
