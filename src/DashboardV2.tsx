@@ -142,7 +142,7 @@ export default function DashboardV2() {
   const couldHaveDetailRef = useRef<HTMLElement>(null);
 
   // End-of-day report: opens by itself when the DAY·60s sweep freezes on
-  // 22:30 (the sweep flag is armed by the button, disarmed by any scrub),
+  // 24:00 (the sweep flag is armed by the button, disarmed by any scrub),
   // and on demand from the DAY REPORT button.
   const [isReportOpen, setIsReportOpen] = useState(false);
   const sweepArmedRef = useRef(false);

@@ -1,7 +1,7 @@
 /**
  * DayReportModal — the debrief after a day has run.
  *
- * Opens automatically when the DAY·60s sweep freezes on 22:30, and on demand
+ * Opens automatically when the DAY·60s sweep freezes on 24:00, and on demand
  * from the DAY REPORT button. Four answers, in the order an owner asks them:
  *
  *   1. How did the day go?         earned / missed / collected of possible
@@ -95,8 +95,8 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
           </section>
 
           {/* 1b · the conservation line — visible math so the operator sees
-                where every wanted rider ends up. 3-term: collected + lost
-                (abandoned/Grab) + waiting (still in queue at 22:30) = couldHave. */}
+                where every wanted rider ends up at 24:00. 3-term:
+                collected + lost (Grab) + waiting (still on the curb) = couldHave. */}
           <p className="v2-report__conservation">
             <span><b>{report.collectedPax.toLocaleString()}</b> collected</span>
             <span aria-hidden="true">+</span>
@@ -105,6 +105,11 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
             <span><b>{report.waitingPax.toLocaleString()}</b> still waiting</span>
             <span aria-hidden="true">=</span>
             <span><b>{report.couldHavePax.toLocaleString()}</b> wanted a bus</span>
+          </p>
+          <p className="v2-report__conservation-note">
+            {report.waitingPax === 0
+              ? "Midnight: the curb was empty. Everyone who wanted a bus either boarded or took a Grab."
+              : `Midnight: ${report.waitingPax.toLocaleString()} still on the curb. They never boarded and they never took a Grab — they carry into tomorrow.`}
           </p>
 
           <div className="v2-report__grid">

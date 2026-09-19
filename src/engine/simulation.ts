@@ -19,7 +19,7 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, SERVICE_END } from "./fleetSimulator";
 import {
   atMinute,
   getDayModel,
@@ -30,8 +30,8 @@ import {
 } from "./demandSupplyEngine";
 import { regionFor } from "./travelBehavior";
 
-const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
-const SVC_END = 1350;  // 22:30 — matches fleetSimulator SERVICE_END (PKSB last departure 23:30, last arrival ~22:30)
+const SVC_START = 360; // 06:00 — chart axis floor
+const SVC_END = SERVICE_END; // 24:00 — in-service arrivals include the late-night flights the engine already models
 
 export function simNow(): number {
   return getSimulatedMinutes();
