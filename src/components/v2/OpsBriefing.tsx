@@ -18,6 +18,8 @@ interface OpsBriefingProps {
   standbyBuses: number;
   nextDeparture: number | null;
   hourlyBalance: HourlyBalance[];
+  /** Set in LIVE: real tracker buses and today's observed/estimated totals. */
+  live?: { busesMoving: number; trips: number; km: number; riders: number; fareThb: number } | null;
 }
 
 function hourLabel(hour: number): string {
@@ -45,6 +47,7 @@ export function OpsBriefing({
   standbyBuses,
   nextDeparture,
   hourlyBalance,
+  live = null,
 }: OpsBriefingProps) {
   const priorityHours = useMemo(
     () => [...hourlyBalance]
@@ -82,14 +85,15 @@ export function OpsBriefing({
             <span className="v2-brief__eyebrow">Live fleet</span>
             <h2 id="brief-map-title">Where the buses are</h2>
           </div>
-          <strong>{movingBuses} moving</strong>
+          <strong>{live ? live.busesMoving : movingBuses} moving</strong>
         </header>
         <div className="v2-brief__map-frame">
           <V2LiveMap ref={mapRef} />
         </div>
         <p className="v2-brief__note">
-          Positions currently follow the published timetable and road geometry.
-          GPS can replace the simulation without changing this screen.
+          {live
+            ? "Positions are live GPS from the PKSB tracker. Trips and km are observed; riders and fares are estimated from each trip's modelled load."
+            : "Positions currently follow the published timetable and road geometry. GPS can replace the simulation without changing this screen."}
         </p>
       </section>
 
@@ -108,12 +112,21 @@ export function OpsBriefing({
         </ol>
       </section>
 
-      <section className="v2-brief__totals" aria-label="Today's operating totals">
-        <div><span>Boarded</span><strong>{boarded.toLocaleString()}</strong></div>
-        <div><span>Walked away</span><strong>{abandoned.toLocaleString()}</strong></div>
-        <div><span>Revenue</span><strong>฿{earnedThb.toLocaleString()}</strong></div>
-        <div><span>Missed</span><strong>฿{lostThb.toLocaleString()}</strong></div>
-      </section>
+      {live ? (
+        <section className="v2-brief__totals" aria-label="Today's live totals">
+          <div><span>Trips · GPS</span><strong>{live.trips.toLocaleString()}</strong></div>
+          <div><span>Km · GPS</span><strong>{live.km.toLocaleString()}</strong></div>
+          <div><span>Riders · est.</span><strong>{live.riders.toLocaleString()}</strong></div>
+          <div><span>Fares · est.</span><strong>฿{live.fareThb.toLocaleString()}</strong></div>
+        </section>
+      ) : (
+        <section className="v2-brief__totals" aria-label="Today's operating totals">
+          <div><span>Boarded</span><strong>{boarded.toLocaleString()}</strong></div>
+          <div><span>Walked away</span><strong>{abandoned.toLocaleString()}</strong></div>
+          <div><span>Revenue</span><strong>฿{earnedThb.toLocaleString()}</strong></div>
+          <div><span>Missed</span><strong>฿{lostThb.toLocaleString()}</strong></div>
+        </section>
+      )}
 
       <section className="v2-brief__priority" aria-labelledby="brief-priority-title">
         <header className="v2-brief__section-head">

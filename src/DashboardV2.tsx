@@ -24,12 +24,15 @@ import {
   getClockState,
   getSimulatedMinutes,
   setSimulatedMinutes,
+  setClockOverride,
   resetClockAnchor,
   startDaySweep,
   SERVICE_START,
   DAY_TARGET_END,
   DAY_SPEED,
 } from "./engine/fleetSimulator";
+import { bangkokDow, getLiveFeedState, getLiveMapVehicles, startLiveFeed, subscribeLiveFeed } from "./engine/liveOps";
+import { getBangkokNowFractionalMinutes } from "./engine/time";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -54,9 +57,27 @@ import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 import { BusPlanPanel } from "./components/v2/BusPlanPanel";
 import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
 import { DayReportModal } from "./components/v2/DayReportModal";
-import { isLiveGpsActive, getLiveTelemetryVehicles } from "./engine/liveGpsReceiver";
+import { LiveFleetPanel } from "./components/v2/LiveFleetPanel";
+import { LiveFeedBar } from "./components/v2/LiveFeedBar";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
+
+/** LIVE = real PKSB buses on the real clock; SIMULATION = the replay engine. */
+type OpsSource = "live" | "sim";
+
+/** `?source=live|sim` pins the choice; no param = LIVE whenever real buses are
+ *  reporting, SIMULATION otherwise (night, feed down). `?demo=` is always sim. */
+function getInitialSourcePref(): OpsSource | "auto" {
+  if (typeof window === "undefined") return "auto";
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("demo")) return "sim";
+  const requested = params.get("source");
+  return requested === "live" || requested === "sim" ? requested : "auto";
+}
+
+function hhmm(min: number): string {
+  return `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(Math.floor(min % 60)).padStart(2, "0")}`;
+}
 
 function getInitialViewMode(): ViewMode {
   if (typeof window === "undefined") return "operations";
@@ -224,17 +245,58 @@ export default function DashboardV2() {
   }, []);
 
   const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState(false);
-  const [isGpsActive, setIsGpsActive] = useState(() => isLiveGpsActive());
-  const [liveGpsCount, setLiveGpsCount] = useState(0);
 
+  // ── LIVE ⇄ SIMULATION ──────────────────────────────────────────────────
+  // The tracker is polled for as long as the console is open, in either mode,
+  // so today's ledger has no holes when someone replays the simulation.
+  const [sourcePref, setSourcePref] = useState(getInitialSourcePref);
+  const [live, setLive] = useState(() => getLiveFeedState());
   useEffect(() => {
-    const checkGps = () => {
-      setIsGpsActive(isLiveGpsActive());
-      setLiveGpsCount(getLiveTelemetryVehicles().size);
+    const stop = startLiveFeed();
+    const refresh = () => setLive(getLiveFeedState());
+    const unsubscribe = subscribeLiveFeed(refresh);
+    const tick = setInterval(refresh, 1000); // "feed 6s old", "seen 40s" tick
+    return () => { stop(); unsubscribe(); clearInterval(tick); };
+  }, []);
+  const liveAvailable = live.summary.busesReporting > 0 && live.feedAgeSec !== null && live.feedAgeSec < 120;
+  const source: OpsSource = sourcePref === "auto" ? (liveAvailable ? "live" : "sim") : sourcePref;
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
+  const liveSummary = live.summary;
+
+  const chooseSource = (next: OpsSource) => {
+    setSourcePref(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("source", next);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  // LIVE runs the demand model on the real Bangkok clock and today's weekday,
+  // so the flight board, equation and balance chart describe THIS hour while
+  // the map shows real buses. Leaving LIVE hands the replay clock back.
+  useEffect(() => {
+    if (source !== "live") return;
+    const dow = bangkokDow(Date.now());
+    setSimulationDay(dow);
+    setSimDayState(dow);
+    setClockOverride(() => getBangkokNowFractionalMinutes());
+    setState(computeSimState());
+    return () => {
+      setClockOverride(null);
+      resetClockAnchor();
+      setState(computeSimState());
+      setClockState(getClockState());
     };
-    checkGps();
-    const interval = setInterval(checkGps, 1500);
-    return () => clearInterval(interval);
+  }, [source]);
+
+  // Any "replay this hour" click (hour tables, balance chart, flight board)
+  // made while LIVE switches to SIMULATION at that hour.
+  useEffect(() => {
+    const onScrub = () => {
+      if (sourceRef.current === "live") chooseSource("sim");
+    };
+    window.addEventListener("pksb:scrub-to-hour", onScrub);
+    return () => window.removeEventListener("pksb:scrub-to-hour", onScrub);
   }, []);
 
   const handleViewModeChange = (next: Exclude<ViewMode, "live">) => {
@@ -265,6 +327,13 @@ export default function DashboardV2() {
     let stopped = false;
 
     const writeFrame = (t: number) => {
+      if (sourceRef.current === "live") {
+        // Real buses, tweened between tracker fixes. The live money cells are
+        // React-bound (they change per trip, not per frame).
+        mapRef.current?.syncNow(getLiveMapVehicles());
+        if (clockRef.current) clockRef.current.textContent = formatClockLabel(t);
+        return;
+      }
       const totals = getLiveTotals(t);
       const vehicles = getMapVehicles(t);
       mapRef.current?.syncNow(vehicles);
@@ -350,7 +419,7 @@ export default function DashboardV2() {
   return (
     <div className={`v2 v2--${viewMode}`} style={{ zoom: opsScale }}>
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
-      {serviceGap > 25 && (
+      {source === "sim" && serviceGap > 25 && (
         <div className="v2-alert-banner">
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
@@ -421,30 +490,52 @@ export default function DashboardV2() {
           <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
           <span className="v2-header__sep" aria-hidden="true">·</span>
           <span className="v2-header__speed">
-            {clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}
+            {source === "live" ? "REAL TIME" : `${clockState.speed}× ${clockState.mode === 'playing' ? '▶' : '⏸'}`}
           </span>
         </div>
 
-        {/* Live GPS Telemetry Status Pill */}
-        <button
-          type="button"
-          className={`v2-header__telemetry-pill ${isGpsActive ? "is-live" : "is-sim"}`}
-          onClick={() => setIsTelemetryModalOpen(true)}
-          title="Click to inspect Live GPS Telemetry Console or test live hardware ingestion"
-        >
-          <span className="v2-telemetry-dot" />
-          <span>{isGpsActive ? `LIVE GPS (${liveGpsCount})` : "TIMETABLE SIM"}</span>
-        </button>
+        {/* Data source: real PKSB buses on the real clock, or the replay. */}
+        <div className="v2-source" role="group" aria-label="Data source">
+          <button
+            type="button"
+            className={`v2-source__btn v2-source__btn--live ${source === "live" ? "is-active" : ""} ${liveAvailable ? "is-available" : ""}`}
+            aria-pressed={source === "live"}
+            onClick={() => chooseSource("live")}
+            title="Real buses from the PKSB tracker, real Bangkok clock, today's estimated fares"
+          >
+            <span className="v2-telemetry-dot" aria-hidden="true" />
+            LIVE{liveSummary.busesReporting > 0 ? ` · ${liveSummary.busesReporting}` : ""}
+          </button>
+          <button
+            type="button"
+            className={`v2-source__btn ${source === "sim" ? "is-active" : ""}`}
+            aria-pressed={source === "sim"}
+            onClick={() => chooseSource("sim")}
+            title="Replay any day from the timetable + flight demand model"
+          >
+            SIMULATION
+          </button>
+        </div>
 
-        {/* Time Bar & Simulation controls */}
-        <SimulationControls
-          clockState={clockState}
-          onClockStateChange={setClockState}
-          simDay={simDay}
-          onDayChange={handleDayChange}
-          onStartDaySweep={handleStartDaySweep}
-          onOpenDayReport={() => setIsReportOpen(true)}
-        />
+        {source === "live" ? (
+          <LiveFeedBar
+            status={live.status}
+            detail={live.detail}
+            feedAgeSec={live.feedAgeSec}
+            busesReporting={liveSummary.busesReporting}
+            observedSinceMin={liveSummary.observedSinceMin}
+            onOpenDevices={() => setIsTelemetryModalOpen(true)}
+          />
+        ) : (
+          <SimulationControls
+            clockState={clockState}
+            onClockStateChange={setClockState}
+            simDay={simDay}
+            onDayChange={handleDayChange}
+            onStartDaySweep={handleStartDaySweep}
+            onOpenDayReport={() => setIsReportOpen(true)}
+          />
+        )}
       </header>
 
       {viewMode === 'toolkit' ? (
@@ -490,6 +581,13 @@ export default function DashboardV2() {
           standbyBuses={standbyBusesNeeded}
           nextDeparture={state.nextDeparture}
           hourlyBalance={hourlyBalance}
+          live={source === "live" ? {
+            busesMoving: liveSummary.busesMoving,
+            trips: liveSummary.tripsCompleted,
+            km: liveSummary.kmDriven,
+            riders: liveSummary.riders,
+            fareThb: liveSummary.fareThb,
+          } : null}
         />
       ) : (
         // OPERATIONS view — one decision rail, one geographic truth
@@ -499,7 +597,38 @@ export default function DashboardV2() {
 
           <section className="v2-map">
             <PhuketConditionsStrip />
-            <div className="v2-map__hero">
+            {/* Distinct keys: the SIMULATION cells are ref-written per frame, so
+                React must never reuse those DOM nodes for LIVE (it would update
+                text nodes the rAF loop already replaced and freeze stale ฿). */}
+            {source === "live" ? (
+            <div className="v2-map__hero" key="hero-live">
+              <div className="v2-map__hero-card">
+                <span className="v2-map__hero-label">Buses reporting</span>
+                <strong className="v2-map__hero-value">{liveSummary.busesReporting.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail">{liveSummary.busesMoving} moving · real GPS, PKSB tracker</span>
+              </div>
+              <div className="v2-map__hero-card">
+                <span className="v2-map__hero-label">Trips completed</span>
+                <strong className="v2-map__hero-value">{liveSummary.tripsCompleted.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail">
+                  {liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · {liveSummary.kmDriven.toLocaleString()} km
+                </span>
+              </div>
+              <div className="v2-map__hero-card v2-map__hero-card--earned">
+                <span className="v2-map__hero-label">Riders (est.)</span>
+                <strong className="v2-map__hero-value">{liveSummary.riders.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail">
+                  {liveSummary.pricedByScheduledRun} of {liveSummary.tripsCompleted} trips matched to a scheduled run
+                </span>
+              </div>
+              <div className="v2-map__hero-card v2-map__hero-card--earned">
+                <span className="v2-map__hero-label">Fares today (est.)</span>
+                <strong className="v2-map__hero-value">฿{liveSummary.fareThb.toLocaleString()}</strong>
+                <span className="v2-map__hero-detail">riders × fare · no fare-box feed yet</span>
+              </div>
+            </div>
+            ) : (
+            <div className="v2-map__hero" key="hero-sim">
               <div className="v2-map__hero-card">
                 <span className="v2-map__hero-label">Waiting now</span>
                 <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
@@ -521,6 +650,7 @@ export default function DashboardV2() {
                 <span className="v2-map__hero-detail">moving now · both directions</span>
               </div>
             </div>
+            )}
             <div className="v2-map__stage">
               <V2LiveMap
                 ref={mapRef}
@@ -535,7 +665,9 @@ export default function DashboardV2() {
               />
             </div>
             <div className="v2-map__overlay">
-              <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>
+              {source === "live"
+                ? <span className="v2-map__stat">{liveSummary.busesReporting} live · {liveSummary.busesMoving} moving</span>
+                : <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>}
               <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
               {state.nextDeparture !== null && (
                 <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
@@ -543,19 +675,57 @@ export default function DashboardV2() {
             </div>
             {/* The operator fleet table — sits under the map so operators
                 see WHERE every bus is while reading the table below. */}
-            <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />
+            {source === "live"
+              ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
+              : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />}
           </section>
 
         </main>
       )}
 
       <footer className="v2-footer">
+        {source === "live" ? (
+        // LIVE accumulator: observed supply (buses, trips, km) and estimated
+        // money. No "walked away" cell — GPS can't see who didn't board.
+        <div className="v2-accum" key="accum-live">
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.busesReporting}</span>
+            <span className="v2-accum__label">Buses Reporting</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.tripsCompleted.toLocaleString()}</span>
+            <span className="v2-accum__label">Trips Today · GPS</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.kmDriven.toLocaleString()}</span>
+            <span className="v2-accum__label">Km Today · GPS</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--accent">
+            <span className="v2-accum__val">{liveSummary.riders.toLocaleString()}</span>
+            <span className="v2-accum__label">Riders · est.</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--twin">
+            <span className="v2-accum__twin">
+              <span className="v2-accum__earned">฿{liveSummary.fareThb.toLocaleString()}</span>
+              <span className="v2-accum__lost">
+                {liveSummary.observedSinceMin !== null ? `since ${hhmm(liveSummary.observedSinceMin)}` : "awaiting first trip"}
+              </span>
+            </span>
+            <span className="v2-accum__label">Fares Today · est.</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--green">
+            <span className="v2-accum__val">{liveSummary.co2SavedKg.toLocaleString()} kg</span>
+            <span className="v2-accum__label">CO₂ Saved · airport line</span>
+          </div>
+        </div>
+        ) : (
+        <>
         {/* Accumulator bar. The streaming cells (trips/km/pax/money/CO₂) render
             STATIC opening placeholders and are ref-written by the rAF loop each
             frame — never re-bound to React state, so the 4Hz coarse re-render
             can't clobber the buttery live numbers. Buses Now / Avg Load stay
             React-bound (they change slowly, coarse cadence is imperceptible). */}
-        <div className="v2-accum">
+        <div className="v2-accum" key="accum-sim">
           <div className="v2-accum__item">
             <span className="v2-accum__val"><Counter value={metrics.fleet.totalBuses} /></span>
             <span className="v2-accum__label">Buses Now</span>
@@ -592,6 +762,8 @@ export default function DashboardV2() {
             <span className="v2-accum__label">Avg Load</span>
           </div>
         </div>
+        </>
+        )}
       </footer>
 
       <TelemetryStatusModal

@@ -22,6 +22,6 @@
     },
     "types": ["vitest/globals"]
   },
-  "include": ["src", "shared", "vite.config.ts"],
+  "include": ["src", "shared", "functions", "vite.config.ts"],
   "references": []
 }

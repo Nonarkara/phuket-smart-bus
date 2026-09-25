@@ -1,4 +1,5 @@
 import type { DataSourceStatus, OperationalRouteId, VehiclePosition } from "../../../shared/types.js";
+import { inferPksbRoute, type PksbRawRecord } from "../../../shared/pksbFeed.js";
 import { BUS_CACHE_MS, BUS_FEED_URL, LIVE_STALE_AFTER_MS, SMARTBUS_BEARER_TOKEN } from "../../config.js";
 import { routeDestinationLabel, text } from "../../lib/i18n.js";
 import { buildSourceStatus, formatFallbackReason } from "../../lib/sourceStatus.js";
@@ -7,24 +8,7 @@ import { getTelemetryVehicles } from "../operationsStore.js";
 import { buildScheduleMockFleet } from "./mockFleetProvider.js";
 import { FERRY_ROUTE_IDS } from "../../config.js";
 
-type RawBusRecord = {
-  id: number;
-  licence: string;
-  date: string;
-  buffer: string;
-  data: {
-    azm: number;
-    pos: [number, number];
-    spd: number;
-    time: string;
-    buffer: string;
-    determineBusDirection: string | [string, number | string, string, number | string, number | string];
-    vhc: {
-      id: string;
-      lc: string;
-    };
-  };
-};
+type RawBusRecord = PksbRawRecord;
 
 let cache:
   | {
@@ -41,29 +25,7 @@ type BusSnapshotResult = {
 };
 
 export function inferRoute(record: RawBusRecord): OperationalRouteId | null {
-  const hint = [
-    record.buffer,
-    record.data.buffer,
-    Array.isArray(record.data.determineBusDirection)
-      ? record.data.determineBusDirection[2]
-      : ""
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  if (hint.includes("dragon")) {
-    return "dragon-line";
-  }
-
-  if (hint.includes("rawai") || hint.includes("airport")) {
-    return "rawai-airport";
-  }
-
-  if (hint.includes("patong") || hint.includes("terminal")) {
-    return "patong-old-bus-station";
-  }
-
-  return null;
+  return inferPksbRoute(record);
 }
 
 export function normalizeRecord(record: RawBusRecord): VehiclePosition | null {

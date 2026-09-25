@@ -96,7 +96,10 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
 
 function busTooltip(vehicle: SimState["vehicles"][number]) {
   const isFerry = FERRY_ROUTES.has(vehicle.route);
-  return isFerry ? `${vehicle.plate} · scheduled vessel` : `${vehicle.plate} · ${vehicle.pax}/${BUS_CAP}`;
+  if (isFerry) return `${vehicle.plate} · scheduled vessel`;
+  return vehicle.paxEstimated
+    ? `${vehicle.plate} · live GPS · ~${vehicle.pax}/${BUS_CAP} est.`
+    : `${vehicle.plate} · ${vehicle.pax}/${BUS_CAP}`;
 }
 
 function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], focused: boolean) {

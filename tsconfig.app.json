@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src", "shared"],
+  "include": ["src", "shared", "functions"],
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
