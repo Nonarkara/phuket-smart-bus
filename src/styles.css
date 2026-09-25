@@ -12935,6 +12935,39 @@ a { color: var(--tint); }
 }
 
 /* ── TELEMETRY & HARDWARE INGESTION STYLES ───────────────────────────────── */
+.v2-header__telemetry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--ax-panel);
+  border: 1px solid var(--ax-line-2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.v2-header__telemetry-pill:hover {
+  border-color: var(--ax-accent);
+  color: var(--ax-ink);
+}
+.v2-header__telemetry-pill.is-live {
+  border-color: rgba(70, 185, 134, 0.4);
+  background: rgba(70, 185, 134, 0.08);
+  color: var(--ax-accent);
+}
+.v2-header__telemetry-pill.is-sim {
+  border-color: var(--ax-line-2);
+}
+.v2-header__telemetry-pill.is-error {
+  border-color: rgba(192, 57, 43, 0.5);
+  background: rgba(192, 57, 43, 0.06);
+  color: var(--loss, #c0392b);
+}
 
 .v2-telemetry-dot {
   width: 7px;
@@ -13402,6 +13435,7 @@ a { color: var(--tint); }
 .v2--operations .v2-header__time { font-size: 18px; }
 .v2--operations .v2-header__clock { font-size: 14px; }
 .v2--operations .v2-mode-btn { font-size: 13px; padding: 6px 14px; }
+.v2--operations .v2-header__telemetry-pill { font-size: 12px; padding: 6px 12px; }
 .v2--operations .v2-alert-banner { font-size: 14px; padding: 9px 24px; }
 .v2--operations .v2-alert-banner strong { font-size: 15px; }
 
@@ -13854,16 +13888,17 @@ a { color: var(--tint); }
 .v2--operations .v2-fleet { flex: 2 1 0; min-height: 150px; padding: 10px 18px 8px; gap: 6px; border-left: 0; border-right: 0; border-bottom: 0; }
 .v2--operations .v2-fleet__title { font-size: 20px; }
 .v2--operations .v2-fleet__row { padding: 6px 6px; }
-/* The header carries the LIVE / SIMULATION switch; the map's telemetry
-   badge collided with the flight badge. One control, one place. */
+/* The header already carries the TIMETABLE SIM / LIVE GPS pill; the map's
+   copy of it collided with the flight badge. One control, one place. */
 .v2--operations .v2-map__telemetry-badge { display: none; }
 .v2--operations .v2-map__layer-btn { font-size: 12px; min-height: 32px; padding: 0 11px; }
 .v2--operations .v2-map__maritime-banner { top: auto; bottom: 44px; left: 12px; right: auto; max-width: 60%; font-size: 12px; padding: 6px 12px; }
 
 /* ── Cockpit fit, second pass: chart above the fold ──────────────────────── */
-/* Header row 1: five cells — brand · story · tabs · clock · LIVE/SIM switch.
+/* Header row 1: five cells — brand · story · tabs · clock · telemetry pill.
    The pill used to wrap onto its own row and steal 40px from the body. */
 .v2--operations .v2-header { grid-template-columns: auto minmax(0, 1fr) auto auto auto; }
+.v2--operations .v2-header__telemetry-pill { grid-column: 5; grid-row: 1; align-self: center; margin-left: 10px; }
 .v2--operations .v2-timebar { grid-column: 1 / -1; grid-row: 2; }
 .v2--operations .v2-header__story { overflow: visible; flex-wrap: wrap; row-gap: 0; column-gap: 12px; align-content: center; }
 .v2--operations .v2-header__story-label { flex-basis: auto; }
@@ -14015,43 +14050,3 @@ a { color: var(--tint); }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 40px; }
 .v2--operations .v2-balance__verdict { font-size: 11px; }
-
-/* ── LIVE ⇄ SIMULATION ───────────────────────────────────────────────────────
-   One switch in the header slot the old telemetry pill held; in LIVE the
-   replay timebar gives its row to the feed bar. Same Axiom rules: hairlines,
-   no radius, ink-on-paper, green only for "this is real and reporting". */
-.v2-source { display: inline-flex; align-items: stretch; border: 1px solid var(--ax-line-2); }
-.v2--operations .v2-source { grid-column: 5; grid-row: 1; align-self: center; margin-left: 10px; }
-.v2-source__btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: none; border: 0; border-radius: 0;
-  padding: 6px 12px; min-height: 30px;
-  font: 700 12px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ax-ink-2); cursor: pointer;
-}
-.v2-source__btn + .v2-source__btn { border-left: 1px solid var(--ax-line-2); }
-.v2-source__btn:hover { color: var(--ax-ink); background: var(--ax-paper); }
-.v2-source__btn.is-active { background: var(--ax-ink); color: var(--ax-panel); }
-.v2-source__btn--live .v2-telemetry-dot { background: var(--ax-ink-3); }
-.v2-source__btn--live.is-available .v2-telemetry-dot {
-  background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite;
-}
-.v2--operations .v2-source__btn { font-size: 13px; }
-
-.v2 .v2-livebar { gap: 16px; flex-wrap: nowrap; overflow: hidden; }
-.v2-livebar__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ax-ink-3); flex-shrink: 0; }
-.v2-livebar--live .v2-livebar__dot { background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite; }
-.v2-livebar--unconfigured .v2-livebar__dot,
-.v2-livebar--offline .v2-livebar__dot { background: var(--ax-warn); }
-.v2-livebar__headline { font-size: 15px; color: var(--ax-ink); white-space: nowrap; }
-.v2-livebar__meta { font-size: 13px; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.v2-livebar__meta--warn { color: var(--ax-warn); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.v2-livebar__basis { margin-left: auto; font-size: 13px; color: var(--ax-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-
-/* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
-.v2 .v2-fleet__row--live { grid-template-columns: 110px minmax(0, 1fr) 76px 52px 48px 56px 88px; }
-.v2-fleet__row--live.is-silent { opacity: 0.45; }
-.v2-fleet__plate-live { font-family: var(--font-mono); font-weight: 700; color: var(--ax-ink); }
-.v2-fleet__num { font-variant-numeric: tabular-nums; text-align: right; color: var(--ax-ink-2); }
-.v2-fleet__num--money { color: var(--ax-accent); font-weight: 700; }
-.v2-fleet__row--live.v2-fleet__row--header > span:nth-child(n + 3) { text-align: right; }

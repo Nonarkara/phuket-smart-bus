@@ -10,6 +10,7 @@ import {
   type TelemetryHealthStatus,
 } from "../../engine/liveGpsReceiver";
 import { getVehiclesNow } from "../../engine/fleetSimulator";
+import { getPhuketProducerState } from "../../engine/phuketGpsProducer";
 
 interface TelemetryStatusModalProps {
   isOpen: boolean;
@@ -29,10 +30,16 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
       : "/api/vehicles/all";
   });
 
+  // The Phuket upstream producer is its own module — see engine/phuketGpsProducer.
+  // We just read its state here so the modal can show feed health without
+  // owning the polling lifecycle.
+  const [producerState, setProducerState] = useState(() => getPhuketProducerState());
+
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
       setHealth(getTelemetryHealth());
+      setProducerState(getPhuketProducerState());
     }, 1000);
     return () => clearInterval(interval);
   }, [isOpen]);
@@ -118,6 +125,23 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 {health.latencyMs !== null ? `${(health.latencyMs / 1000).toFixed(1)}s latency` : "No live pings"}
               </strong>
               <small>{health.lastPingTime ? new Date(health.lastPingTime).toLocaleTimeString() : "Awaiting stream"}</small>
+            </div>
+
+            <div className="v2-telemetry-hud__stat">
+              <span>UPSTREAM POLL</span>
+              <strong className={
+                producerState.lastError ? "text-warn" :
+                producerState.lastSuccessAt && Date.now() - producerState.lastSuccessAt < 60_000 ? "text-accent" :
+                "text-ink"
+              }>
+                {producerState.lastError ? "ERROR" :
+                  producerState.lastSuccessAt === null ? "STARTING…" :
+                  `${Math.round((Date.now() - producerState.lastSuccessAt) / 1000)}s ago`}
+              </strong>
+              <small>
+                {producerState.successCount}/{producerState.pollCount} polls OK
+                {producerState.lastError ? ` · ${producerState.lastError}` : ""}
+              </small>
             </div>
           </div>
 
