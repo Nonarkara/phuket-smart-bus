@@ -20,3 +20,6 @@ data/*.sqlite3-wal
 # Local editor state
 .vscode/
 .worktrees/
+
+# Local Cloudflare Pages dev/deploy state
+.wrangler/

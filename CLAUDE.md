@@ -22,8 +22,14 @@ A **simulation that will become a production system**. Today it's a static site 
 - 30× time acceleration so a visitor sees a full day unfold in minutes
 - Every number on screen traces back to the demand-supply chain: flights land → passengers arrive → buses collect them → revenue earned → CO₂ saved
 
-### Phase 2: NEXT — GPS Integration
-When the bus company provides GPS connectivity:
+### Phase 2: NOW (supply side) — LIVE mode on /ops
+`/ops` has a **LIVE ⇄ SIMULATION** switch (header, top-right; `?source=live|sim` pins it, no param = LIVE whenever real buses are reporting, else SIMULATION):
+- **Real buses**: `functions/api/live-buses.ts` is a Cloudflare Pages Function (ships with `wrangler pages deploy` from the repo root). It holds `SMARTBUS_BEARER_TOKEN` (Pages secret — never a `VITE_` var), fetches the PKSB tracker (`smartbus-pk-api.phuket.cloud/api/bus-news-2/`, the feed behind phuketsmartbus.com/th/tracking), normalises it with `shared/pksbFeed.ts`, and edge-caches 10 s. No token → `503 {status:"unconfigured"}` and /ops stays in SIMULATION.
+- **Tracker timestamps have no zone**; `normalizeTrackerTime` picks the UTC/+07:00 reading nearest "now" (they're 7 h apart). Don't parse them in the browser raw — a viewer abroad would see every bus stale.
+- **Money in LIVE** (`src/engine/liveOps.ts`): GPS observes supply only. Trip = destination flip held on two fixes; km = fix-to-fix haversine (jitter <15 m, jumps >120 km/h, gaps >10 min dropped); riders per trip = the model's boarded load for the scheduled run it matches (±30 min; `getDayModelFor(today)`), local lines = line-P&L occupancy. Each trip stores its pricing basis. Ledger persists per Bangkok date in localStorage and only counts what it observed ("observed since"). No "walked away" in LIVE — GPS can't see it.
+- In LIVE the demand side (flight board, equation, balance chart) runs on the real Bangkok clock + today's weekday via `setClockOverride`; any "replay this hour" click switches to SIMULATION at that hour (`pksb:scrub-to-hour` event).
+
+Still to come when the bus company provides direct device GPS:
 - Replace `fleetSimulator.ts` with real GPS telemetry from devices on buses
 - The `VehiclePosition` type already has `telemetrySource: "public_tracker" | "direct_gps" | "schedule_mock"`
 - The `dataProvider.ts` layer swaps from engine to API calls — UI code doesn't change
@@ -46,6 +52,7 @@ src/
 ├── App.tsx                    # Entry: mobile detection, routing (/ops, /v2, /)
 ├── DashboardV2.tsx            # v2 demand-supply dashboard (now also at /ops)
 ├── engine/                    # Client-side simulation (replaces server)
+│   ├── liveOps.ts             # LIVE ledger: tracker fixes → trips/km → ฿ at modelled load per run
 │   ├── simulation.ts          # SimState, getLiveTotals, line P&L — consumes demandSupplyEngine
 │   ├── demandSupplyEngine.ts  # THE engine: flights → queue → buses → revenue, both directions
 │   ├── travelBehavior.ts      # Region-based bus-capture heuristics (Europeans rent cars, …)
@@ -91,6 +98,9 @@ src/
 │   ├── i18n.ts                 # 919 lines of 6-language UI strings
 │   └── vehicleAnimation.ts     # CSS transition helpers
 └── styles.css                  # 5,000+ lines (includes v2 dark theme)
+
+functions/api/live-buses.ts     # Cloudflare Pages Function: PKSB tracker relay (token server-side)
+shared/pksbFeed.ts              # Tracker parser shared by the edge relay and server/
 
 server/                         # Express backend (preserved, not deployed)
   ├── app.ts                    # 30+ API endpoints ready for production
@@ -253,7 +263,8 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 - Left column, top to bottom: **flight board** (24-h rail + next-30-min callout), the **operating equation** (demand − seats = buses to add, right now), the **demand-vs-supply balance chart** (24 columns, IN/OUT bars ABOVE the axis = riders without a seat → add a bus, BELOW = seats without a rider → run lighter, verdict row in whole buses), then the seven-hour table (scrolls).
 - Map column: conditions strip → four hero cards (**waiting now · collected · could have collected · buses rolling**; collected + walked away + waiting = could have, per frame, from one `atMinute()`) → map → fleet table.
 - **DAY REPORT** (timebar button, and auto-opens when DAY·60s freezes on 22:30): `getDayDebrief()` — hours to add buses (฿ missed there), hours to run lighter (whole empty trips × ฿217 opex), and −2…+8 whole-day fleet re-runs netted against ฿2,192/bus-day (฿800k/yr ÷ 365 ÷ 16 h, same constant as /roi).
-- Basemap is CARTO dark_all (keyless), no invert filter. The design reference is 1440×900 css px scaled by `zoom`; every ops surface must fit above the fold at that size — the left column may scroll, the map column never does.
+- **LIVE mode** swaps the hero cards (buses reporting · trips completed · riders est. · fares est.), the fleet table (`LiveFleetPanel`: plate · heading to · speed · seen · trips · km · ฿ est.), the footer, and the timebar (`LiveFeedBar`: feed age, observed-since, pricing basis, DEVICES → telemetry console). LIVE and SIM containers carry distinct React `key`s — the SIM cells are ref-written per frame, and reused DOM froze a stale ฿ once.
+- Basemap is plain OpenStreetMap + a "smart invert" CSS filter (`invert(1) hue-rotate(180deg)`, never `grayscale` first). **Not CARTO** — CARTO's raster tiles started demanding an API key and watermarked the whole map. The design reference is 1440×900 css px scaled by `zoom`; every ops surface must fit above the fold at that size — the left column may scroll, the map column never does.
 - Type floor in `.v2--operations`: 13 px labels, 14–15 px data, 17 px body, 30 px+ hero figures. Do not reintroduce 9–11 px microcopy on the wall.
 
 ### CSS Transition Rules for Animation
@@ -309,6 +320,7 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 - **Build**: `npx vite build` → `dist/client/`
 - **Custom domain**: `bus.nonarkara.org` is bound to the Cloudflare Pages project's production branch (`main`). `public/CNAME` (`bus.nonarkara.org`) and GitHub Pages exist too, but GitHub Pages only 301-redirects `nonarkara.github.io/phuket-smart-bus/` → `bus.nonarkara.org`; it does not serve the live traffic.
 - **SPA routing**: `404.html` copied from `index.html` in the deploy workflow
+- **LIVE feed secret**: Cloudflare Pages → phuket-smart-bus → Settings → Variables and Secrets → `SMARTBUS_BEARER_TOKEN` (encrypted, Production). Optional `SMARTBUS_FEED_URL` overrides the upstream. Check with `curl https://bus.nonarkara.org/api/live-buses` — `"status":"live"` means it works.
 - **Auto-deploy is broken**: `.github/workflows/cloudflare-pages.yml` runs on push to `main` but fails — `CLOUDFLARE_API_TOKEN` auth-fails (error 10000). `.github/workflows/deploy.yml` (GitHub Pages) succeeds but doesn't matter for the live domain. **Working path until the CF secret is fixed**: deploy manually — `npx vite build && cp dist/client/index.html dist/client/404.html && npx wrangler pages deploy dist/client --project-name phuket-smart-bus --commit-dirty=true` (no `--branch` flag → production). Verify with `npx wrangler pages deployment list --project-name phuket-smart-bus` (look for `Environment: Production`, `Branch: main`).
 - **Live URL**: https://bus.nonarkara.org (https://bus.nonarkara.org/ops = DashboardV2)
 - **Routes**: `/` (tourist app, v1 chain), `/ops` (DashboardV2), `/v2` (legacy v1 dashboard), `/roi` (investor), `/governor` (God-mode), `/driver` (driver tablet)

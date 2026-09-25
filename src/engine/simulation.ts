@@ -254,6 +254,8 @@ export type SimState = {
     /** True for the airport-line bus at the curb boarding the queue right now.
      *  The one vehicle that earns the accent colour on the map. */
     isBoarding?: boolean;
+    /** Real tracker bus: position is observed, load is the model's estimate. */
+    paxEstimated?: boolean;
   }[];
 };
 
@@ -443,6 +445,16 @@ const LOCAL_OCCUPANCY: Record<string, number> = {
   "patong-old-bus-station": 0.42, // daytime local commuter average (Phuket survey est.)
   "dragon-line":            0.31, // tourist loop — lighter, point-to-point riders
 };
+
+/** Riders + fare for one trip on a local (non-airport) line — the same
+ *  capacity × occupancy the line P&L uses. Null for the airport line, whose
+ *  load comes from the flight-driven demand model instead. */
+export function getLocalLineTripEstimate(lineId: string): { riders: number; fareThb: number; tripMinutes: number } | null {
+  const occupancy = LOCAL_OCCUPANCY[lineId];
+  const config = LINE_CONFIG[lineId];
+  if (occupancy === undefined || !config) return null;
+  return { riders: Math.round(config.capacity * occupancy), fareThb: config.fare, tripMinutes: config.tripDurationMinutes };
+}
 
 export function getLineMetrics(): LineMetrics[] {
   const state = computeSimState();
