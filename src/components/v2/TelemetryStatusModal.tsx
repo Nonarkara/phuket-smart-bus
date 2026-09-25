@@ -44,19 +44,26 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const allVehicles = getVehiclesNow();
-  const liveCount = allVehicles.filter((v) => v.telemetrySource === "direct_gps").length;
-  const simCount = allVehicles.length - liveCount;
-
   // Filter the roster by the selected source. Memoised on filter + the
   // current set of vehicles so the user can focus on the live fleet without
   // the sim buses drowning it out.
+  //
+  // NOTE: `getVehiclesNow()` and the filter memo stay ABOVE the
+  // `if (!isOpen) return null` early return — React tracks hooks by call
+  // order, so a hook that only fires on the open path would throw
+  // "Rendered more hooks than during the previous render" (#310) the first
+  // time the modal opens. getVehiclesNow is cheap (a plain read of the
+  // fleet roster) so calling it on every render — closed or open — is fine.
+  const allVehicles = isOpen ? getVehiclesNow() : [];
   const filteredVehicles = useMemo(() => {
     if (sourceFilter === "all") return allVehicles;
     return allVehicles.filter((v) => v.telemetrySource === sourceFilter);
   }, [allVehicles, sourceFilter]);
+
+  if (!isOpen) return null;
+
+  const liveCount = allVehicles.filter((v) => v.telemetrySource === "direct_gps").length;
+  const simCount = allVehicles.length - liveCount;
 
   const handleToggleStream = () => {
     const next = toggleSimulatedGpsStream();
