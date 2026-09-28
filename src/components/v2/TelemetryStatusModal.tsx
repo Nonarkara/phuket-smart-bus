@@ -10,7 +10,6 @@ import {
   type TelemetryHealthStatus,
 } from "../../engine/liveGpsReceiver";
 import { getVehiclesNow } from "../../engine/fleetSimulator";
-import { getPhuketProducerState } from "../../engine/phuketGpsProducer";
 import {
   getFleetEfficiencySummary,
   exportFleetEfficiencyJson,
@@ -18,6 +17,7 @@ import {
   resetFleetEfficiencyLedger,
   type FleetEfficiencySummary,
 } from "../../engine/fleetEfficiency";
+import { getLiveFeedState } from "../../engine/liveOps";
 
 interface TelemetryStatusModalProps {
   isOpen: boolean;
@@ -37,17 +37,16 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
       : "/api/vehicles/all";
   });
 
-  // The Phuket upstream producer is its own module — see engine/phuketGpsProducer.
-  // We just read its state here so the modal can show feed health without
-  // owning the polling lifecycle.
-  const [producerState, setProducerState] = useState(() => getPhuketProducerState());
+  // The tracker relay is polled by engine/liveOps (it drives LIVE mode); the
+  // modal reads its health and the fleet efficiency ledger for financial reporting.
+  const [feed, setFeed] = useState(() => getLiveFeedState());
   const [efficiency, setEfficiency] = useState<FleetEfficiencySummary>(() => getFleetEfficiencySummary());
 
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
       setHealth(getTelemetryHealth());
-      setProducerState(getPhuketProducerState());
+      setFeed(getLiveFeedState());
       setEfficiency(getFleetEfficiencySummary());
     }, 1000);
     return () => clearInterval(interval);
@@ -179,17 +178,17 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
             <div className="v2-telemetry-hud__stat">
               <span>UPSTREAM POLL</span>
               <strong className={
-                producerState.lastError ? "text-warn" :
-                producerState.lastSuccessAt && Date.now() - producerState.lastSuccessAt < 60_000 ? "text-accent" :
+                feed.status === "offline" ? "text-warn" :
+                feed.feedAgeSec !== null && feed.feedAgeSec < 60 ? "text-accent" :
                 "text-ink"
               }>
-                {producerState.lastError ? "ERROR" :
-                  producerState.lastSuccessAt === null ? "STARTING…" :
-                  `${Math.round((Date.now() - producerState.lastSuccessAt) / 1000)}s ago`}
+                {feed.status === "offline" ? "ERROR" :
+                  feed.feedAgeSec === null ? "STARTING…" :
+                  `${feed.feedAgeSec}s ago`}
               </strong>
               <small>
-                {producerState.successCount}/{producerState.pollCount} polls OK
-                {producerState.lastError ? ` · ${producerState.lastError}` : ""}
+                {feed.okCount}/{feed.pollCount} polls OK · {feed.summary.busesReporting} buses
+                {feed.status === "offline" && feed.detail ? ` · ${feed.detail}` : ""}
               </small>
             </div>
           </div>
