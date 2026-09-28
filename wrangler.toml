@@ -1,0 +1,15 @@
+name = "phuket-smart-bus"
+pages_build_output_dir = "dist/client"
+compatibility_date = "2026-07-21"
+
+# KV bindings — accessible from inside any Pages Function via
+# `context.env.GPS_HISTORY.put(...)`. The binding name MUST match what
+# the Function source uses.
+#
+# Production and preview both point at the same namespace for now;
+# we don't have a separate preview workflow yet. Switch to a real
+# preview_id once we start using `wrangler pages dev` to test ingest.
+[[kv_namespaces]]
+binding = "GPS_HISTORY"
+id = "56cdf90d2a144ff6a492c7f1467b4d22"
+preview_id = "56cdf90d2a144ff6a492c7f1467b4d22"

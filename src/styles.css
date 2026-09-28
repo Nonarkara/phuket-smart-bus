@@ -13086,6 +13086,16 @@ a { color: var(--tint); }
   color: var(--ax-ink-2);
 }
 
+.text-gain { color: var(--gain, #16a574) !important; }
+.text-accent { color: var(--ax-accent, #38bdf8) !important; }
+.text-warn { color: var(--amber, #f5a623) !important; }
+.text-ink { color: var(--ax-ink, #ffffff) !important; }
+
+.v2-telemetry-hud--finance {
+  margin-top: 12px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .v2-telemetry-section {
   display: flex;
   flex-direction: column;

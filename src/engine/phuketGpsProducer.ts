@@ -137,6 +137,12 @@ export interface PhuketProducerState {
   successCount: number;
   /** Last error message (cleared on next success). */
   lastError: string | null;
+  /** Successful POSTs to /api/collect/gps (shared KV). */
+  collectSuccess: number;
+  /** Failed POSTs to /api/collect/gps since start. */
+  collectErrors: number;
+  /** Last collect-endpoint error message (cleared on next success). */
+  lastCollectError: string | null;
 }
 
 const STATE: PhuketProducerState = {
@@ -145,6 +151,9 @@ const STATE: PhuketProducerState = {
   pollCount: 0,
   successCount: 0,
   lastError: null,
+  collectSuccess: 0,
+  collectErrors: 0,
+  lastCollectError: null,
 };
 
 /** Read-only snapshot of the producer's runtime state for the UI. */
@@ -153,8 +162,51 @@ export function getPhuketProducerState(): Readonly<PhuketProducerState> {
 }
 
 /**
+ * The producer tags every batch it posts to the shared KV store so the
+ * telemetry console can break down ingest by source (the public tracker
+ * proxy, future bearer-token feeds, manual test bursts, etc.).
+ */
+const COLLECT_SOURCE = "phuket-gps-producer";
+
+/**
+ * Fire-and-forget POST of a single batch to the shared collector
+ * (functions/api/collect/gps.ts). Never throws — ingest must keep
+ * running even if the collector endpoint is misconfigured or KV is
+ * down. STATE tracks success / failure for the operator UI.
+ */
+async function postBatchToCollector(pings: LiveGpsPing[], fetchedAt: number): Promise<void> {
+  if (pings.length === 0) return;
+  try {
+    const res = await fetch("/api/collect/gps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fetchedAt,
+        source: COLLECT_SOURCE,
+        buses: pings,
+      }),
+      // KV cold-starts can spike past 5s on the first request to a
+      // Pages Function with a binding; 15s covers that without
+      // holding up the next 30s poll.
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) {
+      STATE.collectErrors = (STATE.collectErrors ?? 0) + 1;
+      STATE.lastCollectError = `HTTP ${res.status}`;
+    } else {
+      STATE.collectSuccess = (STATE.collectSuccess ?? 0) + 1;
+      STATE.lastCollectError = null;
+    }
+  } catch (err) {
+    STATE.collectErrors = (STATE.collectErrors ?? 0) + 1;
+    STATE.lastCollectError = err instanceof Error ? err.message : String(err);
+  }
+}
+
+/**
  * Poll the live upstream once and ingest whatever comes back.
- * Pure side-effects on the telemetry map + efficiency ledger.
+ * Pure side-effects on the telemetry map + efficiency ledger +
+ * the shared collector KV.
  */
 export async function pollPhuketGpsOnce(signal?: AbortSignal): Promise<PhuketUpstreamResponse> {
   STATE.pollCount++;
@@ -175,8 +227,11 @@ export async function pollPhuketGpsOnce(signal?: AbortSignal): Promise<PhuketUps
     const normalised = rawRows
       .map((r) => normalisePhuketGpsRow(r, now))
       .filter((n): n is { ping: LiveGpsPing; usable: true } => n.usable);
-    if (normalised.length > 0) {
-      ingestBatchGps(normalised.map((n) => n.ping));
+    const pings = normalised.map((n) => n.ping);
+    if (pings.length > 0) {
+      ingestBatchGps(pings);
+      // Fire-and-forget — don't block the next poll on KV write.
+      void postBatchToCollector(pings, now);
     }
     STATE.successCount++;
     STATE.lastSuccessAt = Date.now();

@@ -332,6 +332,49 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 <small>{efficiency.recommendation.summaryText}</small>
               </div>
             </div>
+
+            {/* Real Bus Financial & Revenue Ledger */}
+            <div className="v2-telemetry-hud v2-telemetry-hud--finance">
+              <div className="v2-telemetry-hud__stat">
+                <span>REAL GPS REVENUE EARNED</span>
+                <strong className="text-gain">
+                  ฿{efficiency.totalRevenueThb.toLocaleString()}
+                </strong>
+                <small>{efficiency.totalPaxServed.toLocaleString()} pax @ ฿100 flat fare</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>ESTIMATED OPERATING COST</span>
+                <strong className="text-ink">
+                  ฿{efficiency.totalOperatingCostThb.toLocaleString()}
+                </strong>
+                <small>฿35/km across {efficiency.totalKmTracked} km driven</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>NET OPERATING MARGIN</span>
+                <strong className={efficiency.netMarginThb >= 0 ? "text-gain" : "text-warn"}>
+                  {efficiency.netMarginThb >= 0 ? "+" : "−"}฿{Math.abs(efficiency.netMarginThb).toLocaleString()}
+                </strong>
+                <small>{efficiency.profitMarginPct}% margin · {efficiency.tripsCompleted} trips completed</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>PASSENGER BENEFIT</span>
+                <strong className="text-gain">
+                  ฿{efficiency.passengerSavingsThb.toLocaleString()} Saved
+                </strong>
+                <small>vs Grab/taxi · {efficiency.totalCo2SavedKg} kg CO₂ saved</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat v2-telemetry-hud__stat--span2">
+                <span>REVENUE DENSITY &amp; EFFICIENCY</span>
+                <strong className="text-ink">
+                  ฿{efficiency.revenuePerKm} / km · ฿{efficiency.revenuePerActiveBus.toLocaleString()} / active bus
+                </strong>
+                <small>Traced directly from real bus GPS pings and APC door counts</small>
+              </div>
+            </div>
           </section>
 
           {/* Endpoint Configuration & Developer Bridge */}
@@ -399,7 +442,11 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                   <tr>
                     <th>Bus Plate</th>
                     <th>Telemetry Source</th>
-                    <th>Current Coordinates</th>
+                    <th>Distance</th>
+                    <th>Trips</th>
+                    <th>Pax</th>
+                    <th>Gross Revenue</th>
+                    <th>Net Margin</th>
                     <th>Speed</th>
                     <th>Signal Freshness</th>
                     <th>Status</th>
@@ -408,6 +455,15 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 <tbody>
                   {filteredVehicles.map((v) => {
                     const isGps = v.telemetrySource === "direct_gps";
+                    const eff = efficiency.vehicles.find(
+                      (ev) => ev.vehicleId === v.vehicleId || ev.licensePlate === v.licensePlate
+                    );
+                    const rev = eff?.revenueThb ?? 0;
+                    const margin = eff?.netMarginThb ?? 0;
+                    const km = eff?.totalDistanceKm ?? 0;
+                    const trips = eff?.tripsCompleted ?? 0;
+                    const pax = eff?.paxServed ?? 0;
+
                     return (
                       <tr key={v.vehicleId || v.id} className={isGps ? "is-live-gps" : ""}>
                         <td><strong>{v.licensePlate || v.vehicleId}</strong></td>
@@ -418,7 +474,19 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                         </td>
                         <td>
                           <span className="v2-font-mono">
-                            {v.coordinates[0].toFixed(4)}, {v.coordinates[1].toFixed(4)}
+                            {isGps ? `${km.toFixed(1)} km` : "—"}
+                          </span>
+                        </td>
+                        <td>{isGps ? trips : "—"}</td>
+                        <td>{isGps ? pax : "—"}</td>
+                        <td>
+                          <strong className={rev > 0 ? "text-gain" : "text-ink"}>
+                            {isGps ? `฿${rev.toLocaleString()}` : "—"}
+                          </strong>
+                        </td>
+                        <td>
+                          <span className={margin > 0 ? "text-gain" : margin < 0 ? "text-warn" : "text-ink"}>
+                            {isGps ? `${margin >= 0 ? "+" : "−"}฿${Math.abs(margin).toLocaleString()}` : "—"}
                           </span>
                         </td>
                         <td>{v.speedKph} km/h</td>
@@ -433,7 +501,7 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                   })}
                   {filteredVehicles.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="v2-telemetry-empty">
+                      <td colSpan={10} className="v2-telemetry-empty">
                         No vehicles match this filter.{" "}
                         {sourceFilter !== "all" && (
                           <button type="button" className="v2-btn-link" onClick={() => setSourceFilter("all")}>
