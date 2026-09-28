@@ -16,6 +16,15 @@
  *   SMARTBUS_KEYLESS_URL / SMARTBUS_FEED_URL  override the upstream URLs
  */
 import {
+  applyBusesToDay,
+  emptyGpsDay,
+  gpsBatchKey,
+  gpsDayKey,
+  GPS_HISTORY_TTL_S,
+  type GpsBusPing,
+  type GpsDay,
+} from "../../shared/gpsBatch";
+import {
   PKSB_FEED_URL,
   PKSB_KEYLESS_HEADERS,
   PKSB_KEYLESS_URL,
@@ -101,28 +110,31 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
     if (context.env.GPS_HISTORY) {
       try {
         const cloned = response.clone();
-        const kvPromise = cloned.json().then((data: any) => {
-          if (data?.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
-            const now = Date.now();
-            const batch = {
-              fetchedAt: now,
-              source: "pksb-tracker",
-              buses: data.vehicles.map((v: any) => ({
-                vehicleId: v.plate,
-                licensePlate: v.plate,
-                coordinates: [v.lat, v.lng],
-                speedKph: v.speedKph,
-                heading: v.heading,
-                timestamp: v.updatedAt,
-                routeId: v.routeId ?? undefined,
-                destinationHint: v.destination ?? undefined,
-                paxCount: v.paxOnBoard ?? undefined,
-              })),
+        const kvPromise = cloned.json().then(async (data: { vehicles?: LiveBus[] }) => {
+          const vehicles = data?.vehicles;
+          if (!Array.isArray(vehicles) || vehicles.length === 0) return;
+          const now = Date.now();
+          const buses: GpsBusPing[] = vehicles.map((v) => {
+            const ping: GpsBusPing = {
+              vehicleId: v.plate,
+              licensePlate: v.plate,
+              coordinates: [v.lat, v.lng],
+              speedKph: v.speedKph,
+              heading: v.heading,
+              timestamp: v.updatedAt,
             };
-            return context.env.GPS_HISTORY.put(`batch:${now}`, JSON.stringify(batch), {
-              expirationTtl: 604800, // 7-day TTL
-            });
-          }
+            if (v.routeId) ping.routeId = v.routeId;
+            if (v.destination) ping.destinationHint = v.destination;
+            if (v.paxOnBoard != null) ping.paxCount = v.paxOnBoard;
+            return ping;
+          });
+          const kv = context.env.GPS_HISTORY;
+          const batch = { fetchedAt: now, storedAt: now, source: "pksb-tracker", buses };
+          await kv.put(gpsBatchKey(now), JSON.stringify(batch), { expirationTtl: GPS_HISTORY_TTL_S });
+          const dayKey = gpsDayKey(now);
+          const prev = (await kv.get(dayKey, "json")) as GpsDay | null;
+          const next = applyBusesToDay(prev?.vehicles ? prev : emptyGpsDay(now), buses, now);
+          await kv.put(dayKey, JSON.stringify(next), { expirationTtl: GPS_HISTORY_TTL_S });
         }).catch(() => {});
         context.waitUntil(kvPromise);
       } catch {

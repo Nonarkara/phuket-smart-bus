@@ -1,0 +1,2 @@
+# Pages Functions own /api/*. This only catches the SPA.
+/*    /index.html   200

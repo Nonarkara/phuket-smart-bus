@@ -86,8 +86,10 @@ export type LiveBusFeed = {
 // Phuket island plus a margin. A [0,0] or off-island fix is a device glitch,
 // never a bus — dropping it keeps a phantom marker out of the Gulf of Guinea.
 const BBOX = { minLat: 7.4, maxLat: 8.4, minLng: 98.0, maxLng: 98.7 };
-const inPhuket = (lat: number, lng: number) =>
-  lat >= BBOX.minLat && lat <= BBOX.maxLat && lng >= BBOX.minLng && lng <= BBOX.maxLng;
+export function isOnPhuketIsland(lat: number, lng: number): boolean {
+  return lat >= BBOX.minLat && lat <= BBOX.maxLat && lng >= BBOX.minLng && lng <= BBOX.maxLng;
+}
+const inPhuket = isOnPhuketIsland;
 
 /** "10-1230ภูเก็ต", "10-1230 ภูเก็ต", "10-1230" → "10-1230". */
 export function plateKey(raw: string): string {

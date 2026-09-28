@@ -1,21 +1,17 @@
 /**
  * Cloudflare Pages Function: POST /api/collect/gps
  *
- * Receives one batch of normalised GPS pings from the browser-side
- * Phuket upstream producer (src/engine/phuketGpsProducer.ts) and
- * writes it to KV. The batch is keyed by `batch:${fetchedAt}` so
- * each 30-second poll is a distinct, listable record. The fleet
- * efficiency ledger in the browser stays per-visitor; this endpoint
- * is the shared, persistent record that survives tab close.
+ * The edge relay (`/api/live-buses`) is the writer. It already parsed
+ * the tracker. This endpoint accepts the same batch shape for anything
+ * else that has a normalised ping, and folds it into the same
+ * Bangkok-day ledger. Keys sort newest-first (`gps:`), not oldest-first
+ * (`batch:`), because KV list is lexicographic.
  *
- * GET returns the last N batches (default 20) so anyone can verify
- * data is actually landing without wrangler CLI access.
- *
- * Pair with src/engine/phuketGpsProducer.ts — that producer polls
- * the public Phuket Smart Bus tracker every 30 s on the operator
- * wall and POSTs the normalised batch here.
+ * GET returns the last N batches so the operator can see that fixes
+ * are landing, plus the revenue rollup of those batches only.
  */
 
+import { gpsBatchKey, gpsDayKey, GPS_HISTORY_TTL_S, applyBusesToDay, emptyGpsDay, type GpsBatch, type GpsDay } from "../../../shared/gpsBatch";
 import { computeRevenueFromBatches } from "./revenue";
 
 interface PagesEventContext {
@@ -124,15 +120,15 @@ export async function onRequestPost(context: PagesEventContext): Promise<Respons
   }
 
   const payload: CollectPayload = body;
-  const key = `batch:${payload.fetchedAt}:${payload.source}`;
   const storedAt = Date.now();
-
-  // Wrap with metadata so the GET handler can list without re-deriving
-  const record = { ...payload, storedAt };
+  const record: GpsBatch = { ...payload, storedAt };
+  const key = gpsBatchKey(payload.fetchedAt, payload.source);
   try {
-    // 1-day expiry so we don't accumulate forever. Bumps each write;
-    // adjust if we want longer retention.
-    await kv.put(key, JSON.stringify(record), { expirationTtl: 60 * 60 * 24 * 7 });
+    await kv.put(key, JSON.stringify(record), { expirationTtl: GPS_HISTORY_TTL_S });
+    const dayKey = gpsDayKey(payload.fetchedAt);
+    const prev = (await kv.get(dayKey, "json")) as GpsDay | null;
+    const next = applyBusesToDay(prev?.vehicles ? prev : emptyGpsDay(payload.fetchedAt), payload.buses, payload.fetchedAt);
+    await kv.put(dayKey, JSON.stringify(next), { expirationTtl: GPS_HISTORY_TTL_S });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "KV write failed", details: err instanceof Error ? err.message : String(err) }),
@@ -185,8 +181,8 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
 
   try {
     const listed = await kv.list({
-      prefix: "batch:",
-      limit: Math.min(limit * 4, RECENT_MAX_LIMIT * 4), // overfetch to allow filter
+      prefix: "gps:",
+      limit: Math.min(limit * 4, RECENT_MAX_LIMIT * 4),
     });
 
     const records: Array<{ key: string; value: CollectPayload & { storedAt: number } }> = [];
@@ -209,7 +205,6 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
       if (v) counterSummary[entry.name.replace(/^counter:/, "")] = v;
     }
 
-    // Compute revenue rollup across the retrieved batches
     const revenue = computeRevenueFromBatches(records.map((r) => r.value));
 
     return new Response(
