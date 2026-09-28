@@ -7,9 +7,9 @@
  * smartbus.phuket.cloud, so the edge does the fetch and returns the
  * normalised JSON to the browser with permissive CORS.
  *
- * Pairs with src/engine/phuketGpsProducer.ts — that producer polls
- * this URL every 30 s on the operator wall and feeds the data into
- * the existing LiveGpsReceiver + fleetEfficiency pipeline.
+ * A raw passthrough for outside consumers. The /ops console does NOT use
+ * it: it reads /api/live-buses, which fetches the same upstream and
+ * returns normalised buses (see shared/pksbFeed.ts).
  */
 
 interface PagesEventContext {

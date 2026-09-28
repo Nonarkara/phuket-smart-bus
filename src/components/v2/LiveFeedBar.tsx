@@ -10,18 +10,18 @@ type Props = {
   feedAgeSec: number | null;
   busesReporting: number;
   observedSinceMin: number | null;
+  countersOnline: boolean;
   onOpenDevices: () => void;
 };
 
 /** Replaces the replay timebar in LIVE: no scrubber, no speeds — the clock is
  *  the real one. Says plainly where the numbers come from and how fresh they are. */
-export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observedSinceMin, onOpenDevices }: Props) {
+export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observedSinceMin, countersOnline, onOpenDevices }: Props) {
   const headline =
     status === "live" ? `${busesReporting} bus${busesReporting === 1 ? "" : "es"} reporting`
       : status === "quiet" ? "Tracker connected · no bus reporting now"
-        : status === "connecting" ? "Connecting to the PKSB tracker…"
-          : status === "unconfigured" ? "Tracker relay not configured"
-            : "Tracker unreachable";
+        : status === "connecting" ? "Connecting to the Phuket Smart Bus tracker…"
+          : "Tracker unreachable";
 
   return (
     <div className={`v2-timebar v2-livebar v2-livebar--${status}`} role="status">
@@ -29,8 +29,10 @@ export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observ
       <strong className="v2-livebar__headline">{headline}</strong>
       {feedAgeSec !== null && <span className="v2-livebar__meta">feed {feedAgeSec}s old</span>}
       {observedSinceMin !== null && <span className="v2-livebar__meta">observed since {hhmm(observedSinceMin)}</span>}
-      {(status === "unconfigured" || status === "offline") && detail && <span className="v2-livebar__meta v2-livebar__meta--warn">{detail}</span>}
-      <span className="v2-livebar__basis">Trips &amp; km: GPS · Riders &amp; ฿: trip × modelled load per run</span>
+      {status === "offline" && detail && <span className="v2-livebar__meta v2-livebar__meta--warn">{detail}</span>}
+      <span className="v2-livebar__basis">
+        Trips &amp; km: GPS · Riders: {countersOnline ? "bus passenger counters, modelled where a bus has none" : "modelled load per run"}
+      </span>
       <button type="button" className="v2-timebar__speed" onClick={onOpenDevices} title="Direct GPS device ingest console">
         DEVICES
       </button>

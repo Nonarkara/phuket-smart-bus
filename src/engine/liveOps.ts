@@ -1,27 +1,31 @@
 /**
- * LIVE operations ledger — real PKSB buses, today's money.
+ * LIVE operations ledger — real Phuket Smart Bus buses, today's money.
  *
- * GPS observes SUPPLY, never riders. So the chain in LIVE mode is:
- *
- *   tracker fix → trip completed (destination flips, seen on two fixes)
+ *   tracker fix → which line (geometry: the route polyline it drives along)
+ *               → trip completed (arrives at a terminal ≥ half a line away
+ *                 from where it last left one; loops: back at the start)
  *               → km driven (fix-to-fix haversine, glitches dropped)
- *   completed trip × modelled riders for THAT run → estimated fares
+ *   trip × riders → fares
  *
- * "Modelled riders for that run": an airport-line trip is matched to the
- * scheduled departure it most plausibly is (±30 min of when it started) and
- * takes that departure's boarded load from today's demand model — the same
- * number the SIMULATION shows for that bus. Local lines take the line P&L's
- * capacity × occupancy. Every trip records which basis priced it, so when
- * seat cameras or fare-box counts arrive, one function swaps and every ฿
- * figure downstream sharpens without a UI change.
+ * Riders, best evidence first:
+ *   apc-count      the bus's own passenger counter (PeopleCur): every rise
+ *                  in on-board count during the trip is a boarding. A lower
+ *                  bound — a stop where 3 get off and 5 get on between two
+ *                  fixes reads as +2.
+ *   scheduled-run  no counter: the demand model's boarded load for the
+ *                  scheduled run this trip matches (±30 min, today's weekday)
+ *   hour-average   no run that close: mean load of runs within the hour
+ *   line-occupancy local lines without a counter: line-P&L occupancy
+ * Every trip keeps its basis; the console says which figures are counted.
  *
  * The ledger is kept per Bangkok calendar day in localStorage, so a wall
- * screen that reloads keeps its day. It only knows what it observed: trips
- * before the first fix of the day are not invented ("observed since").
+ * screen that reloads keeps its day. It only knows what it observed.
  */
+import type { LatLngTuple } from "@shared/types";
 import type { LiveBus, LiveBusFeed, LiveBusRouteId } from "@shared/pksbFeed";
 import { getDayModelFor, BUS_CAPACITY, FARE_THB } from "./demandSupplyEngine";
 import { getLocalLineTripEstimate, type SimState } from "./simulation";
+import { getDirectionPolyline } from "./routes";
 import { haversineDistanceMeters } from "./geo";
 import { getBangkokNowFractionalMinutes, BANGKOK_TIME_ZONE } from "./time";
 import { ROI_CONSTANTS } from "./roi";
@@ -37,19 +41,90 @@ const MAX_KM_GAP_MS = 10 * 60_000;
 const MIN_MOVE_M = 15;
 /** Implied speed above this between two fixes is a GPS jump, not a bus. */
 const MAX_PLAUSIBLE_KPH = 120;
+/** Within this of a terminal point the bus is AT that terminal. */
+const TERMINAL_RADIUS_M = 400;
+/** A fix this close to one line and this much farther from every other is evidence for it. */
+const ON_LINE_M = 250;
+const LINE_MARGIN_M = 400;
+/** Decisive fixes needed before a bus is assigned to a line. */
+const LINE_VOTES = 2;
+/** A rise in on-board count larger than this between two fixes is a counter glitch. */
+const MAX_BOARD_STEP = 40;
 /** An airport-line trip within this of a scheduled run IS that run. */
 const RUN_MATCH_MIN = 30;
 const AIRPORT_TRIP_MINUTES = 95;
 const CO2_KG_PER_PAX_KM_SAVED = ROI_CONSTANTS.co2KgPerPaxKmCar - ROI_CONSTANTS.co2KgPerPaxKmBus;
 
-export type PricingBasis = "scheduled-run" | "hour-average" | "line-occupancy" | "no-model";
+// ── line geometry ──────────────────────────────────────────────────────────
+type Terminal = { name: string; lat: number; lng: number };
+type LineGeo = { routeId: LiveBusRouteId; poly: LatLngTuple[]; terminals: Terminal[]; loop: boolean; lengthM: number };
+
+const LINE_SEEDS: { routeId: LiveBusRouteId; firstStop: LatLngTuple; names: [string, string]; loop: boolean }[] = [
+  { routeId: "rawai-airport", firstStop: [8.108, 98.317], names: ["Airport", "Rawai"], loop: false },
+  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], names: ["Old Town", "Patong"], loop: false },
+  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], names: ["Old Town loop", "Old Town loop"], loop: true },
+];
+
+let lineCache: LineGeo[] | null = null;
+function lines(): LineGeo[] {
+  if (lineCache) return lineCache;
+  lineCache = LINE_SEEDS.flatMap((seed) => {
+    const poly = getDirectionPolyline(seed.routeId, seed.firstStop);
+    if (poly.length < 2) return [];
+    let lengthM = 0;
+    for (let i = 1; i < poly.length; i++) lengthM += haversineDistanceMeters(poly[i - 1]!, poly[i]!);
+    const [a, b] = [poly[0]!, poly[poly.length - 1]!];
+    const terminals = seed.loop
+      ? [{ name: seed.names[0], lat: a[0], lng: a[1] }]
+      : [{ name: seed.names[0], lat: a[0], lng: a[1] }, { name: seed.names[1], lat: b[0], lng: b[1] }];
+    return [{ routeId: seed.routeId, poly, terminals, loop: seed.loop, lengthM }];
+  });
+  return lineCache;
+}
+
+function lineFor(routeId: LiveBusRouteId | null): LineGeo | null {
+  return routeId ? lines().find((line) => line.routeId === routeId) ?? null : null;
+}
+
+/** Metres from a point to a polyline (local equirectangular projection — exact enough at island scale). */
+export function distanceToPolylineM(lat: number, lng: number, poly: LatLngTuple[]): number {
+  const kx = 111_320 * Math.cos((lat * Math.PI) / 180);
+  const ky = 110_540;
+  let best = Infinity;
+  for (let i = 1; i < poly.length; i++) {
+    const ax = (poly[i - 1]![1] - lng) * kx, ay = (poly[i - 1]![0] - lat) * ky;
+    const bx = (poly[i]![1] - lng) * kx, by = (poly[i]![0] - lat) * ky;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+    const px = ax + t * dx, py = ay + t * dy;
+    const d = Math.sqrt(px * px + py * py);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+/** The line this fix is decisive evidence for, or null (off-route, or where lines share road). */
+function decisiveLine(lat: number, lng: number): { routeId: LiveBusRouteId; distM: number } | null {
+  const scored = lines().map((line) => ({ routeId: line.routeId, distM: distanceToPolylineM(lat, lng, line.poly) }))
+    .sort((a, b) => a.distM - b.distM);
+  const [best, next] = scored;
+  if (!best || best.distM > ON_LINE_M) return null;
+  if (next && next.distM - best.distM < LINE_MARGIN_M) return null;
+  return best;
+}
+
+// ── ledger types ───────────────────────────────────────────────────────────
+export type PricingBasis = "apc-count" | "scheduled-run" | "hour-average" | "line-occupancy" | "no-model";
 
 export type LiveTrip = {
   plate: string;
   routeId: LiveBusRouteId;
-  /** Destination the completed trip arrived at. */
+  /** Terminal the trip left, when observed. */
+  from: string | null;
+  /** Terminal the trip arrived at. */
   to: string;
-  /** Bangkok minutes; null when the trip began before the first observed fix. */
+  /** Bangkok minutes of departure; null when the trip began before the first observed fix. */
   startMin: number | null;
   endMin: number;
   riders: number;
@@ -59,15 +134,23 @@ export type LiveTrip = {
 
 type VehicleLedger = {
   plate: string;
-  routeId: LiveBusRouteId;
+  routeId: LiveBusRouteId | null;
+  votes: Partial<Record<LiveBusRouteId, number>>;
   lat: number;
   lng: number;
   fixMs: number;
-  dest: string;
-  /** A new destination seen once; committed as a flip only when seen twice running. */
-  pendingDest: string | null;
-  lastFlipMin: number | null;
   km: number;
+  /** Terminal the bus is at right now, if any. */
+  atTerminal: string | null;
+  /** Last terminal visited, and the last minute it was seen there (≈ departure). */
+  lastTerminal: string | null;
+  leftTerminalMin: number | null;
+  /** Path driven since the last terminal — a trip needs a real run, not a depot shuffle. */
+  pathSinceTerminalM: number;
+  /** Passenger counter state. */
+  lastPax: number | null;
+  tripBoardings: number;
+  hasApc: boolean;
 };
 
 export type LiveLedger = {
@@ -95,7 +178,7 @@ export function emptyLedger(nowMs: number): LiveLedger {
 
 const norm = (s: string) => s.trim().toLowerCase();
 
-// ── pricing: one completed trip → riders ───────────────────────────────────
+// ── pricing without a counter: one completed trip → modelled riders ────────
 export function estimateTripRiders(
   routeId: LiveBusRouteId,
   to: string,
@@ -127,8 +210,20 @@ export function estimateTripRiders(
   return { riders: 0, fareThb: FARE_THB, basis: "no-model" };
 }
 
+function fareFor(routeId: LiveBusRouteId): number {
+  return getLocalLineTripEstimate(routeId)?.fareThb ?? FARE_THB;
+}
+
 function typicalTripMinutes(routeId: LiveBusRouteId): number {
   return getLocalLineTripEstimate(routeId)?.tripMinutes ?? AIRPORT_TRIP_MINUTES;
+}
+
+/** Where a bus on a two-terminal line is heading: the terminal it didn't last visit. */
+function headingTo(book: VehicleLedger | undefined): string | null {
+  const line = lineFor(book?.routeId ?? null);
+  if (!line || !book?.lastTerminal) return null;
+  if (line.loop) return line.terminals[0]!.name;
+  return line.terminals.find((t) => t.name !== book.lastTerminal)?.name ?? null;
 }
 
 // ── the ledger step: fold one tracker snapshot into the day ────────────────
@@ -142,59 +237,89 @@ export function applySnapshot(prev: LiveLedger, buses: LiveBus[], nowMs: number)
     const fixMs = Number.isFinite(parsed) ? Math.min(parsed, nowMs) : nowMs;
     if (nowMs - fixMs > FRESH_FIX_MS) continue; // a stale fix says nothing about today
     if (bangkokDate(fixMs) !== ledger.date) continue;
-
-    const dest = norm(bus.destination);
-    const existing = ledger.vehicles[bus.plate];
     if (ledger.firstFixMs === null || fixMs < ledger.firstFixMs) ledger.firstFixMs = fixMs;
 
-    if (!existing) {
-      ledger.vehicles[bus.plate] = {
-        plate: bus.plate, routeId: bus.routeId, lat: bus.lat, lng: bus.lng, fixMs,
-        dest, pendingDest: null, lastFlipMin: null, km: 0,
-      };
-      continue;
-    }
-    if (fixMs <= existing.fixMs) continue; // the tracker re-served the same fix
+    const existing = ledger.vehicles[bus.plate];
+    if (existing && fixMs <= existing.fixMs) continue; // the tracker re-served the same fix
 
-    const next: VehicleLedger = { ...existing, routeId: bus.routeId };
+    const book: VehicleLedger = existing
+      ? { ...existing, votes: { ...existing.votes } }
+      : {
+          plate: bus.plate, routeId: null, votes: {}, lat: bus.lat, lng: bus.lng, fixMs, km: 0,
+          atTerminal: null, lastTerminal: null, leftTerminalMin: null, pathSinceTerminalM: 0,
+          lastPax: null, tripBoardings: 0, hasApc: false,
+        };
+    const fixMin = getBangkokNowFractionalMinutes(new Date(fixMs));
 
-    const dtMs = fixMs - existing.fixMs;
-    const meters = haversineDistanceMeters([existing.lat, existing.lng], [bus.lat, bus.lng]);
-    const kph = (meters / dtMs) * 3600;
-    if (dtMs <= MAX_KM_GAP_MS && meters >= MIN_MOVE_M && kph <= MAX_PLAUSIBLE_KPH) {
-      next.km = existing.km + meters / 1000;
-    }
-    next.lat = bus.lat;
-    next.lng = bus.lng;
-    next.fixMs = fixMs;
-
-    if (dest && existing.dest && dest !== existing.dest) {
-      if (next.pendingDest === dest) {
-        // Confirmed on two fixes: the bus reached `existing.dest` and turned.
-        const endMin = getBangkokNowFractionalMinutes(new Date(fixMs));
-        const startMin = existing.lastFlipMin;
-        const priced = estimateTripRiders(
-          bus.routeId,
-          existing.dest,
-          startMin ?? endMin - typicalTripMinutes(bus.routeId),
-          ledger.dow,
-        );
-        ledger.trips.push({
-          plate: bus.plate, routeId: bus.routeId, to: existing.dest,
-          startMin, endMin: Math.round(endMin), ...priced,
-        });
-        next.dest = dest;
-        next.pendingDest = null;
-        next.lastFlipMin = Math.round(endMin);
-      } else {
-        next.pendingDest = dest;
-      }
+    // Which line: the feed's label when it has one, else a vote of decisive fixes.
+    if (bus.routeId) {
+      book.routeId = bus.routeId;
     } else {
-      next.pendingDest = null; // a one-fix flicker, discarded
-      if (!existing.dest && dest) next.dest = dest;
+      const evidence = decisiveLine(bus.lat, bus.lng);
+      if (evidence) book.votes[evidence.routeId] = (book.votes[evidence.routeId] ?? 0) + 1;
+      const leader = (Object.entries(book.votes) as [LiveBusRouteId, number][]).sort((a, b) => b[1] - a[1])[0];
+      if (leader && leader[1] >= LINE_VOTES) book.routeId = leader[0];
     }
 
-    ledger.vehicles[bus.plate] = next;
+    // Distance driven.
+    if (existing) {
+      const dtMs = fixMs - existing.fixMs;
+      const meters = haversineDistanceMeters([existing.lat, existing.lng], [bus.lat, bus.lng]);
+      const kph = (meters / dtMs) * 3600;
+      if (kph <= MAX_PLAUSIBLE_KPH) {
+        book.pathSinceTerminalM += meters;
+        if (dtMs <= MAX_KM_GAP_MS && meters >= MIN_MOVE_M) book.km = existing.km + meters / 1000;
+      }
+    }
+    book.lat = bus.lat;
+    book.lng = bus.lng;
+    book.fixMs = fixMs;
+
+    // Passenger counter: every rise is a boarding. Read now, booked after the
+    // terminal step, so a rise on an arrival fix counts toward the next trip.
+    let boardedThisFix = 0;
+    if (bus.paxOnBoard !== null) {
+      if (bus.paxOnBoard > 0) book.hasApc = true;
+      const step = book.lastPax === null ? bus.paxOnBoard : bus.paxOnBoard - book.lastPax;
+      if (step > 0 && step <= MAX_BOARD_STEP) boardedThisFix = step;
+      book.lastPax = bus.paxOnBoard;
+    }
+
+    // Terminals: arriving at one closes a trip; dwelling there sets the departure time.
+    const line = lineFor(book.routeId);
+    const terminal = line?.terminals.find((t) => haversineDistanceMeters([bus.lat, bus.lng], [t.lat, t.lng]) <= TERMINAL_RADIUS_M) ?? null;
+    if (line && terminal) {
+      if (book.atTerminal !== terminal.name) {
+        const cameFromOtherEnd = line.loop || book.lastTerminal !== terminal.name;
+        if (cameFromOtherEnd && book.pathSinceTerminalM >= line.lengthM * 0.5) {
+          const startMin = book.lastTerminal ? book.leftTerminalMin : null;
+          const modelled = estimateTripRiders(line.routeId, terminal.name, startMin ?? fixMin - typicalTripMinutes(line.routeId), ledger.dow);
+          const counted = book.hasApc;
+          ledger.trips.push({
+            plate: bus.plate,
+            routeId: line.routeId,
+            from: book.lastTerminal,
+            to: terminal.name,
+            startMin: startMin === null ? null : Math.round(startMin),
+            endMin: Math.round(fixMin),
+            riders: counted ? book.tripBoardings : modelled.riders,
+            fareThb: counted ? fareFor(line.routeId) : modelled.fareThb,
+            basis: counted ? "apc-count" : modelled.basis,
+          });
+        }
+        // Boardings from here on belong to the next trip.
+        book.tripBoardings = 0;
+        book.atTerminal = terminal.name;
+        book.lastTerminal = terminal.name;
+      }
+      book.leftTerminalMin = fixMin;
+      book.pathSinceTerminalM = 0;
+    } else {
+      book.atTerminal = null;
+    }
+    book.tripBoardings += boardedThisFix;
+
+    ledger.vehicles[bus.plate] = book;
   }
   return ledger;
 }
@@ -202,9 +327,11 @@ export function applySnapshot(prev: LiveLedger, buses: LiveBus[], nowMs: number)
 // ── read model for the console ─────────────────────────────────────────────
 export type LiveVehicleRow = {
   plate: string;
-  routeId: LiveBusRouteId;
+  routeId: LiveBusRouteId | null;
+  /** Terminal it's driving toward, the tracker's destination text, or "". */
   destination: string;
   speedKph: number;
+  paxOnBoard: number | null;
   lastSeenSec: number;
   reporting: boolean;
   trips: number;
@@ -216,15 +343,20 @@ export type LiveVehicleRow = {
 export type LiveOpsSummary = {
   busesReporting: number;
   busesMoving: number;
+  /** Reporting buses assigned to a line (the rest are identifying, or parked off-route). */
+  busesOnLine: number;
+  /** Sum of live passenger counters, when any bus has one. */
+  paxOnBoardNow: number | null;
   tripsCompleted: number;
   kmDriven: number;
   riders: number;
+  /** Riders from passenger counters (the rest are modelled). */
+  ridersCounted: number;
   fareThb: number;
   /** Airport-line riders only: local-line ride length isn't modelled yet. */
   co2SavedKg: number;
   /** Bangkok minutes of the day's first fix, or null before any. */
   observedSinceMin: number | null;
-  pricedByScheduledRun: number;
   rows: LiveVehicleRow[];
 };
 
@@ -241,9 +373,10 @@ export function summarizeLedger(ledger: LiveLedger, buses: LiveBus[], nowMs: num
     const trips = ledger.trips.filter((trip) => trip.plate === plate);
     rows.push({
       plate,
-      routeId: (bus?.routeId ?? book?.routeId)!,
-      destination: bus?.destination ?? book?.dest ?? "",
+      routeId: bus?.routeId ?? book?.routeId ?? null,
+      destination: bus?.destination || headingTo(book) || "",
       speedKph: bus ? Math.round(bus.speedKph) : 0,
+      paxOnBoard: bus?.paxOnBoard ?? null,
       lastSeenSec,
       reporting: lastSeenSec * 1000 <= FRESH_FIX_MS,
       trips: trips.length,
@@ -252,31 +385,38 @@ export function summarizeLedger(ledger: LiveLedger, buses: LiveBus[], nowMs: num
       fareThb: trips.reduce((sum, trip) => sum + trip.riders * trip.fareThb, 0),
     });
   }
-  rows.sort((a, b) => Number(b.reporting) - Number(a.reporting) || b.fareThb - a.fareThb || a.plate.localeCompare(b.plate));
+  rows.sort((a, b) =>
+    Number(b.reporting) - Number(a.reporting)
+    || Number(b.routeId !== null) - Number(a.routeId !== null)
+    || b.fareThb - a.fareThb
+    || a.plate.localeCompare(b.plate));
 
   const reporting = rows.filter((row) => row.reporting);
+  const counters = reporting.filter((row) => row.paxOnBoard !== null);
   const airportRiders = ledger.trips.filter((t) => t.routeId === "rawai-airport").reduce((s, t) => s + t.riders, 0);
 
   return {
     busesReporting: reporting.length,
     busesMoving: reporting.filter((row) => row.speedKph > 4).length,
+    busesOnLine: reporting.filter((row) => row.routeId !== null).length,
+    paxOnBoardNow: counters.length > 0 ? counters.reduce((sum, row) => sum + (row.paxOnBoard ?? 0), 0) : null,
     tripsCompleted: ledger.trips.length,
     kmDriven: Math.round(rows.reduce((sum, row) => sum + row.km, 0)),
     riders: ledger.trips.reduce((sum, trip) => sum + trip.riders, 0),
+    ridersCounted: ledger.trips.filter((t) => t.basis === "apc-count").reduce((s, t) => s + t.riders, 0),
     fareThb: ledger.trips.reduce((sum, trip) => sum + trip.riders * trip.fareThb, 0),
     co2SavedKg: Math.round(airportRiders * ROI_CONSTANTS.avgTripKm * CO2_KG_PER_PAX_KM_SAVED),
     observedSinceMin: ledger.firstFixMs === null ? null : Math.floor(getBangkokNowFractionalMinutes(new Date(ledger.firstFixMs))),
-    pricedByScheduledRun: ledger.trips.filter((trip) => trip.basis === "scheduled-run").length,
     rows,
   };
 }
 
 // ── runtime: poll, persist, tween, notify ──────────────────────────────────
-export type LiveFeedStatus = "connecting" | "live" | "quiet" | "unconfigured" | "offline";
+export type LiveFeedStatus = "connecting" | "live" | "quiet" | "offline";
 
-type Tween = { fromLat: number; fromLng: number; toLat: number; toLng: number; heading: number; startMs: number };
+type Tween = { fromLat: number; fromLng: number; toLat: number; toLng: number; startMs: number };
 
-const STORAGE_KEY = "pksb.liveLedger.v1";
+const STORAGE_KEY = "pksb.liveLedger.v2";
 const listeners = new Set<() => void>();
 const tweens = new Map<string, Tween>();
 let ledger: LiveLedger = loadLedger();
@@ -284,6 +424,8 @@ let buses: LiveBus[] = [];
 let status: LiveFeedStatus = "connecting";
 let detail: string | null = null;
 let lastOkMs: number | null = null;
+let pollCount = 0;
+let okCount = 0;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let subscribers = 0;
 
@@ -314,20 +456,21 @@ function lerpPosition(tween: Tween, nowMs: number) {
 
 function ingest(feed: LiveBusFeed, nowMs: number) {
   if (feed.status !== "live") {
-    status = feed.status === "unconfigured" ? "unconfigured" : "offline";
+    status = "offline";
     detail = feed.detail ?? null;
     return;
   }
+  okCount += 1;
   lastOkMs = nowMs;
   detail = null;
   buses = feed.vehicles;
   for (const bus of buses) {
     const tween = tweens.get(bus.plate);
     if (!tween) {
-      tweens.set(bus.plate, { fromLat: bus.lat, fromLng: bus.lng, toLat: bus.lat, toLng: bus.lng, heading: bus.heading, startMs: nowMs });
+      tweens.set(bus.plate, { fromLat: bus.lat, fromLng: bus.lng, toLat: bus.lat, toLng: bus.lng, startMs: nowMs });
     } else if (tween.toLat !== bus.lat || tween.toLng !== bus.lng) {
       const shown = lerpPosition(tween, nowMs);
-      tweens.set(bus.plate, { fromLat: shown.lat, fromLng: shown.lng, toLat: bus.lat, toLng: bus.lng, heading: bus.heading, startMs: nowMs });
+      tweens.set(bus.plate, { fromLat: shown.lat, fromLng: shown.lng, toLat: bus.lat, toLng: bus.lng, startMs: nowMs });
     }
   }
   ledger = applySnapshot(ledger, buses, nowMs);
@@ -337,6 +480,7 @@ function ingest(feed: LiveBusFeed, nowMs: number) {
 }
 
 async function pollOnce() {
+  pollCount += 1;
   try {
     const res = await fetch(appPath("/api/live-buses"), { signal: AbortSignal.timeout(8_000), cache: "no-store" });
     const isJson = (res.headers.get("content-type") ?? "").includes("json");
@@ -377,29 +521,42 @@ export function subscribeLiveFeed(fn: () => void): () => void {
 }
 
 export function getLiveFeedState(nowMs = Date.now()) {
-  return { status, detail, lastOkMs, feedAgeSec: lastOkMs === null ? null : Math.round((nowMs - lastOkMs) / 1000), summary: summarizeLedger(ledger, buses, nowMs) };
+  return {
+    status,
+    detail,
+    lastOkMs,
+    pollCount,
+    okCount,
+    feedAgeSec: lastOkMs === null ? null : Math.round((nowMs - lastOkMs) / 1000),
+    summary: summarizeLedger(ledger, buses, nowMs),
+  };
 }
 
 /** Map instrument shape, tweened between the last two real fixes so a 15 s
  *  feed glides instead of jumping (at most one poll behind the tracker). */
 export function getLiveMapVehicles(nowMs = Date.now()): SimState["vehicles"] {
+  const nowMin = getBangkokNowFractionalMinutes(new Date(nowMs));
   return buses
     .filter((bus) => nowMs - Date.parse(bus.updatedAt) <= FRESH_FIX_MS)
     .map((bus) => {
       const tween = tweens.get(bus.plate);
       const pos = tween ? lerpPosition(tween, nowMs) : { lat: bus.lat, lng: bus.lng };
       const book = ledger.vehicles[bus.plate];
-      const nowMin = getBangkokNowFractionalMinutes(new Date(nowMs));
-      const current = estimateTripRiders(bus.routeId, bus.destination, book?.lastFlipMin ?? nowMin - typicalTripMinutes(bus.routeId) / 2, ledger.dow);
+      const routeId = bus.routeId ?? book?.routeId ?? null;
+      let pax = bus.paxOnBoard ?? 0;
+      if (bus.paxOnBoard === null && routeId) {
+        const to = headingTo(book) ?? bus.destination;
+        pax = estimateTripRiders(routeId, to, book?.leftTerminalMin ?? nowMin - typicalTripMinutes(routeId) / 2, ledger.dow).riders;
+      }
       return {
         id: `live-${bus.plate}`,
         lat: pos.lat,
         lng: pos.lng,
         heading: bus.heading,
         status: bus.speedKph > 4 ? "moving" : "dwelling",
-        route: bus.routeId,
-        pax: current.riders,
-        paxEstimated: true,
+        route: routeId ?? "unassigned",
+        pax,
+        paxEstimated: bus.paxOnBoard === null,
         plate: bus.plate,
       };
     });
@@ -413,4 +570,6 @@ export function __resetLiveFeed(): void {
   status = "connecting";
   detail = null;
   lastOkMs = null;
+  pollCount = 0;
+  okCount = 0;
 }
