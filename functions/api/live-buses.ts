@@ -26,7 +26,12 @@ import {
   type LiveBusFeed,
 } from "../../shared/pksbFeed";
 
-export type LiveBusEnv = { SMARTBUS_BEARER_TOKEN?: string; SMARTBUS_FEED_URL?: string; SMARTBUS_KEYLESS_URL?: string };
+export type LiveBusEnv = {
+  SMARTBUS_BEARER_TOKEN?: string;
+  SMARTBUS_FEED_URL?: string;
+  SMARTBUS_KEYLESS_URL?: string;
+  GPS_HISTORY?: any;
+};
 
 type PagesContext = {
   request: Request;
@@ -89,8 +94,41 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
   }
 
   const response = await buildLiveBusResponse(context.env);
-  if (edgeCache && response.status === 200) {
-    context.waitUntil(edgeCache.put(key, response.clone()));
+  if (response.status === 200) {
+    if (edgeCache) {
+      context.waitUntil(edgeCache.put(key, response.clone()));
+    }
+    if (context.env.GPS_HISTORY) {
+      try {
+        const cloned = response.clone();
+        const kvPromise = cloned.json().then((data: any) => {
+          if (data?.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+            const now = Date.now();
+            const batch = {
+              fetchedAt: now,
+              source: "pksb-tracker",
+              buses: data.vehicles.map((v: any) => ({
+                vehicleId: v.plate,
+                licensePlate: v.plate,
+                coordinates: [v.lat, v.lng],
+                speedKph: v.speedKph,
+                heading: v.heading,
+                timestamp: v.updatedAt,
+                routeId: v.routeId ?? undefined,
+                destinationHint: v.destination ?? undefined,
+                paxCount: v.paxOnBoard ?? undefined,
+              })),
+            };
+            return context.env.GPS_HISTORY.put(`batch:${now}`, JSON.stringify(batch), {
+              expirationTtl: 604800, // 7-day TTL
+            });
+          }
+        }).catch(() => {});
+        context.waitUntil(kvPromise);
+      } catch {
+        // Non-blocking KV write
+      }
+    }
   }
   return response;
 }
