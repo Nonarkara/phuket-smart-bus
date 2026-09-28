@@ -11,9 +11,9 @@
 # Copy the Functions tree into dist/client/functions/ before deploy,
 # otherwise the static bundle ships alone and every /api/* route 404s.
 #
-# Likewise, dist/client/404.html must mirror dist/client/index.html for
-# SPA fallback to work on Pages — Cloudflare serves 404.html for any
-# path the router doesn't recognise.
+# SPA routes (/ops, /v2, …) are public/_redirects → /index.html 200.
+# Do not add dist/client/404.html. Pages serves that file as a real 404
+# and it overrides the redirect, so /ops looks down.
 #
 # Usage:
 #   scripts/deploy.sh                  # auto commit-message from git log
@@ -39,8 +39,9 @@ fi
 echo "→ vite build"
 npx vite build
 
-echo "→ cp dist/client/index.html dist/client/404.html (SPA fallback)"
-cp dist/client/index.html dist/client/404.html
+# SPA fallback is public/_redirects (`/* /index.html 200`). Do not also
+# copy index.html to 404.html — Pages serves that file with status 404,
+# which wins over the redirect and makes /ops look down.
 
 echo "→ cp -r functions dist/client/functions (Pages Functions ship with dist)"
 cp -r functions dist/client/functions

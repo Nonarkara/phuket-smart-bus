@@ -247,8 +247,8 @@ export default function DashboardV2() {
   const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState(false);
 
   // ── LIVE ⇄ SIMULATION ──────────────────────────────────────────────────
-  // The tracker is polled for as long as the console is open, in either mode,
-  // so today's ledger has no holes when someone replays the simulation.
+  // The tracker is polled for as long as the console is open. The week
+  // archive is /api/collect/tick (a minute cron), not this screen.
   const [sourcePref, setSourcePref] = useState(getInitialSourcePref);
   const [live, setLive] = useState(() => getLiveFeedState());
   useEffect(() => {

@@ -4,6 +4,8 @@ import {
   emptyGpsDay,
   foldBatches,
   gpsBatchKey,
+  GPS_HISTORY_TTL_S,
+  studyDates,
   summarizeGpsDay,
   type GpsBusPing,
 } from "../../shared/gpsBatch";
@@ -20,8 +22,23 @@ function ping(over: Partial<GpsBusPing> & Pick<GpsBusPing, "coordinates">): GpsB
 }
 
 describe("gps history", () => {
-  it("lists newest batches first", () => {
+  it("lists newest batches first and keeps a study week past its last day", () => {
     expect(gpsBatchKey(2_000) < gpsBatchKey(1_000)).toBe(true);
+    expect(GPS_HISTORY_TTL_S).toBe(14 * 24 * 60 * 60);
+  });
+
+  it("names the seven Bangkok dates of a study that starts 30 Sep", () => {
+    expect(studyDates("2026-09-30", 7)).toEqual([
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+    ]);
+    expect(studyDates("2026-09-31", 7)).toBeNull();
+    expect(studyDates("2026-09-30", 100)).toHaveLength(14);
   });
 
   it("joins the Thai plate to the canonical plate and does not count riders already on board", () => {

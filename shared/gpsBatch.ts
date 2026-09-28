@@ -13,7 +13,12 @@
  */
 import { isOnPhuketIsland, plateKey } from "./pksbFeed";
 
-export const GPS_HISTORY_TTL_S = 7 * 24 * 60 * 60;
+/**
+ * A 7-day study has to still be there the week after it ends.
+ * Each key's clock starts at its last write, so day 1 of a
+ * Mon–Sun collection is readable through the following Monday.
+ */
+export const GPS_HISTORY_TTL_S = 14 * 24 * 60 * 60;
 /** Lexicographic inverse of a millisecond timestamp, so `kv.list` returns newest first. */
 const KEY_SPAN = 9_999_999_999_999;
 const MIN_MOVE_KM = 0.015;
@@ -83,6 +88,26 @@ export function bangkokDate(ms: number): string {
 
 export function gpsDayKey(ms: number): string {
   return `day:${bangkokDate(ms)}`;
+}
+
+const STUDY_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Noon in Bangkok for a calendar date, or null when it isn't a real date. */
+export function parseStudyDate(iso: string): number | null {
+  if (!STUDY_DATE.test(iso)) return null;
+  const ms = Date.parse(`${iso}T12:00:00+07:00`);
+  if (!Number.isFinite(ms) || bangkokDate(ms) !== iso) return null;
+  return ms;
+}
+
+/** `days` Bangkok dates beginning at `from`, capped at 14. Null if `from` isn't a date. */
+export function studyDates(from: string, days: number): string[] | null {
+  const start = parseStudyDate(from);
+  if (start === null) return null;
+  const n = Math.max(1, Math.min(14, Math.floor(days)));
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) out.push(bangkokDate(start + i * 86_400_000));
+  return out;
 }
 
 export function emptyGpsDay(ms: number): GpsDay {

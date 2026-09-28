@@ -11,19 +11,15 @@
  *   keyless  po-smartbus.phuket.cloud/vehicles/last  always — positions + APC
  *   token    smartbus-pk-api …/bus-news-2/           only if the secret is set
  *
+ * A successful fetch also folds the snapshot into the Bangkok-day
+ * ledger, at most once per RECORD_MIN_GAP_MS. The archive when nobody
+ * has this page open is GET /api/collect/tick, not this cache.
+ *
  * Pages → Settings → Variables and Secrets (all optional):
  *   SMARTBUS_BEARER_TOKEN  (secret)  adds line + destination labels
  *   SMARTBUS_KEYLESS_URL / SMARTBUS_FEED_URL  override the upstream URLs
  */
-import {
-  applyBusesToDay,
-  emptyGpsDay,
-  gpsBatchKey,
-  gpsDayKey,
-  GPS_HISTORY_TTL_S,
-  type GpsBusPing,
-  type GpsDay,
-} from "../../shared/gpsBatch";
+import { liveBusesToPings, recordFleetSample } from "../../shared/recordFleet";
 import {
   PKSB_FEED_URL,
   PKSB_KEYLESS_HEADERS,
@@ -113,32 +109,11 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
         const kvPromise = cloned.json().then(async (data: { vehicles?: LiveBus[] }) => {
           const vehicles = data?.vehicles;
           if (!Array.isArray(vehicles) || vehicles.length === 0) return;
-          const now = Date.now();
-          const buses: GpsBusPing[] = vehicles.map((v) => {
-            const ping: GpsBusPing = {
-              vehicleId: v.plate,
-              licensePlate: v.plate,
-              coordinates: [v.lat, v.lng],
-              speedKph: v.speedKph,
-              heading: v.heading,
-              timestamp: v.updatedAt,
-            };
-            if (v.routeId) ping.routeId = v.routeId;
-            if (v.destination) ping.destinationHint = v.destination;
-            if (v.paxOnBoard != null) ping.paxCount = v.paxOnBoard;
-            return ping;
-          });
-          const kv = context.env.GPS_HISTORY;
-          const batch = { fetchedAt: now, storedAt: now, source: "pksb-tracker", buses };
-          await kv.put(gpsBatchKey(now), JSON.stringify(batch), { expirationTtl: GPS_HISTORY_TTL_S });
-          const dayKey = gpsDayKey(now);
-          const prev = (await kv.get(dayKey, "json")) as GpsDay | null;
-          const next = applyBusesToDay(prev?.vehicles ? prev : emptyGpsDay(now), buses, now);
-          await kv.put(dayKey, JSON.stringify(next), { expirationTtl: GPS_HISTORY_TTL_S });
+          await recordFleetSample(context.env.GPS_HISTORY, liveBusesToPings(vehicles), Date.now());
         }).catch(() => {});
         context.waitUntil(kvPromise);
       } catch {
-        // Non-blocking KV write
+        // Non-blocking KV write. The cron hits /api/collect/tick, which awaits its write.
       }
     }
   }

@@ -1,0 +1,10 @@
+# Minute cron for the real-bus archive. Pages has the KV binding and
+# the parser; this worker only wakes GET /api/collect/tick.
+# Deploy beside the site: npx wrangler deploy -c wrangler.collector.toml
+name = "phuket-smart-bus-collector"
+main = "workers/collect.ts"
+compatibility_date = "2026-07-21"
+workers_dev = true
+
+[triggers]
+crons = ["* * * * *"]

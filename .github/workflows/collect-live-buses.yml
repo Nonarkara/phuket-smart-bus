@@ -1,0 +1,21 @@
+# Backup archive. The minute path is workers/collect.ts. GitHub's
+# finest schedule is 5 minutes and it can slip, so this only fills
+# gaps when the worker is down. It does not need a Cloudflare token:
+# the public tick route does the write.
+name: Collect live buses
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record one tracker sample
+        run: |
+          curl -fsS --retry 5 --retry-all-errors --retry-delay 15 --max-time 40 \
+            -A "phuket-smart-bus-collector" \
+            -H "accept: application/json" \
+            "https://bus.nonarkara.org/api/collect/tick"

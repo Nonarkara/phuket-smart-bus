@@ -8,9 +8,11 @@
  *
  * If today's key is missing (first minute after a deploy), fold the
  * newest `gps:` snapshots so the endpoint is not an empty 503.
+ * `?date=YYYY-MM-DD` reads that Bangkok day and does not fall back
+ * onto another day's batches. A missing day is zeros.
  */
 
-import { emptyGpsDay, foldBatches, gpsDayKey, summarizeGpsDay, type GpsBatch, type GpsDay } from "../../../shared/gpsBatch";
+import { bangkokDate, emptyGpsDay, foldBatches, gpsDayKey, parseStudyDate, summarizeGpsDay, type GpsBatch, type GpsDay } from "../../../shared/gpsBatch";
 
 interface PagesEventContext {
   request: Request;
@@ -41,12 +43,20 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
 
   try {
     const now = Date.now();
-    const dayKey = gpsDayKey(now);
+    const requested = new URL(context.request.url).searchParams.get("date");
+    if (requested && parseStudyDate(requested) === null) {
+      return new Response(JSON.stringify({ ok: false, error: "date must be YYYY-MM-DD" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...CORS },
+      });
+    }
+    const dayMs = requested ? parseStudyDate(requested)! : now;
+    const dayKey = gpsDayKey(dayMs);
     const stored = (await kv.get(dayKey, "json")) as GpsDay | null;
     let day = stored?.vehicles ? stored : null;
-    let source: "day-ledger" | "recent-batches" = "day-ledger";
+    let source: "day-ledger" | "recent-batches" | "missing" = "day-ledger";
 
-    if (!day) {
+    if (!day && !requested) {
       const listed = await kv.list({ prefix: "gps:", limit: 100 });
       const batches: GpsBatch[] = [];
       for (const entry of listed.keys) {
@@ -54,8 +64,13 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
         if (val && Array.isArray(val.buses)) batches.push(val);
       }
       day = batches.length > 0 ? foldBatches(batches) : emptyGpsDay(now);
-      source = "recent-batches";
+      source = batches.length > 0 ? "recent-batches" : "missing";
+    } else if (!day) {
+      day = emptyGpsDay(dayMs);
+      source = "missing";
     }
+    // A requested date must not be relabelled by foldBatches' first sample.
+    if (requested && day.date !== requested) day = { ...day, date: bangkokDate(dayMs) };
 
     return new Response(
       JSON.stringify({
