@@ -1294,6 +1294,15 @@ export function getClockState(): { mode: SimClockState['mode']; speed: number } 
   return { mode: simClock.mode, speed: simClock.speed };
 }
 
+/**
+ * True when the simulation is actively running (playing at >1× speed, or running a day sweep).
+ * When false (paused, or real-time 1× playback), the system displays real GPS positions
+ * from the live tracker whenever available.
+ */
+export function isSimulating(): boolean {
+  return simClock.runOnce || (simClock.mode === 'playing' && simClock.speed > 1);
+}
+
 /** All vehicles including orange line competitor, at the simulated instant. */
 /** All vehicles at the simulated instant. Pass `overrideMin` to sample a
  *  SPECIFIC minute without touching the clock — this makes the function a
@@ -1306,7 +1315,12 @@ export function getVehiclesNow(now = new Date(), overrideMin?: number): VehicleP
   const orange = buildOrangeLineVehicles(nowMin, now);
   const base = [...smart, ...orange];
 
-  // Merge direct GPS telemetry if available
+  // When we simulate, the bus will use the simulation algorithm we have designed.
+  if (isSimulating()) {
+    return base;
+  }
+
+  // When the simulation is not running, we let the bus run according to the real GPS.
   const liveMap = getLiveTelemetryVehicles(now.getTime());
   if (!liveMap || liveMap.size === 0) {
     return base;

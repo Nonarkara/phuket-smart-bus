@@ -13099,6 +13099,32 @@ a { color: var(--tint); }
   text-transform: uppercase;
   color: var(--ax-ink);
 }
+.v2-telemetry-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.v2-telemetry-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ax-ink-3);
+  max-width: 520px;
+}
+.v2-telemetry-export-btns {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.v2-telemetry-hud__stat--span2 {
+  grid-column: span 2;
+}
+.v2-btn--sm {
+  padding: 6px 10px;
+  font-size: 11px;
+}
 
 .v2-telemetry-actions {
   display: flex;

@@ -11,6 +11,13 @@ import {
 } from "../../engine/liveGpsReceiver";
 import { getVehiclesNow } from "../../engine/fleetSimulator";
 import { getPhuketProducerState } from "../../engine/phuketGpsProducer";
+import {
+  getFleetEfficiencySummary,
+  exportFleetEfficiencyJson,
+  exportFleetEfficiencyCsv,
+  resetFleetEfficiencyLedger,
+  type FleetEfficiencySummary,
+} from "../../engine/fleetEfficiency";
 
 interface TelemetryStatusModalProps {
   isOpen: boolean;
@@ -34,12 +41,14 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
   // We just read its state here so the modal can show feed health without
   // owning the polling lifecycle.
   const [producerState, setProducerState] = useState(() => getPhuketProducerState());
+  const [efficiency, setEfficiency] = useState<FleetEfficiencySummary>(() => getFleetEfficiencySummary());
 
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
       setHealth(getTelemetryHealth());
       setProducerState(getPhuketProducerState());
+      setEfficiency(getFleetEfficiencySummary());
     }, 1000);
     return () => clearInterval(interval);
   }, [isOpen]);
@@ -90,6 +99,39 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
     setEndpointSaved(true);
     setHealth(getTelemetryHealth());
     window.setTimeout(() => setEndpointSaved(false), 2400);
+  };
+
+  const handleDownloadJson = () => {
+    const data = exportFleetEfficiencyJson();
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pksb-fleet-efficiency-report-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadCsv = () => {
+    const data = exportFleetEfficiencyCsv();
+    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pksb-fleet-efficiency-data-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetEfficiency = () => {
+    if (typeof window !== "undefined" && window.confirm("Reset the 1-week fleet efficiency calibration ledger?")) {
+      resetFleetEfficiencyLedger();
+      setEfficiency(getFleetEfficiencySummary());
+    }
   };
 
   return (
@@ -208,6 +250,86 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 >
                   Clear Telemetry
                 </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Fleet Efficiency & 1-Week Calibration */}
+          <section className="v2-telemetry-section">
+            <div className="v2-telemetry-section__header">
+              <div>
+                <h3>Fleet Efficiency &amp; 1-Week Calibration</h3>
+                <small className="v2-telemetry-sub">
+                  Observed hardware signals calibrate cycle times, stop dwelling, and required fleet size for HKT airport demand.
+                </small>
+              </div>
+              <div className="v2-telemetry-export-btns">
+                <button
+                  type="button"
+                  className="v2-btn v2-btn--ghost v2-btn--sm"
+                  onClick={handleDownloadJson}
+                  title="Download complete calibration ledger as JSON"
+                >
+                  Download JSON
+                </button>
+                <button
+                  type="button"
+                  className="v2-btn v2-btn--ghost v2-btn--sm"
+                  onClick={handleDownloadCsv}
+                  title="Export fleet efficiency metrics as CSV for Excel/Numbers"
+                >
+                  Export CSV
+                </button>
+                <button
+                  type="button"
+                  className="v2-btn v2-btn--ghost v2-btn--sm text-warn"
+                  onClick={handleResetEfficiency}
+                  title="Reset recorded efficiency samples"
+                >
+                  Reset Ledger
+                </button>
+              </div>
+            </div>
+
+            <div className="v2-telemetry-hud">
+              <div className="v2-telemetry-hud__stat">
+                <span>MOVING / TRANSIT RATIO</span>
+                <strong className={efficiency.movingRatioPct >= 70 ? "text-accent" : "text-warn"}>
+                  {efficiency.movingRatioPct}%
+                </strong>
+                <small>{efficiency.fleetUtilizationPct}% total fleet utilization</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>AVERAGE OPERATING SPEED</span>
+                <strong className="text-ink">
+                  {efficiency.avgFleetSpeedKph} km/h
+                </strong>
+                <small>{efficiency.totalKmTracked} km tracked across {efficiency.daysCollected} day(s)</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>BUNCHING INCIDENTS</span>
+                <strong className={efficiency.detectedBunchingIncidents === 0 ? "text-accent" : "text-warn"}>
+                  {efficiency.detectedBunchingIncidents}
+                </strong>
+                <small>Buses &lt; 600m apart on same route</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>CYCLE TIME CALIBRATION</span>
+                <strong className={efficiency.cycleTimeInflationFactor > 1.1 ? "text-warn" : "text-accent"}>
+                  {efficiency.observedCycleTimeMin} min
+                </strong>
+                <small>95m nominal ({efficiency.cycleTimeInflationFactor}× inflation)</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat v2-telemetry-hud__stat--span2">
+                <span>OPTIMAL FLEET SIZING RECOMMENDATION</span>
+                <strong className={efficiency.recommendation.surplusDeficit > 0 ? "text-warn" : "text-accent"}>
+                  {efficiency.recommendation.recommendedBuses} Active Buses Required
+                </strong>
+                <small>{efficiency.recommendation.summaryText}</small>
               </div>
             </div>
           </section>
