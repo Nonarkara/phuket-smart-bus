@@ -13,14 +13,23 @@ Audit of Grok's collector (f18cdc2). Verified against the raw tracker, not the r
 - GitHub backup ran once in 4 h (not 5 min). TTL 14 d < "week/month".
 
 ## Fixes — ship before 2026-09-30 00:00 BKK
-- [ ] Parser: resolve GPSTime against UpdateTime; speed ÷10; carry odometer, online, raw passenger fields
-- [ ] Archive: odometer km (trace as fallback); counter honest ("no counter" ≠ 0 riders); coverage per day; raw rows kept
-- [ ] One writer: /api/live-buses stops writing; tick is the archive
-- [ ] Lock POST /api/collect/gps behind a secret
-- [ ] Week report: coverage, counters reporting, revenue null without a counter
-- [ ] Retention 45 days
-- [ ] Telemetry console: stop inventing riders
-- [ ] Tests on the real captured row; CDPT; verify live
+- [x] Parser: resolve GPSTime against UpdateTime; speed ÷10; carry odometer, online, raw passenger fields
+- [x] Archive: odometer km (trace as fallback); counter honest ("no counter" ≠ 0 riders); coverage per day; raw rows kept
+- [x] One writer: /api/live-buses stops writing; tick is the archive
+- [x] Lock POST /api/collect/gps behind a secret
+- [x] Week report: coverage, counters reporting, revenue null without a counter
+- [x] Retention 45 days
+- [x] Telemetry console: stop inventing riders
+- [x] Tests on the real captured row; CDPT; verify live
+
+## Verified live (9ac7554 + 8a80a9e, 11:40 BKK)
+fresh 11 = online 11 (was 20 vs 8) · 0 fixes in the future · max 34.4 km/h (was 529) · odometer carried · riders null, countersReporting 0 · POST /api/collect/gps 403 · KV >1,008 writes/day still landing (not free-tier capped).
+
+## Still open
+- Passenger counter: ask PKSB whether APC is fitted/enabled on CMSV6. Until then the study measures supply (km, hours, coverage), not riders or fares.
+- Trips per bus: not in the archive yet (tripsCompleted 0). Derivable after the week from raw samples (kept 45 d).
+- server/app.test.ts flakes (a different 1–3 tests each run, HEAD too) — shared data/pksb.sqlite3 state.
+- 2026-09-29 is a transition day (old + new rules). Present from 2026-09-30.
 
 # Triple-surface audit — 2026-07-28
 
