@@ -6,8 +6,8 @@
  * cache on `/api/live-buses` and awaits the KV write, so a cron that
  * reads the body has actually stored the fix. Callers:
  *
- *   workers/collect.ts          every minute, twice (about every 30 s)
- *   .github/workflows/collect-live-buses.yml   every 5 min, if the worker is down
+ *   workers/collect.ts          every minute, twice (about every 30 s) — the real path
+ *   .github/workflows/collect-live-buses.yml   best-effort backstop; GitHub runs it far less than its 5-min schedule
  *
  * A second call inside RECORD_MIN_GAP_MS is a 200 with recorded:false.
  * It does not write again.

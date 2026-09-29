@@ -1,7 +1,9 @@
-# Backup archive. The minute path is workers/collect.ts. GitHub's
-# finest schedule is 5 minutes and it can slip, so this only fills
-# gaps when the worker is down. It does not need a Cloudflare token:
-# the public tick route does the write.
+# Best-effort backstop, not a 5-minute guarantee. The minute path is
+# workers/collect.ts. GitHub delays and skips scheduled runs: on
+# 2026-09-29 this fired once in four hours. It only helps if the worker
+# cron stops while Pages and KV are fine; the week report's coverage
+# column is what shows a gap. No Cloudflare token needed: the public
+# tick route does the write.
 name: Collect live buses
 
 on:
