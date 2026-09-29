@@ -11,15 +11,13 @@
  *   keyless  po-smartbus.phuket.cloud/vehicles/last  always — positions + APC
  *   token    smartbus-pk-api …/bus-news-2/           only if the secret is set
  *
- * A successful fetch also folds the snapshot into the Bangkok-day
- * ledger, at most once per RECORD_MIN_GAP_MS. The archive when nobody
- * has this page open is GET /api/collect/tick, not this cache.
+ * This relay does not write the archive. GET /api/collect/tick does,
+ * on a cron, whether or not anyone has this page open.
  *
  * Pages → Settings → Variables and Secrets (all optional):
  *   SMARTBUS_BEARER_TOKEN  (secret)  adds line + destination labels
  *   SMARTBUS_KEYLESS_URL / SMARTBUS_FEED_URL  override the upstream URLs
  */
-import { liveBusesToPings, recordFleetSample } from "../../shared/recordFleet";
 import {
   PKSB_FEED_URL,
   PKSB_KEYLESS_HEADERS,
@@ -99,23 +97,10 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
   }
 
   const response = await buildLiveBusResponse(context.env);
-  if (response.status === 200) {
-    if (edgeCache) {
-      context.waitUntil(edgeCache.put(key, response.clone()));
-    }
-    if (context.env.GPS_HISTORY) {
-      try {
-        const cloned = response.clone();
-        const kvPromise = cloned.json().then(async (data: { vehicles?: LiveBus[] }) => {
-          const vehicles = data?.vehicles;
-          if (!Array.isArray(vehicles) || vehicles.length === 0) return;
-          await recordFleetSample(context.env.GPS_HISTORY, liveBusesToPings(vehicles), Date.now());
-        }).catch(() => {});
-        context.waitUntil(kvPromise);
-      } catch {
-        // Non-blocking KV write. The cron hits /api/collect/tick, which awaits its write.
-      }
-    }
+  if (response.status === 200 && edgeCache) {
+    context.waitUntil(edgeCache.put(key, response.clone()));
   }
+  // No archive write here. /api/collect/tick is the one writer; a second
+  // writer in another edge location overwrote the day key it couldn't see.
   return response;
 }

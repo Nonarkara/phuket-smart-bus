@@ -38,17 +38,21 @@ export async function collectTick(env: LiveBusEnv, fetchImpl: typeof fetch = fet
     );
   }
 
-  const fresh = body.vehicles.filter((v) => now - Date.parse(v.updatedAt) <= FRESH_MS).length;
+  const fresh = body.vehicles.filter((v) => {
+    const age = now - Date.parse(v.updatedAt);
+    return age >= -FRESH_MS && age <= FRESH_MS; // a fix from the future is a clock bug, not a fresh bus
+  }).length;
+  const online = body.vehicles.filter((v) => v.online === true).length;
   if (!env.GPS_HISTORY) {
     return new Response(
-      JSON.stringify({ ok: false, recorded: false, reason: "no-kv", vehicles: body.vehicles.length, fresh, serverTime: now }),
+      JSON.stringify({ ok: false, recorded: false, reason: "no-kv", vehicles: body.vehicles.length, fresh, online, serverTime: now }),
       { status: 503, headers: HEADERS },
     );
   }
 
   const result = await recordFleetSample(env.GPS_HISTORY, liveBusesToPings(body.vehicles), now);
   return new Response(
-    JSON.stringify({ ok: true, minGapMs: RECORD_MIN_GAP_MS, fresh, sources: body.sources ?? null, serverTime: now, ...result }),
+    JSON.stringify({ ok: true, minGapMs: RECORD_MIN_GAP_MS, fresh, online, sources: body.sources ?? null, serverTime: now, ...result }),
     { status: 200, headers: HEADERS },
   );
 }

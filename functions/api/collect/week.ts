@@ -2,9 +2,11 @@
  * GET /api/collect/week?from=YYYY-MM-DD&days=7
  *
  * One row per Bangkok day already stored by /api/collect/tick.
- * Missing days are zeros with missing:true — they are not estimated.
- * Default is the 7 days ending today. A study that starts on a
- * chosen morning is `?from=2026-09-30&days=7`.
+ * Missing days are missing:true with nulls — not zeros, not estimates.
+ * Each row says how much of the 05:00–24:00 window was sampled, where
+ * its km came from, and how many buses' counters ever spoke. Riders and
+ * fares are null unless a counter did. Default is the 7 days ending
+ * today; a study week is `?from=2026-09-30&days=7`.
  */
 import { bangkokDate, parseStudyDate, studyDates, summarizeGpsDay, type GpsDay } from "../../../shared/gpsBatch";
 
@@ -42,26 +44,38 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
     return new Response(JSON.stringify({ ok: false, error: "from must be YYYY-MM-DD" }), { status: 400, headers: HEADERS });
   }
 
+  const now = Date.now();
   const rows = [];
   for (const date of dates) {
     const stored = (await kv.get(`day:${date}`, "json")) as GpsDay | null;
     if (!stored?.vehicles) {
-      rows.push({ date, missing: true, updatedAt: null, totalTrackedVehicles: 0, totalKmTracked: 0, totalPaxServed: 0, totalRevenueThb: 0 });
+      rows.push({
+        date, missing: true, future: date > today, updatedAt: null, coverage: null,
+        totalTrackedVehicles: null, kmBasis: null, totalKmTracked: null, totalGpsTraceKm: null,
+        countersReporting: null, totalPaxServed: null, totalRevenueThb: null,
+      });
       continue;
     }
-    const summary = summarizeGpsDay(stored);
+    const summary = summarizeGpsDay(stored, now);
     rows.push({
       date,
       missing: false,
+      future: false,
       updatedAt: stored.updatedAt,
+      coverage: summary.coverage,
       totalTrackedVehicles: summary.totalTrackedVehicles,
+      kmBasis: summary.kmBasis,
       totalKmTracked: summary.totalKmTracked,
+      totalGpsTraceKm: summary.totalGpsTraceKm,
+      countersReporting: summary.countersReporting,
       totalPaxServed: summary.totalPaxServed,
       totalRevenueThb: summary.totalRevenueThb,
     });
   }
 
   const present = rows.filter((row) => !row.missing);
+  const counted = present.filter((row) => row.totalPaxServed !== null);
+  const pastMissing = rows.filter((row) => row.missing && !row.future).map((row) => row.date);
   return new Response(
     JSON.stringify({
       ok: true,
@@ -69,9 +83,15 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
       through: dates[dates.length - 1],
       days: rows,
       daysPresent: present.length,
-      totalKmTracked: Math.round(present.reduce((s, row) => s + row.totalKmTracked, 0) * 10) / 10,
-      totalPaxServed: present.reduce((s, row) => s + row.totalPaxServed, 0),
-      totalRevenueThb: present.reduce((s, row) => s + row.totalRevenueThb, 0),
+      daysMissing: pastMissing,
+      totalKmTracked: Math.round(present.reduce((s, row) => s + (row.totalKmTracked ?? 0), 0) * 10) / 10,
+      /** Riders over days a counter reported. Null when none did — unknown, not zero. */
+      totalPaxServed: counted.length ? counted.reduce((s, row) => s + (row.totalPaxServed ?? 0), 0) : null,
+      totalRevenueThb: counted.length ? counted.reduce((s, row) => s + (row.totalRevenueThb ?? 0), 0) : null,
+      riderDays: counted.length,
+      note: counted.length < present.length
+        ? `Riders are measured only where a bus's passenger counter read above zero. ${present.length - counted.length} of ${present.length} recorded day(s) had no working counter, so riders and fares there are unknown, not zero.`
+        : null,
     }),
     { status: 200, headers: HEADERS },
   );

@@ -1,12 +1,12 @@
 /**
- * One writer for the real-bus archive.
- *
- * `/api/live-buses` (the wall screen) and `/api/collect/tick` (the
- * minute cron) both call this. A second sample inside the gap is
- * dropped, so the two callers cannot double-count a boarding or
- * flood KV. The day ledger is still one key per Bangkok date.
+ * The one writer for the real-bus archive, called only by
+ * `/api/collect/tick` (the minute cron). The wall screen reads the
+ * tracker but does not write: two writers read-modify-writing one KV
+ * key from different edge locations lose each other's updates. A
+ * second call inside the gap is dropped, so a double-fired cron
+ * cannot double-count.
  */
-import type { LiveBus } from "./pksbFeed";
+import type { LiveBus } from "./pksbFeed.js";
 import {
   applyBusesToDay,
   emptyGpsDay,
@@ -16,7 +16,7 @@ import {
   summarizeGpsDay,
   type GpsBusPing,
   type GpsDay,
-} from "./gpsBatch";
+} from "./gpsBatch.js";
 
 /** Two samples a minute. A stop is longer than this; a double-fired cron is not. */
 export const RECORD_MIN_GAP_MS = 25_000;
@@ -32,8 +32,10 @@ export type RecordResult = {
   date: string;
   vehicles: number;
   totalKmTracked: number;
-  totalPaxServed: number;
-  totalRevenueThb: number;
+  /** Null when no counter has reported: riders unknown, not zero. */
+  totalPaxServed: number | null;
+  totalRevenueThb: number | null;
+  countersReporting: number;
   updatedAt: number | null;
 };
 
@@ -52,18 +54,23 @@ export function liveBusesToPings(vehicles: LiveBus[]): GpsBusPing[] {
     if (v.routeId) ping.routeId = v.routeId;
     if (v.destination) ping.destinationHint = v.destination;
     if (v.paxOnBoard != null) ping.paxCount = v.paxOnBoard;
+    if (v.paxUp != null) ping.paxUp = v.paxUp;
+    if (v.paxDown != null) ping.paxDown = v.paxDown;
+    if (v.odometerM != null) ping.odometerM = v.odometerM;
+    if (v.online != null) ping.online = v.online;
     pings.push(ping);
   }
   return pings;
 }
 
-function totalsOf(day: GpsDay): Pick<RecordResult, "vehicles" | "totalKmTracked" | "totalPaxServed" | "totalRevenueThb" | "updatedAt"> {
+function totalsOf(day: GpsDay): Pick<RecordResult, "vehicles" | "totalKmTracked" | "totalPaxServed" | "totalRevenueThb" | "countersReporting" | "updatedAt"> {
   const summary = summarizeGpsDay(day);
   return {
     vehicles: summary.totalTrackedVehicles,
     totalKmTracked: summary.totalKmTracked,
     totalPaxServed: summary.totalPaxServed,
     totalRevenueThb: summary.totalRevenueThb,
+    countersReporting: summary.countersReporting,
     updatedAt: day.updatedAt,
   };
 }
@@ -78,16 +85,10 @@ export async function recordFleetSample(kv: FleetKv, buses: GpsBusPing[], nowMs:
   }
   if (buses.length === 0) {
     const date = prev?.date ?? emptyGpsDay(nowMs).date;
-    return {
-      recorded: false,
-      reason: "no-vehicles",
-      date,
-      vehicles: prev ? Object.keys(prev.vehicles).length : 0,
-      totalKmTracked: prev ? totalsOf(prev).totalKmTracked : 0,
-      totalPaxServed: prev ? totalsOf(prev).totalPaxServed : 0,
-      totalRevenueThb: prev ? totalsOf(prev).totalRevenueThb : 0,
-      updatedAt: prev?.updatedAt ?? null,
-    };
+    const totals = prev
+      ? totalsOf(prev)
+      : { vehicles: 0, totalKmTracked: 0, totalPaxServed: null, totalRevenueThb: null, countersReporting: 0, updatedAt: null };
+    return { recorded: false, reason: "no-vehicles", date, ...totals };
   }
 
   const batch = { fetchedAt: nowMs, storedAt: nowMs, source: "pksb-tracker", buses };

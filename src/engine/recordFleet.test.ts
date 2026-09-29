@@ -1,4 +1,5 @@
 import { collectTick } from "../../functions/api/collect/tick";
+import { onRequestPost } from "../../functions/api/collect/gps";
 import { GPS_HISTORY_TTL_S } from "../../shared/gpsBatch";
 import { recordFleetSample, type FleetKv } from "../../shared/recordFleet";
 import type { GpsBusPing } from "../../shared/gpsBatch";
@@ -44,7 +45,11 @@ describe("fleet archive", () => {
     expect(rushed.reason).toBe("recent");
     expect(rushed.totalPaxServed).toBe(0);
 
-    const next = await recordFleetSample(kv, [ping({ paxCount: 9, coordinates: [7.9, 98.39] })], t0 + 60_000);
+    const next = await recordFleetSample(
+      kv,
+      [ping({ paxCount: 9, coordinates: [7.9, 98.39], timestamp: new Date(t0 + 60_000).toISOString() })],
+      t0 + 60_000,
+    );
     expect(next.recorded).toBe(true);
     expect(next.totalPaxServed).toBe(5);
     expect(next.totalRevenueThb).toBe(500);
@@ -59,6 +64,39 @@ describe("fleet archive", () => {
     expect(result.recorded).toBe(false);
     expect(result.reason).toBe("no-vehicles");
     expect(kv.puts).toHaveLength(0);
+  });
+});
+
+describe("POST /api/collect/gps — the door into the study ledger", () => {
+  const body = (fetchedAt: number) => JSON.stringify({
+    fetchedAt,
+    source: "someone",
+    buses: [{ vehicleId: "10-9999", coordinates: [7.89, 98.39], speedKph: 30, timestamp: new Date(fetchedAt).toISOString(), paxCount: 40 }],
+  });
+  const post = (env: Record<string, unknown>, init: { body: string; token?: string }) =>
+    onRequestPost({
+      request: new Request("https://bus.nonarkara.org/api/collect/gps", {
+        method: "POST",
+        body: init.body,
+        headers: init.token ? { authorization: `Bearer ${init.token}` } : {},
+      }),
+      env: env as never,
+    });
+
+  it("is closed when no INGEST_TOKEN is set, and to anyone without it", async () => {
+    const kv = memoryKv();
+    expect((await post({ GPS_HISTORY: kv }, { body: body(Date.now()) })).status).toBe(403);
+    expect((await post({ GPS_HISTORY: kv, INGEST_TOKEN: "s3cret" }, { body: body(Date.now()), token: "guess" })).status).toBe(403);
+    expect(kv.puts).toHaveLength(0);
+  });
+
+  it("with the token, still refuses a batch back-dated into another day", async () => {
+    const kv = memoryKv();
+    const env = { GPS_HISTORY: kv, INGEST_TOKEN: "s3cret" };
+    const lastWeek = Date.now() - 7 * 86_400_000;
+    expect((await post(env, { body: body(lastWeek), token: "s3cret" })).status).toBe(422);
+    expect(kv.puts).toHaveLength(0);
+    expect((await post(env, { body: body(Date.now()), token: "s3cret" })).status).toBe(200);
   });
 });
 

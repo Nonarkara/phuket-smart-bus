@@ -5,6 +5,7 @@ import {
   parseKeylessFeed,
   parsePksbFeed,
   plateKey,
+  resolveKeylessFixTime,
   type LiveBus,
   type PksbRawRecord,
 } from "@shared/pksbFeed";
@@ -78,18 +79,40 @@ function drive(
 }
 
 describe("tracker parsing", () => {
-  it("keyless rows: canonical plate, [lat, lon] strings, heading, GPS time and the passenger counter", () => {
-    const [b] = parseKeylessFeed([{
-      licence: "10-1230ภูเก็ต",
-      lat: "7.867424",
-      lon: "98.396622",
-      speed: "42",
-      data: JSON.stringify({ HangXiang: 173, GPSTime: "2026-09-25T12:00:00.000Z", Satellites: 12, PeopleCur: 18 }),
-    }], Date.parse("2026-09-25T12:00:10Z"));
+  it("keyless rows, as the tracker really sends them: Bangkok clock stamped Z, speed in tenths, odometer", () => {
+    // Captured 2026-09-29 04:08 UTC (11:08 Bangkok), bus 10-1240 driving.
+    const captured = {
+      licence: "10-1240ภูเก็ต",
+      lat: "7.828499",
+      lon: "98.343725",
+      speed: "529",
+      data: JSON.stringify({
+        Online: 1, Speed: 529, HangXiang: 16, Satellites: 12, LiCheng: 52076500,
+        GPSTime: "2026-09-29T11:08:13.000Z", RecvTime: "2026-09-29T11:08:13.000Z", UpdateTime: "2026-09-29T04:08:15.000Z",
+        PeopleCur: 0, CurPeople: 0, PeopleUp: 0, PeopleDown: 0, IncrPeople: 0,
+      }),
+    };
+    const [b] = parseKeylessFeed([captured], Date.parse("2026-09-29T04:08:42Z"));
     expect(b).toMatchObject({
-      plate: "10-1230", vehicleId: "10-1230ภูเก็ต", lat: 7.867424, lng: 98.396622,
-      speedKph: 42, heading: 173, paxOnBoard: 18, routeId: null, updatedAt: "2026-09-25T12:00:00.000Z",
+      plate: "10-1240", vehicleId: "10-1240ภูเก็ต", lat: 7.828499, lng: 98.343725, heading: 16, routeId: null,
+      updatedAt: "2026-09-29T04:08:13.000Z", // not 11:08Z — that's 7 h in the future
+      speedKph: 52.9, // not 529 km/h
+      odometerM: 52076500,
+      online: true,
+      paxOnBoard: 0, paxUp: 0, paxDown: 0,
     });
+  });
+
+  it("a fix two days stale resolves against the server's receive time, not against now", () => {
+    // 10-1229, parked since 27 Sep. "Nearest now" would pick the later, wrong reading.
+    expect(resolveKeylessFixTime("2026-09-27T09:08:04.000Z", "2026-09-27T02:11:08.000Z", Date.parse("2026-09-29T04:08:42Z")))
+      .toBe("2026-09-27T02:08:04.000Z");
+    // No UpdateTime on the row: anchored on now, never in the future.
+    expect(resolveKeylessFixTime("2026-09-29T11:08:13.000Z", undefined, Date.parse("2026-09-29T04:08:42Z")))
+      .toBe("2026-09-29T04:08:13.000Z");
+    // If the vendor ever sends true UTC, the anchor still picks it.
+    expect(resolveKeylessFixTime("2026-09-29T04:08:13.000Z", "2026-09-29T04:08:15.000Z", Date.parse("2026-09-29T04:08:42Z")))
+      .toBe("2026-09-29T04:08:13.000Z");
   });
 
   it("keyless rows: survives truncated inner JSON, drops the 0,0 depot sentinel and plateless rows", () => {

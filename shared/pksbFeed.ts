@@ -69,6 +69,13 @@ export type LiveBus = {
   paxOnBoard: number | null;
   /** When the device took the fix (ISO, UTC). */
   updatedAt: string;
+  /** Device odometer in metres (keyless `LiCheng`). Null when absent. */
+  odometerM?: number | null;
+  /** Tracker's own "device connected" flag (keyless `Online`). */
+  online?: boolean | null;
+  /** Counter's boarded / alighted fields (`PeopleUp` / `PeopleDown`), raw. */
+  paxUp?: number | null;
+  paxDown?: number | null;
 };
 
 export type LiveBusFeedStatus = "live" | "upstream_error";
@@ -171,6 +178,33 @@ export function parsePksbFeed(json: unknown, nowMs = Date.now()): LiveBus[] {
 }
 
 // ── keyless feed (vehicles/last) ───────────────────────────────────────────
+/**
+ * The keyless tracker's device clock is Bangkok wall time with a `Z` stuck
+ * on it: at 04:08 UTC a moving bus reports `GPSTime "…T11:08:13.000Z"`.
+ * `UpdateTime` on the same row is the server's receive time in real UTC
+ * ("…T04:08:15.000Z"). A fix can't be received before it was taken, so of
+ * the two readings of GPSTime (as UTC, as +07:00) take the one nearest
+ * UpdateTime that isn't after it. That holds for a fix two days stale too,
+ * where "nearest now" picks the wrong one. No UpdateTime: anchor on now.
+ */
+export function resolveKeylessFixTime(gpsTime: unknown, updateTime: unknown, nowMs: number): string | null {
+  const anchorParsed = typeof updateTime === "string" ? Date.parse(updateTime) : NaN;
+  const anchor = Number.isFinite(anchorParsed) ? anchorParsed : nowMs;
+  if (typeof gpsTime !== "string" || !gpsTime.trim()) {
+    return Number.isFinite(anchorParsed) ? new Date(anchorParsed).toISOString() : null;
+  }
+  const wall = gpsTime.trim().replace(" ", "T").replace(/(\.\d{3})\d+/, "$1").replace(ZONE_SUFFIX, "");
+  const readings = [Date.parse(`${wall}Z`), Date.parse(`${wall}+07:00`)].filter(Number.isFinite);
+  if (readings.length === 0) return null;
+  const possible = readings.filter((t) => t <= anchor + 120_000);
+  const pool = possible.length > 0 ? possible : readings;
+  const best = pool.reduce((a, b) => (Math.abs(a - anchor) <= Math.abs(b - anchor) ? a : b));
+  return new Date(best).toISOString();
+}
+
+/** CMSV6 trackers send speed in tenths of a km/h: 529 is 52.9 km/h (odometer-checked). */
+const SPEED_UNITS_PER_KPH = 10;
+
 export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus | null {
   const rawPlate = String(row?.licence ?? "").trim();
   if (!rawPlate) return null;
@@ -178,7 +212,10 @@ export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus
   const lng = Number(row.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inPhuket(lat, lng)) return null;
 
-  let inner: { HangXiang?: unknown; GPSTime?: unknown; PeopleCur?: unknown } = {};
+  let inner: {
+    HangXiang?: unknown; GPSTime?: unknown; UpdateTime?: unknown; Speed?: unknown; LiCheng?: unknown;
+    Online?: unknown; PeopleCur?: unknown; PeopleUp?: unknown; PeopleDown?: unknown;
+  } = {};
   if (typeof row.data === "string" && row.data.length > 0) {
     try {
       inner = JSON.parse(row.data) as typeof inner;
@@ -187,11 +224,17 @@ export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus
     }
   }
 
-  // Some real rows omit GPSTime (seen on the live feed): the relay's fetch time
-  // stands in, so those buses stay visible rather than vanishing.
-  const updatedAt = normalizeTrackerTime(typeof inner.GPSTime === "string" ? inner.GPSTime : null, nowMs)
-    ?? new Date(nowMs).toISOString();
-  const pax = finiteOrNull(inner.PeopleCur);
+  // No usable time at all: the fetch time stands in so the bus stays visible.
+  // ponytail: that makes an unknown-age fix look fresh; rows seen so far always carry UpdateTime.
+  const updatedAt = resolveKeylessFixTime(inner.GPSTime, inner.UpdateTime, nowMs) ?? new Date(nowMs).toISOString();
+  const onBoard = finiteOrNull(inner.PeopleCur);
+  // Up/down may be running totals, so no seat cap; kept raw for the archive.
+  const tally = (v: unknown) => {
+    const n = finiteOrNull(v);
+    return n !== null && n >= 0 ? Math.round(n) : null;
+  };
+  const rawSpeed = finiteOrNull(inner.Speed) ?? finiteOrNull(row.speed) ?? 0;
+  const odometer = finiteOrNull(inner.LiCheng);
 
   return {
     id: plateKey(rawPlate),
@@ -200,11 +243,15 @@ export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus
     lat,
     lng,
     heading: finiteOrNull(inner.HangXiang) ?? 0,
-    speedKph: Math.max(0, finiteOrNull(row.speed) ?? 0),
+    speedKph: Math.max(0, Math.round((rawSpeed / SPEED_UNITS_PER_KPH) * 10) / 10),
     routeId: null,
     destination: "",
-    paxOnBoard: pax !== null && pax >= 0 && pax <= 120 ? Math.round(pax) : null,
+    paxOnBoard: onBoard !== null && onBoard >= 0 && onBoard <= 120 ? Math.round(onBoard) : null,
     updatedAt,
+    odometerM: odometer !== null && odometer > 0 ? odometer : null,
+    online: inner.Online === undefined ? null : Number(inner.Online) === 1,
+    paxUp: tally(inner.PeopleUp),
+    paxDown: tally(inner.PeopleDown),
   };
 }
 

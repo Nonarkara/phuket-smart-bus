@@ -335,11 +335,18 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
             {/* Real Bus Financial & Revenue Ledger */}
             <div className="v2-telemetry-hud v2-telemetry-hud--finance">
               <div className="v2-telemetry-hud__stat">
-                <span>REAL GPS REVENUE EARNED</span>
-                <strong className="text-gain">
-                  ฿{efficiency.totalRevenueThb.toLocaleString()}
-                </strong>
-                <small>{efficiency.totalPaxServed.toLocaleString()} pax @ ฿100 flat fare</small>
+                <span>FARES FROM PASSENGER COUNTERS</span>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-gain">฿{efficiency.totalRevenueThb.toLocaleString()}</strong>
+                    <small>{efficiency.totalPaxServed.toLocaleString()} counted boardings @ ฿100 · {efficiency.countersReporting} bus(es) counting</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">Unknown</strong>
+                    <small>No bus's passenger counter has read above zero. Riders aren't measured, so fares and margin aren't shown.</small>
+                  </>
+                )}
               </div>
 
               <div className="v2-telemetry-hud__stat">
@@ -352,26 +359,51 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
 
               <div className="v2-telemetry-hud__stat">
                 <span>NET OPERATING MARGIN</span>
-                <strong className={efficiency.netMarginThb >= 0 ? "text-gain" : "text-warn"}>
-                  {efficiency.netMarginThb >= 0 ? "+" : "−"}฿{Math.abs(efficiency.netMarginThb).toLocaleString()}
-                </strong>
-                <small>{efficiency.profitMarginPct}% margin · {efficiency.tripsCompleted} trips completed</small>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className={efficiency.netMarginThb >= 0 ? "text-gain" : "text-warn"}>
+                      {efficiency.netMarginThb >= 0 ? "+" : "−"}฿{Math.abs(efficiency.netMarginThb).toLocaleString()}
+                    </strong>
+                    <small>{efficiency.profitMarginPct}% margin on counted fares</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">—</strong>
+                    <small>Needs counted fares</small>
+                  </>
+                )}
               </div>
 
               <div className="v2-telemetry-hud__stat">
                 <span>PASSENGER BENEFIT</span>
-                <strong className="text-gain">
-                  ฿{efficiency.passengerSavingsThb.toLocaleString()} Saved
-                </strong>
-                <small>vs Grab/taxi · {efficiency.totalCo2SavedKg} kg CO₂ saved</small>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-gain">฿{efficiency.passengerSavingsThb.toLocaleString()} Saved</strong>
+                    <small>vs Grab/taxi · {efficiency.totalCo2SavedKg} kg CO₂ saved</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">—</strong>
+                    <small>Needs counted riders</small>
+                  </>
+                )}
               </div>
 
               <div className="v2-telemetry-hud__stat v2-telemetry-hud__stat--span2">
                 <span>REVENUE DENSITY &amp; EFFICIENCY</span>
-                <strong className="text-ink">
-                  ฿{efficiency.revenuePerKm} / km · ฿{efficiency.revenuePerActiveBus.toLocaleString()} / active bus
-                </strong>
-                <small>Traced directly from real bus GPS pings and APC door counts</small>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-ink">
+                      ฿{efficiency.revenuePerKm} / km · ฿{efficiency.revenuePerActiveBus.toLocaleString()} / active bus
+                    </strong>
+                    <small>Counted fares over GPS kilometres</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-ink">—</strong>
+                    <small>Kilometres are measured; fares aren't until a counter reports</small>
+                  </>
+                )}
               </div>
             </div>
           </section>
@@ -462,6 +494,7 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                     const km = eff?.totalDistanceKm ?? 0;
                     const trips = eff?.tripsCompleted ?? 0;
                     const pax = eff?.paxServed ?? 0;
+                    const counted = (eff?.apcBoardings ?? 0) > 0;
 
                     return (
                       <tr key={v.vehicleId || v.id} className={isGps ? "is-live-gps" : ""}>
@@ -477,15 +510,15 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                           </span>
                         </td>
                         <td>{isGps ? trips : "—"}</td>
-                        <td>{isGps ? pax : "—"}</td>
+                        <td>{isGps && counted ? pax : isGps ? "no counter" : "—"}</td>
                         <td>
                           <strong className={rev > 0 ? "text-gain" : "text-ink"}>
-                            {isGps ? `฿${rev.toLocaleString()}` : "—"}
+                            {isGps && counted ? `฿${rev.toLocaleString()}` : "—"}
                           </strong>
                         </td>
                         <td>
                           <span className={margin > 0 ? "text-gain" : margin < 0 ? "text-warn" : "text-ink"}>
-                            {isGps ? `${margin >= 0 ? "+" : "−"}฿${Math.abs(margin).toLocaleString()}` : "—"}
+                            {isGps && counted ? `${margin >= 0 ? "+" : "−"}฿${Math.abs(margin).toLocaleString()}` : "—"}
                           </span>
                         </td>
                         <td>{v.speedKph} km/h</td>

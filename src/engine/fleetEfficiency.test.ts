@@ -187,7 +187,7 @@ describe("fleetEfficiency engine", () => {
     expect(summary.passengerSavingsThb).toBe(14 * (720 - 100));
   });
 
-  it("calculates calibrated trip revenue when APC is uncalibrated or reporting 0", () => {
+  it("without a passenger counter it counts kilometres and invents no riders", () => {
     const t0 = Date.now();
     // Bus drives a full corridor leg (~36 km) without APC paxCount
     recordFleetEfficiencySample(
@@ -220,12 +220,12 @@ describe("fleetEfficiency engine", () => {
     expect(bus).toBeDefined();
     expect(bus!.totalDistanceKm).toBeGreaterThan(35);
     expect(bus!.tripsCompleted).toBeGreaterThanOrEqual(1);
-    // At least 18 pax for 1 trip
-    expect(bus!.paxServed).toBeGreaterThanOrEqual(18);
-    expect(bus!.revenueThb).toBe(bus!.paxServed * 100);
-    // Cost ~37 km × ฿35 = ~฿1,295
+    // The old rule filled a silent counter with 18 riders per 35 km and called it real revenue.
+    expect(bus!.paxServed).toBe(0);
+    expect(bus!.revenueThb).toBe(0);
+    expect(summary.countersReporting).toBe(0);
+    // Cost ~37 km × ฿35 = ~฿1,295 — kilometres are measured, the rate is a stated assumption.
     expect(bus!.operatingCostThb).toBeGreaterThan(1200);
-    expect(bus!.netMarginThb).toBe(bus!.revenueThb - bus!.operatingCostThb);
   });
 });
 

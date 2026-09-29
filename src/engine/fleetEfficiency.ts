@@ -106,6 +106,8 @@ export interface FleetEfficiencySummary {
   netMarginThb: number;
   profitMarginPct: number;
   totalPaxServed: number;
+  /** Buses whose passenger counter rose at least once. 0 = riders and fares unknown. */
+  countersReporting: number;
   totalCo2SavedKg: number;
   tripsCompleted: number;
   revenuePerKm: number;
@@ -128,7 +130,6 @@ const TARGET_AIRPORT_HEADWAY_MIN = 30;
 export const FARE_THB = 100;
 export const OPEX_PER_KM_THB = 35;
 export const NOMINAL_CORRIDOR_KM = 35;
-export const CALIBRATED_PAX_PER_TRIP = 18;
 export const GRAB_EQUIV_FARE_THB = 720;
 export const CO2_KG_PER_PAX_TRIP = 4.2; // 28 km * 0.15 kg/pax-km
 
@@ -343,14 +344,10 @@ export function recordFleetEfficiencySample(
       record.lastPaxCount = currentPax;
     }
 
-    // Derive passengers served & financial ledger for this vehicle
-    if (record.apcBoardings > 0) {
-      record.paxServed = record.apcBoardings;
-    } else {
-      const inTransitKm = record.totalDistanceKm % NOMINAL_CORRIDOR_KM;
-      const inTransitPax = Math.round(inTransitKm * 0.5);
-      record.paxServed = (record.tripsCompleted * CALIBRATED_PAX_PER_TRIP) + inTransitPax;
-    }
+    // Riders come from the bus's counter or not at all. A silent counter is
+    // "no counter", shown as such — not 18 riders per 35 km, which this panel
+    // labelled "real GPS revenue" while every counter in the fleet read 0.
+    record.paxServed = record.apcBoardings;
 
     record.revenueThb = record.paxServed * FARE_THB;
     record.operatingCostThb = Math.round(record.totalDistanceKm * OPEX_PER_KM_THB);
@@ -517,6 +514,7 @@ export function getFleetEfficiencySummary(now = Date.now()): FleetEfficiencySumm
     netMarginThb,
     profitMarginPct,
     totalPaxServed,
+    countersReporting: vehicles.filter((v) => (v.apcBoardings ?? 0) > 0).length,
     totalCo2SavedKg,
     tripsCompleted: totalTripsCompleted,
     revenuePerKm,
