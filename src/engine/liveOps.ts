@@ -43,9 +43,21 @@ const MIN_MOVE_M = 15;
 const MAX_PLAUSIBLE_KPH = 120;
 /** Within this of a terminal point the bus is AT that terminal. */
 const TERMINAL_RADIUS_M = 400;
-/** A fix this close to one line and this much farther from every other is evidence for it. */
-const ON_LINE_M = 250;
-const LINE_MARGIN_M = 400;
+/**
+ * A fix this close to one line is a vote for it. The keyless tracker's CMSV6
+ * devices have ~50 m of jitter + a systematic offset vs the OSM polylines we
+ * loaded years ago (the polylines run on the western coast while real
+ * service drives on the eastern corridor). 500 m covers both the jitter
+ * and the polyline drift. At 250 m we were rejecting every bus.
+ */
+const ON_LINE_M = 500;
+/**
+ * Decisive margin to the *next* line — a bus on a road shared by two lines
+ * stays ambiguous. The patong + dragon + rawai lines share the Old Town
+ * corridor for several km; the strict 400 m margin was vetoing every match
+ * there too. 250 m lets the nearest line win when the gap is real.
+ */
+const LINE_MARGIN_M = 250;
 /** Decisive fixes needed before a bus is assigned to a line. */
 const LINE_VOTES = 2;
 /** A rise in on-board count larger than this between two fixes is a counter glitch. */
