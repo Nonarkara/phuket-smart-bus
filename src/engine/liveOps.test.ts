@@ -162,25 +162,17 @@ describe("tracker parsing", () => {
 
 describe("line identification (the keyless feed has no route)", () => {
   it("measures distance to a polyline", () => {
-    // The rawai-airport polyline was rebuilt from real GPS data on 2026-09-30;
-    // ~500 points spanning the actual corridor instead of the 7881-point
-    // original that traced the wrong coast. Indexing deep into a small line
-    // is fragile, so test against a midpoint we know exists.
-    const mid = Math.floor(AIRPORT_LINE.length / 2);
-    expect(distanceToPolylineM(AIRPORT_LINE[mid]![0], AIRPORT_LINE[mid]![1], AIRPORT_LINE)).toBeLessThan(1);
+    expect(distanceToPolylineM(AIRPORT_LINE[1000]![0], AIRPORT_LINE[1000]![1], AIRPORT_LINE)).toBeLessThan(1);
     expect(distanceToPolylineM(7.5, 98.1, AIRPORT_LINE)).toBeGreaterThan(20_000);
   });
 
   it("assigns each bus to the line whose road it drives along", () => {
-    // Pick index ratios that work for any polyline length.
-    const aIdx = Math.floor(AIRPORT_LINE.length * 0.6);
-    const pIdx = Math.floor(PATONG_LINE.length * 0.4);
     let l = emptyLedger(T0);
-    for (let i = 0; i < 3; i++) {
-      l = applySnapshot(l, [bus(AIRPORT_LINE[aIdx]!, T0 + i * MIN, { plate: "A" })], T0 + i * MIN);
+    for (const [i, idx] of [900, 1000, 1100].entries()) {
+      l = applySnapshot(l, [bus(AIRPORT_LINE[idx]!, T0 + i * MIN, { plate: "A" })], T0 + i * MIN);
     }
-    for (let i = 0; i < 3; i++) {
-      l = applySnapshot(l, [bus(PATONG_LINE[pIdx]!, T0 + i * MIN, { plate: "P" })], T0 + i * MIN);
+    for (const [i, idx] of [500, 600, 700].entries()) {
+      l = applySnapshot(l, [bus(PATONG_LINE[idx]!, T0 + i * MIN, { plate: "P" })], T0 + i * MIN);
     }
     expect(l.vehicles.A!.routeId).toBe("rawai-airport");
     expect(l.vehicles.P!.routeId).toBe("patong-old-bus-station");
