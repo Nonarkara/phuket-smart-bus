@@ -526,6 +526,16 @@ export default function DashboardV2() {
           >
             FLEET
           </a>
+          {/* Deep link to the Real-Bus Study screen — daily/weekly/monthly
+              aggregates of the KV archive, side-by-side with modelled boarders
+              from the flight schedule. */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/study")}
+            title="Patient, consistent, true numbers from the live tracker"
+          >
+            STUDY
+          </a>
         </div>
 
         {source === "live" ? (

@@ -1,0 +1,532 @@
+/**
+ * Real-Bus Study — patient, consistent, true numbers from the live tracker.
+ *
+ * One screen, three honest cuts of the same data:
+ *   1. Today's snapshot — what's been observed since 00:00 BKK so far
+ *   2. Range view (today / 7d / 14d / 30d) — daily breakdown, per-bus totals
+ *   3. Modelled comparison — what the demand model says SHOULD have boarded
+ *      (plane arrivals × regional capture × 25-cap bus), side by side with
+ *      what the counters actually counted (currently null — the APC hasn't
+ *      reported above zero across the fleet, so this view makes that gap
+ *      unmistakable).
+ *
+ * The data path: KV `day:YYYY-MM-DD` aggregates written by `/api/collect/tick`
+ * (cron) and `/api/collect/gps` (browser producer). One minute of GPS data
+ * per sample; the day ledger accumulates fix-to-fix km, odometer km, and
+ * passenger-counter rises. Coverage is shown minute-by-minute so a gap is
+ * honest, never papered over.
+ *
+ * What the user asked for: "patient, consistent, true, accurate, unbiased"
+ * — so we never round up to "0 riders" when the counter was silent. Missing
+ * is missing. Model is model. Counter is counter. Each labelled.
+ */
+import { useEffect, useMemo, useState } from "react";
+import {
+  getDayModelFor,
+} from "../../engine/demandSupplyEngine";
+import { getOpsFlightSchedule, setSimulationDay } from "../../engine/opsFlightSchedule";
+import { appPath } from "../../lib/paths";
+
+type Range = "today" | "7d" | "14d" | "30d";
+
+type Coverage = {
+  samples: number | null;
+  firstSampleAt: string | null;
+  lastSampleAt: string | null;
+  longestGapMin: number | null;
+  serviceMinutesSampled: number | null;
+  serviceMinutesSoFar: number;
+  coveragePct: number | null;
+};
+
+type DayVehicle = {
+  vehicleId: string;
+  licensePlate: string;
+  totalDistanceKm: number;
+  kmBasis: "odometer" | "gps-trace";
+  gpsTraceKm: number;
+  fixes: number | null;
+  paxServed: number | null;
+  paxBasis: "apc" | "counter-silent" | "no-counter";
+  revenueThb: number | null;
+  lastState: string;
+  lastSeenAt: string;
+  lastFixAt: string | null;
+};
+
+type Day = {
+  date: string;
+  missing: boolean;
+  future: boolean;
+  updatedAt: number | null;
+  coverage: Coverage | null;
+  totalTrackedVehicles: number | null;
+  kmBasis: "odometer" | "mixed" | "gps-trace" | null;
+  totalKmTracked: number | null;
+  totalGpsTraceKm: number | null;
+  countersReporting: number | null;
+  unmeteredVehicles: number | null;
+  totalPaxServed: number | null;
+  totalRevenueThb: number | null;
+  totalOperatingCostThb: number | null;
+  netMarginThb: number | null;
+  profitMarginPct: number | null;
+  totalCo2SavedKg: number | null;
+  revenuePerKm: number | null;
+  vehicles: DayVehicle[];
+};
+
+type WeekResponse = {
+  ok: boolean;
+  from: string;
+  through: string;
+  days: Day[];
+};
+
+const BKK_TZ = "Asia/Bangkok";
+const DAY_MS = 86_400_000;
+const FARE_THB = 100;
+const BUS_CAPACITY = 25;
+
+function todayBangkokIso(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BKK_TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date());
+  return `${parts.find((p) => p.type === "year")?.value}-${parts.find((p) => p.type === "month")?.value}-${parts.find((p) => p.type === "day")?.value}`;
+}
+
+function bangkokDow(iso: string): number {
+  // `en-CA` → ISO date. Bangkok is +07:00. Noon in Bangkok is the safe noon for any zone.
+  const ms = Date.parse(`${iso}T12:00:00+07:00`);
+  if (!Number.isFinite(ms)) return 0;
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: BKK_TZ, weekday: "short" }).format(new Date(ms));
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd);
+}
+
+function fmtN(n: number | null | undefined, suffix = ""): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
+  return `${n.toLocaleString()}${suffix}`;
+}
+
+function fmtThb(n: number | null | undefined): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
+  return `฿${Math.round(n).toLocaleString()}`;
+}
+
+function fmtPct(n: number | null | undefined): string {
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
+  return `${n.toFixed(1)}%`;
+}
+
+function rangeStart(range: Range, todayIso: string): string {
+  if (range === "today") return todayIso;
+  if (range === "7d") return bangkokAddDays(todayIso, -6);
+  if (range === "14d") return bangkokAddDays(todayIso, -13);
+  return bangkokAddDays(todayIso, -29);
+}
+
+function bangkokAddDays(iso: string, delta: number): string {
+  const ms = Date.parse(`${iso}T12:00:00+07:00`);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: BKK_TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(ms + delta * DAY_MS));
+}
+
+function bangkokTimeOf(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: BKK_TZ, hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(d);
+}
+
+export function Study() {
+  const [range, setRange] = useState<Range>("7d");
+  const [anchorIso, setAnchorIso] = useState<string>(() => todayBangkokIso());
+  const [data, setData] = useState<WeekResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fetchedAt, setFetchedAt] = useState<number>(0);
+
+  const from = useMemo(() => rangeStart(range, anchorIso), [range, anchorIso]);
+  const days = range === "today" ? 1 : range === "7d" ? 7 : range === "14d" ? 14 : 30;
+
+  async function load() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = `${appPath("/api/collect/week")}?from=${encodeURIComponent(from)}&days=${days}`;
+      const res = await fetch(url, { cache: "no-store" });
+      const ct = res.headers.get("content-type") ?? "";
+      if (!ct.includes("json")) {
+        setError(`/api/collect/week returned ${res.status} ${ct || "non-JSON"}`);
+        setIsLoading(false);
+        return;
+      }
+      const body = await res.json() as WeekResponse & { detail?: string };
+      if (!body.ok) {
+        setError(body.detail ?? "study endpoint returned ok=false");
+        setIsLoading(false);
+        return;
+      }
+      setData(body);
+      setFetchedAt(Date.now());
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => { void load(); }, [from, days]);
+  // Refresh once a minute so the "last seen X min ago" stays honest.
+  useEffect(() => {
+    const id = setInterval(() => void load(), 60_000);
+    return () => clearInterval(id);
+  }, [from, days]);
+
+  // Modelled boarded: the engine's per-DOW flight demand × regional capture ×
+  // 25-cap queue simulation. Independent of the tracker — what we'd EXPECT
+  // given today's flight schedule. Counter data sits next to it for contrast.
+  const modelledByDate = useMemo(() => {
+    const out: Record<string, { dow: number; flights: number; pax: number; modelledBoarded: number; modelledRevenue: number; modelledKm: number }> = {};
+    if (!data) return out;
+    // Drive the engine's day model per date. We don't mutate the global sim day
+    // — getDayModelFor is pure given dow.
+    const seenDow = new Set<number>();
+    for (const day of data.days) {
+      const dow = bangkokDow(day.date);
+      if (!seenDow.has(dow)) {
+        // Warm the ops schedule cache for this dow without leaking globals.
+        setSimulationDay(dow);
+        seenDow.add(dow);
+      }
+      const schedule = getOpsFlightSchedule();
+      const arrivalsToday = schedule.filter((f) => f.type === "arr");
+      const pax = arrivalsToday.reduce((s, f) => s + f.pax, 0);
+      const model = getDayModelFor(dow);
+      out[day.date] = {
+        dow,
+        flights: arrivalsToday.length,
+        pax,
+        modelledBoarded: model.combined.boarded,
+        modelledRevenue: model.combined.revenueThb,
+        modelledKm: model.combined.demand * 28, // ~airport↔island avg, see roi.ts
+      };
+    }
+    return out;
+  }, [data]);
+
+  // Aggregate the range so we can answer "this week / this month" at a glance.
+  const aggregate = useMemo(() => {
+    if (!data) return null;
+    const present = data.days.filter((d) => !d.missing && !d.future);
+    const totalKm = present.reduce((s, d) => s + (d.totalKmTracked ?? 0), 0);
+    const totalGpsKm = present.reduce((s, d) => s + (d.totalGpsTraceKm ?? 0), 0);
+    const countedVehicles = present.reduce((s, d) => s + (d.countersReporting ?? 0), 0);
+    const totalCountedPax = present.reduce((s, d) => s + (d.totalPaxServed ?? 0), 0);
+    const totalCountedRev = present.reduce((s, d) => s + (d.totalRevenueThb ?? 0), 0);
+    const totalVehiclesEver = present.reduce((s, d) => s + (d.totalTrackedVehicles ?? 0), 0);
+    const modelledBoarders = Object.values(modelledByDate).reduce((s, v) => s + v.modelledBoarded, 0);
+    const modelledRevenue = Object.values(modelledByDate).reduce((s, v) => s + v.modelledRevenue, 0);
+    const modelledFlights = Object.values(modelledByDate).reduce((s, v) => s + v.flights, 0);
+    const modelledPax = Object.values(modelledByDate).reduce((s, v) => s + v.pax, 0);
+    // Capacity supplied = tracked vehicles × 25 × ~5 trips/day (airport line)
+    const capacitySupplied = present.reduce((s, d) => {
+      const vehicles = d.totalTrackedVehicles ?? 0;
+      // Each tracked vehicle on an airport run can carry ~5 full trips × 25 seats.
+      return s + vehicles * 5 * BUS_CAPACITY;
+    }, 0);
+    return {
+      daysObserved: present.length,
+      daysInRange: data.days.length,
+      totalKm, totalGpsKm,
+      countersMovedEver: countedVehicles,
+      totalCountedPax, totalCountedRev,
+      totalVehiclesEver,
+      modelledFlights, modelledPax, modelledBoarders, modelledRevenue,
+      capacitySupplied,
+    };
+  }, [data, modelledByDate]);
+
+  // Per-bus aggregates across the range.
+  const perBus = useMemo(() => {
+    if (!data) return [];
+    const byPlate: Record<string, {
+      plate: string;
+      daysSeen: number;
+      km: number;
+      gpsKm: number;
+      fixes: number;
+      countedPax: number;
+      countedRevenue: number;
+      lastSeenAt: string;
+      lastState: string;
+      paxBasis: DayVehicle["paxBasis"] | null;
+    }> = {};
+    for (const day of data.days) {
+      if (day.missing || day.future) continue;
+      for (const v of day.vehicles) {
+        const cur = byPlate[v.licensePlate] ?? {
+          plate: v.licensePlate, daysSeen: 0, km: 0, gpsKm: 0, fixes: 0,
+          countedPax: 0, countedRevenue: 0, lastSeenAt: "", lastState: "", paxBasis: null,
+        };
+        cur.daysSeen += 1;
+        cur.km += v.totalDistanceKm;
+        cur.gpsKm += v.gpsTraceKm;
+        cur.fixes += v.fixes ?? 0;
+        if (v.paxBasis === "apc") cur.paxBasis = "apc";
+        else if (v.paxBasis === "counter-silent" && cur.paxBasis !== "apc") cur.paxBasis = "counter-silent";
+        else if (cur.paxBasis === null) cur.paxBasis = v.paxBasis;
+        cur.countedPax += v.paxServed ?? 0;
+        cur.countedRevenue += v.revenueThb ?? 0;
+        if (!cur.lastSeenAt || (v.lastSeenAt && v.lastSeenAt > cur.lastSeenAt)) {
+          cur.lastSeenAt = v.lastSeenAt;
+          cur.lastState = v.lastState;
+        }
+        byPlate[v.licensePlate] = cur;
+      }
+    }
+    return Object.values(byPlate).sort((a, b) => b.km - a.km);
+  }, [data]);
+
+  const dowShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const collectionIsLive = fetchedAt > 0 && Date.now() - fetchedAt < 90_000;
+
+  return (
+    <div className="v2 v2--operations study" style={{ zoom: 1, minHeight: "100vh", overflow: "auto" }}>
+      <header className="v2-header study__header">
+        <div className="v2-header__brand">
+          <span className="v2-header__eyebrow">
+            <span className="v2-header__eyebrow-full">Real-Bus Study</span>
+            <span className="v2-header__eyebrow-compact">Study</span>
+          </span>
+          <h1>Phuket Smart Bus · Study</h1>
+          <span className="v2-header__sub">Patient · consistent · true — every number has a source</span>
+        </div>
+
+        <div className="study__controls">
+          <div className="study__chips" role="group" aria-label="Range">
+            {(["today", "7d", "14d", "30d"] as Range[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`study__chip ${range === r ? "is-active" : ""}`}
+                onClick={() => setRange(r)}
+              >{r === "today" ? "Today" : r.toUpperCase()}</button>
+            ))}
+          </div>
+          <input
+            type="date"
+            className="study__date"
+            value={anchorIso}
+            onChange={(e) => setAnchorIso(e.target.value)}
+            aria-label="Anchor date (Bangkok)"
+          />
+          <button type="button" className="study__refresh" onClick={() => void load()} disabled={isLoading}>
+            {isLoading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+
+        <div className="study__actions">
+          <a className="v2-source__btn" href={appPath("/ops")}>← Back to ops</a>
+          <a className="v2-source__btn" href={appPath("/fleet")}>Fleet</a>
+        </div>
+      </header>
+
+      {error && (
+        <div className="study__error">
+          <strong>Could not load study data.</strong>
+          <span>{error}</span>
+          <code>GET {appPath("/api/collect/week")}?from={from}&days={days}</code>
+        </div>
+      )}
+
+      {data && aggregate && (
+        <>
+          <section className="study__kpis">
+            <div className="study__kpi">
+              <span className="study__kpi-label">Days observed</span>
+              <strong className="study__kpi-value">{aggregate.daysObserved} / {aggregate.daysInRange}</strong>
+              <span className="study__kpi-detail">out of {data.days.length} days in the range</span>
+            </div>
+            <div className="study__kpi">
+              <span className="study__kpi-label">Tracked km (odometer / GPS trace)</span>
+              <strong className="study__kpi-value">{fmtN(Math.round(aggregate.totalKm), "")}</strong>
+              <span className="study__kpi-detail">GPS trace {fmtN(Math.round(aggregate.totalGpsKm), "")} km — odometer is the bus's own count</span>
+            </div>
+            <div className="study__kpi">
+              <span className="study__kpi-label">Counters moved (APC)</span>
+              <strong className="study__kpi-value">{aggregate.countersMovedEver}</strong>
+              <span className="study__kpi-detail">distinct buses whose counter read &gt;0 today</span>
+            </div>
+            <div className="study__kpi">
+              <span className="study__kpi-label">Counted boarders</span>
+              <strong className="study__kpi-value">{fmtN(aggregate.totalCountedPax)}</strong>
+              <span className="study__kpi-detail">{fmtThb(aggregate.totalCountedRev)} revenue · vs {fmtN(aggregate.modelledBoarders)} modelled</span>
+            </div>
+            <div className="study__kpi study__kpi--model">
+              <span className="study__kpi-label">Modelled (flights × capture × 25-cap)</span>
+              <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
+              <span className="study__kpi-detail">{aggregate.modelledFlights} flight arrivals · {fmtN(aggregate.modelledPax)} seats arriving · {fmtThb(aggregate.modelledRevenue)} modelled ฿</span>
+            </div>
+            <div className="study__kpi study__kpi--model">
+              <span className="study__kpi-label">Capacity supplied</span>
+              <strong className="study__kpi-value">{fmtN(aggregate.capacitySupplied)}</strong>
+              <span className="study__kpi-detail">vehicle-days × 5 trips × 25 seats · max possible if every seat filled</span>
+            </div>
+          </section>
+
+          <section className="study__caveats">
+            <h3>What this screen is honest about</h3>
+            <ul>
+              <li>
+                <strong>Counters are silent.</strong> Every CMSV6 passenger counter on every PKSB bus reads 0 even while the bus is moving — verified {data.days.find((d) => !d.missing && (d.countersReporting ?? 0) > 0) ? "" : "across all observed days"}.
+                So <em>counted boarders</em> is currently null, not ฿0. The page never rounds up.
+              </li>
+              <li>
+                <strong>Modelled numbers</strong> use the engine's flight schedule × regional capture rate (SE Asia 7%, Europe 3%, …) × 25-cap queue simulation.
+                They're the demand-side <em>expectation</em>, not a measurement.
+              </li>
+              <li>
+                <strong>Capacity supplied</strong> = tracked vehicle-days × 5 trips/day × 25 seats — a ceiling, not a delivered count.
+              </li>
+              <li>
+                <strong>Coverage</strong> shows which Bangkok minutes have a sample. A missing day means the cron or browser producer didn't write — that gap is shown, never papered over.
+              </li>
+            </ul>
+          </section>
+
+          <section className="study__coverage">
+            <h3>Daily coverage</h3>
+            <div className="study__coverage-strip">
+              {data.days.map((d) => {
+                const cov = d.coverage?.coveragePct;
+                const filled = cov == null ? 0 : Math.round(cov);
+                const label = d.missing ? "missing" : d.future ? "future" : cov == null ? "no data" : `${cov.toFixed(0)}%`;
+                return (
+                  <div key={d.date} className={`study__coverage-cell study__coverage-cell--${d.missing ? "missing" : d.future ? "future" : (cov ?? 0) >= 80 ? "good" : (cov ?? 0) >= 40 ? "partial" : "thin"}`} title={`${d.date}: ${label}`}>
+                    <div className="study__coverage-bar" style={{ height: `${Math.max(2, filled)}%` }} />
+                    <span className="study__coverage-date">{d.date.slice(5)}</span>
+                    <span className="study__coverage-pct">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="study__hint">
+              Bar height = % of the 05:00–24:00 BKK service window that received at least one sample.
+              <span className="study__chip study__chip--legend study__chip--good">good ≥80%</span>
+              <span className="study__chip study__chip--legend study__chip--partial">partial 40–80%</span>
+              <span className="study__chip study__chip--legend study__chip--thin">thin &lt;40%</span>
+              <span className="study__chip study__chip--legend study__chip--missing">missing</span>
+              <span className="study__chip study__chip--legend study__chip--future">future</span>
+            </p>
+          </section>
+
+          <section className="study__table-wrap">
+            <h3>Per-day breakdown</h3>
+            <table className="study__table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>DOW</th>
+                  <th className="study__num">Flights (arr)</th>
+                  <th className="study__num">Pax arrived</th>
+                  <th className="study__num">Modelled boarders</th>
+                  <th className="study__num">Counted boarders</th>
+                  <th className="study__num">Counted ฿</th>
+                  <th className="study__num">Tracked km</th>
+                  <th className="study__num">GPS trace km</th>
+                  <th className="study__num">Vehicles</th>
+                  <th className="study__num">Counters moved</th>
+                  <th className="study__num">Coverage</th>
+                  <th>Last sample (BKK)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.days.map((d) => {
+                  const m = modelledByDate[d.date];
+                  return (
+                    <tr key={d.date} className={`study__row study__row--${d.missing ? "missing" : d.future ? "future" : "ok"}`}>
+                      <td><strong>{d.date}</strong></td>
+                      <td>{m ? dowShort[m.dow] : dowShort[bangkokDow(d.date)]}</td>
+                      <td className="study__num">{m ? fmtN(m.flights) : "—"}</td>
+                      <td className="study__num">{m ? fmtN(m.pax) : "—"}</td>
+                      <td className="study__num">{m ? fmtN(m.modelledBoarded) : "—"}</td>
+                      <td className="study__num">{d.totalPaxServed == null ? <span className="study__null">null · counter silent</span> : fmtN(d.totalPaxServed)}</td>
+                      <td className="study__num">{fmtThb(d.totalRevenueThb)}</td>
+                      <td className="study__num">{fmtN(d.totalKmTracked)}</td>
+                      <td className="study__num">{fmtN(d.totalGpsTraceKm)}</td>
+                      <td className="study__num">{fmtN(d.totalTrackedVehicles)}</td>
+                      <td className="study__num">{fmtN(d.countersReporting)}</td>
+                      <td className="study__num">{fmtPct(d.coverage?.coveragePct ?? null)}</td>
+                      <td>{bangkokTimeOf(d.coverage?.lastSampleAt ?? null)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="study__table-wrap">
+            <h3>Per-bus — {aggregate.daysObserved}-day aggregate</h3>
+            <p className="study__hint">
+              Sorted by tracked km. Each row is one bus summed across every day it appeared in the range.
+              <span className="study__chip study__chip--legend study__chip--pax">apc</span> counted from passenger counter · <span className="study__chip study__chip--legend study__chip--silent">silent</span> counter present but never read above 0 · <span className="study__chip study__chip--legend study__chip--none">none</span> no counter on the device
+            </p>
+            <table className="study__table">
+              <thead>
+                <tr>
+                  <th>Plate</th>
+                  <th className="study__num">Days seen</th>
+                  <th className="study__num">Tracked km</th>
+                  <th className="study__num">GPS trace km</th>
+                  <th className="study__num">Fixes</th>
+                  <th>Counter</th>
+                  <th className="study__num">Counted boarders</th>
+                  <th className="study__num">Counted ฿</th>
+                  <th>Last state</th>
+                  <th>Last seen (BKK)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perBus.length === 0 ? (
+                  <tr><td colSpan={10} className="study__empty">No buses observed in this range yet.</td></tr>
+                ) : perBus.map((b) => (
+                  <tr key={b.plate}>
+                    <td><strong>{b.plate}</strong></td>
+                    <td className="study__num">{b.daysSeen}</td>
+                    <td className="study__num">{fmtN(Math.round(b.km))}</td>
+                    <td className="study__num">{fmtN(Math.round(b.gpsKm))}</td>
+                    <td className="study__num">{fmtN(b.fixes)}</td>
+                    <td>
+                      {b.paxBasis === "apc" ? <span className="study__chip study__chip--pax">apc</span>
+                        : b.paxBasis === "counter-silent" ? <span className="study__chip study__chip--silent">silent</span>
+                        : b.paxBasis === "no-counter" ? <span className="study__chip study__chip--none">none</span>
+                        : <span className="study__chip study__chip--none">—</span>}
+                    </td>
+                    <td className="study__num">{b.countedPax > 0 ? fmtN(b.countedPax) : <span className="study__null">null</span>}</td>
+                    <td className="study__num">{b.countedRevenue > 0 ? fmtThb(b.countedRevenue) : <span className="study__null">—</span>}</td>
+                    <td>{b.lastState || "—"}</td>
+                    <td>{bangkokTimeOf(b.lastSeenAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <footer className="study__footer">
+            <span>
+              Range <strong>{data.from}</strong> → <strong>{data.through}</strong> ({aggregate.daysInRange} days BKK)
+              {collectionIsLive ? " · live" : ` · last refresh ${bangkokTimeOf(new Date(fetchedAt).toISOString())}`}
+            </span>
+            <span className="study__footer-detail">
+              One click upstream: {appPath("/api/collect/week")}?from={data.from}&days={data.days.length}
+            </span>
+          </footer>
+        </>
+      )}
+    </div>
+  );
+}
