@@ -174,4 +174,11 @@ describe("gps history", () => {
     day = applyBusesToDay(day, [fixAt(t0 + 60_000, { coordinates: [7.86, 98.39], speedKph: 0 })], t0 + 60_000);
     expect(summarizeGpsDay(day, t0 + 86_400_000).vehicles[0]!.lastState).toBe("halted");
   });
+
+  it("a day folded before runs were recorded says unknown, not 0 runs", () => {
+    const t0 = Date.parse("2026-09-29T12:00:00+07:00");
+    const day = applyBusesToDay(emptyGpsDay(t0), [fixAt(t0, { coordinates: [7.86, 98.39] })], t0);
+    expect(summarizeGpsDay(day, t0).totalRuns).toBe(0);
+    expect(summarizeGpsDay({ ...day, rules: undefined }, t0).totalRuns).toBeNull();
+  });
 });

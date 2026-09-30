@@ -131,7 +131,11 @@ export type GpsDay = {
   updatedAt: number;
   vehicles: Record<string, DayVehicle>;
   coverage?: DayCoverage;
+  /** 2 = the fold records runs and time moving. Older days have no such figures — shown as unknown, not 0. */
+  rules?: number;
 };
+
+const FOLD_RULES = 2;
 
 export function gpsBatchKey(fetchedAt: number, source = "pksb-tracker"): string {
   const inv = String(KEY_SPAN - Math.max(0, Math.floor(fetchedAt))).padStart(13, "0");
@@ -311,7 +315,7 @@ export function applyBusesToDay(day: GpsDay, buses: GpsBusPing[], nowMs: number)
     if (typeof bus.online === "boolean") next.online = bus.online;
     vehicles[plate] = next;
   }
-  return { date: day.date, updatedAt: nowMs, vehicles, coverage: markCoverage(day.coverage, nowMs) };
+  return { date: day.date, updatedAt: nowMs, vehicles, coverage: markCoverage(day.coverage, nowMs), rules: FOLD_RULES };
 }
 
 function haltKm(v: DayVehicle, lat: number, lng: number): number {
@@ -394,6 +398,7 @@ export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
     };
   }).sort((a, b) => (b.revenueThb ?? -1) - (a.revenueThb ?? -1) || b.totalDistanceKm - a.totalDistanceKm);
 
+  const measured = (day.rules ?? 1) >= FOLD_RULES;
   const counted = vehicles.filter((v) => v.paxBasis === "apc");
   const totalKmTracked = r1(vehicles.reduce((s, v) => s + v.totalDistanceKm, 0));
   const totalPaxServed = counted.length ? counted.reduce((s, v) => s + (v.paxServed ?? 0), 0) : null;
@@ -405,9 +410,9 @@ export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
     date: day.date,
     totalTrackedVehicles: vehicles.length,
     activeVehiclesCount: vehicles.filter((v) => v.lastState !== "parked_depot").length,
-    busesMoved: vehicles.filter((v) => v.hoursMoving > 0).length,
-    totalRuns: vehicles.reduce((s, v) => s + v.runs, 0),
-    totalHoursMoving: r1(vehicles.reduce((s, v) => s + v.hoursMoving, 0)),
+    busesMoved: measured ? vehicles.filter((v) => v.hoursMoving > 0).length : null,
+    totalRuns: measured ? vehicles.reduce((s, v) => s + v.runs, 0) : null,
+    totalHoursMoving: measured ? r1(vehicles.reduce((s, v) => s + v.hoursMoving, 0)) : null,
     busesReachedAirport: vehicles.filter((v) => v.reachedAirport).length,
     busesNoFix: vehicles.filter((v) => v.lastState === "no_fix").length,
     depotVehiclesCount: vehicles.filter((v) => v.lastState === "parked_depot").length,
