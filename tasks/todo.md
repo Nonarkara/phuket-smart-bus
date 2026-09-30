@@ -1,3 +1,17 @@
+# PKCD real-GPS monitoring — 2026-10-01
+
+- [x] /study tables render (they did; earlier read was wrong)
+- [x] Revert 6e74122: official Airport–Rawai polyline was replaced by one mined from town buses (490/506 pts >0.5 km off road); regression test had been skipped
+- [x] Archive fold: runs, hours moving, first/last move, longest halt, airport reach, no_fix state; past days read at their last sample; `rules: 2` so older days show unknown
+- [x] /study: collector freshness tile; observed runs · hours replace "vehicles × 5 trips × 25"; airport model labelled reference; per-dow schedule without mutating global sim day; 30D = 30 days
+- [x] 30 Sep ledger refolded from raw samples (backup of the old one kept in session scratchpad)
+- [x] CDPT: e6727cf, 7764521, 3b706b6, 3a985c8 — live, verified
+
+## Still open
+- Ask PKCD: which lines do 10-1227…10-1250 run, and are the airport-line buses on any tracker? A line list turns runs into real trips.
+- APC counters still silent — riders/fares stay unknown.
+- /ops LIVE still matches these town buses against airport/Patong/Dragon geometry (with LINE_MARGIN restored to 250 m most will stay "identifying"). Its money figures assume airport-line fares.
+
 # Real-bus study audit — 2026-09-29 (study week starts 2026-09-30)
 
 Audit of Grok's collector (f18cdc2). Verified against the raw tracker, not the report.
