@@ -31,7 +31,7 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
 
   const url = new URL(context.request.url);
   const daysRaw = Number(url.searchParams.get("days") ?? "7");
-  const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(14, Math.floor(daysRaw))) : 7;
+  const days = Number.isFinite(daysRaw) ? Math.max(1, Math.min(31, Math.floor(daysRaw))) : 7;
   const today = bangkokDate(Date.now());
   const requested = url.searchParams.get("from");
   let from = requested;
@@ -57,6 +57,7 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
         date, missing: true, future: date > today, updatedAt: null, coverage: null,
         totalTrackedVehicles: null, kmBasis: null, totalKmTracked: null, totalGpsTraceKm: null,
         countersReporting: null, totalPaxServed: null, totalRevenueThb: null,
+        busesMoved: null, totalRuns: null, totalHoursMoving: null, busesReachedAirport: null, busesNoFix: null,
       });
       continue;
     }
@@ -72,6 +73,11 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
       totalKmTracked: summary.totalKmTracked,
       totalGpsTraceKm: summary.totalGpsTraceKm,
       countersReporting: summary.countersReporting,
+      busesMoved: summary.busesMoved,
+      totalRuns: summary.totalRuns,
+      totalHoursMoving: summary.totalHoursMoving,
+      busesReachedAirport: summary.busesReachedAirport,
+      busesNoFix: summary.busesNoFix,
       totalPaxServed: summary.totalPaxServed,
       totalRevenueThb: summary.totalRevenueThb,
       // Per-bus drill-down. Capped at the day ledger's vehicle count, which

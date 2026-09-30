@@ -38,6 +38,17 @@ const FARE_THB = 100;
 const OPEX_PER_KM_THB = 35;
 const CO2_KG_PER_PAX = 4.2;
 const GRAB_EQUIV_FARE_THB = 720;
+/** Between two fixes the bus moved (GPS jitter on a parked bus stays well under this). */
+const MOVE_KM = 0.05;
+/** A halt this long ends a run; leaving it starts the next. Traffic lights and stops are shorter. */
+const RUN_HALT_MS = 10 * 60_000;
+const HALT_KM = 0.15;
+/** Fix-to-fix gaps longer than this are not counted as time moving — the tracker was silent. */
+const MAX_MOVING_GAP_MS = 3 * 60_000;
+/** No new fix for this long = the bus's state is unknown, not "in transit". */
+const NO_FIX_MS = 15 * 60_000;
+const AIRPORT: [number, number] = [8.108, 98.317];
+const AIRPORT_KM = 1;
 
 export type GpsBusPing = {
   vehicleId: string;
@@ -90,6 +101,20 @@ export type DayVehicle = {
   /** Any counter field ever above zero today. False = the counter never spoke. */
   counterMoved?: boolean;
   online?: boolean | null;
+  /** First and last fix-to-fix step that covered ≥50 m. */
+  firstMoveMs?: number;
+  lastMoveMs?: number;
+  /** Time between fixes ≤3 min apart where the bus moved. */
+  movingMs?: number;
+  /** Departures from a halt of ≥10 min (or the first move seen). */
+  runs?: number;
+  longestHaltMs?: number;
+  /** Where the current halt began, while stationary. */
+  haltLat?: number | null;
+  haltLng?: number | null;
+  haltStartMs?: number | null;
+  /** Came within 1 km of HKT airport today. */
+  reachedAirport?: boolean;
 };
 
 export type DayCoverage = {
@@ -137,11 +162,11 @@ export function parseStudyDate(iso: string): number | null {
   return ms;
 }
 
-/** `days` Bangkok dates beginning at `from`, capped at 14. Null if `from` isn't a date. */
+/** `days` Bangkok dates beginning at `from`, capped at 31 (a month). Null if `from` isn't a date. */
 export function studyDates(from: string, days: number): string[] | null {
   const start = parseStudyDate(from);
   if (start === null) return null;
-  const n = Math.max(1, Math.min(14, Math.floor(days)));
+  const n = Math.max(1, Math.min(31, Math.floor(days)));
   const out: string[] = [];
   for (let i = 0; i < n; i++) out.push(bangkokDate(start + i * 86_400_000));
   return out;
@@ -225,10 +250,33 @@ export function applyBusesToDay(day: GpsDay, buses: GpsBusPing[], nowMs: number)
         };
 
     const hours = prev && prevFixMs !== null ? Math.max(1 / 3600, (fixMs - prevFixMs) / 3_600_000) : 0;
-    if (prev) {
+    if (prev && prevFixMs !== null) {
       const dKm = haversineKm([prev.lastLat, prev.lastLng], [lat, lng]);
       if (dKm >= MIN_MOVE_KM && dKm / hours <= MAX_KPH) next.km += dKm;
+      if (dKm >= MOVE_KM && dKm / hours <= MAX_KPH) {
+        const gapMs = fixMs - prevFixMs;
+        if (gapMs <= MAX_MOVING_GAP_MS) next.movingMs = (next.movingMs ?? 0) + gapMs;
+        next.firstMoveMs ??= prevFixMs;
+        next.lastMoveMs = fixMs;
+        const haltMs = next.haltStartMs != null ? prevFixMs - next.haltStartMs : null;
+        if (haltMs !== null && haltMs >= RUN_HALT_MS) {
+          next.runs = (next.runs ?? 0) + 1;
+          next.longestHaltMs = Math.max(next.longestHaltMs ?? 0, haltMs);
+        } else if (!next.runs) {
+          next.runs = 1; // first move seen today, already under way
+        }
+        next.haltLat = next.haltLng = next.haltStartMs = null;
+      } else if (next.haltLat == null || haltKm(next, lat, lng) > HALT_KM) {
+        next.haltLat = prev.lastLat;
+        next.haltLng = prev.lastLng;
+        next.haltStartMs = prevFixMs;
+      }
+    } else {
+      next.haltLat = lat;
+      next.haltLng = lng;
+      next.haltStartMs = fixMs;
     }
+    if (haversineKm([lat, lng], AIRPORT) <= AIRPORT_KM) next.reachedAirport = true;
 
     const odo = num(bus.odometerM);
     if (odo !== null) {
@@ -266,6 +314,10 @@ export function applyBusesToDay(day: GpsDay, buses: GpsBusPing[], nowMs: number)
   return { date: day.date, updatedAt: nowMs, vehicles, coverage: markCoverage(day.coverage, nowMs) };
 }
 
+function haltKm(v: DayVehicle, lat: number, lng: number): number {
+  return haversineKm([v.haltLat ?? lat, v.haltLng ?? lng], [lat, lng]);
+}
+
 export function foldBatches(batches: GpsBatch[]): GpsDay {
   const sorted = [...batches].sort((a, b) => a.fetchedAt - b.fetchedAt);
   const start = sorted[0]?.fetchedAt ?? Date.now();
@@ -295,10 +347,16 @@ export function summarizeCoverage(coverage: DayCoverage | undefined, date: strin
   };
 }
 
+export type BusState = "parked_depot" | "moving" | "halted" | "no_fix";
+
 export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
+  // A past day is read as it stood at its last sample, not against today's clock.
+  const refMs = bangkokDate(nowMs) === day.date ? nowMs : day.coverage?.lastMs ?? day.updatedAt;
   const vehicles = Object.values(day.vehicles).map((v) => {
     const atDepot = haversineKm([v.lastLat, v.lastLng], DEPOT) <= DEPOT_KM;
-    const lastState = atDepot ? "parked_depot" : v.lastSpeedKph > 4 ? "in_transit" : "dwelling";
+    const fixAgeMs = refMs - (v.lastFixMs ?? v.lastMs);
+    const moving = v.lastSpeedKph > 4 || (v.lastMoveMs != null && v.lastMoveMs === v.lastFixMs);
+    const lastState: BusState = atDepot ? "parked_depot" : fixAgeMs > NO_FIX_MS ? "no_fix" : moving ? "moving" : "halted";
     const hasOdometer = v.lastOdoM != null;
     const km = hasOdometer ? v.odoKm ?? 0 : v.km;
     const paxBasis = v.counterMoved ? "apc" as const : v.sawCounter ? "counter-silent" as const : "no-counter" as const;
@@ -313,6 +371,15 @@ export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
       gpsTraceKm: r1(v.km),
       fixes: v.fixes ?? null,
       tripsCompleted: 0,
+      /** Departures after a ≥10 min halt. Not line trips — the feed carries no line. */
+      runs: v.runs ?? 0,
+      hoursMoving: r1((v.movingMs ?? 0) / 3_600_000),
+      firstMoveAt: v.firstMoveMs ? new Date(v.firstMoveMs).toISOString() : null,
+      lastMoveAt: v.lastMoveMs ? new Date(v.lastMoveMs).toISOString() : null,
+      longestHaltMin: v.longestHaltMs ? Math.round(v.longestHaltMs / 60_000) : null,
+      reachedAirport: v.reachedAirport ?? false,
+      /** Lost signal while driving — a device or coverage fault worth chasing. */
+      lostWhileMoving: lastState === "no_fix" && moving,
       paxServed,
       paxBasis,
       revenueThb,
@@ -338,6 +405,11 @@ export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
     date: day.date,
     totalTrackedVehicles: vehicles.length,
     activeVehiclesCount: vehicles.filter((v) => v.lastState !== "parked_depot").length,
+    busesMoved: vehicles.filter((v) => v.hoursMoving > 0).length,
+    totalRuns: vehicles.reduce((s, v) => s + v.runs, 0),
+    totalHoursMoving: r1(vehicles.reduce((s, v) => s + v.hoursMoving, 0)),
+    busesReachedAirport: vehicles.filter((v) => v.reachedAirport).length,
+    busesNoFix: vehicles.filter((v) => v.lastState === "no_fix").length,
     depotVehiclesCount: vehicles.filter((v) => v.lastState === "parked_depot").length,
     /** Buses whose counter read above zero at least once. The rest have no rider figure. */
     countersReporting: counted.length,

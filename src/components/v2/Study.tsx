@@ -24,7 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getDayModelFor,
 } from "../../engine/demandSupplyEngine";
-import { getOpsFlightSchedule, setSimulationDay } from "../../engine/opsFlightSchedule";
+import { getOpsFlightScheduleFor } from "../../engine/opsFlightSchedule";
 import { appPath } from "../../lib/paths";
 
 type Range = "today" | "7d" | "14d" | "30d";
@@ -49,9 +49,15 @@ type DayVehicle = {
   paxServed: number | null;
   paxBasis: "apc" | "counter-silent" | "no-counter";
   revenueThb: number | null;
-  lastState: string;
+  lastState: "parked_depot" | "moving" | "halted" | "no_fix";
   lastSeenAt: string;
   lastFixAt: string | null;
+  runs?: number;
+  hoursMoving?: number;
+  firstMoveAt?: string | null;
+  lastMoveAt?: string | null;
+  reachedAirport?: boolean;
+  lostWhileMoving?: boolean;
 };
 
 type Day = {
@@ -73,6 +79,11 @@ type Day = {
   profitMarginPct: number | null;
   totalCo2SavedKg: number | null;
   revenuePerKm: number | null;
+  busesMoved?: number | null;
+  totalRuns?: number | null;
+  totalHoursMoving?: number | null;
+  busesReachedAirport?: number | null;
+  busesNoFix?: number | null;
   vehicles: DayVehicle[];
 };
 
@@ -85,8 +96,9 @@ type WeekResponse = {
 
 const BKK_TZ = "Asia/Bangkok";
 const DAY_MS = 86_400_000;
-const FARE_THB = 100;
-const BUS_CAPACITY = 25;
+/** Service hours when a silent collector is a fault, not night. */
+const SERVICE_START_H = 5;
+const COLLECTOR_STALE_MIN = 5;
 
 function todayBangkokIso(): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -192,17 +204,10 @@ export function Study() {
   const modelledByDate = useMemo(() => {
     const out: Record<string, { dow: number; flights: number; pax: number; modelledBoarded: number; modelledRevenue: number; modelledKm: number }> = {};
     if (!data) return out;
-    // Drive the engine's day model per date. We don't mutate the global sim day
-    // — getDayModelFor is pure given dow.
-    const seenDow = new Set<number>();
+    // Both reads are keyed by dow — the global sim day (/ops picker) is untouched.
     for (const day of data.days) {
       const dow = bangkokDow(day.date);
-      if (!seenDow.has(dow)) {
-        // Warm the ops schedule cache for this dow without leaking globals.
-        setSimulationDay(dow);
-        seenDow.add(dow);
-      }
-      const schedule = getOpsFlightSchedule();
+      const schedule = getOpsFlightScheduleFor(dow);
       const arrivalsToday = schedule.filter((f) => f.type === "arr");
       const pax = arrivalsToday.reduce((s, f) => s + f.pax, 0);
       const model = getDayModelFor(dow);
@@ -232,12 +237,11 @@ export function Study() {
     const modelledRevenue = Object.values(modelledByDate).reduce((s, v) => s + v.modelledRevenue, 0);
     const modelledFlights = Object.values(modelledByDate).reduce((s, v) => s + v.flights, 0);
     const modelledPax = Object.values(modelledByDate).reduce((s, v) => s + v.pax, 0);
-    // Capacity supplied = tracked vehicles × 25 × ~5 trips/day (airport line)
-    const capacitySupplied = present.reduce((s, d) => {
-      const vehicles = d.totalTrackedVehicles ?? 0;
-      // Each tracked vehicle on an airport run can carry ~5 full trips × 25 seats.
-      return s + vehicles * 5 * BUS_CAPACITY;
-    }, 0);
+    // Observed supply: what the buses actually did, not seats × an assumed trip count.
+    const busDaysMoved = present.reduce((s, d) => s + (d.busesMoved ?? 0), 0);
+    const totalRuns = present.reduce((s, d) => s + (d.totalRuns ?? 0), 0);
+    const totalHoursMoving = present.reduce((s, d) => s + (d.totalHoursMoving ?? 0), 0);
+    const airportBusDays = present.reduce((s, d) => s + (d.busesReachedAirport ?? 0), 0);
     return {
       daysObserved: present.length,
       daysInRange: data.days.length,
@@ -246,7 +250,7 @@ export function Study() {
       totalCountedPax, totalCountedRev,
       totalVehiclesEver,
       modelledFlights, modelledPax, modelledBoarders, modelledRevenue,
-      capacitySupplied,
+      busDaysMoved, totalRuns, totalHoursMoving, airportBusDays,
     };
   }, [data, modelledByDate]);
 
@@ -263,6 +267,9 @@ export function Study() {
       countedRevenue: number;
       lastSeenAt: string;
       lastState: string;
+      lostWhileMoving: boolean;
+      runs: number;
+      hoursMoving: number;
       paxBasis: DayVehicle["paxBasis"] | null;
     }> = {};
     for (const day of data.days) {
@@ -270,8 +277,11 @@ export function Study() {
       for (const v of day.vehicles) {
         const cur = byPlate[v.licensePlate] ?? {
           plate: v.licensePlate, daysSeen: 0, km: 0, gpsKm: 0, fixes: 0,
-          countedPax: 0, countedRevenue: 0, lastSeenAt: "", lastState: "", paxBasis: null,
+          countedPax: 0, countedRevenue: 0, lastSeenAt: "", lastState: "", lostWhileMoving: false,
+          runs: 0, hoursMoving: 0, paxBasis: null,
         };
+        cur.runs += v.runs ?? 0;
+        cur.hoursMoving += v.hoursMoving ?? 0;
         cur.daysSeen += 1;
         cur.km += v.totalDistanceKm;
         cur.gpsKm += v.gpsTraceKm;
@@ -284,6 +294,7 @@ export function Study() {
         if (!cur.lastSeenAt || (v.lastSeenAt && v.lastSeenAt > cur.lastSeenAt)) {
           cur.lastSeenAt = v.lastSeenAt;
           cur.lastState = v.lastState;
+          cur.lostWhileMoving = v.lostWhileMoving ?? false;
         }
         byPlate[v.licensePlate] = cur;
       }
@@ -293,6 +304,15 @@ export function Study() {
 
   const dowShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const collectionIsLive = fetchedAt > 0 && Date.now() - fetchedAt < 90_000;
+  // Is the collector itself alive? Read from the archive, not from this page's own fetch.
+  const todayRow = data?.days.find((d) => d.date === todayBangkokIso());
+  const lastSampleMs = todayRow?.coverage?.lastSampleAt ? Date.parse(todayRow.coverage.lastSampleAt) : null;
+  const collectorAgeMin = lastSampleMs === null ? null : Math.max(0, Math.round((Date.now() - lastSampleMs) / 60_000));
+  const inService = Number(bangkokTimeOf(new Date().toISOString()).slice(0, 2)) >= SERVICE_START_H;
+  const collectorStale = inService && (collectorAgeMin === null || collectorAgeMin > COLLECTOR_STALE_MIN);
+  const stateLabel = (state: string, lastSeenAt: string, lost: boolean) =>
+    state === "no_fix" ? `${lost ? "lost signal driving" : "no fix"} since ${bangkokTimeOf(lastSeenAt)}`
+      : state === "parked_depot" ? "at depot" : state || "—";
 
   return (
     <div className="v2 v2--operations study" style={{ zoom: 1, minHeight: "100vh", overflow: "auto" }}>
@@ -346,6 +366,11 @@ export function Study() {
       {data && aggregate && (
         <>
           <section className="study__kpis">
+            <div className={`study__kpi${collectorStale ? " study__kpi--alert" : ""}`}>
+              <span className="study__kpi-label">Collector</span>
+              <strong className="study__kpi-value">{collectorAgeMin === null ? "no sample today" : `${collectorAgeMin} min ago`}</strong>
+              <span className="study__kpi-detail">{collectorStale ? "Not recording — check the phuket-smart-bus-collector cron" : "last archived fleet sample · cron every 30 s"}</span>
+            </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Days observed</span>
               <strong className="study__kpi-value">{aggregate.daysObserved} / {aggregate.daysInRange}</strong>
@@ -359,22 +384,22 @@ export function Study() {
             <div className="study__kpi">
               <span className="study__kpi-label">Counters moved (APC)</span>
               <strong className="study__kpi-value">{aggregate.countersMovedEver}</strong>
-              <span className="study__kpi-detail">distinct buses whose counter read &gt;0 today</span>
+              <span className="study__kpi-detail">bus-days with a counter reading &gt;0</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Counted boarders</span>
               <strong className="study__kpi-value">{fmtN(aggregate.totalCountedPax)}</strong>
-              <span className="study__kpi-detail">{fmtThb(aggregate.totalCountedRev)} revenue · vs {fmtN(aggregate.modelledBoarders)} modelled</span>
+              <span className="study__kpi-detail">{aggregate.countersMovedEver > 0 ? `${fmtThb(aggregate.totalCountedRev)} revenue` : "unknown — no counter reported"}</span>
             </div>
             <div className="study__kpi study__kpi--model">
-              <span className="study__kpi-label">Modelled (flights × capture × 25-cap)</span>
+              <span className="study__kpi-label">Airport-line model · reference</span>
               <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
-              <span className="study__kpi-detail">{aggregate.modelledFlights} flight arrivals · {fmtN(aggregate.modelledPax)} seats arriving · {fmtThb(aggregate.modelledRevenue)} modelled ฿</span>
+              <span className="study__kpi-detail">{aggregate.airportBusDays === 0 ? "Not these buses — none reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
             </div>
-            <div className="study__kpi study__kpi--model">
-              <span className="study__kpi-label">Capacity supplied</span>
-              <strong className="study__kpi-value">{fmtN(aggregate.capacitySupplied)}</strong>
-              <span className="study__kpi-detail">vehicle-days × 5 trips × 25 seats · max possible if every seat filled</span>
+            <div className="study__kpi">
+              <span className="study__kpi-label">Runs · hours moving</span>
+              <strong className="study__kpi-value">{fmtN(aggregate.totalRuns)} · {fmtN(Math.round(aggregate.totalHoursMoving))} h</strong>
+              <span className="study__kpi-detail">{aggregate.busDaysMoved} bus-days moved · a run = leaving a halt of 10+ min</span>
             </div>
           </section>
 
@@ -390,7 +415,10 @@ export function Study() {
                 They're the demand-side <em>expectation</em>, not a measurement.
               </li>
               <li>
-                <strong>Capacity supplied</strong> = tracked vehicle-days × 5 trips/day × 25 seats — a ceiling, not a delivered count.
+                <strong>These are town buses.</strong> {aggregate.airportBusDays === 0 ? "No tracked bus came within 1 km of HKT airport in this range" : `${aggregate.airportBusDays} tracked bus-days reached HKT airport`}. The airport-line model is shown for reference only — it is not a target for this fleet.
+              </li>
+              <li>
+                <strong>Runs and hours moving</strong> come from the fixes: a run starts when a bus leaves a halt of 10+ minutes; hours moving count only fix-to-fix steps of 50 m+ taken ≤3 min apart. The feed carries no line or trip, so these are not timetable trips.
               </li>
               <li>
                 <strong>Coverage</strong> shows which Bangkok minutes have a sample. A missing day means the cron or browser producer didn't write — that gap is shown, never papered over.
@@ -439,6 +467,10 @@ export function Study() {
                   <th className="study__num">Tracked km</th>
                   <th className="study__num">GPS trace km</th>
                   <th className="study__num">Vehicles</th>
+                  <th className="study__num">Moved</th>
+                  <th className="study__num">Runs</th>
+                  <th className="study__num">Hours moving</th>
+                  <th className="study__num">No fix</th>
                   <th className="study__num">Counters moved</th>
                   <th className="study__num">Coverage</th>
                   <th>Last sample (BKK)</th>
@@ -454,11 +486,15 @@ export function Study() {
                       <td className="study__num">{m ? fmtN(m.flights) : "—"}</td>
                       <td className="study__num">{m ? fmtN(m.pax) : "—"}</td>
                       <td className="study__num">{m ? fmtN(m.modelledBoarded) : "—"}</td>
-                      <td className="study__num">{d.totalPaxServed == null ? <span className="study__null">null · counter silent</span> : fmtN(d.totalPaxServed)}</td>
+                      <td className="study__num">{d.missing || d.future ? "—" : d.totalPaxServed == null ? <span className="study__null">null · counter silent</span> : fmtN(d.totalPaxServed)}</td>
                       <td className="study__num">{fmtThb(d.totalRevenueThb)}</td>
                       <td className="study__num">{fmtN(d.totalKmTracked)}</td>
                       <td className="study__num">{fmtN(d.totalGpsTraceKm)}</td>
                       <td className="study__num">{fmtN(d.totalTrackedVehicles)}</td>
+                      <td className="study__num">{fmtN(d.busesMoved)}</td>
+                      <td className="study__num">{fmtN(d.totalRuns)}</td>
+                      <td className="study__num">{fmtN(d.totalHoursMoving)}</td>
+                      <td className="study__num">{fmtN(d.busesNoFix)}</td>
                       <td className="study__num">{fmtN(d.countersReporting)}</td>
                       <td className="study__num">{fmtPct(d.coverage?.coveragePct ?? null)}</td>
                       <td>{bangkokTimeOf(d.coverage?.lastSampleAt ?? null)}</td>
@@ -483,6 +519,8 @@ export function Study() {
                   <th className="study__num">Tracked km</th>
                   <th className="study__num">GPS trace km</th>
                   <th className="study__num">Fixes</th>
+                  <th className="study__num">Runs</th>
+                  <th className="study__num">Hours moving</th>
                   <th>Counter</th>
                   <th className="study__num">Counted boarders</th>
                   <th className="study__num">Counted ฿</th>
@@ -492,7 +530,7 @@ export function Study() {
               </thead>
               <tbody>
                 {perBus.length === 0 ? (
-                  <tr><td colSpan={10} className="study__empty">No buses observed in this range yet.</td></tr>
+                  <tr><td colSpan={12} className="study__empty">No buses observed in this range yet.</td></tr>
                 ) : perBus.map((b) => (
                   <tr key={b.plate}>
                     <td><strong>{b.plate}</strong></td>
@@ -500,6 +538,8 @@ export function Study() {
                     <td className="study__num">{fmtN(Math.round(b.km))}</td>
                     <td className="study__num">{fmtN(Math.round(b.gpsKm))}</td>
                     <td className="study__num">{fmtN(b.fixes)}</td>
+                    <td className="study__num">{fmtN(b.runs)}</td>
+                    <td className="study__num">{fmtN(Math.round(b.hoursMoving * 10) / 10)}</td>
                     <td>
                       {b.paxBasis === "apc" ? <span className="study__chip study__chip--pax">apc</span>
                         : b.paxBasis === "counter-silent" ? <span className="study__chip study__chip--silent">silent</span>
@@ -508,7 +548,7 @@ export function Study() {
                     </td>
                     <td className="study__num">{b.countedPax > 0 ? fmtN(b.countedPax) : <span className="study__null">null</span>}</td>
                     <td className="study__num">{b.countedRevenue > 0 ? fmtThb(b.countedRevenue) : <span className="study__null">—</span>}</td>
-                    <td>{b.lastState || "—"}</td>
+                    <td className={b.lastState === "no_fix" ? "study__state--alert" : undefined}>{stateLabel(b.lastState, b.lastSeenAt, b.lostWhileMoving)}</td>
                     <td>{bangkokTimeOf(b.lastSeenAt)}</td>
                   </tr>
                 ))}

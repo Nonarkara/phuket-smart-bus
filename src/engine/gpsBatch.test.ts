@@ -42,7 +42,7 @@ describe("gps history", () => {
       "2026-10-06",
     ]);
     expect(studyDates("2026-09-31", 7)).toBeNull();
-    expect(studyDates("2026-09-30", 100)).toHaveLength(14);
+    expect(studyDates("2026-09-30", 100)).toHaveLength(31);
   });
 
   it("joins the Thai plate to the canonical plate and does not count riders already on board", () => {
@@ -144,5 +144,34 @@ describe("gps history", () => {
     let day = applyBusesToDay(emptyGpsDay(t0), [fixAt(t0, { coordinates: [7.89, 98.39], paxCount: 2 })], t0);
     day = applyBusesToDay(day, [fixAt(t0 + 60_000, { coordinates: [7.891, 98.39], paxCount: 80 })], t0 + 60_000);
     expect(summarizeGpsDay(day).totalPaxServed).toBe(0);
+  });
+
+  it("a run is a departure from a 10-minute halt; time moving excludes the halt; a bus that goes silent mid-route is no_fix, not in transit", () => {
+    const t0 = Date.parse("2026-09-30T06:00:00+07:00");
+    const at = (min: number, lat: number, speedKph: number) => fixAt(t0 + min * 60_000, { coordinates: [lat, 98.39], speedKph });
+    const steps = [
+      at(0, 7.86, 0), at(12, 7.86, 0),            // parked 12 min
+      at(13, 7.865, 30), at(14, 7.87, 30),        // run 1: two moving minutes
+      at(15, 7.87, 0), at(16, 7.87, 0),           // 2-min stop — a bus stop, not a new run
+      at(17, 7.875, 30),
+      at(18, 7.875, 0), at(30, 7.875, 0),         // 13-min halt
+      at(31, 7.88, 30),                           // run 2, then the tracker goes silent
+    ];
+    let day = emptyGpsDay(t0);
+    for (const p of steps) day = applyBusesToDay(day, [p], Date.parse(p.timestamp));
+    const v = summarizeGpsDay(day, t0 + 60 * 60_000).vehicles[0]!;
+    expect(v.runs).toBe(2);
+    expect(v.hoursMoving).toBeCloseTo(4 / 60, 1);
+    expect(v.longestHaltMin).toBe(13);
+    expect(v.lastState).toBe("no_fix");
+    expect(v.lostWhileMoving).toBe(true);
+    expect(v.reachedAirport).toBe(false);
+  });
+
+  it("a past day is read at its last sample, so a bus that was halted then is halted — not no_fix a day later", () => {
+    const t0 = Date.parse("2026-09-30T20:00:00+07:00");
+    let day = applyBusesToDay(emptyGpsDay(t0), [fixAt(t0, { coordinates: [7.86, 98.39], speedKph: 0 })], t0);
+    day = applyBusesToDay(day, [fixAt(t0 + 60_000, { coordinates: [7.86, 98.39], speedKph: 0 })], t0 + 60_000);
+    expect(summarizeGpsDay(day, t0 + 86_400_000).vehicles[0]!.lastState).toBe("halted");
   });
 });
