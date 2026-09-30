@@ -156,7 +156,7 @@ export function Study() {
     setIsLoading(true);
     setError(null);
     try {
-      const url = `${appPath("/api/collect/week")}?from=${encodeURIComponent(from)}&days=${days}`;
+      const url = `${appPath("/api/collect/week")}?from=${encodeURIComponent(from)}&days=${days}&detail=vehicles`;
       const res = await fetch(url, { cache: "no-store" });
       const ct = res.headers.get("content-type") ?? "";
       if (!ct.includes("json")) {
@@ -522,7 +522,7 @@ export function Study() {
               {collectionIsLive ? " · live" : ` · last refresh ${bangkokTimeOf(new Date(fetchedAt).toISOString())}`}
             </span>
             <span className="study__footer-detail">
-              One click upstream: {appPath("/api/collect/week")}?from={data.from}&days={data.days.length}
+              One click upstream: {appPath("/api/collect/week")}?from={data.from}&days={data.days.length}&detail=vehicles
             </span>
           </footer>
         </>

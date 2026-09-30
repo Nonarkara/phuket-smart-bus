@@ -39,6 +39,10 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
     const end = parseStudyDate(today);
     from = end === null ? today : bangkokDate(end - (days - 1) * 86_400_000);
   }
+  // `?detail=vehicles` (or any non-empty value) attaches the per-bus array to
+  // each day. Default keeps the response small for cron consumers and dashboards
+  // that only need day totals. The Study screen always passes this.
+  const includeVehicles = (url.searchParams.get("detail") ?? "").length > 0;
   const dates = studyDates(from, days);
   if (!dates) {
     return new Response(JSON.stringify({ ok: false, error: "from must be YYYY-MM-DD" }), { status: 400, headers: HEADERS });
@@ -70,6 +74,10 @@ export async function onRequestGet(context: PagesEventContext): Promise<Response
       countersReporting: summary.countersReporting,
       totalPaxServed: summary.totalPaxServed,
       totalRevenueThb: summary.totalRevenueThb,
+      // Per-bus drill-down. Capped at the day ledger's vehicle count, which
+      // is bounded by the real fleet (≈24). Safe to include unconditionally
+      // when the caller asks for it.
+      ...(includeVehicles ? { vehicles: summary.vehicles } : {}),
     });
   }
 
