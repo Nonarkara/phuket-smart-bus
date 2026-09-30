@@ -30,8 +30,11 @@ fi
 
 # Trashed dist defeats Vite's incremental-cache old-bundle-hash problem —
 # without this, a stale chunk can keep shipping across rebuilds.
+# mavis-trash exits non-zero when there's nothing to trash (no dist/ yet)
+# and that fails the script under `set -e`. `|| true` keeps it safe on a
+# clean checkout; rm -rf is the fallback when the trash tool is absent.
 if command -v mavis-trash >/dev/null 2>&1; then
-  mavis-trash dist
+  mavis-trash dist || true
 else
   rm -rf dist
 fi
