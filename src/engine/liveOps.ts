@@ -54,10 +54,11 @@ const ON_LINE_M = 500;
 /**
  * Decisive margin to the *next* line — a bus on a road shared by two lines
  * stays ambiguous. The patong + dragon + rawai lines share the Old Town
- * corridor for several km; the strict 400 m margin was vetoing every match
- * there too. 250 m lets the nearest line win when the gap is real.
+ * corridor for several km; the 250 m margin was still vetoing matches
+ * there. 50 m lets the closest line win while keeping votes in a
+ * bus's ledger distinct enough to flip if it moves onto a different road.
  */
-const LINE_MARGIN_M = 250;
+const LINE_MARGIN_M = 50;
 /** Decisive fixes needed before a bus is assigned to a line. */
 const LINE_VOTES = 2;
 /** A rise in on-board count larger than this between two fixes is a counter glitch. */
