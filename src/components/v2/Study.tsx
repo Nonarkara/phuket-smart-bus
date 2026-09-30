@@ -388,7 +388,7 @@ export function Study() {
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Counted boarders</span>
-              <strong className="study__kpi-value">{fmtN(aggregate.totalCountedPax)}</strong>
+              <strong className="study__kpi-value">{aggregate.countersMovedEver > 0 ? fmtN(aggregate.totalCountedPax) : "unknown"}</strong>
               <span className="study__kpi-detail">{aggregate.countersMovedEver > 0 ? `${fmtThb(aggregate.totalCountedRev)} revenue` : "unknown — no counter reported"}</span>
             </div>
             <div className="study__kpi study__kpi--model">
