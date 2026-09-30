@@ -439,6 +439,10 @@ let detail: string | null = null;
 let lastOkMs: number | null = null;
 let pollCount = 0;
 let okCount = 0;
+/** Bangkok-zone ISO timestamp the server stamped on the last successful upstream poll. */
+let fetchedAtMs: number | null = null;
+/** Which upstreams answered the last poll. `null` before the first successful fetch. */
+let sources: { keyless: boolean; token: boolean } | null = null;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let subscribers = 0;
 
@@ -477,6 +481,13 @@ function ingest(feed: LiveBusFeed, nowMs: number) {
   lastOkMs = nowMs;
   detail = null;
   buses = feed.vehicles;
+  // Server stamps `fetchedAt` on every successful poll — the edge relay hits
+  // both upstreams, then echoes whichever answered. The Fleet Detail screen
+  // surfaces this so an operator can tell "the relay polled at 11:08:33"
+  // apart from "the GPS device took this fix at 11:08:13".
+  const parsedFetched = Date.parse(feed.fetchedAt);
+  fetchedAtMs = Number.isFinite(parsedFetched) ? parsedFetched : nowMs;
+  sources = feed.sources ?? { keyless: true, token: false };
   for (const bus of buses) {
     const tween = tweens.get(bus.plate);
     if (!tween) {
@@ -538,11 +549,36 @@ export function getLiveFeedState(nowMs = Date.now()) {
     status,
     detail,
     lastOkMs,
+    fetchedAtMs,
+    sources,
     pollCount,
     okCount,
     feedAgeSec: lastOkMs === null ? null : Math.round((nowMs - lastOkMs) / 1000),
+    /** Bangkok date the ledger is summing (rolls over at Bangkok midnight). */
+    ledgerDate: ledger.date,
     summary: summarizeLedger(ledger, buses, nowMs),
   };
+}
+
+/**
+ * The full set of live buses from the last successful upstream poll — every
+ * field the tracker sent, no summarisation. The Fleet Detail screen reads
+ * this directly so a curious operator can see lat / lng / heading / pax
+ * counters / odometer / online flag per plate, none of which survive the
+ * map-vehicle projection.
+ */
+export function getLiveBusesRaw(): readonly LiveBus[] {
+  return buses;
+}
+
+/**
+ * The day ledger (per-plate votes, trips, km, boardings, APC flag, terminal
+ * dwell state). Plain object — the Fleet Detail screen joins it with
+ * `getLiveBusesRaw()` on the client to draw one row per bus with every
+ * ledger field and every raw tracker field visible.
+ */
+export function getLiveLedgerSnapshot(): LiveLedger {
+  return ledger;
 }
 
 /** Map instrument shape, tweened between the last two real fixes so a 15 s
@@ -583,6 +619,8 @@ export function __resetLiveFeed(): void {
   status = "connecting";
   detail = null;
   lastOkMs = null;
+  fetchedAtMs = null;
+  sources = null;
   pollCount = 0;
   okCount = 0;
 }

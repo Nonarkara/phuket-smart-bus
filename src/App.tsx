@@ -46,6 +46,7 @@ import { appPath, routePath } from "./lib/paths";
 
 const DashboardV2 = lazy(() => import("./DashboardV2"));
 const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
+const FleetDetail = lazy(() => import("./components/v2/FleetDetail").then((m) => ({ default: m.FleetDetail })));
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
 );
@@ -83,10 +84,11 @@ type MapRouteFilter = RouteId | "all-core";
 
 const VIEW_PATHS: Record<AppView, string> = { map: appPath("/"), more: appPath("/more") };
 
-function getInitialView(): AppView | "ops" {
+function getInitialView(): AppView | "ops" | "fleet" {
   if (typeof window === "undefined") return "map";
   const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
+  if (p.startsWith("/fleet")) return "fleet";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
 }
@@ -215,6 +217,13 @@ export default function App() {
   // /roi page (financial model for buyers)
   if (pathname.startsWith("/roi")) {
     return <RoiCalculator />;
+  }
+
+  // /fleet — every data point about every real bus on the live tracker.
+  // Lives outside the desktop-shell so an operator can pop it open full-screen
+  // next to the ops wall.
+  if (pathname.startsWith("/fleet")) {
+    return <Suspense fallback={<RouteLoading />}><FleetDetail /></Suspense>;
   }
 
   // bus.nonarkara.org is the passenger front door — the only screen a
@@ -412,8 +421,10 @@ function LiveStatsWidget() {
 function TouristApp({ onToggle }: { onToggle: () => void }) {
   const [lang, setLang] = useState<Lang>(getStoredLang);
   const [view, setView] = useState<AppView>(() => {
+    // Parent routes /ops /fleet /toolkit /v2 /governor /roi /driver before
+    // reaching TouristApp, so TouristApp only renders on "/" or /more* paths.
     const init = getInitialView();
-    return init === "ops" ? "map" : init;
+    return init === "ops" || init === "fleet" ? "map" : init;
   });
   const [morePanel, setMorePanel] = useState<MorePanel>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -566,7 +577,9 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   useEffect(() => {
     function handlePopState() {
       const init = getInitialView();
-      if (init !== "ops") setView(init);
+      // TouristApp only mounts on / or /more* paths, so ignore ops/fleet here.
+      if (init === "ops" || init === "fleet") return;
+      setView(init);
     }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);

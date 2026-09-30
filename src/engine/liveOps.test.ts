@@ -16,6 +16,9 @@ import {
   distanceToPolylineM,
   emptyLedger,
   estimateTripRiders,
+  getLiveBusesRaw,
+  getLiveFeedState,
+  getLiveLedgerSnapshot,
   summarizeLedger,
   type LiveLedger,
 } from "./liveOps";
@@ -288,5 +291,23 @@ describe("modelled pricing (buses without a counter)", () => {
   it("local lines use the line P&L occupancy", () => {
     expect(estimateTripRiders("patong-old-bus-station", "Patong", 600, 4)).toEqual({ riders: 11, fareThb: 100, basis: "line-occupancy" });
     expect(estimateTripRiders("dragon-line", "Old Town loop", 600, 4)).toEqual({ riders: 5, fareThb: 100, basis: "line-occupancy" });
+  });
+});
+
+describe("feed state exports (Fleet Detail screen)", () => {
+  it("exports fetchedAtMs + sources + ledgerDate on the feed state and exposes raw buses + ledger", () => {
+    // The state shape is fixed (extra fields on getLiveFeedState); values
+    // depend on whether other tests have ingested anything, so assert the
+    // type contract, not the absolute values. The ledger date is always
+    // the Bangkok date at module-load — assert it's a valid yyyy-mm-dd.
+    const state = getLiveFeedState(T0);
+    expect(state.ledgerDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(state.pollCount).toBeGreaterThanOrEqual(0);
+    expect(state.fetchedAtMs === null || Number.isFinite(state.fetchedAtMs)).toBe(true);
+    expect(state.sources === null || typeof state.sources.keyless === "boolean").toBe(true);
+    expect(Array.isArray(getLiveBusesRaw())).toBe(true);
+    expect(getLiveLedgerSnapshot().date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(getLiveLedgerSnapshot().vehicles).toBeDefined();
+    expect(getLiveLedgerSnapshot().trips).toBeDefined();
   });
 });

@@ -59,6 +59,7 @@ import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
 import { DayReportModal } from "./components/v2/DayReportModal";
 import { LiveFleetPanel } from "./components/v2/LiveFleetPanel";
 import { LiveFeedBar } from "./components/v2/LiveFeedBar";
+import { appPath } from "./lib/paths";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
 
@@ -515,6 +516,16 @@ export default function DashboardV2() {
           >
             SIMULATION
           </button>
+          {/* Deep link to the dedicated Fleet Detail screen — every data point
+              per real bus (raw GPS, pax counter, odometer, day ledger). Always
+              visible (works in SIM too — the day ledger survives either way). */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/fleet")}
+            title="Every data point the live tracker sent, per real bus"
+          >
+            FLEET
+          </a>
         </div>
 
         {source === "live" ? (

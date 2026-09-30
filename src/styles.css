@@ -14073,6 +14073,135 @@ a { color: var(--tint); }
   background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite;
 }
 .v2--operations .v2-source__btn { font-size: 13px; }
+/* Fleet deep link: a clickable ghost in the same group, but uses a hairline
+   border so the eye reads "more pages" not "more state". */
+.v2-source__btn--fleet { text-decoration: none; color: var(--ax-ink-2); }
+.v2-source__btn--fleet:hover { color: var(--ax-accent); background: var(--ax-paper); }
+
+/* ── Fleet Detail screen ─────────────────────────────────────────────────────
+   A dedicated page for every data point the live tracker has on every real
+   bus. Dense table, monospace numerics, expandable rows. Inherits the v2
+   operations dark tokens. */
+.fleet-detail { padding: 0 24px 48px; min-height: 100vh; background: var(--ax-paper); color: var(--ax-ink); }
+.fleet-detail__header { padding: 16px 0 12px !important; align-items: flex-start; }
+.fleet-detail__status { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; min-width: 0; }
+.fleet-detail__pill {
+  display: inline-block; align-self: flex-start;
+  font: 700 11px/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 5px 10px; border: 1px solid var(--ax-line-2);
+}
+.fleet-detail__pill--live { background: var(--ax-accent); color: var(--ax-panel); border-color: var(--ax-accent); }
+.fleet-detail__pill--quiet { color: var(--ax-warn); border-color: var(--ax-warn); }
+.fleet-detail__pill--offline, .fleet-detail__pill--connecting { color: var(--ax-ink-3); }
+.fleet-detail__meta {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  font: 12px/1.5 var(--font-body); color: var(--ax-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.fleet-detail__meta strong { color: var(--ax-ink-3); font-weight: 600; margin-right: 4px; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
+.fleet-detail__chip {
+  display: inline-block; padding: 2px 6px; margin-left: 4px;
+  font: 700 10px/1.4 var(--font-body); letter-spacing: 0.06em;
+  border: 1px solid var(--ax-line-2);
+}
+.fleet-detail__chip.is-on { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fleet-detail__chip.is-off { color: var(--ax-ink-3); }
+.fleet-detail__actions { display: inline-flex; gap: 0; align-self: flex-start; }
+
+.fleet-detail__filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--ax-line); border-bottom: 1px solid var(--ax-line);
+  margin-bottom: 16px;
+}
+.fleet-detail__search {
+  background: var(--ax-panel); border: 1px solid var(--ax-line-2); color: var(--ax-ink);
+  font: 13px/1.4 var(--font-body); padding: 6px 10px; min-width: 220px;
+  font-variant-numeric: tabular-nums;
+}
+.fleet-detail__search:focus { outline: 1px solid var(--ax-accent); outline-offset: -1px; }
+.fleet-detail__chips { display: inline-flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--ax-line-2); }
+.fleet-detail__chip-btn {
+  background: none; border: 0; border-right: 1px solid var(--ax-line-2);
+  padding: 6px 10px; font: 600 11px/1 var(--font-body); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ax-ink-2); cursor: pointer;
+}
+.fleet-detail__chip-btn:last-child { border-right: 0; }
+.fleet-detail__chip-btn:hover { background: var(--ax-paper); color: var(--ax-ink); }
+.fleet-detail__chip-btn.is-active { background: var(--ax-ink); color: var(--ax-panel); }
+.fleet-detail__count {
+  margin-left: auto;
+  font: 700 12px/1 var(--font-body); color: var(--ax-ink-3); letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.fleet-detail__table-wrap { overflow-x: auto; border: 1px solid var(--ax-line); }
+.fleet-detail__table {
+  width: 100%; min-width: 1300px;
+  border-collapse: collapse; background: var(--ax-panel);
+  font: 13px/1.4 var(--font-body); color: var(--ax-ink);
+  font-variant-numeric: tabular-nums;
+}
+.fleet-detail__table thead th {
+  position: sticky; top: 0; background: var(--ax-panel); z-index: 1;
+  text-align: left; font: 700 11px/1.4 var(--font-body); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ax-ink-3);
+  padding: 10px 12px; border-bottom: 1px solid var(--ax-line-2);
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+.fleet-detail__table thead th:hover { color: var(--ax-ink); }
+.fleet-detail__table thead th.is-sorted { color: var(--ax-accent); }
+.fleet-detail__table tbody td {
+  padding: 8px 12px; border-bottom: 1px solid var(--ax-line);
+  white-space: nowrap; vertical-align: top;
+}
+.fleet-detail__table tbody tr.fleet-detail__row { cursor: pointer; transition: background-color 120ms ease; }
+.fleet-detail__table tbody tr.fleet-detail__row:hover { background: rgba(70, 185, 134, 0.05); }
+.fleet-detail__table tbody tr.is-open { background: rgba(70, 185, 134, 0.08); }
+.fleet-detail__table tbody tr.fleet-detail__row--stale td,
+.fleet-detail__table tbody tr.fleet-detail__row--offline td { color: var(--ax-ink-3); }
+.fleet-detail__table tbody td.fleet-detail__num { text-align: right; }
+.fleet-detail__table .fleet-detail__dim { color: var(--ax-ink-3); }
+.fleet-detail__table .fleet-detail__ago { font-size: 11px; color: var(--ax-ink-3); }
+.fleet-detail__table strong { color: var(--ax-ink); }
+.fleet-detail__status-tag {
+  display: inline-block; padding: 2px 6px;
+  font: 700 10px/1.4 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--ax-line-2); color: var(--ax-ink-2);
+}
+.fleet-detail__status-tag--moving { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fleet-detail__status-tag--dwelling { color: var(--ax-ink-2); }
+.fleet-detail__status-tag--stale { color: var(--ax-warn); border-color: var(--ax-warn); }
+.fleet-detail__status-tag--offline { color: var(--ax-neg); border-color: var(--ax-neg); }
+.fleet-detail__empty { padding: 24px; text-align: center; color: var(--ax-ink-3); font-style: italic; }
+
+.fleet-detail__expanded td { padding: 0 !important; background: var(--ax-paper); border-bottom: 1px solid var(--ax-line-2); }
+.fleet-detail__detail {
+  display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) minmax(320px, 2fr);
+  gap: 16px; padding: 16px;
+}
+.fleet-detail__panel h4 {
+  margin: 0 0 8px;
+  font: 700 11px/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-ink-3);
+}
+.fleet-detail__json {
+  background: var(--ax-panel); border: 1px solid var(--ax-line-2); padding: 10px;
+  font: 11px/1.5 ui-monospace, "SFMono-Regular", Menlo, monospace; color: var(--ax-ink-2);
+  overflow: auto; max-height: 280px; margin: 0; white-space: pre;
+}
+.fleet-detail__trips { width: 100%; border-collapse: collapse; font: 12px/1.4 var(--font-body); }
+.fleet-detail__trips th { text-align: left; font-weight: 700; color: var(--ax-ink-3); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 6px; border-bottom: 1px solid var(--ax-line-2); }
+.fleet-detail__trips td { padding: 4px 6px; border-bottom: 1px solid var(--ax-line); }
+.fleet-detail__trips td.fleet-detail__num { text-align: right; }
+
+@media (max-width: 1100px) {
+  .fleet-detail__detail { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .fleet-detail { padding: 0 12px 32px; }
+  .fleet-detail__filters { gap: 8px; }
+  .fleet-detail__search { min-width: 0; flex: 1 1 100%; }
+}
 
 .v2 .v2-livebar { gap: 16px; flex-wrap: nowrap; overflow: hidden; }
 .v2-livebar__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ax-ink-3); flex-shrink: 0; }
