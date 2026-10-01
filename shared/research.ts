@@ -19,7 +19,7 @@
  *   stop time   linear interpolation between the two fixes that bracket the
  *               stop, only when they are ≤5 min apart; else null.
  */
-import geometry from "./lineGeometry.json";
+import geometry from "./lineGeometry.json" with { type: "json" };
 
 export type ResearchFix = {
   plate: string;
