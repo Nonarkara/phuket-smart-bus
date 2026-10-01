@@ -536,6 +536,16 @@ export default function DashboardV2() {
           >
             STUDY
           </a>
+          {/* Capacity command — the single-screen dispatcher view. Live
+              operation + live gap + live recommendation, one number per
+              decision. */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/capacity")}
+            title="One-screen capacity command — live operation + live gap + live recommendation"
+          >
+            CAPACITY
+          </a>
         </div>
 
         {source === "live" ? (

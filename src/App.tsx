@@ -48,6 +48,7 @@ const DashboardV2 = lazy(() => import("./DashboardV2"));
 const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
 const FleetDetail = lazy(() => import("./components/v2/FleetDetail").then((m) => ({ default: m.FleetDetail })));
 const Study = lazy(() => import("./components/v2/Study").then((m) => ({ default: m.Study })));
+const Capacity = lazy(() => import("./components/v2/Capacity").then((m) => ({ default: m.Capacity })));
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
 );
@@ -85,12 +86,13 @@ type MapRouteFilter = RouteId | "all-core";
 
 const VIEW_PATHS: Record<AppView, string> = { map: appPath("/"), more: appPath("/more") };
 
-function getInitialView(): AppView | "ops" | "fleet" | "study" {
+function getInitialView(): AppView | "ops" | "fleet" | "study" | "capacity" {
   if (typeof window === "undefined") return "map";
   const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
   if (p.startsWith("/fleet")) return "fleet";
   if (p.startsWith("/study")) return "study";
+  if (p.startsWith("/capacity")) return "capacity";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
 }
@@ -234,6 +236,13 @@ export default function App() {
   // flight arrivals behind each modelled figure.
   if (pathname.startsWith("/study")) {
     return <Suspense fallback={<RouteLoading />}><Study /></Suspense>;
+  }
+
+  // /capacity — one-screen capacity command: live operation + live gap +
+  // live recommendation. Hero KPIs, the operating equation, 24h forecast
+  // strip, what-to-do-next queue. The screen a dispatcher would keep open.
+  if (pathname.startsWith("/capacity")) {
+    return <Suspense fallback={<RouteLoading />}><Capacity /></Suspense>;
   }
 
   // bus.nonarkara.org is the passenger front door — the only screen a
@@ -431,10 +440,11 @@ function LiveStatsWidget() {
 function TouristApp({ onToggle }: { onToggle: () => void }) {
   const [lang, setLang] = useState<Lang>(getStoredLang);
   const [view, setView] = useState<AppView>(() => {
-    // Parent routes /ops /fleet /study /toolkit /v2 /governor /roi /driver
-    // before reaching TouristApp, so TouristApp only renders on "/" or /more*.
+    // Parent routes /ops /fleet /study /capacity /toolkit /v2 /governor /roi
+    // /driver before reaching TouristApp, so TouristApp only renders on
+    // "/" or /more* paths.
     const init = getInitialView();
-    return init === "ops" || init === "fleet" || init === "study" ? "map" : init;
+    return init === "ops" || init === "fleet" || init === "study" || init === "capacity" ? "map" : init;
   });
   const [morePanel, setMorePanel] = useState<MorePanel>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -587,8 +597,8 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   useEffect(() => {
     function handlePopState() {
       const init = getInitialView();
-      // TouristApp only mounts on / or /more* paths, so ignore ops/fleet/study.
-      if (init === "ops" || init === "fleet" || init === "study") return;
+      // TouristApp only mounts on / or /more* paths, so ignore ops/fleet/study/capacity.
+      if (init === "ops" || init === "fleet" || init === "study" || init === "capacity") return;
       setView(init);
     }
     window.addEventListener("popstate", handlePopState);
