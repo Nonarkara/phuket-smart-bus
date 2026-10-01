@@ -13,3 +13,11 @@ compatibility_date = "2026-07-21"
 binding = "GPS_HISTORY"
 id = "56cdf90d2a144ff6a492c7f1467b4d22"
 preview_id = "56cdf90d2a144ff6a492c7f1467b4d22"
+
+# Every distinct GPS fix, both feeds, no expiry — the research record.
+# Written by /api/collect/tick; read by /api/research/*.
+[[d1_databases]]
+binding = "FIXES"
+database_name = "phuket-smart-bus-fixes"
+database_id = "0a1281b7-e1bb-400d-82bc-58aeba354a96"
+migrations_dir = "migrations"

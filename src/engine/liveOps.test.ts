@@ -134,6 +134,17 @@ describe("tracker parsing", () => {
     expect(parsed).toMatchObject({ plate: "10-1223", lat: 7.906158, lng: 98.356406, routeId: "patong-old-bus-station", destination: "Patong" });
   });
 
+  it("token rows: the fix time is gpstime (Bangkok), not the poll time — an offline bus 13 days stale stays stale", () => {
+    const now = Date.parse("2026-10-01T23:57:49+07:00");
+    const live = { ...realTokenRow, licence: "10-1149", data: { ...realTokenRow.data, pos: [98.297613, 7.890908] as [number, number],
+      vhc: { id: "008800AD2F", lc: "10-1149" }, time: "2026-10-01T23:57:48.831640", gpstime: "2026-10-01T23:54:48", fix_age_s: 181, stat: "online" } };
+    const parked = { ...realTokenRow, licence: "10-1147", data: { ...realTokenRow.data, pos: [98.361768, 7.893098] as [number, number],
+      vhc: { id: "008800B1A2", lc: "10-1147" }, time: "2026-10-01T23:57:48.892483", gpstime: "2026-09-18T21:46:56", fix_age_s: 1131053, stat: "offline" } };
+    const [a, b] = parsePksbFeed([live, parked], now);
+    expect(a).toMatchObject({ plate: "10-1149", updatedAt: "2026-10-01T16:54:48.000Z", online: true });
+    expect(b).toMatchObject({ plate: "10-1147", updatedAt: "2026-09-18T14:46:56.000Z", online: false });
+  });
+
   it("plates join across feeds whatever the suffix", () => {
     expect(plateKey("10-1230ภูเก็ต")).toBe("10-1230");
     expect(plateKey("10-1230 ภูเก็ต")).toBe("10-1230");

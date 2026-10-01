@@ -15,6 +15,7 @@
 import { buildLiveBusResponse, type LiveBusEnv } from "../live-buses";
 import { liveBusesToPings, recordFleetSample, RECORD_MIN_GAP_MS } from "../../../shared/recordFleet";
 import type { LiveBus } from "../../../shared/pksbFeed";
+import { storeFixes, type D1Like } from "../../../shared/fixStore";
 
 const FRESH_MS = 3 * 60_000;
 
@@ -23,11 +24,12 @@ const HEADERS = {
   "cache-control": "no-store",
 };
 
+type TickEnv = LiveBusEnv & { FIXES?: D1Like };
 type TickContext = {
-  env: LiveBusEnv;
+  env: TickEnv;
 };
 
-export async function collectTick(env: LiveBusEnv, fetchImpl: typeof fetch = fetch): Promise<Response> {
+export async function collectTick(env: TickEnv, fetchImpl: typeof fetch = fetch): Promise<Response> {
   const now = Date.now();
   const upstream = await buildLiveBusResponse(env, fetchImpl);
   const body = (await upstream.json()) as { status?: string; vehicles?: LiveBus[]; detail?: string; sources?: unknown };
@@ -51,8 +53,16 @@ export async function collectTick(env: LiveBusEnv, fetchImpl: typeof fetch = fet
   }
 
   const result = await recordFleetSample(env.GPS_HISTORY, liveBusesToPings(body.vehicles), now);
+  // The research record is written only with a sample the ledger accepted, so
+  // both see the same ticks. A D1 failure is reported, never allowed to lose the KV write.
+  let research: { stored: number } | { error: string } | null = null;
+  if (env.FIXES && result.recorded) {
+    research = await storeFixes(env.FIXES, body.vehicles, now)
+      .then((stored) => ({ stored }))
+      .catch((e: Error) => ({ error: e.message }));
+  }
   return new Response(
-    JSON.stringify({ ok: true, minGapMs: RECORD_MIN_GAP_MS, fresh, online, sources: body.sources ?? null, serverTime: now, ...result }),
+    JSON.stringify({ ok: true, minGapMs: RECORD_MIN_GAP_MS, fresh, online, sources: body.sources ?? null, research, serverTime: now, ...result }),
     { status: 200, headers: HEADERS },
   );
 }

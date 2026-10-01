@@ -31,7 +31,14 @@ export type PksbRawRecord = {
     /** [lng, lat] — note the order. */
     pos: [number, number];
     spd: number;
+    /** Server poll time (Bangkok wall), NOT the fix — every row carries the same one. */
     time: string;
+    /** When the device took the fix, Bangkok wall time, no zone. Absent on old captures. */
+    gpstime?: string;
+    /** Seconds between the fix and `time`. */
+    fix_age_s?: number;
+    /** "online" | "offline" — the device link. */
+    stat?: string;
     buffer: string;
     /** [sentence, metres, destination, metres-to-destination, stops-away] or a bare string. */
     determineBusDirection: string | [string, number | string, string, number | string, number | string];
@@ -76,6 +83,8 @@ export type LiveBus = {
   /** Counter's boarded / alighted fields (`PeopleUp` / `PeopleDown`), raw. */
   paxUp?: number | null;
   paxDown?: number | null;
+  /** Which tracker the position came from. */
+  feed?: "keyless" | "token";
 };
 
 export type LiveBusFeedStatus = "live" | "upstream_error";
@@ -154,7 +163,13 @@ export function parsePksbRecord(record: PksbRawRecord, nowMs = Date.now()): Live
   const direction = record.data.determineBusDirection;
   const destination = String((Array.isArray(direction) ? direction[2] : "") || record.data.buffer || record.buffer || "").trim();
   const rawPlate = record.data.vhc?.lc || record.licence || String(record.id);
-  const updatedAt = normalizeTrackerTime(record.data.time, nowMs) ?? normalizeTrackerTime(record.date, nowMs);
+  // `time` is when the server polled, so an offline bus parked 13 days ago
+  // carries a fresh `time`. The fix is `gpstime`, Bangkok wall time
+  // (verified 2026-10-01: gpstime 23:54:48, fetched 23:57:49 BKK, fix_age_s 181).
+  const gps = record.data.gpstime ? Date.parse(`${String(record.data.gpstime).replace(" ", "T").replace(/(\.\d{3})\d+/, "$1")}+07:00`) : NaN;
+  const updatedAt = Number.isFinite(gps)
+    ? new Date(Math.min(gps, nowMs)).toISOString()
+    : normalizeTrackerTime(record.data.time, nowMs) ?? normalizeTrackerTime(record.date, nowMs);
   if (!updatedAt) return null; // a fix with no usable time can't be called live
 
   return {
@@ -169,6 +184,8 @@ export function parsePksbRecord(record: PksbRawRecord, nowMs = Date.now()): Live
     destination,
     paxOnBoard: null,
     updatedAt,
+    online: record.data.stat === "online" ? true : record.data.stat === "offline" ? false : null,
+    feed: "token",
   };
 }
 
@@ -252,6 +269,7 @@ export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus
     online: inner.Online === undefined ? null : Number(inner.Online) === 1,
     paxUp: tally(inner.PeopleUp),
     paxDown: tally(inner.PeopleDown),
+    feed: "keyless",
   };
 }
 

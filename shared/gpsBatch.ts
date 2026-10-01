@@ -115,6 +115,8 @@ export type DayVehicle = {
   haltStartMs?: number | null;
   /** Came within 1 km of HKT airport today. */
   reachedAirport?: boolean;
+  /** Last line the token feed named for this bus. The keyless (town) feed names none. */
+  line?: string;
 };
 
 export type DayCoverage = {
@@ -313,6 +315,7 @@ export function applyBusesToDay(day: GpsDay, buses: GpsBusPing[], nowMs: number)
     next.lastSpeedKph = Math.max(0, Number(bus.speedKph) || 0);
     next.lastSeenAt = bus.timestamp || new Date(nowMs).toISOString();
     if (typeof bus.online === "boolean") next.online = bus.online;
+    if (bus.routeId) next.line = bus.routeId;
     vehicles[plate] = next;
   }
   return { date: day.date, updatedAt: nowMs, vehicles, coverage: markCoverage(day.coverage, nowMs), rules: FOLD_RULES };
@@ -370,6 +373,7 @@ export function summarizeGpsDay(day: GpsDay, nowMs = Date.now()) {
     return {
       vehicleId: v.plate,
       licensePlate: v.plate,
+      line: v.line ?? null,
       totalDistanceKm: r1(km),
       kmBasis: hasOdometer ? "odometer" as const : "gps-trace" as const,
       gpsTraceKm: r1(v.km),
