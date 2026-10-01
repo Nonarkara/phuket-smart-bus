@@ -25,6 +25,7 @@ import {
   getDayModelFor,
 } from "../../engine/demandSupplyEngine";
 import { getOpsFlightScheduleFor } from "../../engine/opsFlightSchedule";
+import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
 
 type Range = "today" | "7d" | "14d" | "30d";
@@ -49,7 +50,7 @@ type DayVehicle = {
   paxServed: number | null;
   paxBasis: "apc" | "counter-silent" | "no-counter";
   revenueThb: number | null;
-  lastState: "parked_depot" | "moving" | "halted" | "no_fix";
+  lastState: "parked_depot" | "in_transit" | "dwelling";
   lastSeenAt: string;
   lastFixAt: string | null;
   runs?: number;
@@ -137,6 +138,22 @@ function rangeStart(range: Range, todayIso: string): string {
   return bangkokAddDays(todayIso, -29);
 }
 
+/** 1440×900 is the design reference; wall screens scale up, never down.
+ *  Width-only scaling clipped the body on common 16:9 displays because the
+ *  header/footer consumed more than their share of the zoomed height. */
+function computeOpsScale(): number {
+  if (typeof window === "undefined") return 1;
+  const widthScale = window.innerWidth / 1440;
+  const heightScale = window.innerHeight / 900;
+  return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
+}
+
+/** A laptop should get a focused briefing, not a cropped wall console. */
+function shouldUseCompactOps(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 1360 || window.innerHeight < 820;
+}
+
 function bangkokAddDays(iso: string, delta: number): string {
   const ms = Date.parse(`${iso}T12:00:00+07:00`);
   return new Intl.DateTimeFormat("en-CA", {
@@ -160,6 +177,26 @@ export function Study() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<number>(0);
+  // Live "right now" panel: pulls the same feed the Ops Wall reads, so an
+  // operator sees buses moving THIS minute alongside the historical aggregates.
+  const [liveFeed, setLiveFeed] = useState(() => getLiveFeedState());
+  const [liveBuses, setLiveBuses] = useState(() => getLiveBusesRaw());
+  const [now, setNow] = useState(() => Date.now());
+
+  // Wall-display scaling: same logic as DashboardV2. Reference is 1440×900,
+  // narrow laptops collapse to the compact OpsBriefing. The Study screen reads
+  // best when the operator can stand back from it, so we scale up by default
+  // rather than letting 13 px type drown on a 4K monitor.
+  const [opsScale, setOpsScale] = useState(() => computeOpsScale());
+  const [isCompact, setIsCompact] = useState(() => shouldUseCompactOps());
+  useEffect(() => {
+    const onResize = () => {
+      setOpsScale(computeOpsScale());
+      setIsCompact(shouldUseCompactOps());
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const from = useMemo(() => rangeStart(range, anchorIso), [range, anchorIso]);
   const days = range === "today" ? 1 : range === "7d" ? 7 : range === "14d" ? 14 : 30;
@@ -197,6 +234,20 @@ export function Study() {
     const id = setInterval(() => void load(), 60_000);
     return () => clearInterval(id);
   }, [from, days]);
+
+  // Ref-counted live feed: the same /api/live-buses the Ops Wall reads.
+  // Stays subscribed while Study is open so the "right now" panel can show
+  // current buses reporting / moving, not just the last sample.
+  useEffect(() => {
+    const stop = startLiveFeed();
+    const refresh = () => {
+      setLiveFeed(getLiveFeedState());
+      setLiveBuses(getLiveBusesRaw());
+    };
+    const unsub = subscribeLiveFeed(refresh);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => { stop(); unsub(); clearInterval(tick); };
+  }, []);
 
   // Modelled boarded: the engine's per-DOW flight demand × regional capture ×
   // 25-cap queue simulation. Independent of the tracker — what we'd EXPECT
@@ -315,7 +366,7 @@ export function Study() {
       : state === "parked_depot" ? "at depot" : state || "—";
 
   return (
-    <div className="v2 v2--operations study" style={{ zoom: 1, minHeight: "100vh", overflow: "auto" }}>
+    <div className={`v2 v2--operations study ${isCompact ? "study--compact" : ""}`} style={{ zoom: opsScale, minHeight: "100vh", overflow: "auto" }}>
       <header className="v2-header study__header">
         <div className="v2-header__brand">
           <span className="v2-header__eyebrow">
@@ -365,6 +416,8 @@ export function Study() {
 
       {data && aggregate && (
         <>
+          <RightNowPanel feed={liveFeed} buses={liveBuses} now={now} />
+
           <section className="study__kpis">
             <div className={`study__kpi${collectorStale ? " study__kpi--alert" : ""}`}>
               <span className="study__kpi-label">Collector</span>
@@ -568,5 +621,70 @@ export function Study() {
         </>
       )}
     </div>
+  );
+}
+
+/** "Right now" banner — the operator's first read. Pulls the live feed
+ *  (same source the Ops Wall reads) and answers:
+ *    - Are buses reporting THIS minute?
+ *    - How many are moving?
+ *    - When did the relay last hear from upstream?
+ *  Big numbers + BKK-timestamped labels so it reads from across the room. */
+function RightNowPanel({ feed, buses, now }: { feed: ReturnType<typeof getLiveFeedState>; buses: ReturnType<typeof getLiveBusesRaw>; now: number }) {
+  const FRESH_MS = 3 * 60_000;
+  const reporting = buses.filter((b) => now - Date.parse(b.updatedAt) <= FRESH_MS);
+  const moving = reporting.filter((b) => b.speedKph > 4);
+  const dwelling = reporting.filter((b) => b.speedKph <= 4 && b.speedKph >= 0);
+  const stale = buses.length - reporting.length;
+  const ageSec = feed.lastOkMs === null ? null : Math.max(0, Math.round((now - feed.lastOkMs) / 1000));
+  const isFresh = ageSec !== null && ageSec <= 60;
+
+  return (
+    <section className="study__now">
+      <div className="study__now-head">
+        <span className="study__now-eyebrow">Right now</span>
+        <span className={`study__now-pill study__now-pill--${feed.status}`}>{feed.status.toUpperCase()}</span>
+        <span className="study__now-detail">
+          Server fetched <strong>{feed.fetchedAtMs ? bangkokTimeOf(new Date(feed.fetchedAtMs).toISOString()) : "—"}</strong>
+          {" · "}last sample {ageSec === null ? "—" : `${ageSec}s ago`}
+          {" · "}sources
+          <span className={`study__chip study__chip--${feed.sources?.keyless ? "pax" : "none"}`}>{feed.sources?.keyless ? "✓" : "×"} keyless</span>
+          <span className={`study__chip study__chip--${feed.sources?.token ? "pax" : "none"}`}>{feed.sources?.token ? "✓" : "×"} token</span>
+        </span>
+      </div>
+
+      <div className="study__now-grid">
+        <div className="study__now-tile">
+          <span className="study__now-label">Buses reporting</span>
+          <strong className="study__now-value">{reporting.length}</strong>
+          <span className="study__now-sub">fresh fix in the last 3 min</span>
+        </div>
+        <div className={`study__now-tile study__now-tile--${moving.length > 0 ? "live" : "quiet"}`}>
+          <span className="study__now-label">Moving now</span>
+          <strong className="study__now-value">{moving.length}</strong>
+          <span className="study__now-sub">{moving.length > 0 ? "speed &gt; 4 km/h right now" : "every reporting bus is dwelling"}</span>
+        </div>
+        <div className="study__now-tile">
+          <span className="study__now-label">Dwelling</span>
+          <strong className="study__now-value">{dwelling.length}</strong>
+          <span className="study__now-sub">parked or stopped, still reporting</span>
+        </div>
+        <div className={`study__now-tile ${stale > 0 ? "study__now-tile--alert" : ""}`}>
+          <span className="study__now-label">Stale / no fix</span>
+          <strong className="study__now-value">{stale}</strong>
+          <span className="study__now-sub">reported once but not in the last 3 min</span>
+        </div>
+        <div className="study__now-tile">
+          <span className="study__now-label">Feed age</span>
+          <strong className="study__now-value">{ageSec === null ? "—" : `${ageSec}s`}</strong>
+          <span className="study__now-sub">{isFresh ? "within the 60 s health window" : "edge relay slower than usual"}</span>
+        </div>
+        <div className="study__now-tile">
+          <span className="study__now-label">Sample rate</span>
+          <strong className="study__now-value">{feed.okCount}/{feed.pollCount}</strong>
+          <span className="study__now-sub">ok / total polls · {feed.pollCount === 0 ? "warming up" : `${Math.round((feed.okCount / feed.pollCount) * 100)}%`}</span>
+        </div>
+      </div>
+    </section>
   );
 }

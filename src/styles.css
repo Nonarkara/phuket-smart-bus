@@ -14285,14 +14285,14 @@ a { color: var(--tint); }
 .study__kpi--alert { border-color: var(--ax-warn); }
 .study__kpi--alert .study__kpi-value, .study__state--alert { color: var(--ax-warn); }
 .study__kpi-label {
-  display: block; font: 700 10px/1 var(--font-body); letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 6px;
+  display: block; font: 700 12px/1 var(--font-body); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 8px;
 }
 .study__kpi-value {
-  display: block; font: 700 24px/1.1 var(--font-display); color: var(--ax-ink);
-  font-variant-numeric: tabular-nums; margin-bottom: 6px;
+  display: block; font: 700 32px/1.05 var(--font-display); color: var(--ax-ink);
+  font-variant-numeric: tabular-nums; margin-bottom: 8px;
 }
-.study__kpi-detail { font: 12px/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.study__kpi-detail { font: 13px/1.45 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
 .study__caveats {
   background: rgba(224, 162, 67, 0.04); border: 1px solid rgba(224, 162, 67, 0.25);
@@ -14332,12 +14332,12 @@ a { color: var(--tint); }
   font: 13px/1.4 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
 .study__table thead th {
-  background: var(--ax-panel); text-align: left; padding: 10px 12px;
-  font: 700 11px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--ax-panel); text-align: left; padding: 14px 16px;
+  font: 700 12px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap;
 }
 .study__table thead th.study__num { text-align: right; }
-.study__table tbody td { padding: 8px 12px; border-bottom: 1px solid var(--ax-line); white-space: nowrap; vertical-align: top; }
+.study__table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--ax-line); white-space: nowrap; vertical-align: top; font-size: 14px; }
 .study__table tbody td.study__num { text-align: right; }
 .study__table tbody tr:hover { background: rgba(70, 185, 134, 0.04); }
 .study__table tbody tr.study__row--missing td { color: var(--ax-ink-3); background: rgba(255, 138, 122, 0.03); }
@@ -14360,3 +14360,61 @@ a { color: var(--tint); }
   .study__controls { flex-direction: column; align-items: stretch; }
   .study__chips, .study__date, .study__refresh { width: 100%; }
 }
+
+/* ── Right Now banner ──────────────────────────────────────────────────────
+   The operator's first read on /study — answers "are buses moving?" at a
+   glance. Big numbers, BKK timestamps, source chips. Reads from across the
+   room. */
+.study__now {
+  background: linear-gradient(180deg, var(--ax-panel) 0%, rgba(70, 185, 134, 0.04) 100%);
+  border: 1px solid var(--ax-line); padding: 18px 22px;
+  margin: 16px 0;
+}
+.study__now-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--ax-line); margin-bottom: 16px;
+}
+.study__now-eyebrow {
+  font: 700 13px/1 var(--font-body); letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ax-accent);
+}
+.study__now-pill {
+  display: inline-block;
+  font: 700 12px/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 5px 10px; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3);
+}
+.study__now-pill--live { background: var(--ax-accent); color: var(--ax-panel); border-color: var(--ax-accent); }
+.study__now-pill--quiet { color: var(--ax-warn); border-color: var(--ax-warn); }
+.study__now-pill--offline, .study__now-pill--connecting { color: var(--ax-ink-3); }
+.study__now-detail {
+  font: 13px/1.5 var(--font-body); color: var(--ax-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.study__now-detail strong { color: var(--ax-ink); font-weight: 700; }
+
+.study__now-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+.study__now-tile {
+  background: var(--ax-panel); border: 1px solid var(--ax-line);
+  padding: 14px 16px;
+}
+.study__now-tile--live { background: rgba(70, 185, 134, 0.08); border-color: rgba(70, 185, 134, 0.35); }
+.study__now-tile--quiet { background: rgba(224, 162, 67, 0.06); border-color: rgba(224, 162, 67, 0.25); }
+.study__now-tile--alert { background: rgba(255, 138, 122, 0.06); border-color: rgba(255, 138, 122, 0.25); }
+.study__now-label {
+  display: block; font: 700 11px/1 var(--font-body); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 6px;
+}
+.study__now-value {
+  display: block; font: 700 36px/1.05 var(--font-display); color: var(--ax-ink);
+  font-variant-numeric: tabular-nums; margin-bottom: 6px;
+}
+.study__now-tile--live .study__now-value { color: var(--ax-accent); }
+.study__now-tile--quiet .study__now-value { color: var(--ax-warn); }
+.study__now-tile--alert .study__now-value { color: var(--ax-neg); }
+.study__now-sub { font: 12px/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+
+.study--compact .study__now-grid { grid-template-columns: repeat(2, 1fr); }
+.study--compact .study__now-value { font-size: 28px; }
