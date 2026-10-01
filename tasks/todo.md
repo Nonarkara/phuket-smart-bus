@@ -1,3 +1,18 @@
+# LIVE = official map, both fleets, research record — 2026-10-02
+
+- [x] Token feed (line fleet, 30 buses) wired: Pages secret set; fix time = gpstime (BKK), not poll time; online flag
+- [x] D1 research store: every distinct fix, both feeds, no expiry, written by the tick
+- [x] shared/research.ts: line by geometry/feed, trips terminal→terminal, laps, stop crossing times, jump + plausibility guards (tests)
+- [x] /api/research/day + /api/research/fixes (CSV/JSON)
+- [x] /research page: Marey, trip times, headways, stop profile, p85 schedule table, trip log; phone-checked
+- [x] CDPT 57546a5, 981934e — live
+
+## Next (needs data to accumulate)
+- After ~7 service days: multi-day view (same hour across days) → the timetable proposal per line
+- Calibrate the simulation's trip times / headways from observed p50/p85 by hour (replace fixed 95 min)
+- Ridership: counters read 0 on both fleets → ask PKSB for ticket/farebox counts. No revenue figure survives a lender without it.
+- First real trips land from ~05:30 2026-10-02; check /research by 09:00 and fix anything the real data breaks
+
 # PKCD real-GPS monitoring — 2026-10-01
 
 - [x] /study tables render (they did; earlier read was wrong)
