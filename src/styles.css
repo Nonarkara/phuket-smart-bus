@@ -14355,8 +14355,45 @@ a { color: var(--tint); }
 .study__footer strong { color: var(--ax-ink); font-weight: 700; }
 .study__footer-detail { font: 11px/1.4 ui-monospace, monospace; color: var(--ax-ink-3); }
 
+/* ── /research — real trips from the permanent fix record ─────────────────── */
+/* .v2 is a flex column; a section with overflow:auto would shrink to its heading. */
+.research > * { flex-shrink: 0; }
+.research__lines { display: flex; flex-wrap: wrap; margin: 16px 0 0; }
+.research__lines .study__chip, .research__plates .study__chip { min-height: 44px; display: inline-flex; align-items: center; }
+.research .study__table-wrap { padding: 16px; background: var(--ax-panel); }
+.research .study__table-wrap > h3 { margin: 0; font: 700 15px/1.3 var(--font-body); color: var(--ax-ink); }
+.research__marey-wrap { overflow-x: auto; margin-top: 12px; }
+.research__marey { display: block; }
+.research__chart { display: block; margin-top: 12px; }
+.research__axis { font: 13px var(--font-body); fill: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.research__stopline { stroke: var(--ax-line); stroke-width: 1; }
+.research__gridline { stroke: var(--ax-line); stroke-width: 1; stroke-dasharray: 2 4; }
+.research__now { stroke: var(--ax-warn); stroke-width: 1.5; }
+.research__trace { fill: none; stroke: var(--ax-ink-2); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; transition: stroke 150ms ease, opacity 150ms ease; }
+.research__trace.is-dim { opacity: 0.25; }
+.research__trace.is-focus { stroke: var(--ax-accent); stroke-width: 3; opacity: 1; }
+.research__hit { fill: none; stroke: transparent; stroke-width: 12; cursor: pointer; }
+.research__dot { fill: var(--ax-ink); }
+.research__dot--rev { fill: var(--ax-panel); stroke: var(--ax-ink); stroke-width: 1.5; }
+.research__plates { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.research__plates .study__chip { border: 1px solid var(--ax-line-2); }
+.research__pair { display: grid; grid-template-columns: 1fr; gap: 0 24px; }
+@media (min-width: 1100px) { .research__pair { grid-template-columns: 1fr 1fr; } }
+.research__headways { margin-top: 12px; display: grid; gap: 20px; }
+.research__headway-label { display: flex; flex-direction: column; gap: 2px; font: 13px/1.4 var(--font-body); color: var(--ax-ink-2); }
+.research__headway-label strong { color: var(--ax-ink); font-size: 15px; }
+.research__ticks { position: relative; height: 32px; margin-top: 8px; border-bottom: 1px solid var(--ax-line-2); }
+.research__tick { position: absolute; bottom: 0; width: 2px; height: 24px; margin-left: -1px; background: var(--ax-ink); }
+.research__tick.is-bunched { background: var(--ax-warn); height: 32px; }
+.research__ticks-axis { display: flex; justify-content: space-between; font: 13px var(--font-body); color: var(--ax-ink-3); }
+.research__table-scroll { overflow-x: auto; margin-top: 12px; }
+.research__th { color: var(--ax-ink-3); margin-left: 6px; }
+
 @media (max-width: 720px) {
   .study { padding: 0 12px 32px; }
+  /* The ops header grid overlaps three children on a phone: stack them instead. */
+  .v2 .study__header { display: flex; flex-wrap: wrap; gap: 12px; }
+  .v2 .study__header > * { flex: 1 1 100%; }
   .study__controls { flex-direction: column; align-items: stretch; }
   .study__chips, .study__date, .study__refresh { width: 100%; }
 }

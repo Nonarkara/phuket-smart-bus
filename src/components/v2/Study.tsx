@@ -403,6 +403,7 @@ export function Study() {
         <div className="study__actions">
           <a className="v2-source__btn" href={appPath("/ops")}>← Back to ops</a>
           <a className="v2-source__btn" href={appPath("/fleet")}>Fleet</a>
+          <a className="v2-source__btn" href={appPath("/research")}>Trips</a>
         </div>
       </header>
 

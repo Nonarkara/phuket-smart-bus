@@ -48,6 +48,7 @@ const DashboardV2 = lazy(() => import("./DashboardV2"));
 const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
 const FleetDetail = lazy(() => import("./components/v2/FleetDetail").then((m) => ({ default: m.FleetDetail })));
 const Study = lazy(() => import("./components/v2/Study").then((m) => ({ default: m.Study })));
+const Research = lazy(() => import("./components/v2/Research").then((m) => ({ default: m.Research })));
 const Capacity = lazy(() => import("./components/v2/Capacity").then((m) => ({ default: m.Capacity })));
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
@@ -91,7 +92,7 @@ function getInitialView(): AppView | "ops" | "fleet" | "study" | "capacity" {
   const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
   if (p.startsWith("/fleet")) return "fleet";
-  if (p.startsWith("/study")) return "study";
+  if (p.startsWith("/study") || p.startsWith("/research")) return "study";
   if (p.startsWith("/capacity")) return "capacity";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
@@ -236,6 +237,12 @@ export default function App() {
   // flight arrivals behind each modelled figure.
   if (pathname.startsWith("/study")) {
     return <Suspense fallback={<RouteLoading />}><Study /></Suspense>;
+  }
+
+  // /research — real trips from the permanent fix record: time–distance
+  // diagram, trip times, headways, stop-to-stop minutes, schedule running times.
+  if (pathname.startsWith("/research")) {
+    return <Suspense fallback={<RouteLoading />}><Research /></Suspense>;
   }
 
   // /capacity — one-screen capacity command: live operation + live gap +
