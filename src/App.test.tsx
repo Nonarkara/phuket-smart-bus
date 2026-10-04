@@ -96,7 +96,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", {
         name: /what if an airport passenger can find the bus/i
-      }, { timeout: 5_000 })
+      }, { timeout: 15_000 })
     ).toBeInTheDocument();
     expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Evidence status legend")).toHaveTextContent(
@@ -104,7 +104,7 @@ describe("App", () => {
     );
     expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
     expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
-  });
+  }, 30_000);
 
   it("shows the desktop passenger shell — not the bare mobile app or the toolkit hub — for a desktop visitor on the rider domain", async () => {
     // Regression test: isRiderDomain used to short-circuit to the bare

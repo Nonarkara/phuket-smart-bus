@@ -225,9 +225,10 @@ export function Capacity() {
   const currentBusesToAdd = Math.max(0, Math.ceil(currentQueue / BUS_CAPACITY));
   const currentMissedThb = simState.lostRevenueThb;
 
-  // Next 24 hours' pending actions, ranked by urgency (gap, then by hour)
-  const topActions = useMemo(() => {
-    const actions = balance
+  // Next 24 hours' pending actions, ranked by urgency (gap, then by hour).
+  // topActionsAll feeds the story sentence; topActions is the visible list (top 6).
+  const topActionsAll = useMemo(() => {
+    return balance
       .filter((r) => r.busesToAdd > 0 || r.emptySeatsPax >= BUS_CAPACITY)
       .map((r) => ({
         hour: r.hour,
@@ -239,9 +240,29 @@ export function Capacity() {
         missedThb: r.missedThb,
         earnedThb: r.earnedThb,
         severity: r.busesToAdd * 10 + Math.max(r.inGapPax, r.outGapPax),
-      }));
-    return actions.sort((a, b) => b.severity - a.severity).slice(0, 6);
+      }))
+      .sort((a, b) => b.severity - a.severity);
   }, [balance]);
+  const topActions = topActionsAll.slice(0, 6);
+
+  // The "so what" — the one sentence an operator wants to read first.
+  // Built from the same engine numbers that drive the rest of the page so
+  // it never drifts from the math underneath.
+  const topAction = topActionsAll[0];
+  const storySentence = (() => {
+    if (source === "live") {
+      const moving = liveMoving.length;
+      const reporting = liveReporting.length;
+      if (topAction && topAction.busesToAdd > 0) {
+        return `${moving} of ${reporting} buses are moving. Add ${topAction.busesToAdd} bus${topAction.busesToAdd === 1 ? "" : "es"} at ${String(topAction.hour).padStart(2, "0")}:00 to clear the ${fmtThb(topAction.missedThb)} shortfall there.`;
+      }
+      return `${moving} of ${reporting} buses are moving. No bus needed this hour.`;
+    }
+    if (topAction && topAction.busesToAdd > 0) {
+      return `Modelled demand outpaces modelled supply for most of today. Peak: add ${topAction.busesToAdd} bus${topAction.busesToAdd === 1 ? "" : "es"} at ${String(topAction.hour).padStart(2, "0")}:00 to recover ${fmtThb(topAction.missedThb)} missed.`;
+    }
+    return `Modelled demand and supply are balanced across the modelled day.`;
+  })();
 
   const chooseSource = (next: OpsSource) => {
     setSource(next);
@@ -290,35 +311,41 @@ export function Capacity() {
         </div>
       </header>
 
+      {/* ── Story banner — one sentence that tells the operator what to do */}
+      <section className="capacity__story">
+        <span className="capacity__story-label">{source === "live" ? "RIGHT NOW · REAL FLEET" : "TODAY · MODELLED"}</span>
+        <p className="capacity__story-text">{storySentence}</p>
+      </section>
+
       {/* ── Hero KPIs ─────────────────────────────────────────────────── */}
       <section className="capacity__heroes">
         <div className="capacity__hero">
-          <span className="capacity__hero-label">Buses rolling</span>
+          <span className="capacity__hero-label">{source === "live" ? "Buses moving" : "Buses rolling"}</span>
           <strong className="capacity__hero-value">
             <Counter value={currentBusesRolling} />
           </strong>
-          <span className="capacity__hero-sub">{source === "live" ? `${liveReporting.length} reporting · ${liveMoving.length} &gt; 4 km/h` : `${fmtN(headline.fleet.totalBuses)} in fleet`}</span>
+          <span className="capacity__hero-sub">{source === "live" ? `${liveReporting.length} reporting right now` : `${fmtN(headline.fleet.totalBuses)} in fleet`}</span>
         </div>
         <div className={`capacity__hero ${currentQueue > 50 ? "capacity__hero--alert" : currentQueue > 0 ? "capacity__hero--warn" : ""}`}>
-          <span className="capacity__hero-label">Modelled airport queue</span>
+          <span className="capacity__hero-label">Queue at airport</span>
           <strong className="capacity__hero-value">
             <Counter value={currentQueue} suffix=" pax" />
           </strong>
-          <span className="capacity__hero-sub">{simState.paxAbandoned > 0 ? `${fmtN(simState.paxAbandoned)} already walked away` : "FIFO patience 60 min"}</span>
+          <span className="capacity__hero-sub">{simState.paxAbandoned > 0 ? `${fmtN(simState.paxAbandoned)} already walked away today` : "no walk-aways yet today"}</span>
         </div>
         <div className={`capacity__hero ${currentBusesToAdd > 0 ? "capacity__hero--action" : ""}`}>
-          <span className="capacity__hero-label">Planning recommendation</span>
+          <span className="capacity__hero-label">Add buses now</span>
           <strong className="capacity__hero-value">
-            <Counter value={currentBusesToAdd} suffix=" buses" />
+            <Counter value={currentBusesToAdd} suffix="" />
           </strong>
-          <span className="capacity__hero-sub">to clear {currentQueue}-pax queue at 25-cap · {fmtThb(currentMissedThb)} lost today</span>
+          <span className="capacity__hero-sub">{currentBusesToAdd > 0 ? "to clear the queue at 25 seats per bus" : "queue is within supply — no add needed"}</span>
         </div>
         <div className="capacity__hero capacity__hero--money">
-          <span className="capacity__hero-label">Modelled fare potential</span>
+          <span className="capacity__hero-label">Earned today</span>
           <strong className="capacity__hero-value">
             <Counter value={Math.round(totals.revenueThb)} className="capacity__hero-thb" />
           </strong>
-          <span className="capacity__hero-sub">riders × ฿{FARE_THB} · {fmtN(totals.paxDelivered)} delivered · {fmtN(totals.tripsCompleted)} trips</span>
+          <span className="capacity__hero-sub">{fmtN(totals.paxDelivered)} riders × ฿{FARE_THB} · {fmtThb(currentMissedThb)} missed · {fmtN(totals.tripsCompleted)} trips</span>
         </div>
       </section>
 
@@ -337,7 +364,17 @@ export function Capacity() {
         <div className="capacity__equation-op">−</div>
         <div className="capacity__equation-cell">
           <span className="capacity__equation-label">Gap</span>
-          <strong className={`capacity__equation-value ${(currentBalance?.gapPax ?? 0) > 0 ? "is-shortfall" : "is-ok"}`}>{currentBalance?.gapPax && currentBalance.gapPax > 0 ? "−" : ""}{fmtN(Math.abs(currentBalance?.gapPax ?? 0))} <span className="capacity__equation-unit">pax</span></strong>
+          {(() => {
+            const gap = currentBalance?.gapPax ?? 0;
+            const shortfall = gap > 0;
+            return (
+              <strong className={`capacity__equation-value ${shortfall ? "is-shortfall" : "is-ok"}`}>
+                {shortfall ? `−${fmtN(gap)}` : gap < 0 ? `+${fmtN(Math.abs(gap))}` : "0"}
+                <span className="capacity__equation-unit">pax</span>
+                <span className="capacity__equation-tag">{shortfall ? "shortfall" : gap < 0 ? "surplus" : currentBalance?.status?.toUpperCase() ?? "—"}</span>
+              </strong>
+            );
+          })()}
           <span className="capacity__equation-detail">{currentBalance?.status?.toUpperCase() ?? "—"}</span>
         </div>
         <div className="capacity__equation-op">=</div>

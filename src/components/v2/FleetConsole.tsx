@@ -24,6 +24,7 @@ import geometry from "@shared/lineGeometry.json";
 import { projectOnLine } from "@shared/research";
 import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
+import { TrumanDirectorDeck } from "./TrumanDirectorDeck";
 import "./fleetConsole.css";
 
 // ── what a bus is doing ────────────────────────────────────────────────────
@@ -272,12 +273,21 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
 }
 
 // ── page ───────────────────────────────────────────────────────────────────
-export function FleetConsole() {
+// ── page ───────────────────────────────────────────────────────────────────
+export function FleetConsole({ initialMode }: { initialMode?: "truman" | "board" }) {
   const [now, setNow] = useState(() => Date.now());
   const [buses, setBuses] = useState<readonly LiveBus[]>(() => getLiveBusesRaw());
   const [feed, setFeed] = useState(() => getLiveFeedState());
   const [today, setToday] = useState<Today | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
+  const [mode, setMode] = useState<"truman" | "board">(() => {
+    if (initialMode) return initialMode;
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("view") === "board" || p.get("mode") === "board") return "board";
+    }
+    return "truman";
+  });
 
   useEffect(() => {
     const stop = startLiveFeed();
@@ -335,42 +345,75 @@ export function FleetConsole() {
                 : `${count("driving")} driving, ${count("standing")} standing${count("late") ? `, ${count("late")} with a late signal` : ""}. ${count("quiet")} lost signal earlier today, ${count("off")} not out. Updated ${feedAge === null ? "—" : feedAge < 5 ? "just now" : `${feedAge} s ago`}, ${bkkClock(now)} in Phuket.`}
             </p>
           </div>
-          <nav className="fc-nav" aria-label="Other views">
-            <a href={appPath("/ops")}>Ops wall</a>
-            <a href={appPath("/research")}>Trips</a>
-            <a href={appPath("/study")}>Study</a>
-            <a href={appPath("/fleet/raw")}>Every field</a>
-          </nav>
+          <div className="fc-head__controls">
+            <div className="fc-mode-switch" role="group" aria-label="View mode">
+              <button
+                type="button"
+                className={`fc-mode-btn ${mode === "truman" ? "is-active" : ""}`}
+                onClick={() => setMode("truman")}
+                title="The Truman Show: Reality of the buses vs untapped demand potential"
+              >
+                🎬 TRUMAN SHOW (REALITY & GAP)
+              </button>
+              <button
+                type="button"
+                className={`fc-mode-btn ${mode === "board" ? "is-active" : ""}`}
+                onClick={() => setMode("board")}
+                title="Line-by-line station board with interval headways"
+              >
+                📋 STATION BOARD
+              </button>
+            </div>
+            <nav className="fc-nav" aria-label="Other views">
+              <a href={appPath("/ops")}>Ops wall</a>
+              <a href={appPath("/research")}>Trips</a>
+              <a href={appPath("/study")}>Study</a>
+              <a href={appPath("/fleet/raw")}>Every field</a>
+            </nav>
+          </div>
         </header>
 
-        <div className="fc-main">
-          <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+        {mode === "truman" ? (
+          <div className="fc-truman-view">
+            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+            <TrumanDirectorDeck
+              buses={buses}
+              realKmToday={feed.summary.kmDriven}
+              realRevenueThb={feed.summary.fareThb}
+              selectedPlate={focus}
+              onSelectPlate={setFocus}
+            />
+          </div>
+        ) : (
+          <div className="fc-main">
+            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
 
-          <aside className="fc-board" aria-label="Lines">
-            {focused && <BusDetail row={focused} now={now} today={today?.perBus[focused.bus.plate] ?? null} onClose={() => setFocus(null)} />}
+            <aside className="fc-board" aria-label="Lines">
+              {focused && <BusDetail row={focused} now={now} today={today?.perBus[focused.bus.plate] ?? null} onClose={() => setFocus(null)} />}
 
-            {attention.length > 0 && (
-              <section className="fc-attn" aria-label="Needs a look">
-                <h2>Needs a look</h2>
-                <ul>{attention.map((a, i) => (
-                  <li key={i} className={`is-${a.tone}`}><button type="button" onClick={() => setFocus(a.plate)}>{a.text}</button></li>
-                ))}</ul>
+              {attention.length > 0 && (
+                <section className="fc-attn" aria-label="Needs a look">
+                  <h2>Needs a look</h2>
+                  <ul>{attention.map((a, i) => (
+                    <li key={i} className={`is-${a.tone}`}><button type="button" onClick={() => setFocus(a.plate)}>{a.text}</button></li>
+                  ))}</ul>
+                </section>
+              )}
+
+              {LINES.map((line) => (
+                <LineBlock key={line.routeId} line={line} rows={rows.filter((r) => r.line === line)} today={today?.line[line.routeId]} focus={focus} onFocus={setFocus} />
+              ))}
+
+              <section className="fc-line">
+                <header className="fc-line__head"><h3>Town buses</h3><strong>{townOut.length} {townOut.length === 1 ? "bus" : "buses"}</strong></header>
+                <p className="fc-line__say">
+                  {townOut.filter((r) => r.state === "driving").length} driving, {townOut.filter((r) => r.state !== "driving").length} standing.
+                  {" "}These run Phuket Town routes that aren't PKSB lines, so they show on the map only.
+                </p>
               </section>
-            )}
-
-            {LINES.map((line) => (
-              <LineBlock key={line.routeId} line={line} rows={rows.filter((r) => r.line === line)} today={today?.line[line.routeId]} focus={focus} onFocus={setFocus} />
-            ))}
-
-            <section className="fc-line">
-              <header className="fc-line__head"><h3>Town buses</h3><strong>{townOut.length} {townOut.length === 1 ? "bus" : "buses"}</strong></header>
-              <p className="fc-line__say">
-                {townOut.filter((r) => r.state === "driving").length} driving, {townOut.filter((r) => r.state !== "driving").length} standing.
-                {" "}These run Phuket Town routes that aren't PKSB lines, so they show on the map only.
-              </p>
-            </section>
-          </aside>
-        </div>
+            </aside>
+          </div>
+        )}
 
         <details className="fc-all">
           <summary>All {rows.length} buses</summary>

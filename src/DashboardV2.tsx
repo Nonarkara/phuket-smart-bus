@@ -526,6 +526,14 @@ export default function DashboardV2() {
           >
             FLEET
           </a>
+          {/* Deep link to Truman Show — omniscient reality monitoring of buses vs untapped flight demand */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet v2-source__btn--truman"
+            href={appPath("/truman")}
+            title="The Truman Show — Omniscient observer of real bus operations vs untapped flight demand"
+          >
+            🎬 TRUMAN
+          </a>
           {/* Deep link to the Real-Bus Study screen — daily/weekly/monthly
               aggregates of the KV archive, side-by-side with modelled boarders
               from the flight schedule. */}

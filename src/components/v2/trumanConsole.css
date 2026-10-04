@@ -1,0 +1,408 @@
+/* trumanConsole.css — The Truman Show Fleet Observer Aesthetic */
+
+.truman-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-top: 1em;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+/* ── Top Director Bar ─────────────────────────────────────────────── */
+.truman-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6em 1em;
+  background: var(--ax-panel, #121820);
+  border: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+}
+
+.truman-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  font-size: 0.85em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.truman-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: #ff4d4d;
+  font-weight: 800;
+}
+
+.truman-rec__dot {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: #ff4d4d;
+  animation: truman-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes truman-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+.truman-tag {
+  color: var(--ax-ink-2, #8b949e);
+  border-left: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+  padding-left: 0.8em;
+}
+
+.truman-live-clock {
+  color: var(--ax-ink, #ffffff);
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+  padding-left: 0.8em;
+}
+
+.truman-tour-btn {
+  padding: 0.4em 0.8em;
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ax-ink, #ffffff);
+  background: var(--ax-paper, #0a0e14);
+  border: 1px solid var(--ax-accent, #3b82f6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.truman-tour-btn:hover,
+.truman-tour-btn.is-active {
+  background: var(--ax-accent, #3b82f6);
+  color: #ffffff;
+}
+
+/* ── Reality vs Potential Split Scoreboard ───────────────────────── */
+.truman-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1em;
+}
+
+@media (min-width: 860px) {
+  .truman-scoreboard {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.truman-side {
+  padding: 1em;
+  background: var(--ax-panel, #121820);
+  border: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+}
+
+.truman-side--reality {
+  border-top: 3px solid #10b981;
+}
+
+.truman-side--potential {
+  border-top: 3px solid #f59e0b;
+}
+
+.truman-side__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.8em;
+}
+
+.truman-badge {
+  font-size: 0.75em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0.2em 0.5em;
+}
+
+.truman-badge--reality {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid #10b981;
+}
+
+.truman-badge--potential {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+}
+
+.truman-sub {
+  font-size: 0.75em;
+  color: var(--ax-ink-2, #8b949e);
+}
+
+.truman-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8em;
+}
+
+.truman-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.truman-metric__label {
+  font-size: 0.7em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3, #6b7280);
+}
+
+.truman-metric__val {
+  font-size: 1.35em;
+  font-weight: 800;
+  color: var(--ax-ink, #ffffff);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.truman-metric__val small {
+  font-size: 0.65em;
+  color: var(--ax-ink-2, #8b949e);
+  font-weight: 500;
+}
+
+.truman-metric__note {
+  font-size: 0.68em;
+  color: var(--ax-ink-2, #8b949e);
+}
+
+.truman-metric--gain .truman-metric__val { color: #10b981; }
+.truman-metric--warn .truman-metric__val { color: #f59e0b; }
+.truman-metric--neg .truman-metric__val { color: #ef4444; }
+.truman-metric--action .truman-metric__val { color: #3b82f6; }
+
+/* ── Viewport: Actor Spotlight + Scene Narration List ─────────────── */
+.truman-viewport {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1em;
+}
+
+@media (min-width: 960px) {
+  .truman-viewport {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Actor Card Viewfinder ────────────────────────────────────────── */
+.truman-actor {
+  background: var(--ax-panel, #121820);
+  border: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+  padding: 1.2em;
+}
+
+.truman-actor__viewfinder {
+  position: relative;
+  padding: 1em;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Viewfinder corner brackets */
+.vf-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--ax-accent, #3b82f6);
+  border-style: solid;
+}
+.vf-bracket--tl { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+.vf-bracket--tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
+.vf-bracket--bl { bottom: -2px; left: -2px; border-width: 0 0 2px 2px; }
+.vf-bracket--br { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+
+.truman-actor__profile {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+
+.truman-actor__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 4px;
+  border: 1px solid var(--ax-line, rgba(255, 255, 255, 0.2));
+  background: #000;
+  image-rendering: pixelated;
+}
+
+.truman-actor__id {
+  display: flex;
+  flex-direction: column;
+}
+
+.truman-actor__kicker {
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ax-accent, #3b82f6);
+}
+
+.truman-actor__name {
+  font-size: 1.1em;
+  color: var(--ax-ink, #ffffff);
+}
+
+.truman-actor__plate {
+  font-size: 0.8em;
+  color: var(--ax-ink-2, #8b949e);
+  font-family: monospace;
+}
+
+.truman-actor__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6em;
+  padding: 0.8em 0;
+  border-top: 1px solid var(--ax-line, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--ax-line, rgba(255, 255, 255, 0.1));
+}
+
+.truman-actor__stats dt {
+  font-size: 0.68em;
+  color: var(--ax-ink-3, #6b7280);
+  text-transform: uppercase;
+}
+
+.truman-actor__stats dd {
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--ax-ink, #ffffff);
+}
+
+.truman-highlight {
+  color: #10b981;
+}
+
+.truman-actor__note {
+  margin-top: 0.8em;
+  font-size: 0.8em;
+  line-height: 1.4;
+  color: var(--ax-ink-2, #8b949e);
+}
+
+.truman-note-label {
+  display: inline-block;
+  font-weight: 800;
+  color: #f59e0b;
+  margin-right: 0.4em;
+}
+
+/* ── Scene Narration List ─────────────────────────────────────────── */
+.truman-scenes {
+  display: flex;
+  flex-direction: column;
+  background: var(--ax-panel, #121820);
+  border: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+}
+
+.truman-scenes__title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8em 1em;
+  font-size: 0.75em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--ax-ink-2, #8b949e);
+  border-bottom: 1px solid var(--ax-line, rgba(255, 255, 255, 0.12));
+}
+
+.truman-scenes__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 24em;
+  overflow-y: auto;
+}
+
+.truman-scene-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  padding: 0.8em 1em;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--ax-line, rgba(255, 255, 255, 0.08));
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.truman-scene-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.truman-scene-card.is-selected {
+  background: rgba(59, 130, 246, 0.12);
+  border-left: 3px solid var(--ax-accent, #3b82f6);
+}
+
+.truman-scene-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  font-size: 0.8em;
+}
+
+.truman-scene-card__chan {
+  color: var(--ax-accent, #3b82f6);
+  font-weight: 800;
+}
+
+.truman-scene-card__plate {
+  color: var(--ax-ink, #ffffff);
+  font-family: monospace;
+}
+
+.truman-scene-card__speed {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink-2, #8b949e);
+}
+
+.truman-scene-card__reality {
+  margin: 0;
+  font-size: 0.78em;
+  color: var(--ax-ink, #e5e7eb);
+  line-height: 1.35;
+}
+
+.truman-scene-card__reality strong {
+  color: #10b981;
+}
+
+.truman-scene-card__potential {
+  margin: 0;
+  font-size: 0.75em;
+  color: var(--ax-ink-2, #9ca3af);
+  line-height: 1.35;
+}
+
+.truman-scene-card__potential strong {
+  color: #f59e0b;
+}
+
+.truman-scene-card__footer {
+  font-size: 0.7em;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-top: 0.2em;
+}
+
+.truman-empty {
+  padding: 2em;
+  text-align: center;
+  color: var(--ax-ink-3, #6b7280);
+  font-size: 0.85em;
+}

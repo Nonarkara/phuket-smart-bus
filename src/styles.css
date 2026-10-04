@@ -14431,6 +14431,13 @@ a { color: var(--tint); }
 /* Fleet head on two lines, not five */
 .v2--operations .v2-fleet__head { align-items: center; gap: 10px; }
 .v2--operations .v2-fleet__head > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.v2-fleet__truman-pill {
+  display: inline-flex; align-items: center; padding: 4px 10px;
+  font: 700 11px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
+  color: #ffffff; background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6;
+  text-decoration: none; border-radius: 2px; transition: all 0.15s ease; margin-left: auto;
+}
+.v2-fleet__truman-pill:hover { background: #3b82f6; color: #ffffff; }
 .v2--operations .v2-fleet__title { font-size: 18px; }
 .v2--operations .v2-fleet__sub { font-size: 12px; }
 .v2--operations .v2-fleet__problems { gap: 4px; }
@@ -14990,6 +14997,13 @@ a { color: var(--tint); }
 .capacity__equation-value.is-shortfall { color: var(--ax-neg); }
 .capacity__equation-value.is-ok { color: var(--ax-accent); }
 .capacity__equation-ok { font: 700 22px/1.1 var(--font-display); color: var(--ax-accent); }
+.capacity__equation-tag {
+  display: inline-block; margin-left: 10px; padding: 3px 8px;
+  font: 700 10px/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase;
+  border: 1px solid currentColor; vertical-align: middle;
+}
+.capacity__equation-value.is-shortfall .capacity__equation-tag { color: var(--ax-neg); }
+.capacity__equation-value.is-ok .capacity__equation-tag { color: var(--ax-accent); }
 .capacity__equation-detail { font: 12px/1.4 var(--font-body); color: var(--ax-ink-2); }
 .capacity__equation-op {
   display: flex; align-items: center; justify-content: center;
@@ -15043,8 +15057,8 @@ a { color: var(--tint); }
 .capacity__hour-bar {
   flex: 1; min-height: 2px; transition: height 600ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.capacity__hour-bar--demand { background: var(--ax-ink); }
-.capacity__hour-bar--supply { background: transparent; border: 1px dashed var(--ax-accent); border-bottom: 0; }
+.capacity__hour-bar--demand { background: var(--ax-ink); border: 1px solid var(--ax-ink); }
+.capacity__hour-bar--supply { background: var(--ax-accent); border: 1px solid var(--ax-accent); opacity: 0.55; }
 .capacity__hour-label {
   font: 700 10px/1 var(--font-body); color: var(--ax-ink-3); padding: 4px 0;
   letter-spacing: 0.04em;
