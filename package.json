@@ -33,7 +33,7 @@
     "better-sqlite3": "^12.8.0",
     "compression": "^1.8.1",
     "cors": "^2.8.6",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
     "leaflet": "^1.9.4",
@@ -43,8 +43,13 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
-    "socket.io-client": "^4.8.1",
+    "socket.io-client": "^4.8.4",
     "zod": "^4.3.6"
+  },
+  "overrides": {
+    "body-parser": "1.20.8",
+    "qs": "6.16.0",
+    "socket.io-parser": "4.2.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
