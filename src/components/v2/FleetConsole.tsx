@@ -266,6 +266,15 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
     }
   }, [rows, focus, onFocus]);
 
+  // Frame the buses that are out, once, when the first positions arrive.
+  const framed = useRef(false);
+  useEffect(() => {
+    const out = rows.filter((r) => r.state !== "off" && r.state !== "quiet");
+    if (framed.current || !map.current || out.length < 2) return;
+    map.current.fitBounds(L.latLngBounds(out.map((r) => [r.bus.lat, r.bus.lng] as [number, number])), { padding: [24, 24], maxZoom: 13 });
+    framed.current = true;
+  }, [rows]);
+
   useEffect(() => {
     const r = rows.find((x) => x.bus.plate === focus);
     if (r && map.current) map.current.panTo([r.bus.lat, r.bus.lng]);
