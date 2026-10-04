@@ -64,7 +64,7 @@
 .fc .fc-bus--late { color: var(--ax-warn); }
 .fc-bus.is-focus .fc-bus__plate { background: var(--ax-accent); color: var(--ax-paper); }
 .fc-note { margin: 10px 0 0; font-size: 13px; color: var(--ax-ink-3); max-width: 75ch; }
-.fc-strips .fc-note { background: var(--ax-panel); margin: 0; padding: 10px 14px; }
+.fc-strips .fc-note { background: var(--ax-panel); margin: 0; padding: 10px 14px; max-width: none; }
 
 /* map + attention */
 .fc-pair { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 16px 0; }

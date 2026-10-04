@@ -333,6 +333,8 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 - **Auto-deploy is broken**: `.github/workflows/cloudflare-pages.yml` runs on push to `main` but fails — `CLOUDFLARE_API_TOKEN` auth-fails (error 10000). `.github/workflows/deploy.yml` (GitHub Pages) succeeds but doesn't matter for the live domain. **Working path until the CF secret is fixed**: deploy manually — `npx vite build && cp dist/client/index.html dist/client/404.html && npx wrangler pages deploy dist/client --project-name phuket-smart-bus --commit-dirty=true` (no `--branch` flag → production). Verify with `npx wrangler pages deployment list --project-name phuket-smart-bus` (look for `Environment: Production`, `Branch: main`).
 - **Live URL**: https://bus.nonarkara.org (https://bus.nonarkara.org/ops = DashboardV2)
 - **Routes**: `/` (tourist app, v1 chain), `/ops` (DashboardV2), `/v2` (legacy v1 dashboard), `/roi` (investor), `/governor` (God-mode), `/driver` (driver tablet)
+- **Real-fleet screens**: `/fleet` (FleetConsole — people read this: state counts, a strip per line with every bus at its position and heading, map, "needs a look", one card per bus), `/fleet/raw` (FleetDetail — every tracker field, sort/filter/export), `/research` (trips, Marey, schedule running times), `/study` (week/month archive).
+- **Deploying from a clean worktree** (when another agent has uncommitted work in the main tree): `git worktree add <dir> HEAD`, symlink `node_modules`, build there, and pass `--branch main` — a detached HEAD otherwise deploys as a *Preview* named "HEAD".
 
 ---
 
