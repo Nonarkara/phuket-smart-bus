@@ -1,0 +1,85 @@
+/* /research — how the buses really ran. Axiom: hairlines, zero radius, zero shadow, one accent.
+   One root size grows with the screen (same rule as /fleet); charts draw in the same em.
+   Three sizes: 1.6em (title) · 1em (body, findings) · 0.8em (small, axes, tables). */
+
+/* html/body/#root hide overflow (app shell), so the page is its own scroller. */
+.v2.rs {
+  position: fixed;
+  inset: 0;
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-size: clamp(16px, calc(100vw / 85), 40px);
+  line-height: 1.5;
+}
+:where(.rs) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.rs button:focus-visible, .rs a:focus-visible, .rs summary:focus-visible, .rs input:focus-visible { outline: 2px solid var(--ax-accent); outline-offset: 2px; }
+.rs a { color: var(--ax-accent); }
+
+.rs-page { max-width: 72em; margin: 0 auto; padding: 1em 1em 4em; }
+
+/* header */
+.rs-head { display: flex; flex-direction: column; gap: 0.8em; padding-bottom: 1em; border-bottom: 1px solid var(--ax-line); }
+.rs-eyebrow { margin: 0; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
+.rs-title { margin: 0.2em 0; font-size: 1.6em; line-height: 1.2; font-weight: 700; color: var(--ax-ink); text-wrap: balance; }
+.rs-sub { margin: 0; color: var(--ax-ink-2); }
+.rs-nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
+/* Small-text controls: 3.45em × 0.8em = 44 px tap height at the 16 px floor. */
+.rs-nav a { display: flex; align-items: center; justify-content: center; min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
+.rs-nav a:hover { color: var(--ax-ink); background: var(--ax-panel); }
+
+/* controls */
+.rs-controls { display: flex; flex-direction: column; gap: 0.8em; margin: 1.2em 0; }
+.rs-date { display: inline-flex; align-items: center; gap: 0.6em; color: var(--ax-ink-2); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; }
+.rs-date input { font: inherit; font-size: 1.25em; text-transform: none; letter-spacing: 0; min-height: 2.2em; padding: 0 0.6em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); color-scheme: dark; }
+.rs-lines { display: flex; flex-wrap: wrap; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); align-self: flex-start; }
+.rs-lines button { min-height: 2.75em; padding: 0 1em; background: var(--ax-paper); color: var(--ax-ink-2); }
+.rs-lines button.is-active { background: var(--ax-ink); color: var(--ax-paper); font-weight: 700; }
+.rs-error { color: var(--ax-neg); }
+
+/* in short */
+.rs-short { border-left: 3px solid var(--ax-accent); padding: 0.2em 0 0.2em 1em; margin: 0 0 1.5em; }
+.rs-short h2, .rs-card h2 { margin: 0 0 0.5em; font-size: 1em; font-weight: 700; color: var(--ax-ink); }
+.rs-short ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5em; }
+.rs-short li { color: var(--ax-ink); max-width: 46em; }
+
+/* cards + charts */
+.rs-card { background: var(--ax-panel); border: 1px solid var(--ax-line); padding: 1em; margin-top: 1em; }
+.rs-hint { margin: 0 0 0.8em; font-size: 0.8em; color: var(--ax-ink-2); max-width: 60em; }
+.rs-chart { display: block; overflow: visible; }
+.rs-scroll { overflow-x: auto; }
+.rs-axis { font-size: 0.8em; fill: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.rs-axis--strong { fill: var(--ax-ink); font-weight: 700; }
+.rs-grid { stroke: var(--ax-line); stroke-width: 1; }
+.rs-stopline { stroke: var(--ax-line); stroke-width: 1; }
+.rs-timetable { stroke: var(--ax-ink-2); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.rs-dot { fill: var(--ax-ink); }
+.rs-dot--rev { fill: var(--ax-panel); stroke: var(--ax-ink); stroke-width: 2; }
+.rs-bar { fill: var(--ax-ink-2); }
+.rs-bar--bunched { fill: var(--ax-warn); }
+.rs-trace { fill: none; stroke: var(--ax-ink-2); stroke-width: 1.5; stroke-linejoin: round; pointer-events: none; transition: opacity 150ms ease, stroke 150ms ease; }
+.rs-trace.is-dim { opacity: 0.2; }
+.rs-trace.is-focus { stroke: var(--ax-accent); stroke-width: 3.5; opacity: 1; }
+.rs-hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+
+/* tables */
+.rs-table { width: 100%; border-collapse: collapse; font-size: 0.8em; font-variant-numeric: tabular-nums; }
+.rs-table th { text-align: left; padding: 0.6em 0.8em; color: var(--ax-ink-3); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--ax-line-2); white-space: nowrap; }
+.rs-table td { padding: 0.55em 0.8em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; }
+.rs-table td strong { color: var(--ax-ink); }
+.rs-num { text-align: right !important; }
+.rs-few { color: var(--ax-ink-3); font-weight: 400; }
+.rs-th { color: var(--ax-ink-3); margin-left: 0.4em; }
+
+/* folded details */
+.rs-more { margin-top: 1em; border: 1px solid var(--ax-line); background: var(--ax-panel); }
+.rs-more summary { min-height: 2.75em; display: flex; align-items: center; padding: 0 1em; cursor: pointer; font-weight: 700; color: var(--ax-ink); }
+.rs-more > :not(summary) { margin: 0 1em 1em; }
+.rs-method { padding-left: 1.2em; font-size: 0.8em; color: var(--ax-ink-2); display: grid; gap: 0.5em; max-width: 62em; }
+
+@media (min-width: 720px) {
+  .rs-page { padding: 1.5em 2em 4em; }
+  .rs-head { flex-direction: row; justify-content: space-between; align-items: flex-start; }
+  .rs-nav { flex-shrink: 0; }
+  .rs-controls { flex-direction: row; align-items: center; gap: 1.5em; }
+}
