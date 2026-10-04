@@ -484,11 +484,11 @@ export function PassengerApp() {
             <div className="pa-stage__stats">
               <span><strong>{operator.fleet.movingBuses}</strong> buses moving</span>
               <span className="pa-sep">·</span>
-              <span><strong>{operator.today.paxDelivered.toLocaleString()}</strong> riders today</span>
+              <span><strong>{operator.today.paxDelivered.toLocaleString()}</strong> modelled riders</span>
               <span className="pa-sep">·</span>
-              <span><strong>฿{operator.today.revenueThb.toLocaleString()}</strong> earned</span>
+              <span><strong>฿{operator.today.revenueThb.toLocaleString()}</strong> modelled fares</span>
               <span className="pa-sep">·</span>
-              <span><strong>{Math.round(operator.today.co2SavedKg).toLocaleString()} kg</strong> CO₂ saved</span>
+              <span><strong>{Math.round(operator.today.co2SavedKg).toLocaleString()} kg</strong> modelled CO₂ saving</span>
             </div>
             <a href="/ops" className="pa-stage__ops-link">
               Open operations console ↗

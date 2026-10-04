@@ -323,7 +323,7 @@ export default function App() {
       <div className="desktop-shell__side desktop-shell__side--right">
         <div className="desktop-shell__brand">
           <h2 className="desktop-shell__title">Phuket Smart Bus</h2>
-          <p className="desktop-shell__subtitle">Real-time transit for Phuket Island</p>
+          <p className="desktop-shell__subtitle">Timetable model + live fleet feed</p>
         </div>
         <LiveStatsWidget />
         <button className="desktop-shell__ops-btn" type="button" onClick={goOps}>
@@ -431,20 +431,21 @@ function LiveStatsWidget() {
     <div className="live-stats">
       <div className="live-stat">
         <span className="live-stat__val"><AnimatedCounter value={stats.riders} /></span>
-        <span className="live-stat__label">Riders today</span>
+        <span className="live-stat__label">Modelled riders today</span>
       </div>
       <div className="live-stat">
         <span className="live-stat__val"><span className="live-pulse" /><AnimatedCounter value={stats.buses} /></span>
-        <span className="live-stat__label">Buses active</span>
+        <span className="live-stat__label">Scheduled buses active</span>
       </div>
       <div className="live-stat">
         <span className="live-stat__val"><AnimatedCounter value={stats.onTime} suffix="%" /></span>
-        <span className="live-stat__label">On-time</span>
+        <span className="live-stat__label">Modelled on-time</span>
       </div>
       <div className="live-stat">
         <span className="live-stat__val">{co2Label}</span>
-        <span className="live-stat__label">CO₂ saved</span>
+        <span className="live-stat__label">Modelled CO₂ saving</span>
       </div>
+      <p className="live-stats__source">Source: published timetable + demand simulation · not passenger counts</p>
     </div>
   );
 }

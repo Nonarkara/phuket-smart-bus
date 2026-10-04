@@ -4680,6 +4680,15 @@ a { color: var(--tint); }
   font-weight: 500;
 }
 
+.live-stats__source {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.66);
+  font: 500 11px/1.45 var(--font-body);
+}
+
 /* Live pulse indicator — green dot that breathes */
 .live-pulse {
   display: inline-block;

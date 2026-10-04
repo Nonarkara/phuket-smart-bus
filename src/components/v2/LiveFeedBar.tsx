@@ -31,7 +31,7 @@ export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observ
       {observedSinceMin !== null && <span className="v2-livebar__meta">observed since {hhmm(observedSinceMin)}</span>}
       {status === "offline" && detail && <span className="v2-livebar__meta v2-livebar__meta--warn">{detail}</span>}
       <span className="v2-livebar__basis">
-        Trips &amp; km: GPS · Riders: {countersOnline ? "bus passenger counters, modelled where a bus has none" : "modelled load per run"}
+        Fleet, trips &amp; km: GPS · Demand, queues and dispatch: model · Riders: {countersOnline ? "counted where available, otherwise modelled" : "modelled load per run"}
       </span>
       <button type="button" className="v2-timebar__speed" onClick={onOpenDevices} title="Direct GPS device ingest console">
         DEVICES

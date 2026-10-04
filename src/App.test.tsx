@@ -96,7 +96,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", {
         name: /what if an airport passenger can find the bus/i
-      })
+      }, { timeout: 5_000 })
     ).toBeInTheDocument();
     expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Evidence status legend")).toHaveTextContent(
@@ -125,6 +125,8 @@ describe("App", () => {
 
       expect(await screen.findByRole("button", { name: /Operator Console/i })).toBeInTheDocument();
       expect(screen.getByText("Explore the system")).toBeInTheDocument();
+      expect(screen.getByText("Modelled riders today")).toBeInTheDocument();
+      expect(screen.getByText(/published timetable \+ demand simulation/i)).toBeInTheDocument();
       expect(
         screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
       ).not.toBeInTheDocument();

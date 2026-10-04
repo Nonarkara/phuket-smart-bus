@@ -4,7 +4,7 @@
 
 # Phuket Smart Bus
 
-An independent civic-studio prototype: a **simulation that is shaped to become a production operations system**. Today it is a static site. Vehicle positions, queues, revenue, and missed ฿100s are computed in the browser from published timetables and a demand model. When real GPS (and later cameras) exist, the same screens are meant to keep their contracts and swap the data source.
+An independent civic-studio prototype with two evidence layers. Public Phuket Smart Bus tracker fixes drive the live fleet map and the permanent GPS research record. Passenger demand, queues, dispatch recommendations, fares, and CO₂ remain model outputs built from published timetables and stated assumptions. The interface labels that boundary; a live bus position does not turn a modelled passenger into an observed passenger.
 
 Live: [bus.nonarkara.org](https://bus.nonarkara.org)
 
@@ -17,13 +17,17 @@ Two audiences, one codebase.
 1. **Riders** (phone) — where is the next bus, when does it arrive, what does it cost versus a taxi or Grab.
 2. **Operations** (wall screen, also usable on a phone) — where the fleet is in the model, how many seats are scheduled, who boarded, what was earned, what was missed, and where demand and supply do not meet.
 
-The public site is a **client-side engine** plus a preserved Express backend that is not the live production feed. Numbers on the operations surfaces are supposed to trace to one demand–supply chain — flights, capture heuristics, the published airport-line timetable, boarding, delivery, fare — not to decorative constants.
+The public site is a Cloudflare Pages application with Pages Functions, a public fleet relay, KV daily summaries, and a D1 fix archive. The preserved Express backend provides the production-shaped ingest and service boundary for a future operator deployment; it is not the backend serving the public Pages site. Modelled numbers trace to one demand–supply chain—flights, capture heuristics, timetable, boarding, delivery, fare—not to decorative constants.
 
 | Surface | Path | Who it is for |
 |---|---|---|
 | Passenger app | [`/`](https://bus.nonarkara.org/) on `bus.nonarkara.org` | Riders |
 | Studio / toolkit hub | [`/`](https://bus.nonarkara.org/) on localhost (and `/toolkit`) | Research archive, USASCP method notes |
 | Operations wall | [`/ops`](https://bus.nonarkara.org/ops) | Dispatch / owner |
+| Capacity command | [`/capacity`](https://bus.nonarkara.org/capacity) | Live fleet beside modelled demand and dispatch planning |
+| Fleet detail | [`/fleet`](https://bus.nonarkara.org/fleet) | Raw tracker fields, fix age and per-bus evidence |
+| Operations study | [`/study`](https://bus.nonarkara.org/study) | Daily and weekly archive with coverage and unknowns |
+| Route research | [`/research`](https://bus.nonarkara.org/research) | Observed trips, headways and time–distance diagrams |
 | Legacy ops styling | [`/v2`](https://bus.nonarkara.org/v2) | Same engine, older chrome |
 | ROI calculator | [`/roi`](https://bus.nonarkara.org/roi) | Fare / fleet / capture sliders with sourced constants |
 | Governor picture | [`/governor`](https://bus.nonarkara.org/governor) | Impact framing |
@@ -55,7 +59,7 @@ The `server/` tree stays. It is the production-shaped backend (telemetry ingest,
 
 - Do not present the live site, the plates, the map, or the HUD-style hero as Phuket Provincial Administration, PAT, Phuket Smart Bus company, or any concessionaire’s official passenger information system.
 - Published **PKSB timetable** facts (effective 18 January 2025 in this repo’s schedule comments) and other public sources are **model inputs**. Using a public schedule is not an endorsement and does not grant operational authority.
-- Simulated positions use `telemetrySource: "schedule_mock"` until a real feed is wired. Do not describe them as live GPS.
+- Tracker positions are live only while their fix age passes the freshness gate. Replay positions use `telemetrySource: "schedule_mock"`. Demand, queues, ridership without a reporting counter, fares derived from that ridership, and CO₂ derived from those riders remain modelled and must be labelled as such.
 - Seat cameras, driver-attention status, and passenger-flow types in `shared/types.ts` describe **future** ingest. They are not evidence that those devices are running on the island today.
 - The toolkit’s USDOT / USASCP / METRANS history is an archive of a programme that was later paused. Independent continuation of the method is not the same as an agency deploying this repo.
 - Forks that put this UI in front of real riders must say what is modelled, what is live, and who is responsible for the service. Do not ship the studio illustration HUD as if it were a vehicle API.

@@ -259,7 +259,7 @@ export function Capacity() {
         <div className="capacity__brand">
           <span className="capacity__eyebrow">Capacity Command</span>
           <h1>Phuket Smart Bus</h1>
-          <span className="capacity__sub">One screen · live operation · live gap · live recommendation</span>
+          <span className="capacity__sub">Live fleet · modelled demand · planning recommendation</span>
         </div>
 
         <div className="capacity__clock">
@@ -275,7 +275,7 @@ export function Capacity() {
             className={`capacity__source-btn ${source === "live" ? "is-active" : ""} ${liveSourceOk && liveAgeSec !== null && liveAgeSec < 90 ? "is-available" : ""}`}
             onClick={() => chooseSource("live")}
           >
-            LIVE{liveReporting.length > 0 ? ` · ${liveReporting.length}` : ""}
+            LIVE FLEET{liveReporting.length > 0 ? ` · ${liveReporting.length}` : ""}
           </button>
           <button
             type="button"
@@ -300,21 +300,21 @@ export function Capacity() {
           <span className="capacity__hero-sub">{source === "live" ? `${liveReporting.length} reporting · ${liveMoving.length} &gt; 4 km/h` : `${fmtN(headline.fleet.totalBuses)} in fleet`}</span>
         </div>
         <div className={`capacity__hero ${currentQueue > 50 ? "capacity__hero--alert" : currentQueue > 0 ? "capacity__hero--warn" : ""}`}>
-          <span className="capacity__hero-label">Queue at airport</span>
+          <span className="capacity__hero-label">Modelled airport queue</span>
           <strong className="capacity__hero-value">
             <Counter value={currentQueue} suffix=" pax" />
           </strong>
           <span className="capacity__hero-sub">{simState.paxAbandoned > 0 ? `${fmtN(simState.paxAbandoned)} already walked away` : "FIFO patience 60 min"}</span>
         </div>
         <div className={`capacity__hero ${currentBusesToAdd > 0 ? "capacity__hero--action" : ""}`}>
-          <span className="capacity__hero-label">Add buses now</span>
+          <span className="capacity__hero-label">Planning recommendation</span>
           <strong className="capacity__hero-value">
             <Counter value={currentBusesToAdd} suffix=" buses" />
           </strong>
           <span className="capacity__hero-sub">to clear {currentQueue}-pax queue at 25-cap · {fmtThb(currentMissedThb)} lost today</span>
         </div>
         <div className="capacity__hero capacity__hero--money">
-          <span className="capacity__hero-label">Earned today</span>
+          <span className="capacity__hero-label">Modelled fare potential</span>
           <strong className="capacity__hero-value">
             <Counter value={Math.round(totals.revenueThb)} className="capacity__hero-thb" />
           </strong>

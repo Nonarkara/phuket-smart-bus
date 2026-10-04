@@ -6,7 +6,7 @@ This file is the single source of truth for this project. Every Codex session sh
 
 ## What This Is
 
-A **simulation that will become a production system**. Today it's a static site with a client-side simulation engine. Tomorrow, when GPS devices on buses and cameras in vehicles start sending data, this becomes the real operational dashboard. The simulation must be so convincing that the bus company wants to plug in their real data — because the system is already built and waiting for it.
+A **hybrid research prototype shaped to become an operator system**. Today the public Pages site already receives public Phuket Smart Bus tracker fixes and stores a permanent research record. Demand, queues, dispatch recommendations, riders without a working passenger counter, fares derived from those riders, and CO₂ remain modelled. The interface must keep those evidence layers separate.
 
 **Two audiences, one system:**
 1. **Tourists** (mobile-first, phone screen) — "Where's my bus? When does it arrive? How much does it cost vs a taxi?"
@@ -16,9 +16,10 @@ A **simulation that will become a production system**. Today it's a static site 
 
 ## The Vision: Simulation → Production Pipeline
 
-### Phase 1: NOW — Static Simulation (GitHub Pages)
-- Client-side engine computes all vehicle positions from published timetables + `new Date()`
-- No backend, no server costs, no API keys
+### Phase 1: NOW — Live Fleet + Modelled Demand (Cloudflare Pages)
+- Pages Functions relay public tracker fixes; KV and D1 keep daily summaries and the fix record
+- The client-side engine computes demand, queues, recommendations, fares and CO₂ from published timetables + `new Date()`
+- LIVE means fresh fleet telemetry only. It does not promote modelled demand or ridership to observed data.
 - 30× time acceleration so a visitor sees a full day unfold in minutes
 - Every number on screen traces back to the demand-supply chain: flights land → passengers arrive → buses collect them → revenue earned → CO₂ saved
 
@@ -155,7 +156,7 @@ The hour-by-hour MISSED MONEY diagram (the basic diagram, in `HourlyBalanceChart
 
 Conservation: `demand = boarded + lost` at every minute for both directions; `getLiveTotals(t).paxDelivered = inbound.deliveredCum[t] + outbound.deliveredCum[t]` at every minute, asserted by tests.
 
-### Time Acceleration
+### Time Acceleration (simulation mode only)
 
 - `SIM_SPEED = 30` → 1 real second = 30 simulated seconds
 - Service window wraps within 06:00–22:30 so buses are always running
@@ -299,7 +300,7 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 - **Build**: `npx vite build` → `dist/client/`
 - **Custom domain**: `bus.nonarkara.org` is bound to the Cloudflare Pages project's production branch (`main`). `public/CNAME` (`bus.nonarkara.org`) and GitHub Pages exist too, but GitHub Pages only 301-redirects `nonarkara.github.io/phuket-smart-bus/` → `bus.nonarkara.org`; it does not serve the live traffic.
 - **SPA routing**: `404.html` copied from `index.html` in the deploy workflow
-- **Auto-deploy is broken**: `.github/workflows/cloudflare-pages.yml` runs on push to `main` but fails — `CLOUDFLARE_API_TOKEN` auth-fails (error 10000). `.github/workflows/deploy.yml` (GitHub Pages) succeeds but doesn't matter for the live domain. **Working path until the CF secret is fixed**: deploy manually — `npx vite build && cp dist/client/index.html dist/client/404.html && npx wrangler pages deploy dist/client --project-name phuket-smart-bus --commit-dirty=true` (no `--branch` flag → production). Verify with `npx wrangler pages deployment list --project-name phuket-smart-bus` (look for `Environment: Production`, `Branch: main`).
+- **Auto-deploy is broken**: `.github/workflows/cloudflare-pages.yml` runs on push to `main` but the repository `CLOUDFLARE_API_TOKEN` auth-fails (error 10000). GitHub Pages succeeds but does not serve the live domain. Until the secret is rotated, use `scripts/deploy.sh`; it builds, includes Pages Functions, deploys production, compares the built JS/CSS bytes through the canonical alias and custom domain, and checks the live-bus JSON response.
 - **Live URL**: https://bus.nonarkara.org (https://bus.nonarkara.org/ops = DashboardV2)
 - **Routes**: `/` (tourist app, v1 chain), `/ops` (DashboardV2), `/v2` (legacy v1 dashboard), `/roi` (investor), `/governor` (God-mode), `/driver` (driver tablet)
 
