@@ -24,7 +24,8 @@
 .fc-sub { margin: 0; font-size: 1em; color: var(--ax-ink-2); max-width: 60em; }
 .fc-sub.is-dead { color: var(--ax-neg); font-weight: 700; }
 .fc-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
-.fc-nav a { display: flex; align-items: center; min-height: 2.75em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
+/* Small-text controls: 3.45em × 0.8em = 44 px tap height at the 16 px floor. */
+.fc-nav a { display: flex; align-items: center; min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
 .fc-nav a:hover { color: var(--ax-ink); background: var(--ax-panel); }
 
 /* main: map + board */
@@ -98,9 +99,9 @@
 .fc-attn button { min-height: 2.75em; color: var(--ax-ink); }
 
 .fc-detail { border-left: 3px solid var(--ax-accent); }
-.fc-detail header button { min-height: 2.75em; padding: 0 0.9em; border: 1px solid var(--ax-line-2); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
+.fc-detail header button { min-height: 3.45em; padding: 0 0.9em; border: 1px solid var(--ax-line-2); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
 .fc-detail details { margin-top: 0.5em; font-size: 0.8em; color: var(--ax-ink-2); }
-.fc-detail summary { min-height: 2.75em; display: flex; align-items: center; cursor: pointer; }
+.fc-detail summary { min-height: 3.45em; display: flex; align-items: center; cursor: pointer; }
 .fc-detail pre { overflow-x: auto; background: var(--ax-paper); padding: 0.8em; border: 1px solid var(--ax-line); }
 
 /* all buses */
@@ -109,7 +110,7 @@
 .fc-all table { width: 100%; border-collapse: collapse; font-size: 0.8em; }
 .fc-all th { text-align: left; padding: 0.6em 1em; color: var(--ax-ink-3); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--ax-line-2); }
 .fc-all td { padding: 0.5em 1em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
-.fc-all td button { min-height: 2.75em; font-weight: 700; color: var(--ax-ink); }
+.fc-all td button { min-height: 3.45em; font-weight: 700; color: var(--ax-ink); }
 .fc-all tr.is-focus td { background: var(--ax-paper); }
 .fc-state-word--driving { color: var(--ax-accent) !important; }
 .fc-state-word--late { color: var(--ax-warn) !important; }
