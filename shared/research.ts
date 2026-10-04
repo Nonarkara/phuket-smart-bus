@@ -9,13 +9,17 @@
  *               a town bus, listed, not forced onto a line.
  *   on the line a fix ≤250 m from the polyline. Off-line fixes are left out of
  *               the time–distance trace, never snapped onto it.
- *   trip        leaving one terminal zone (≤1 km of the end) and reaching the
- *               other, with no gap >15 min between on-line fixes. Departure =
- *               last fix in the origin zone; arrival = first fix in the other.
- *   lap         (loop lines) the trace wrapping from the last fifth back to the
- *               first fifth.
- *   jump        a step along the line faster than 120 km/h breaks the trace's
- *               trip; a trip averaging outside 3–70 km/h is dropped.
+ *   trip        leaving one terminal zone (≤1 km of the terminal stop — the
+ *               line's end, or where its buses really wait, see TERMINAL_STOPS)
+ *               and reaching the other. A bus may leave the drawn line on the
+ *               way (detours, the other carriageway); the trip only breaks if
+ *               the tracker goes silent >15 min or the bus physically jumps.
+ *               Departure = last fix in the origin zone; arrival = first fix in
+ *               the other.
+ *   lap         (loop lines) the trace wrapping round, either direction; a lap
+ *               with a 15-min+ stand is a layover, not a lap.
+ *   jump        consecutive fixes farther apart on the ground than 120 km/h
+ *               allows; a trip averaging outside 3–70 km/h is dropped.
  *   stop time   linear interpolation between the two fixes that bracket the
  *               stop, only when they are ≤5 min apart; else null.
  */
@@ -41,7 +45,7 @@ const END_ZONE_M = 1000;
 const MAX_TRIP_GAP_MS = 15 * 60_000;
 const MAX_STOP_GAP_MS = 5 * 60_000;
 const MOVING_KPH = 5;
-/** A step along the line faster than this is a GPS jump: the trip breaks there. */
+/** Consecutive fixes farther apart on the ground than this speed allows are a GPS jump: the trip breaks there. */
 const MAX_STEP_KPH = 120;
 /** Terminal-to-terminal averages outside this are not a bus trip. */
 const TRIP_KPH: [number, number] = [3, 70];
@@ -118,32 +122,72 @@ export type Trip = {
   stopMin: (number | null)[];
 };
 
-type Pt = { ms: number; along: number };
+/** One fix the bus sent. `along` is null while it is off the drawn line (a detour, the other carriageway). */
+type Pt = { ms: number; lat: number; lng: number; along: number | null };
+type OnPt = Pt & { along: number };
 
-function crossingMs(a: Pt, b: Pt, at: number): number | null {
+function crossingMs(a: OnPt, b: OnPt, at: number): number | null {
   if (b.ms - a.ms > MAX_STOP_GAP_MS || a.along === b.along) return null;
   const t = (at - a.along) / (b.along - a.along);
   return t >= 0 && t <= 1 ? a.ms + t * (b.ms - a.ms) : null;
 }
 
-/** The tracker went quiet, or the position jumped — no trip continues across this step. */
-function broken(a: Pt, b: Pt, ringM: number | null): boolean {
+function physicalKm(a: Pt, b: Pt): number {
+  const kx = 111.32 * Math.cos((a.lat * Math.PI) / 180);
+  return Math.hypot((b.lng - a.lng) * kx, (b.lat - a.lat) * 110.54);
+}
+
+/**
+ * No trip continues across this step: the tracker went silent, or the bus
+ * physically jumped. Measured on the ground, not along the drawn line — the
+ * official polylines take detours the buses skip (Patong) and follow one
+ * carriageway only (Airport line), so along-line distance can leap legitimately.
+ */
+function broken(a: Pt, b: Pt): boolean {
   const dt = b.ms - a.ms;
-  const d = Math.abs(b.along - a.along);
-  const step = ringM === null ? d : Math.min(d, ringM - d); // round a loop, the wrap is a short step
-  return dt > MAX_TRIP_GAP_MS || (dt > 0 && step / 1000 / (dt / 3_600_000) > MAX_STEP_KPH);
+  return dt > MAX_TRIP_GAP_MS || (dt > 0 && physicalKm(a, b) / (dt / 3_600_000) > MAX_STEP_KPH);
+}
+
+/** Longest spell, in ms, the bus stood within 50 m of one spot. */
+function longestStillMs(seg: Pt[]): number {
+  let best = 0, from = 0;
+  for (let i = 1; i < seg.length; i++) {
+    while (physicalKm(seg[from]!, seg[i]!) > 0.05) from++;
+    best = Math.max(best, seg[i]!.ms - seg[from]!.ms);
+  }
+  return best;
+}
+const MAX_LAP_STILL_MS = 15 * 60_000;
+
+/**
+ * Where buses actually turn round, when it isn't the end of the polyline.
+ * Verified 2026-10-04: Patong-line buses wait at Phuket Bus Terminal 1,
+ * 1.44 km along the line, so a zone at the polyline's start never held them.
+ */
+const TERMINAL_STOPS: Record<string, [string, string]> = {
+  "patong-old-bus-station": ["Phuket Bus Terminal 1", "Patong"],
+};
+
+function terminalAlong(line: Line): [number, number] {
+  const names = TERMINAL_STOPS[line.routeId];
+  const at = (name: string | undefined, fallback: number) => line.stops.find((s) => s.name === name)?.alongM ?? fallback;
+  return [at(names?.[0], 0), at(names?.[1], line.lengthM)];
 }
 
 function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): Trip[] {
   const trips: Trip[] = [];
   const L = line.lengthM;
-  const make = (dir: Trip["dir"], seg: Pt[], dist: number): Trip => {
+  const make = (dir: Trip["dir"], seg: Pt[]): Trip => {
+    const on = seg.filter((p): p is OnPt => p.along !== null);
+    // Speed over the ground the bus actually drove, not the drawn line (which may detour). Jitter under 15 m ignored.
+    let dist = 0;
+    for (let i = 1; i < seg.length; i++) { const d = physicalKm(seg[i - 1]!, seg[i]!); if (d >= 0.015) dist += d * 1000; }
     const departMs = seg[0]!.ms, arriveMs = seg[seg.length - 1]!.ms;
     const stopMin = line.stops.map((s) => {
-      for (let i = 1; i < seg.length; i++) {
-        const lo = Math.min(seg[i - 1]!.along, seg[i]!.along), hi = Math.max(seg[i - 1]!.along, seg[i]!.along);
+      for (let i = 1; i < on.length; i++) {
+        const lo = Math.min(on[i - 1]!.along, on[i]!.along), hi = Math.max(on[i - 1]!.along, on[i]!.along);
         if (s.alongM >= lo && s.alongM <= hi) {
-          const ms = crossingMs(seg[i - 1]!, seg[i]!, s.alongM);
+          const ms = crossingMs(on[i - 1]!, on[i]!, s.alongM);
           return ms === null ? null : dayMinute(ms, dayStartMs);
         }
       }
@@ -152,33 +196,47 @@ function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): Tri
     const minutes = (arriveMs - departMs) / 60_000;
     return { plate, dir, departMs, arriveMs, minutes: Math.round(minutes * 10) / 10, avgKph: minutes > 0 ? Math.round((dist / 1000 / (minutes / 60)) * 10) / 10 : 0, stopMin };
   };
+  const plausible = (t: Trip) => t.avgKph >= TRIP_KPH[0] && t.avgKph <= TRIP_KPH[1];
 
   if (line.loop) {
     let lapStart = -1;
-    for (let i = 1; i < pts.length; i++) {
-      if (broken(pts[i - 1]!, pts[i]!, L)) { lapStart = -1; continue; }
-      if (pts[i - 1]!.along > 0.8 * L && pts[i]!.along < 0.2 * L) {
-        if (lapStart >= 0) trips.push(make("lap", pts.slice(lapStart, i), L));
-        lapStart = i;
+    let prevOn: OnPt | null = null;
+    for (let i = 0; i < pts.length; i++) {
+      if (i > 0 && broken(pts[i - 1]!, pts[i]!)) { lapStart = -1; prevOn = null; }
+      const p = pts[i]!;
+      if (p.along === null) continue;
+      // Buses may run the loop either way round (Dragon runs it backwards): a wrap is either crossing.
+      if (prevOn) {
+        const [a, b] = [prevOn.along, p.along];
+        if ((a > 0.8 * L && b < 0.2 * L) || (a < 0.2 * L && b > 0.8 * L)) {
+          if (lapStart >= 0) {
+            const seg = pts.slice(lapStart, i);
+            if (longestStillMs(seg) < MAX_LAP_STILL_MS) trips.push(make("lap", seg)); // parked mid-loop: not a lap
+          }
+          lapStart = i;
+        }
       }
+      prevOn = p as OnPt;
     }
-    return trips.filter((t) => t.avgKph >= TRIP_KPH[0] && t.avgKph <= TRIP_KPH[1]);
+    return trips.filter(plausible);
   }
 
+  const [fromM, toM] = terminalAlong(line);
   let zone: "from" | "to" | null = null;
-  let leftAt = -1; // index of the last point in the origin zone
+  let leftAt = -1; // index of the last fix in the origin zone
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i]!;
-    if (i > 0 && broken(pts[i - 1]!, p, null)) { zone = null; leftAt = -1; }
-    const here = p.along <= END_ZONE_M ? "from" : p.along >= L - END_ZONE_M ? "to" : null;
+    if (i > 0 && broken(pts[i - 1]!, p)) { zone = null; leftAt = -1; }
+    if (p.along === null) continue; // off the drawn line: the trip carries on
+    const here = Math.abs(p.along - fromM) <= END_ZONE_M ? "from" : Math.abs(p.along - toM) <= END_ZONE_M ? "to" : null;
     if (here === null) continue;
     if (zone !== null && here !== zone && leftAt >= 0) {
-      trips.push(make(zone === "from" ? "fwd" : "rev", pts.slice(leftAt, i + 1), L - 2 * END_ZONE_M));
+      trips.push(make(zone === "from" ? "fwd" : "rev", pts.slice(leftAt, i + 1)));
     }
     zone = here;
     leftAt = i;
   }
-  return trips.filter((t) => t.avgKph >= TRIP_KPH[0] && t.avgKph <= TRIP_KPH[1]);
+  return trips.filter(plausible);
 }
 
 export type LineDay = {
@@ -227,13 +285,12 @@ export function analyzeDay(date: string, rows: ResearchFix[]): ResearchDay {
       unassigned.push({ plate, feed, fixes: list.length, movingFixes: list.filter((f) => (f.speedKph ?? 0) > MOVING_KPH).length });
       continue;
     }
-    const pts: Pt[] = [];
-    for (const f of list) {
+    const pts: Pt[] = list.map((f) => {
       const p = projectOnLine(line, f.lat, f.lng);
-      if (p.offM <= ON_LINE_M) pts.push({ ms: f.fixMs, along: p.alongM });
-    }
+      return { ms: f.fixMs, lat: f.lat, lng: f.lng, along: p.offM <= ON_LINE_M ? p.alongM : null };
+    });
     const day = lines.get(line.routeId)!;
-    day.buses.push({ plate, feed, points: pts.map((p) => [dayMinute(p.ms, dayStartMs), Math.round(p.along / 10) / 100]) });
+    day.buses.push({ plate, feed, points: pts.filter((p): p is OnPt => p.along !== null).map((p) => [dayMinute(p.ms, dayStartMs), Math.round(p.along / 10) / 100]) });
     day.trips.push(...tripsFor(plate, line, pts, dayStartMs));
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import geometry from "../../shared/lineGeometry.json";
 import { analyzeDay, projectOnLine, serviceDayWindow, type ResearchFix } from "../../shared/research";
+import realDay from "./__fixtures__/PBUS_2026-10-04_DATA_real-fixes-3-buses.json";
 
 const airport = geometry.find((l) => l.routeId === "rawai-airport")!;
 const dragon = geometry.find((l) => l.routeId === "dragon-line")!;
@@ -68,5 +69,30 @@ describe("schedule research", () => {
     const end = airport.poly[airport.poly.length - 1]!;
     const rows = [...dwell("10-1151", airport.poly[0]!, at(8), 5), ...dwell("10-1151", end, at(8, 5), 5)];
     expect(analyzeDay("2026-10-02", rows).lines[0]!.trips).toHaveLength(0);
+  });
+
+  it("a loop run backwards counts laps too (Dragon runs its loop in reverse)", () => {
+    const rows = [0, 1, 2, 3].flatMap((k) => drive("10-1265", dragon.poly, at(10, k * 25), 24, true, "dragon-line"));
+    const line = analyzeDay("2026-10-02", rows).lines.find((l) => l.routeId === "dragon-line")!;
+    expect(line.trips.filter((t) => t.dir === "lap")).toHaveLength(2);
+  });
+
+  it("real day (2026-10-04): Patong trips from Bus Terminal 1, Dragon laps run backwards, airport return trips that leave the drawn line", () => {
+    const rows = (realDay.rows as [string, number, number, number, number | null, string | null][])
+      .map(([plate, fixMs, lat, lng, speedKph, routeId]) => ({ plate, fixMs, lat, lng, speedKph, routeId, feed: "token" }));
+    const day = analyzeDay("2026-10-04", rows);
+    const trips = (id: string, plate: string) => day.lines.find((l) => l.routeId === id)!.trips.filter((t) => t.plate === plate);
+    const patong = trips("patong-old-bus-station", "10-1220");
+    const dragon = trips("dragon-line", "10-1265");
+    const airport = trips("rawai-airport", "10-1204");
+    // 10-1220 drove Terminal 1 → Patong → Terminal 1 three times before 16:30 (seen in the trace).
+    expect(patong.length).toBeGreaterThanOrEqual(5);
+    expect(patong.every((t) => t.minutes > 25 && t.minutes < 70 && t.avgKph < 45)).toBe(true);
+    // 10-1265 laps the Old Town loop backwards in ~26–30 min; the hour it stood at PKCD parking is no lap.
+    expect(dragon.length).toBeGreaterThanOrEqual(4);
+    expect(dragon.every((t) => t.minutes < 40)).toBe(true);
+    // 10-1204 ran Airport → Rawai and back; the return leg leaves the drawn line near Kata yet still counts.
+    expect(airport.map((t) => t.dir)).toContain("fwd");
+    expect(airport.map((t) => t.dir)).toContain("rev");
   });
 });
