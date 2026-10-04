@@ -139,6 +139,11 @@ async function loadToday(): Promise<Today | null> {
   }
 }
 
+/** "3 heading to Rawai, about every 40 min." / "None heading to Patong." */
+function heading(n: number, to: string, every: string | null): string {
+  return n === 0 ? `None heading to ${to}.` : `${n} heading to ${to}${every ? `, ${every}` : ""}.`;
+}
+
 // ── one PKSB line, in words + a small diagram ──────────────────────────────
 function LineBlock({ line, rows, today, focus, onFocus }: {
   line: Line; rows: Row[]; today: Today["line"][string] | undefined; focus: string | null; onFocus: (p: string) => void;
@@ -182,8 +187,8 @@ function LineBlock({ line, rows, today, focus, onFocus }: {
           : line.loop
             ? `Buses circle Old Town${every(running.length) ? `, ${every(running.length)}` : ""}.`
             : <>
-                {toward("to")} heading to {line.to}{every(toward("to")) ? `, ${every(toward("to"))}` : ""}.{" "}
-                {toward("from")} heading to {line.from}{every(toward("from")) ? `, ${every(toward("from"))}` : ""}.
+                {heading(toward("to"), line.to, every(toward("to")))}{" "}
+                {heading(toward("from"), line.from, every(toward("from")))}
               </>}
       </p>
       {today && (
@@ -216,7 +221,7 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
   useEffect(() => {
     if (!el.current || map.current) return;
     const m = L.map(el.current, { center: [7.93, 98.33], zoom: 11, minZoom: 9, maxZoom: 18, worldCopyJump: false, attributionControl: true });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", className: "fc-tile", maxZoom: 19 }).addTo(m);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 }).addTo(m);
     for (const line of LINES) {
       L.polyline(line.poly.map((p) => [p[0]!, p[1]!] as [number, number]), { className: "fc-route", weight: 3, interactive: false }).addTo(m);
       const [a, b] = [line.poly[0]!, line.poly[line.poly.length - 1]!];
@@ -327,7 +332,7 @@ export function FleetConsole() {
             <p className={`fc-sub${feedDead ? " is-dead" : ""}`}>
               {feedDead
                 ? "The trackers are not answering — what you see may be old."
-                : `${count("driving")} driving, ${count("standing")} standing${count("late") ? `, ${count("late")} with a late signal` : ""}. ${count("quiet")} lost signal earlier today, ${count("off")} not out. Updated ${feedAge ?? "—"} s ago, ${bkkClock(now)} in Phuket.`}
+                : `${count("driving")} driving, ${count("standing")} standing${count("late") ? `, ${count("late")} with a late signal` : ""}. ${count("quiet")} lost signal earlier today, ${count("off")} not out. Updated ${feedAge === null ? "—" : feedAge < 5 ? "just now" : `${feedAge} s ago`}, ${bkkClock(now)} in Phuket.`}
             </p>
           </div>
           <nav className="fc-nav" aria-label="Other views">

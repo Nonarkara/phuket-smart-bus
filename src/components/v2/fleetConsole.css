@@ -31,7 +31,8 @@
 .fc-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1em; margin-top: 1em; }
 .fc-mapwrap { position: relative; border: 1px solid var(--ax-line); background: var(--ax-paper); }
 .fc-map { height: 60vh; min-height: 18em; background: var(--ax-paper); }
-.fc-tile { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.85) saturate(0.5); }
+/* Filter the whole tile pane, not each tile: per-tile filters leave a seam grid. */
+.fc-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.85) saturate(0.5); }
 .fc-route { stroke: #c9d2da; stroke-opacity: 0.55; fill: none; }
 .fc-terminal span {
   position: absolute; transform: translate(-50%, -150%); white-space: nowrap;
@@ -52,11 +53,11 @@
 .fc-mapbus__arrow, .fc-mapbus__dot, .fc-legend__arrow, .fc-legend__dot { display: block; }
 .fc-mapbus__arrow, .fc-mapbus__dot { position: absolute; left: 0; top: 0; translate: -50% -50%; cursor: pointer; }
 .fc-mapbus__arrow, .fc-legend__arrow {
-  width: 0; height: 0; border-left: 0.5em solid transparent; border-right: 0.5em solid transparent;
-  border-bottom: 1.1em solid currentColor;
+  width: 0; height: 0; border-left: 0.6em solid transparent; border-right: 0.6em solid transparent;
+  border-bottom: 1.35em solid currentColor;
 }
 .fc-legend__arrow { color: var(--ax-accent); border-left-width: 0.35em; border-right-width: 0.35em; border-bottom-width: 0.8em; }
-.fc-mapbus__dot, .fc-legend__dot { width: 0.75em; height: 0.75em; border-radius: 50%; background: currentColor; box-shadow: inset 0 0 0 1px var(--ax-paper); }
+.fc-mapbus__dot, .fc-legend__dot { width: 0.85em; height: 0.85em; border-radius: 50%; background: currentColor; box-shadow: inset 0 0 0 1px var(--ax-paper); }
 .fc-legend__dot { color: var(--ax-ink-2); }
 .fc-legend__dot--late { color: var(--ax-warn); }
 .fc-legend__dot--quiet { color: var(--ax-neg); background: transparent; box-shadow: inset 0 0 0 2px currentColor; }
