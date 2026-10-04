@@ -1,2 +1,37 @@
-# Pages Functions own /api/*. This only catches the SPA.
-/*    /index.html   200
+# SPA routes → the app shell, status 200 (link previews and crawlers need 200).
+# Rewrite to "/", never "/index.html": Pages strips index.html, so a
+# "/* /index.html 200" rule is dropped as an infinite loop.
+# No catch-all: _redirects beats static files, so "/*" would serve HTML
+# for /assets/*.js. Unknown paths fall to 404.html (the app, status 404).
+# New top-level route in src/App.tsx → add it here.
+/ops        /  200
+/fleet      /  200
+/study      /  200
+/research   /  200
+/capacity   /  200
+/info       /  200
+/more       /  200
+/stops      /  200
+/pass       /  200
+/ride       /  200
+/compare    /  200
+/governor   /  200
+/driver     /  200
+/roi        /  200
+/v2         /  200
+/toolkit    /  200
+/ops/*      /  200
+/fleet/*    /  200
+/study/*    /  200
+/research/* /  200
+/capacity/* /  200
+/info/*     /  200
+/more/*     /  200
+/stops/*    /  200
+/pass/*     /  200
+/ride/*     /  200
+/compare/*  /  200
+/governor/* /  200
+/driver/*   /  200
+/roi/*      /  200
+/v2/*       /  200

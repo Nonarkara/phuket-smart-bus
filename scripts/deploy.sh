@@ -11,9 +11,9 @@
 # Copy the Functions tree into dist/client/functions/ before deploy,
 # otherwise the static bundle ships alone and every /api/* route 404s.
 #
-# SPA routes (/ops, /v2, …) are public/_redirects → /index.html 200.
-# Do not add dist/client/404.html. Pages serves that file as a real 404
-# and it overrides the redirect, so /ops looks down.
+# SPA routes (/ops, /fleet, …) are explicit public/_redirects → / 200 rules.
+# dist/client/404.html (a copy of index.html) catches everything else with
+# status 404 — keep it, or Pages' SPA mode serves HTML 200 for /assets/nope.js.
 #
 # Usage:
 #   scripts/deploy.sh                  # auto commit-message from git log
@@ -42,9 +42,7 @@ fi
 echo "→ vite build"
 npx vite build
 
-# SPA fallback is public/_redirects (`/* /index.html 200`). Do not also
-# copy index.html to 404.html — Pages serves that file with status 404,
-# which wins over the redirect and makes /ops look down.
+cp dist/client/index.html dist/client/404.html
 
 echo "→ cp -r functions dist/client/functions (Pages Functions ship with dist)"
 cp -r functions dist/client/functions
