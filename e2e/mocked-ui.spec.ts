@@ -13,8 +13,21 @@ test.beforeEach(async ({ page }) => {
   await installMockNetwork(page);
 });
 
-test("mocked shell keeps the map and info tourist flow intact", async ({ page }) => {
+test("rider front door labels modelled figures honestly", async ({ page }) => {
   await page.goto("/");
+
+  if ((page.viewportSize()?.width ?? 0) < 768) {
+    await expect(page.getByRole("heading", { name: /Phuket Smart Bus tickets/i })).toBeVisible();
+    await expect(page.getByText(/live timetable simulation · no real payment/i)).toBeVisible();
+  } else {
+    await expect(page.getByRole("button", { name: /Operator Console/i })).toBeVisible();
+    await expect(page.getByText("Modelled riders today")).toBeVisible();
+    await expect(page.getByText(/published timetable \+ demand simulation/i)).toBeVisible();
+  }
+});
+
+test("legacy tourist shell keeps the map and info flow intact", async ({ page }) => {
+  await page.goto("/tourist");
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toBeVisible();
@@ -27,7 +40,7 @@ test("mocked shell keeps the map and info tourist flow intact", async ({ page })
 });
 
 test("mocked shell still supports the info and pass flow", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/tourist");
 
   await page.getByRole("button", { name: "More" }).click();
 
@@ -41,7 +54,7 @@ test("mocked shell still supports the info and pass flow", async ({ page }) => {
 });
 
 test("mocked shell updates copy when switching language", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/tourist");
 
   await page.getByText(/Plan a trip/i).click();
   await page.getByRole("button", { name: "TH" }).click();
@@ -51,11 +64,10 @@ test("mocked shell updates copy when switching language", async ({ page }) => {
 });
 
 
-test("mocked ops console surfaces backend-declared mode and competitor data", async ({ page }) => {
-  await page.goto("/ops");
+test("ops console separates the replay from the live fleet", async ({ page }) => {
+  await page.goto("/ops?source=sim");
 
-  await expect(page.getByRole("heading", { name: "PKSB Operations" })).toBeVisible();
-  await expect(page.getByText("Demo")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Competitor Benchmark" })).toBeVisible();
-  await expect(page.getByText("Orange Line (Government)")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Phuket Smart Bus" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "SIMULATION" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /^LIVE/ })).toBeVisible();
 });

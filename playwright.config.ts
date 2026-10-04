@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 const apiPort = Number(process.env.API_PORT ?? 3099);
-const baseURL = `http://127.0.0.1:${port}`;
+// `bus.localhost` exercises the same hostname routing as bus.nonarkara.org.
+// Plain localhost is intentionally the research-toolkit front door.
+const baseURL = `http://bus.localhost:${port}`;
 const apiURL = `http://127.0.0.1:${apiPort}`;
 
 export default defineConfig({

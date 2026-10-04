@@ -25,17 +25,18 @@ jobs:
       - run: npm ci
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npm run typecheck
       - name: Test
         run: npm test
 
-      - run: npx vite build
-      - name: Copy 404.html for SPA routing
-        run: cp dist/client/index.html dist/client/404.html
+      - run: npm run build:client
+      - name: Include Pages Functions
+        run: cp -R functions dist/client/functions
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.86.0"
           command: pages deploy dist/client --project-name=phuket-smart-bus --branch=main

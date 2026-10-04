@@ -58,6 +58,8 @@ npx --yes wrangler pages deploy dist/client \
   --commit-message="$COMMIT_MESSAGE"
 
 echo
-echo "✓ deployed. verify with:"
-echo "  curl -sI https://bus.nonarkara.org/api/vehicles/last | head -1   # expect 200"
-echo "  npx wrangler pages deployment list --project-name phuket-smart-bus | head -3"
+echo "→ verify deployed bytes and live API"
+bash scripts/verify-deploy.sh
+
+echo
+echo "✓ deployed and verified"

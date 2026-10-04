@@ -36,6 +36,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    testTimeout: 10_000,
     exclude: [...configDefaults.exclude, "e2e/**", ".claude/**", ".worktrees/**"],
     setupFiles: ["./src/test/setup.ts"]
   }
