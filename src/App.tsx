@@ -47,6 +47,7 @@ import { appPath, routePath } from "./lib/paths";
 const DashboardV2 = lazy(() => import("./DashboardV2"));
 const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
 const FleetDetail = lazy(() => import("./components/v2/FleetDetail").then((m) => ({ default: m.FleetDetail })));
+const FleetConsole = lazy(() => import("./components/v2/FleetConsole").then((m) => ({ default: m.FleetConsole })));
 const Study = lazy(() => import("./components/v2/Study").then((m) => ({ default: m.Study })));
 const Research = lazy(() => import("./components/v2/Research").then((m) => ({ default: m.Research })));
 const Capacity = lazy(() => import("./components/v2/Capacity").then((m) => ({ default: m.Capacity })));
@@ -227,8 +228,12 @@ export default function App() {
   // /fleet — every data point about every real bus on the live tracker.
   // Lives outside the desktop-shell so an operator can pop it open full-screen
   // next to the ops wall.
-  if (pathname.startsWith("/fleet")) {
+  // /fleet/raw keeps the every-field table for debugging; /fleet is the console people read.
+  if (pathname.startsWith("/fleet/raw")) {
     return <Suspense fallback={<RouteLoading />}><FleetDetail /></Suspense>;
+  }
+  if (pathname.startsWith("/fleet")) {
+    return <Suspense fallback={<RouteLoading />}><FleetConsole /></Suspense>;
   }
 
   // /study — patient, consistent, true daily + weekly + monthly view of the
