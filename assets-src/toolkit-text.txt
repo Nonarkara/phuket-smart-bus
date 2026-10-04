@@ -1,0 +1,987 @@
+pages: 23
+--- PAGE 1 ---
+TRANSIT SERVICE PLANNING FOR SUSTAINABLE 
+TOURISM TRAVEL
+INSIGHTS FROM PHUKET AND LAS VEGAS
+T oolkit from the
+US-ASEAN Smart Cities Mobility Program
+
+--- PAGE 2 ---
+1
+US-ASEAN Smart City Program
+INTRODUCTION
+Tourism places unique and sometimes 
+competing demands on urban transportation 
+systems. Visitors, residents, and workers 
+travel at different times, use different modes, 
+and rely on different payment tools; yet they 
+share the same streets and transit networks. 
+As tourism grows across ASEAN cities, these 
+differences complicate the operation of 
+transit services and efforts to deliver reliable, 
+efficient, and sustainable mobility. This 
+toolkit provides a structured approach for 
+understanding and responding to those varied 
+travel needs, helping cities assess tourism-
+related travel patterns and optimize transit 
+services for both visitors and local users.
+The toolkit documents best practices, 
+research methods, and analytical 
+approaches developed through the Smart 
+Mobility Program, a U.S. Department of 
+Transportation-led initiative under the U.S.-
+ASEAN Smart Cities Partnership. Drawing 
+on peer-to-peer exchanges among eight 
+cities in the United States and Southeast 
+Asia, with research support from the 
+METRANS Transportation Consortium at the 
+University of Southern California, it distills 
+lessons from the Las Vegas–Phuket pairing. 
+Together, these partners examined how 
+transit systems can better serve tourist-heavy 
+corridors while maintaining accessibility, 
+efficiency, and quality of service for residents 
+and workers. The partnership included 
+participation from the following agencies:
+Digital Economy and Promotion Agency: 
+DEPA supports Thailand’s comprehensive 
+digital transformation efforts. They currently 
+support over 100 smart cities with programs 
+in the areas of environment, mobility, 
+energy, governance, economy, and more. 
+Box 1. What is the U.S. - ASEAN Smart 
+Mobility Program?
+This program addresse
+--- PAGE 3 ---
+Sustainable Tourism Travel toolkit
+2
+Regional Transportation Commission of 
+Southern Nevada (RTC): RTC is a regional 
+organization responsible for overseeing 
+public transportation, traffic management, 
+roadway design and construction, 
+transportation planning, and regional 
+planning across Southern Nevada. 
+Phuket and Las Vegas are both major tourism 
+hubs facing the challenge of accommodating 
+large, variable visitor flows within constrained 
+urban transportation systems. Drawing on 
+this shared context, the toolkit summarizes 
+best practices and research aimed at 
+advancing five core objectives common 
+to tourism destinations: reducing ground 
+transportation congestion, improving safety, 
+lowering emissions and environmental 
+impacts, reducing travel costs for users, and 
+controlling operating costs for providers.
+The toolkit focuses on increasing transit mode 
+share, particularly shifting trips from private 
+motorized modes to transit, as a primary 
+strategy for achieving these objectives. While 
+non-transit approaches can also support 
+sustainable tourism mobility, the ASEAN 
+context warrants a strong emphasis on transit-
+based solutions. Many ASEAN tourist cities 
+are rapidly motorizing, with high shares of 
+two- and three-wheel vehicles, while road 
+networks are already operating at or near 
+capacity. Opportunities for roadway expansion 
+are limited, and where they exist, they often 
+conflict with broader urban and equity goals.
+Given these constraints, transit offers both a 
+throughput advantage and a more equitable 
+means of serving residents, workers, and 
+visitors alike. In smaller and mid-sized ASEAN 
+tourist destinations, this typically means bus 
+transit, which remains the backbone of public 
+transport systems. Accordingly, this toolkit is 
+designed for  p
+--- PAGE 4 ---
+3
+US-ASEAN Smart City Program
+SUSTAINABLE TOURISM TRAVEL: 
+DEFINING THE PROBLEM IN THE 
+ASEAN CONTEXT 
+Tourism-oriented transit systems operate at 
+the intersection of fragmented institutions, 
+diverse user groups, and highly place-
+specific travel patterns. Understanding 
+how these factors interact requires looking 
+beyond abstract distinctions between 
+tourists and residents or planners and 
+operators, and examining how demand 
+and supply are shaped by local context. 
+The experiences of Phuket and Las Vegas 
+illustrate how differences in arrival modes, 
+information environments, regulatory 
+structures, and urban form influence 
+travel behavior and the attractiveness of 
+transit. The following comparison highlights 
+these contrasts and helps explain why 
+tourism cities face distinct challenges in 
+increasing transit use (Table 1 provides a 
+summary overview of the two cities).
+Las Vegas benefits from proximity to major 
+population centers, most notably Southern 
+California, which means a majority of 
+visitors are domestic and arrive by private 
+car.  Once in the city, many tourists park 
+their vehicles and travel on foot within the 
+2. Methods and tools for both 
+transit planning. The toolkit includes a 
+practical “how-to” primer on data-driven 
+transportation planning, supported by 
+templates and example materials. It 
+presents a mixed-methods approach that 
+combines travel surveys, used to inform 
+route and infrastructure planning, with 
+in-depth interviews and observational 
+techniques designed to develop transit 
+customer personas. Together, these methods 
+generate actionable insights for both 
+public agencies and transit providers.
+3. Best practices and suggested roles 
+for public and private actors. This toolkit 
+will summarize approaches to coordinating 
+the res
+--- PAGE 5 ---
+Sustainable Tourism Travel toolkit
+4
+Table 1: Composition of Tourist Travel, Phuket and Las Vegas based on expert opinion from US-ASCP participants.
+highly concentrated resort corridor, limiting 
+demand for longer-distance transit trips. Las 
+Vegas is a large, low-density metropolitan 
+area of over two million residents, with a 
+publicly operated transit system that provides 
+extensive bus coverage and unified branding 
+across the region.  For both tourists and 
+residents, transit must contend with high car 
+ownership, abundant parking, and roadway 
+designs that prioritize automobile access.  
+Phuket, by contrast, is a geographically 
+isolated island destination where most 
+tourists arrive by air, with a much larger share 
+of international tourists, and immediately 
+require onward transportation to dispersed 
+resort areas. Public transit options from the 
+airport and within tourist corridors are limited 
+and poorly advertised, and information on 
+routes, fares, and schedules is often unclear 
+or unavailable in multiple languages.  The 
+island’s rugged terrain and limited road 
+network constrain route design and service 
+frequency, while the distance between 
+the airport, resort zones, and Phuket Town 
+increases reliance on door-to-door services. 
+Transit provision is fragmented among 
+private operators, and regulatory restrictions 
+prevent buses from stopping directly at 
+major hotels, placing them at a competitive 
+disadvantage relative to taxis and for-hire 
+vehicles.  In addition, informal and semi-
+formal services—such as motorbike taxis—
+play an important role in meeting tourist 
+travel demand, further complicating efforts to 
+shift trips to higher-capacity transit modes.
+LOCATION BUSINESS LEISURE INTERNATIONAL
+PHUKET
+A smaller fraction than 
+in Las Vegas, often 
+a
+--- PAGE 6 ---
+5
+US-ASEAN Smart City Program
+Credit: PKCD
+METHODS FOR IDENTIFYING, 
+UNDERSTANDING, AND ENGAGING 
+STAKEHOLDERS 
+The previous section underscored the 
+importance of tailoring research to the 
+specific context of a tourism destination. 
+Doing so requires a ground-up understanding 
+of the needs and behaviors of existing and 
+potential transit users, beginning with 
+strategies to identify and engage relevant 
+stakeholders. This section outlines the 
+methods applied in Phuket to build that 
+understanding. It begins with identifying 
+relevant stakeholders and gathering input 
+into issues and opportunities for expanding 
+transit service. The initial scoping work 
+feeds into a travel survey designed to reach 
+key user subgroups, followed by qualitative 
+techniques used to develop transit user 
+personas as practical shortcuts for interpreting 
+travel needs. The section concludes with 
+a validation phase, in which findings were 
+tested and refined through stakeholder 
+engagement to co-design actionable insights. 
+For each method, we describe appropriate 
+use cases, required expertise, indicative 
+costs, and practical tools and approaches.
+Stakeholder Delineation
+When to use stakeholder delineation: Context-
+specific research and recommendations 
+should be informed by the people most 
+closely engaged in the operation of transit 
+and who influence how services are used. 
+The composition of relevant stakeholder 
+can vary significantly across locations as 
+institutional structure, the extent of existing 
+services and nature of competition, and 
+even the geography of the location can affect 
+how stakeholders interact with the transit 
+services. In the case of Phuket, for example, 
+the centralization of many transportation 
+decisions, privatization of transit services, 
+and the challen
+--- PAGE 7 ---
+Sustainable Tourism Travel toolkit
+6
+in determining how transit operates. 
+Expertise and information needed: 
+Stakeholder delineation should cover 
+five core groups to ensure that tourism 
+mobility planning reflects regulatory, 
+operational, tourism, local, and community 
+perspectives. These groups include 
+• Regulatory and Planning Institutions 
+responsible for transport policy, licensing, 
+and infrastructure decisions; 
+• Local government bodies with 
+authority over land use, public space, 
+and local mobility management; 
+• Transport Operators and Service 
+Providers, including public, private, and 
+informal or semi-formal services;
+• Tourism-sector actors such as hotels, 
+attractions, destination management 
+organizations, and business associations;
+• Civil society or non-governmental 
+organizations engaged in sustainability, 
+accessibility, or community development. 
+These five groups provide a minimum 
+structure that can be applied across tourism 
+destinations, while allowing additional 
+stakeholders to be included where relevant.
+Approach: The initial stakeholder list is 
+developed through one of two approaches, 
+depending on the availability of local 
+expertise. Where local experts are available, 
+stakeholder delineation begins by consulting 
+individuals with direct knowledge of the local 
+transport and tourism context, such as staff 
+from local governments, transport agencies, 
+operators, universities, or experienced 
+practitioners. These experts are asked to 
+identify key stakeholders within each of the 
+five groups, to flag actors that play influential 
+roles in practice but may not be visible in 
+formal documentation, and to clarify the 
+roles these stakeholders play within the local 
+community and mobility system. Where 
+local experts are not available, the i
+--- PAGE 8 ---
+7
+US-ASEAN Smart City Program
+infrastructure investment and transit service 
+planning, including decisions about street 
+expansions, highway development, bus 
+lanes, route alignments, stop locations, 
+and service frequencies. ASEAN cities 
+should prioritize travel surveys ahead of 
+major infrastructure or network decisions 
+where understanding who is traveling, why, 
+and under what constraints is critical.
+Mobile phone-derived data are an 
+increasingly common alternative and can 
+offer broad coverage at scale, but they lack 
+the behavioral and demographic detail of 
+travel surveys and often involve significant 
+cost and access limitations (see Table 2).1
+Expertise and Information Needed: Travel 
+surveys require an understanding of survey 
+research methods. Often a survey firm can 
+be engaged to conduct the survey. The 
+sponsoring agency should provide careful 
+oversight, as travel surveys are longer and 
+more complicated than many other surveys. 
+A typical travel survey includes a travel diary, 
+querying the respondent about trips made 
+in a day, trip by trip, asking about the origin, 
+destination, mode of travel, trip purpose, 
+and trip start and end time. This requires 
+that the surveyor be familiar with definitions 
+of what constitutes a trip (e.g., how long of 
+a walk before we call it a trip), and ways to 
+help respondents understand the response 
+choices for travel mode and trip purpose. 
+Often times a travel survey will be stratified, 
+either by income, or gender, or residential 
+location, or other traveler characteristics. 
+Hence the survey research firm needs data on 
+the underlying population (e.g., by income or 
+other characteristics that will be used to draw 
+a stratified sample) and needs to be skilled 
+in survey techniques for stratification. The 
+sponsori
+--- PAGE 9 ---
+Sustainable Tourism Travel toolkit
+8
+planning or land development agency – needs 
+to have the project management skills to vet, 
+select, and manage the survey contractor, 
+and an understanding of survey methods and 
+basic statistics to use and interpret the results. 
+Approach   
+• Set objectives
+ ◦ Define what information is needed and 
+why (e.g., trip purpose, mode choice, 
+willingness-to-pay).
+Credit: Baff
+DIMENSION TRAVEL SURVEY MOBILE PHONE DATA
+Primary Data Type Self-reported travel behavior and perceptions Passively collected location and 
+movement data
+Spatial Coverage 
+(Where)
+Limited to survey locations and sampling 
+design
+Very high, covering large areas and 
+multiple corridors
+Temporal Coverage 
+(When)
+Snapshot or short survey period; can be 
+stratified by time
+Continuous or near-continuous 
+over long periods
+User Identification 
+(Who)
+Detailed socio-demographics (resident vs. 
+tourist, age, income, vehicle ownership)
+No direct socio-demographic 
+information
+Attitudes & 
+Perceptions
+Captures satisfaction, preferences, barriers, 
+and willingness to switch modes Not observable
+Sample Size Moderate to small (resource-dependent) Very large
+Bias Risks Sampling bias, recall bias, response bias Representation bias, opaque sam-
+pling mechanisms
+Cost & 
+Implementation Effort
+Relatively high (design, fieldwork, incentives) High data acquisition cost, but low 
+field effort
+Table 2: Comparison of travel survey and mobile-phone derived data.
+--- PAGE 10 ---
+9
+US-ASEAN Smart City Program
+• Design the survey
+ ◦ Draft and pretest questions
+ ◦ Decide on format (on-board, at/around 
+stops, online follow-up).
+• Plan sampling and logistics
+ ◦ Identify where to reach respondents 
+(covering both access and egress zones).
+ ◦ Recruit and train enumerators.
+• Conduct the survey
+ ◦ Pilot first, analyze the pilot results, adjust 
+for missing coverage, then implement the 
+full survey.
+ ◦ Monitor fieldwork to maintain quality.
+• Analyze and report
+ ◦ Clean and analyze data.
+ ◦ Summarize findings, note limitations, and 
+document methods for future use.
+Cost: The travel survey in along the PKCD 
+bus route in Phuket cost approximately 
+$20,000 including $4,000 for survey design 
+and development, $8,000 for the survey 
+fee and $8,000 for the incentive for the 
+respondents) . Generally, travel survey-
+related costs fall into two main categories: 
+First, the development of the survey 
+questions, which could be done either in-
+house by agency staff or in consultation 
+with travel behavior experts. For first-time 
+applications, we advise engaging academic 
+experts skilled in travel surveys to learn from 
+decades of experience in the literature.2 
+Second, survey administration, which is best 
+conducted by an experienced survey research 
+team. Each city will have its own unique 
+context for reaching survey respondents, 
+and skilled local survey research firms will 
+typically best understand that context. 
+Persona Development
+When to use personas: Traveler personas 
+are useful tools to understand traveler 
+motivations from a marketing and consumer 
+satisfaction perspective. Personas are deep 
+profiles, developed from quantitative (e.g., 
+survey) and qualitative (e.g., interview 
+or observational) data, offering a deep 
+understanding of traveler beha
+--- PAGE 11 ---
+Sustainable Tourism Travel toolkit
+10
+to note recurring patterns of use. 
+Group travelers: Use the characteristics 
+identified in Step 2 (above),  sort people 
+into groups with similar patterns using 
+statistical analysis. This helps illuminate 
+clear profiles, such as “students who 
+care about safety and environmental 
+issues. (occupation and attitude)”
+Define traveler personas: For each group, 
+identify the “typical” traveler who best 
+represents that segment. These personas 
+then serve as realistic examples of the 
+different kinds of travelers in the system.
+Once personas are developed, agencies 
+can further engage with real travelers who 
+match these profiles through in-depth 
+interviews or focus groups, or validate 
+them with local stakeholders. This deeper 
+engagement helps uncover motivations, 
+unmet needs, and expectations that may 
+not be fully captured through surveys 
+alone. The resulting insights support the 
+identification of service gaps, opportunities 
+for innovation, and areas where targeted 
+interventions can meaningfully improve 
+the travel experience. This step provides a 
+critical foundation for developing pragmatic 
+and context-sensitive recommendations.
+Cost: Cost will vary based on the solution 
+adopted for the survey. Survey firms are 
+unlikely to provide persona development 
+as well, thus requiring the services of a 
+different set of consultants. In the case of 
+the Phuket case study, the Chulalongkorn 
+team was responsible for both survey 
+design and analysis, which included the 
+persona development. Another factor that 
+will affect cost is the degree of engagement 
+with respondents. More extensive 
+qualitative work can be labor and time 
+intensive and, therefore, costs more. 
+Co-design Recommendations with local 
+stakeholders
+When to use: Foll
+--- PAGE 12 ---
+11
+US-ASEAN Smart City Program
+of the personas and the associated service 
+gaps identified through the analysis. 
+Stakeholders are then invited to assess 
+whether these profiles align with observed 
+travel behavior and operational experience, 
+and to propose refinements where needed.
+To encourage broad participation and 
+maintain engagement, interactive tools 
+may be used, depending on context and 
+availability. Online polling and visualization 
+platforms can support real-time feedback, 
+enable anonymous input, and help 
+surface areas of consensus or divergence 
+among participants. These tools are 
+particularly useful in mixed groups where 
+participants may have different levels of 
+authority or familiarity with the topic.
+Following validation, stakeholders work 
+collaboratively to propose interventions 
+that respond to persona-specific needs 
+and cross-cutting service gaps. Facilitation 
+should emphasize practicality, encouraging 
+participants to consider regulatory authority, 
+operational feasibility, and resource 
+implications when proposing actions.
+Figure 1 Impact-Effort Framework
+--- PAGE 13 ---
+Sustainable Tourism Travel toolkit
+12
+To translate a wide range of co-designed 
+ideas into a focused and actionable set of 
+recommendations, the workshop applies 
+an impact–effort framework. This simple 
+and intuitive tool helps stakeholders 
+jointly assess which interventions should 
+be prioritized, sequenced, or set aside.
+Proposed actions are assessed 
+along two dimensions:
+• Impact referring to the expected 
+contribution to improved service 
+quality, user experience, or ridership
+• Effort reflecting the level of resources, 
+coordination, time, and institutional 
+complexity required for implementation.
+During the workshop, stakeholders collectively 
+discuss and position each proposed 
+intervention on a two-axis matrix. This 
+process encourages participants to consider 
+not only what would be desirable from a user 
+perspective, but also what is realistic given 
+local operational and institutional constraints.
+The resulting matrix typically 
+identifies four broad categories:
+• High-impact, low-effort actions, which are 
+suitable for near-term implementation and 
+can deliver visible improvements quickly
+• High-impact, high-effort actions, which 
+represent strategic priorities requiring 
+longer-term planning and coordination
+• Low-impact, low-effort actions, which 
+may be implemented opportunistically
+• Low-impact, high-effort actions, 
+which are generally deprioritized.
+Cost: TThe co-design workshop conducted 
+as part of the PKCD bus corridor study in 
+Phuket cost approximately $5,000, including 
+$1,500 for pre-workshop preparation and 
+analysis, and $3,500 for direct workshop 
+implementation. Pre-workshop costs 
+covered the synthesis of travel survey 
+results and persona profiles, preparation of 
+workshop materials, facilitation design, and 
+coordination with participa
+--- PAGE 14 ---
+13
+US-ASEAN Smart City Program
+regulations and standards are determined at 
+the national level. Accordingly, understanding 
+governance in Phuket requires first 
+clarifying how national level institutions 
+shape the scope of action available to 
+local governments and operators, and how 
+these arrangements are translated into 
+local level implementation outcomes.
+Regulatory and Planning Institutions
+At the national level, regulatory and planning 
+authority for public transport in Phuket 
+remains largely centralized under the Ministry 
+of Transport. Key institutions include:
+• Department of Land Transport (DLT): 
+Responsible for public bus route planning, 
+operator licensing, and regulatory oversight.
+• Office of Transport Policy and 
+Planning (OTP): Responsible for 
+national public transport policy 
+formulation and strategic planning.
+• Commission for the Management 
+of Land Traffic (CMLT): Provides inter-
+agency coordination on land traffic 
+management, enforcement alignment, 
+and resolution of operational issues 
+affecting routes and service delivery.
+In addition, digital and smart cities 
+initiatives are supported at the national 
+level by the Ministry of Digital Economy:
+• Digital Economy Promotion 
+Administration (DEPA): Promotes smart 
+city and smart mobility technologies, 
+including digital platforms and data-driven 
+solutions relevant to tourism mobility.
+Local Government Bodies
+Provincial and local governments play 
+a coordinating and implementation-
+oriented role, bridging national 
+policy with local conditions:
+• Phuket Provincial Governor’s Office: 
+Coordinates relevant public agencies and 
+supports alignment across sectors.
+• Provincial Subcommittee of CMLT: 
+Acts as a provincial-level coordination 
+mechanism for traffic and transport issues.
+• Phuket Departm
+--- PAGE 15 ---
+Sustainable Tourism Travel toolkit
+14
+Tourism-Sector Actor
+Tourism-sector actors influence travel 
+demand patterns and visitor mobility 
+choices, and therefore play an important 
+enabling role in tourism mobility governance. 
+Their involvement helps align transport 
+services with tourism activity locations, 
+peak periods, and visitor expectations.
+• Patong Hotel Association: Represents 
+hotels in Patong, one of Phuket’s primary 
+tourist destinations, and acts as a coordination 
+platform between accommodation providers 
+and transport stakeholders. The association 
+supports information dissemination, 
+service feedback, and promotion of 
+public transport options to visitors.
+• Thai Hotels Association – Southern 
+Chapter: Represents hotels across southern 
+Thailand, including Phuket, and contributes 
+a broader regional tourism perspective. 
+The association plays a role in advocating 
+for improved accessibility, sustainable 
+transport options, and policies that 
+enhance the overall visitor experience.
+Civil Society and Non-Governmental 
+Organization
+Civil society and non-governmental 
+organizations contribute to governance by 
+representing broader social, economic, and 
+environmental interests. Their involvement 
+supports accountability, inclusiveness, and 
+alignment between mobility interventions 
+and local development objectives.
+• Sustainable Tourism Development 
+Foundation: A non-political foundation 
+dedicated to advancing sustainable 
+tourism and environmental preservation 
+through research, policy support, capacity 
+building, and information dissemination.
+• Federation of Thai Industries (FTI): 
+Represents private-sector and industrial 
+interests, including those related to transport, 
+energy, and vehicle manufacturing. In the 
+context of tourism mobility, FTI provide
+--- PAGE 16 ---
+15
+US-ASEAN Smart City Program
+Potential Demand Heatmap (Origin-
+Destination Density)
+Based on the travel survey, we developed a 
+practical tool to generate potential demand 
+heatmaps, showing where people are most 
+likely to start and end their trips along 
+and around the PKCD EV bus corridor. The 
+maps are built using a 1 km × 1 km grid and 
+combine inputs from both current users and 
+non-users, providing a comprehensive view 
+of both existing ridership and latent demand.
+The heatmaps highlight areas with 
+higher concentrations of travel activity, 
+where darker shading indicates stronger 
+potential demand. By viewing origins and 
+destinations together, stakeholders can 
+quickly assess whether the current route 
+reflects how people move around the city, 
+and where adjustments may be needed to 
+better match observed travel patterns.
+The origin–destination density maps show 
+that both users and non-users are strongly 
+focused on the Phuket Town–Kathu–Patong 
+corridor. Users are most concentrated in 
+Phuket Town (including Talat Nuea) and 
+Patong, which matches the main service 
+corridor. Non-users show a similar corridor 
+Figure 4. Non-users' origins Figure 5. Non-users' destinations
+pattern, but their destinations also extend 
+beyond the corridor, with additional clusters 
+in Chalong and in the eastern parts of 
+Phuket. Compared with users, non-user 
+destinations are therefore more spatially 
+spread, especially toward areas that are 
+less directly covered by the current route.
+Persona-Based Segmentation Results
+Using clustering analysis of survey data, the 
+study identified eight distinct personas: four 
+among current bus users and four among 
+non-users shown in Tables 3 and 4. The 
+personas reveal substantial heterogeneity 
+in socio-demographic characteristics, 
+travel
+--- PAGE 17 ---
+Sustainable Tourism Travel toolkit
+16
+CLUSTER PERSONA 
+DESCRIPTION
+AGE GENDER RESIDENT:
+VISITOR
+FACTORS INFLUENCING 
+CHOICE
+COMMON NEEDS
+1
+Low-income students 
+or workers prioritizing 
+affordability
+<30 M:F ≈ 
+50:50 100:0 Affordability, road safety
+Clearer driver communication, 
+better on-board service, stops 
+closer to destination
+2 Bus-friendly low–mid 
+income freelancers 18–39 M:F ≈ 
+24:76 ≈37:63 Convenience at start of trip Professional drivers, shorter 
+waiting time
+3
+Low–mid income young 
+male visitors interested 
+in adventure
+<30 M:F = 
+100:0 ≈2:98 Convenient and affordable 
+transport
+Professional drivers, shorter 
+waiting time
+4 High-income visitors 
+open to buses 30–39 M:F ≈ 
+27:73 0:100 Feeling safe and secure Professional drivers, tourism 
+information on board & at stops
+CLUSTER PERSONA 
+DESCRIPTION
+AGE GENDER RESIDENT:
+VISITOR
+CURRENT 
+MODE
+FACTORS FOR 
+MODE CHOICE
+KEY NEEDS TO SHIFT TO 
+EV BUS
+5
+Low-income workers/
+students or budget 
+young visitors
+<30 M:F ≈ 
+47:53 48:52 Private MTB, 
+rental MTB
+Short wait time, 
+convenience Cleanliness, app integration
+6 Low–mid income 
+freelancers 18–59 M:F ≈ 
+48:52 58:42 Private MTB/
+car, ride-hailing
+Convenience, 
+flexibility
+App integration, stops closer 
+to destinations, professional 
+drivers
+7 Mid income private 
+riders 18–29 M:F ≈ 
+42:58 ≈92:8 Private car/
+MTB
+Convenience, 
+economy, safety
+Driver communication, on-
+board service, app integration
+8 Premium, app-first 
+high-income visitors 18–29 M:F ≈ 
+42:58 ≈5:95 Taxi, ride-
+hailing
+Comfort, 
+convenience, 
+predictability
+Cleanliness, punctuality, 
+professional drivers, app 
+integration
+Table. 3. User ersonas Results
+Table 4. Non-user personas results
+--- PAGE 18 ---
+17
+US-ASEAN Smart City Program
+and (6) Cleanliness and comfort. These 
+themes formed the basis for the stakeholder 
+workshop that followed, which was designed 
+to validate the personas and translate persona 
+needs into implementable recommendations.
+To ensure the segmentation results were 
+operationally credible and actionable, the 
+research team convened a stakeholder 
+workshop to validate the personas and co-
+design service improvement measures. 
+The workshop created a structured 
+forum for the following stakeholders: 
+• Department of Land Transport, 
+Phuket as a regulator
+• Phuket City Development 
+as an EV bus operator
+• Phuket Mahanakorn as a local bus operator
+• Phuket Provincial Administration 
+Organization (PAO) as a local 
+governmental organization.
+• Federation of Thai Industries as a 
+local non-governmental organization
+• Patong Hotel Association, as a 
+tourism-related organization
+• Thai Hotels Association, Southern 
+Chapter, as a tourism-related organization
+To confirm whether the personas reflected 
+observed mobility patterns and to prioritize 
+interventions based on feasibility and 
+expected benefits. Following validation, 
+stakeholders worked collaboratively to 
+convert persona-specific needs into concrete 
+interventions. The discussion focused on 
+those repeatedly emerged service theme 
+while remaining realistic about institutional 
+capacity and implementation constraints.
+In total, stakeholders consolidated 
+fifteen recommendations, spanning 
+both near-term operational measures 
+and longer-term system reforms. The 
+recommendations cover improvements 
+in boarding and alighting convenience, 
+service frequency and scheduling, 
+timetable transparency, driver training and 
+customer service, digital integration and 
+Figure 6. Impact-effort framework
+--- PAGE 19 ---
+Sustainable Tourism Travel toolkit
+18
+real-time information, vehicle quality and 
+accessibility, route design and coverage, 
+first–last mile connectivity, public awareness 
+campaigns, and trial or promotional 
+fares to encourage initial ridership.
+All recommendations were assessed using 
+an impact–effort framework as shown 
+in Figure 6, enabling stakeholders to 
+distinguish between measures that can be 
+implemented quickly and those requiring 
+greater coordination, investment, or structural 
+change. The assessment highlighted a set 
+of quick wins (Top left quadrant)—such 
+as Improve driver capacity and customer-
+service skills, strengthening driving safety 
+standards and improving digital information 
+through app integration. It also identified 
+several major projects (Top right quadrant) 
+requiring sustained institutional collaboration, 
+including route restructuring, frequency 
+increases, strengthened governmental 
+organization planning capacity, and improved 
+first–last mile connectivity. The resulting 
+prioritization (Figure 6) supported a shared 
+understanding of sequencing: actions 
+that can deliver immediate user-facing 
+improvements versus reforms that enable 
+longer-term system transformation.
+LESSONS LEARNED AND 
+RECOMMENDATIONS
+Stakeholder Delineation
+A key lesson from the stakeholder delineation 
+process is the value of systematically 
+identifying relevant actors at an early stage 
+of tourism mobility planning. Using a clear 
+set of stakeholder groups helped ensure 
+balanced coverage across regulatory, 
+operational, tourism, local government, and 
+civil society perspectives, and reduced the 
+risk of overlooking actors with influence 
+over decision-making or implementation. 
+Engagement with local experts was 
+particularly important for identifying informal 
+r
+--- PAGE 20 ---
+19
+US-ASEAN Smart City Program
+many non-users already travel to destinations 
+served by the route. This suggests that 
+non-use along the corridor is less about 
+destination mismatch and more about 
+service performance compared with other 
+modes. Importantly, the presence of non-
+user destinations within the service corridor 
+signals practical potential demand and helps 
+define clear, stakeholder-focused themes for 
+action, such as improving reliability, service 
+frequency, and passenger information. 
+These themes were then carried forward 
+into the workshop co-design process to 
+support the development and prioritization 
+of stakeholder recommendations.
+Persona Development
+A key lesson from the persona development 
+process is that understanding travel behavior 
+and service needs requires going beyond 
+demographic characteristics alone. While 
+variables such as age, income, or occupation 
+provide useful background, they do not 
+fully explain why people choose to use 
+or avoid public transport. By combining 
+behavioral and attitudinal information, 
+the personas capture differences in travel 
+habits, confidence levels, and expectations 
+toward the service, offering a more complete 
+picture of both users and non-users.
+The Phuket personas further indicate 
+that public transport attractiveness in 
+tourism-oriented contexts depends not 
+only on demographic characteristics, but 
+critically on the overall service experience. 
+Predictability, driver professionalism, clarity 
+of information, and perceived ease of use 
+play a central role in shaping confidence 
+among both residents and visitors, including 
+those who do not currently use bus services. 
+At the same time, the analysis reveals that 
+Credit: Roma Neus - CC-BY 3.0
+--- PAGE 21 ---
+Sustainable Tourism Travel toolkit
+20
+several needs are shared across different 
+personas, despite differences in socio-
+economic profiles. Common concerns related 
+to reliability, ease of use, and information 
+quality appear repeatedly across groups.
+Co-Design recommendation with 
+stakeholders
+A key lesson from the co-design phase is that 
+analytical outputs become significantly more 
+valuable when they are validated and refined 
+with local stakeholders. While personas help 
+clarify who different traveler groups are and 
+what they need, stakeholders are essential 
+for confirming whether these insights reflect 
+local realities and whether proposed actions 
+are feasible given operational constraints, 
+budget limitations, and institutional roles. 
+In Phuket, engaging regulators, operators, 
+local agencies, and tourism-sector actors 
+ensured that personas and service gaps were 
+treated not as standalone research findings, 
+but as practical inputs for decision-making.
+A second lesson is that structured 
+prioritization is necessary to translate a 
+broad set of ideas into an actionable plan. 
+Applying an impact-effort framework 
+provided stakeholders with a shared 
+basis to compare options and agree on 
+near-term priorities, particularly under 
+real-world constraints such as limited 
+funding, staffing capacity, route licensing 
+requirements, and operational feasibility. 
+This approach supports clearer sequencing 
+of actions and helps align improvement 
+ambitions with implementation capacity.
+To further development, evidence and 
+prioritized recommendations will not 
+deliver change on their own without a clear 
+mechanism to carry them forward. While 
+research teams can generate analysis and 
+convene evidence-based dialogue, sustained 
+implementation typically requires a multi-
+--- PAGE 22 ---
+21
+US-ASEAN Smart City Program
+However, a third lesson is that institutional 
+collaboration alone is insufficient without 
+adequate data and demand intelligence. 
+Stakeholder discussions highlighted limited 
+availability of reliable travel demand data and 
+insufficient understanding of heterogeneous 
+passenger needs, particularly differences 
+between tourists and local residents. As a 
+result, service design was not fully aligned 
+with underlying travel patterns, contributing 
+to lower-than-expected ridership levels.
+--- PAGE 23 ---
+Sustainable Tourism Travel toolkit
+22
+ENDNOTES
+1 Alexander, L., Jiang, S., Murga, M., & González, M. C. (2015) “Origin–destination trips by purpose and time 
+of day inferred from mobile phone data.” Transportation Research Part C: Emerging Technologies, 58, 240–250.
+Toole, J. L., Colak, S., Sturt, B., Alexander, L. P ., Evsukoff, A., & González, M. C. (2015) “The path most traveled: Travel 
+demand estimation using big data resources.” Transportation Research Part C: Emerging Technologies, 58, 162–177
+2 See, e.g., M. Boarnet, “Land Use, Travel Behavior, and Disaggregate Travel Data,” in Geography of 
+Urban Transportation, 4th ed., G. Giuliano and S. Hanson, Guilford Press, 2017; and M. Boarnet, “Longer 
+View: A Broader Context for Land Use and Travel Behavior, and a Research Agenda,” Journal of the American 
+Planning Association, vol. 77, no. 3, 2011, pp. 197–213; Pronello, C., & Camusso, C. (2011). “Users’ needs and 
+attitudes towards sustainable urban mobility.” Transport Policy, 18(1), 60–65; Stopher, P . R., & Greaves, S. P . 
+(2007). “Household travel surveys: Where are we going?” Transportation Research Part A, 41(5), 367–381
+3 Airports of Thailand Public Company Limited (AOT). Annual Report 2024. Bangkok, Thailand, 2024; 
+Airports of Thailand Public Company Limited (AOT). Annual Report 2025. Bangkok, Thailand, 2025
