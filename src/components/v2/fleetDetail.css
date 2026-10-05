@@ -1,0 +1,79 @@
+/* /fleet/raw — every bus, every detail. Same language as /fleet: hairlines, zero radius,
+   zero shadow, one accent; em off a root that grows with the screen.
+   Three sizes: 1.6em (title) · 1em (body) · 0.8em (small). */
+
+/* html/body/#root hide overflow (app shell), so the page is its own scroller. */
+.v2.fd {
+  position: fixed; inset: 0; display: block; overflow-x: hidden; overflow-y: auto;
+  font-size: clamp(16px, calc(100vw / 85), 40px); line-height: 1.45;
+}
+:where(.fd) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.fd button:focus-visible, .fd a:focus-visible, .fd input:focus-visible, .fd select:focus-visible, .fd summary:focus-visible { outline: 2px solid var(--ax-accent); outline-offset: 2px; }
+.fd a { color: var(--ax-accent); }
+
+.fd-page { max-width: 80em; margin: 0 auto; padding: 1em 1em 4em; }
+
+.fd-head { display: flex; flex-direction: column; gap: 0.8em; padding-bottom: 1em; border-bottom: 1px solid var(--ax-line); }
+.fd-eyebrow { margin: 0; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
+.fd-title { margin: 0.2em 0; font-size: 1.6em; line-height: 1.2; font-weight: 700; color: var(--ax-ink); }
+.fd-sub { margin: 0; color: var(--ax-ink-2); max-width: 52em; }
+.fd-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
+/* Small-text controls: 3.45em × 0.8em = 44 px tap height at the 16 px floor. */
+.fd-nav a { display: flex; align-items: center; justify-content: center; min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
+.fd-nav a:hover { color: var(--ax-ink); background: var(--ax-panel); }
+
+.fd-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8em 1.2em; margin: 1.2em 0; }
+.fd-search { font: inherit; min-height: 2.75em; padding: 0 0.8em; width: 100%; max-width: 16em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); }
+.fd-search::placeholder { color: var(--ax-ink-3); }
+.fd-chips { display: flex; flex-wrap: wrap; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
+.fd-chips button { min-height: 2.75em; padding: 0 0.9em; background: var(--ax-paper); color: var(--ax-ink-2); white-space: nowrap; }
+.fd-chips button.is-active { background: var(--ax-ink); color: var(--ax-paper); font-weight: 700; }
+.fd-select { display: inline-flex; align-items: center; gap: 0.5em; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
+.fd-select select { font: inherit; font-size: 1.25em; text-transform: none; letter-spacing: 0; min-height: 2.2em; padding: 0 0.5em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); color-scheme: dark; }
+.fd-downloads { display: flex; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
+.fd-downloads button { min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; background: var(--ax-paper); color: var(--ax-ink-2); }
+.fd-downloads button:hover { color: var(--ax-ink); background: var(--ax-panel); }
+
+.fd-group { margin-top: 1.5em; }
+.fd-group h2 { margin: 0 0 0.5em; font-size: 1em; font-weight: 700; color: var(--ax-ink); }
+.fd-group h2 span { font-weight: 400; font-size: 0.8em; color: var(--ax-ink-3); margin-left: 0.5em; }
+.fd-scroll { overflow-x: auto; border: 1px solid var(--ax-line); background: var(--ax-panel); }
+.fd-table { width: 100%; border-collapse: collapse; }
+.fd-table th { text-align: left; padding: 0.6em 0.9em; font-size: 0.8em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap; }
+.fd-table td { padding: 0.35em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75em; font-weight: 700; color: var(--ax-ink); }
+.fd-caret { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3); font-weight: 400; }
+.fd-doing { color: var(--ax-ink) !important; }
+.fd-row--driving .fd-doing { color: var(--ax-accent) !important; }
+.fd-row--late .fd-doing { color: var(--ax-warn) !important; }
+.fd-row--quiet .fd-doing { color: var(--ax-neg) !important; }
+.fd-row--off td { color: var(--ax-ink-3); }
+.fd-row.is-open td { background: var(--ax-paper); }
+
+.fd-detail-row > td { padding: 0 !important; background: var(--ax-paper); white-space: normal; }
+.fd-facts { padding: 0.8em 1em 1em 2.6em; border-left: 3px solid var(--ax-accent); }
+.fd-facts dl { margin: 0; display: grid; gap: 0.35em; }
+.fd-facts dl div { display: grid; grid-template-columns: 10em 1fr; gap: 1em; }
+.fd-facts dt { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-3); padding-top: 0.2em; }
+.fd-facts dd { margin: 0; color: var(--ax-ink); }
+.fd-facts details { margin-top: 0.6em; font-size: 0.8em; color: var(--ax-ink-2); }
+.fd-facts summary { min-height: 3.45em; display: flex; align-items: center; cursor: pointer; }
+.fd-facts pre { overflow-x: auto; margin: 0; padding: 0.8em; background: var(--ax-panel); border: 1px solid var(--ax-line); }
+
+.fd-empty { color: var(--ax-ink-2); }
+.fd-foot { margin: 1.5em 0 0; font-size: 0.8em; color: var(--ax-ink-3); max-width: 70em; }
+
+/* phone: keep Bus, Doing, Last signal; the rest is one tap away in the row */
+@media (max-width: 719px) {
+  .fd-table th:nth-child(3), .fd-table td:nth-child(3), .fd-table th:nth-child(4), .fd-table td:nth-child(4),
+  .fd-table th:nth-child(6), .fd-table td:nth-child(6) { display: none; }
+  .fd-detail-row > td { display: table-cell !important; }
+  .fd-facts { padding-left: 1em; }
+  .fd-facts dl div { grid-template-columns: 1fr; gap: 0; }
+  .fd-search { max-width: none; }
+}
+@media (min-width: 720px) {
+  .fd-page { padding: 1.5em 2em 4em; }
+  .fd-head { flex-direction: row; justify-content: space-between; align-items: flex-start; }
+  .fd-nav { grid-template-columns: repeat(4, auto); flex-shrink: 0; }
+}

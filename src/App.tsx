@@ -92,7 +92,7 @@ function getInitialView(): AppView | "ops" | "fleet" | "study" | "capacity" {
   if (typeof window === "undefined") return "map";
   const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
-  if (p.startsWith("/truman") || p.startsWith("/fleet")) return "fleet";
+  if (p.startsWith("/fleet")) return "fleet";
   if (p.startsWith("/study") || p.startsWith("/research")) return "study";
   if (p.startsWith("/capacity")) return "capacity";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
@@ -231,9 +231,6 @@ export default function App() {
   // /fleet/raw keeps the every-field table for debugging; /fleet is the console people read.
   if (pathname.startsWith("/fleet/raw")) {
     return <Suspense fallback={<RouteLoading />}><FleetDetail /></Suspense>;
-  }
-  if (pathname.startsWith("/truman")) {
-    return <Suspense fallback={<RouteLoading />}><FleetConsole initialMode="truman" /></Suspense>;
   }
   if (pathname.startsWith("/fleet")) {
     return <Suspense fallback={<RouteLoading />}><FleetConsole /></Suspense>;

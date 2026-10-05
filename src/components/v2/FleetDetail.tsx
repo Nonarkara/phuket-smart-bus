@@ -1,493 +1,244 @@
 /**
- * Fleet Detail — every data point the live tracker has on every real bus.
+ * /fleet/raw — every bus, every detail, in plain words.
  *
- * The Ops Wall shows one row per bus in the fleet table. This screen shows
- * the SAME buses in a dense table with every field the keyless feed sent —
- * plate, routeId, destination, lat/lng, heading, speed, pax counter (cur/up/
- * down), online flag, odometer, device update time — plus the day ledger's
- * votes, trip count, km, boardings, APC flag and per-plate trip history.
+ * For the person who needs to look one bus up: grouped by what the bus is
+ * doing (on the road / lost signal today / not out today), one readable row
+ * each. Open a row for every field the trackers send, labelled in words, with
+ * the raw tracker row underneath. Search, filters, ordering and CSV / JSON
+ * download are all here.
  *
- * Designed for operators who want to debug "why is bus 10-1227 not on the
- * wall?" — the votes column explains "still identifying", the updatedAt
- * explains "offline since 11:08", the pax counter explains "modelled 18,
- * no counter fitted".
- *
- * Sort any column by clicking the header. Filter by plate, line and status.
- * Expand any row to see the raw LiveBus JSON + ledger entry + trip log.
- * Export the whole snapshot as JSON or a flat CSV.
+ * Same words as /fleet: both read fleetRows.ts. "Today" figures are the
+ * server's all-day record, never this tab's own tally.
  */
-import { Fragment, useEffect, useMemo, useState } from "react";
-import type { LiveBus, LiveBusRouteId } from "@shared/pksbFeed";
-import {
-  getLiveBusesRaw,
-  getLiveFeedState,
-  getLiveLedgerSnapshot,
-  startLiveFeed,
-  subscribeLiveFeed,
-  type LiveLedger,
-  type LiveTrip,
-} from "../../engine/liveOps";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import type { LiveBus } from "@shared/pksbFeed";
+import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
+import { appPath } from "../../lib/paths";
+import { ago, bkkClock, isOut, loadToday, readRow, service, STATE_WORD, type Row, type Today } from "./fleetRows";
+import "./fleetDetail.css";
 
-type SortKey =
-  | "plate" | "routeId" | "destination" | "status" | "speedKph" | "paxOnBoard"
-  | "heading" | "online" | "updatedAt" | "odometerM" | "trips" | "km" | "riders"
-  | "fare" | "votes";
+type Show = "all" | "road" | "quiet" | "off";
+type ServiceFilter = "all" | "rawai-airport" | "patong-old-bus-station" | "dragon-line" | "town" | "none";
+type Order = "bus" | "signal" | "km";
 
-type SortDir = "asc" | "desc";
-type LineFilter = "all" | LiveBusRouteId | "unassigned";
-type StatusFilter = "all" | "moving" | "dwelling" | "stale" | "offline";
-
-const LINE_LABEL: Record<LiveBusRouteId | "unassigned", string> = {
-  "rawai-airport": "Rawai ↔ Airport",
-  "patong-old-bus-station": "Patong ↔ Old Town",
-  "dragon-line": "Dragon loop",
-  unassigned: "Identifying",
+const SHOW_LABEL: Record<Show, string> = { all: "All", road: "On the road", quiet: "Lost signal", off: "Not out" };
+const SERVICE_LABEL: Record<ServiceFilter, string> = {
+  all: "Every service", "rawai-airport": "Airport ↔ Rawai", "patong-old-bus-station": "Old Town ↔ Patong",
+  "dragon-line": "Dragon loop", town: "Town routes", none: "No line given",
 };
+const COMPASS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+const compass = (deg: number) => (Number.isFinite(deg) ? COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8]! : "—");
+const bkkDateTime = (ms: number) =>
+  new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(ms));
 
-const FRESH_FIX_MS = 3 * 60_000;
-
-// ISO → Bangkok wall-clock "YYYY-MM-DD HH:MM:SS" (operators read in BKK).
-const BKK_TZ = "Asia/Bangkok";
-function bkkTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: BKK_TZ, year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-  }).formatToParts(d);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
+function serviceKey(r: Row): ServiceFilter {
+  if (r.line) return r.line.routeId as ServiceFilter;
+  return r.bus.feed === "keyless" ? "town" : "none";
 }
-
-function compass(deg: number): string {
-  if (!Number.isFinite(deg)) return "—";
-  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  return dirs[Math.round(((deg % 360) / 45)) % 8] ?? "—";
+function doing(r: Row): string {
+  if (r.state === "driving") return `Driving ${Math.round(r.bus.speedKph)} km/h, heading ${compass(r.bus.heading)}`;
+  return STATE_WORD[r.state];
 }
-
-function ago(ms: number, now: number): string {
-  const sec = Math.max(0, Math.round((now - ms) / 1000));
-  if (sec < 60) return `${sec}s ago`;
-  if (sec < 3600) return `${Math.round(sec / 60)}m ago`;
-  return `${Math.round(sec / 3600)}h ago`;
+function lastSignal(r: Row, now: number): string {
+  if (r.state === "off") return `Last seen ${bkkDateTime(r.fixMs)}`;
+  if (r.state === "quiet") return `${bkkClock(r.fixMs)} (${ago(r.fixMs, now)})`;
+  return ago(r.fixMs, now);
 }
+const where = (r: Row) => (r.atDepot ? "At the depot" : r.near ? `Near ${r.near}` : "—");
+const todayText = (t: Today["perBus"][string] | undefined) =>
+  t ? [t.trips ? `${t.trips} ${t.trips === 1 ? "trip" : "trips"}` : null, t.km !== null ? `${Math.round(t.km)} km` : null].filter(Boolean).join(" · ") || "—" : "—";
 
 function csvCell(v: unknown): string {
   if (v === null || v === undefined) return "";
   const s = String(v);
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
-
 function download(filename: string, content: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 export function FleetDetail() {
-  const [, setNow] = useState(() => Date.now());
-  const [feed, setFeed] = useState(() => getLiveFeedState());
+  const [now, setNow] = useState(() => Date.now());
   const [buses, setBuses] = useState<readonly LiveBus[]>(() => getLiveBusesRaw());
-  const [ledger, setLedger] = useState<LiveLedger>(() => getLiveLedgerSnapshot());
-  const [expandedPlate, setExpandedPlate] = useState<string | null>(null);
+  const [feed, setFeed] = useState(() => getLiveFeedState());
+  const [today, setToday] = useState<Today | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [lineFilter, setLineFilter] = useState<LineFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("plate");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [show, setShow] = useState<Show>("all");
+  const [svc, setSvc] = useState<ServiceFilter>("all");
+  const [order, setOrder] = useState<Order>("bus");
 
-  // Ref-counted live feed + a 1s tick so "seen 6s ago" stays honest.
   useEffect(() => {
     const stop = startLiveFeed();
-    const refresh = () => {
-      setFeed(getLiveFeedState());
-      setBuses(getLiveBusesRaw());
-      setLedger(getLiveLedgerSnapshot());
-    };
-    const unsub = subscribeLiveFeed(refresh);
-    const tick = setInterval(() => setNow(Date.now()), 1000);
-    return () => { stop(); unsub(); clearInterval(tick); };
+    const unsub = subscribeLiveFeed(() => { setBuses(getLiveBusesRaw()); setFeed(getLiveFeedState()); });
+    const tick = setInterval(() => setNow(Date.now()), 5_000);
+    const pull = () => void loadToday().then((t) => t && setToday(t));
+    pull();
+    const slow = setInterval(pull, 120_000);
+    return () => { stop(); unsub(); clearInterval(tick); clearInterval(slow); };
   }, []);
 
-  const now = Date.now();
-  const reportingCount = buses.filter((b) => now - Date.parse(b.updatedAt) <= FRESH_FIX_MS).length;
-
-  // One row per plate: raw tracker fields + day-ledger fields + derived status.
-  const rows = useMemo(() => {
-    const latest = new Map(buses.map((b) => [b.plate, b]));
-    const plates = new Set<string>([...latest.keys(), ...Object.keys(ledger.vehicles)]);
-    const out: Array<{
-      plate: string;
-      bus: LiveBus | null;
-      book: LiveLedger["vehicles"][string] | undefined;
-      trips: LiveTrip[];
-      status: "moving" | "dwelling" | "stale" | "offline";
-      km: number;
-      riders: number;
-      counted: number;
-      fare: number;
-      votesSummary: string;
-      ledgerFixMs: number | null;
-    }> = [];
-    for (const plate of plates) {
-      const bus = latest.get(plate) ?? null;
-      const book = ledger.vehicles[plate];
-      const trips = ledger.trips.filter((t) => t.plate === plate);
-      const fixMs = bus ? Date.parse(bus.updatedAt) : book?.fixMs ?? 0;
-      const staleSec = (now - fixMs) / 1000;
-      const status: "moving" | "dwelling" | "stale" | "offline" = bus === null
-        ? "offline"
-        : staleSec * 1000 > FRESH_FIX_MS
-          ? "stale"
-          : bus.speedKph > 4 ? "moving" : "dwelling";
-      const km = book ? Math.round(book.km * 10) / 10 : 0;
-      const riders = trips.reduce((s, t) => s + t.riders, 0);
-      const counted = trips.filter((t) => t.basis === "apc-count").reduce((s, t) => s + t.riders, 0);
-      const fare = trips.reduce((s, t) => s + t.riders * t.fareThb, 0);
-      const votesSummary = book?.votes
-        ? Object.entries(book.votes)
-            .sort((a, b) => b[1] - a[1])
-            .map(([r, v]) => `${LINE_LABEL[r as LiveBusRouteId] ?? r}·${v}`)
-            .join(", ")
-        : "—";
-      out.push({
-        plate,
-        bus,
-        book,
-        trips,
-        status,
-        km, riders, counted, fare,
-        votesSummary,
-        ledgerFixMs: book?.fixMs ?? null,
-      });
-    }
-    return out;
-  }, [buses, ledger, now]);
-
-  // Apply filters + sort.
-  const filteredRows = useMemo(() => {
+  const rows = useMemo(() => buses.map((b) => readRow(b, now)), [buses, now]);
+  const visible = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    const filtered = rows.filter((r) => {
-      if (needle && !r.plate.toLowerCase().includes(needle)) return false;
-      const line = r.bus?.routeId ?? r.book?.routeId ?? "unassigned";
-      if (lineFilter !== "all" && line !== lineFilter) return false;
-      if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      return true;
-    });
-    const dir = sortDir === "asc" ? 1 : -1;
-    const compare = (a: typeof filtered[number], b: typeof filtered[number]): number => {
-      const av = readSortField(a, sortKey);
-      const bv = readSortField(b, sortKey);
-      if (av === bv) return a.plate.localeCompare(b.plate);
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
-      return String(av ?? "").localeCompare(String(bv ?? "")) * dir;
-    };
-    return [...filtered].sort(compare);
-  }, [rows, search, lineFilter, statusFilter, sortKey, sortDir]);
+    const kmOf = (r: Row) => today?.perBus[r.bus.plate]?.km ?? -1;
+    return rows
+      .filter((r) => !needle || r.bus.plate.toLowerCase().includes(needle))
+      .filter((r) => svc === "all" || serviceKey(r) === svc)
+      .sort((a, b) => order === "signal" ? b.fixMs - a.fixMs : order === "km" ? kmOf(b) - kmOf(a) : a.bus.plate.localeCompare(b.bus.plate));
+  }, [rows, search, svc, order, today]);
 
-  function clickHeader(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+  const groups: { key: Show; title: string; note: string; rows: Row[] }[] = [
+    { key: "road", title: "On the road", note: "a position in the last 15 minutes", rows: visible.filter(isOut) },
+    { key: "quiet", title: "Lost signal today", note: "reported earlier today, silent for 15 minutes or more", rows: visible.filter((r) => r.state === "quiet") },
+    { key: "off", title: "Not out today", note: "no position in the last 12 hours", rows: visible.filter((r) => r.state === "off") },
+  ].filter((g) => (show === "all" || show === g.key) && g.rows.length > 0) as { key: Show; title: string; note: string; rows: Row[] }[];
+
+  const count = (k: Show) => rows.filter((r) => (k === "road" ? isOut(r) : k === "quiet" ? r.state === "quiet" : r.state === "off")).length;
+  const feedAge = feed.lastOkMs ? Math.round((now - feed.lastOkMs) / 1000) : null;
+  const stamp = new Date(now + 7 * 3_600_000).toISOString().slice(0, 16).replace("T", "_").replace(":", "");
+
+  function exportRows() {
+    return visible.map((r) => ({
+      plate: r.bus.plate, doing: doing(r), state: r.state, service: service(r), where: where(r),
+      last_fix_bkk: bkkDateTime(r.fixMs), last_fix_utc: r.bus.updatedAt,
+      lat: r.bus.lat, lng: r.bus.lng, speed_kph: r.bus.speedKph, heading_deg: r.bus.heading,
+      tracker: r.bus.feed ?? "", device_online: r.bus.online ?? "", line_named: r.bus.routeId ?? "", destination: r.bus.destination || "",
+      odometer_km: r.bus.odometerM ? Math.round(r.bus.odometerM / 100) / 10 : "",
+      counter_on_board: r.bus.paxOnBoard ?? "", counter_up: r.bus.paxUp ?? "", counter_down: r.bus.paxDown ?? "",
+      trips_today: today?.perBus[r.bus.plate]?.trips ?? "", km_today: today?.perBus[r.bus.plate]?.km ?? "",
+    }));
   }
-
-  function exportJSON() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      ledgerDate: ledger.date,
-      fetchedAt: feed.fetchedAtMs ? new Date(feed.fetchedAtMs).toISOString() : null,
-      sources: feed.sources,
-      pollCount: feed.pollCount, okCount: feed.okCount,
-      buses: filteredRows.map((r) => ({
-        ...(r.bus ?? {}),
-        plate: r.plate,
-        ledgerStatus: r.status,
-        ledgerVotes: r.book?.votes ?? {},
-        ledgerKm: r.km,
-        ledgerRiders: r.riders,
-        ledgerCounted: r.counted,
-        ledgerFareThb: r.fare,
-        ledgerHasApc: r.book?.hasApc ?? false,
-        ledgerAtTerminal: r.book?.atTerminal ?? null,
-        ledgerLastTerminal: r.book?.lastTerminal ?? null,
-        ledgerLeftTerminalMin: r.book?.leftTerminalMin ?? null,
-        ledgerPathSinceTerminalM: r.book?.pathSinceTerminalM ?? 0,
-        ledgerTripBoardings: r.book?.tripBoardings ?? 0,
-        trips: r.trips,
-      })),
-    };
-    download(`fleet-${ledger.date}-${Date.now()}.json`, JSON.stringify(payload, null, 2), "application/json");
-  }
-
   function exportCSV() {
-    const headers = [
-      "plate", "routeId", "destination", "status",
-      "lat", "lng", "heading", "speedKph", "online",
-      "updatedAt", "odometerM", "paxOnBoard", "paxUp", "paxDown",
-      "km", "trips", "riders", "counted", "fareThb",
-      "atTerminal", "lastTerminal", "leftTerminalMin", "pathSinceTerminalM",
-      "tripBoardings", "hasApc", "votes",
-    ];
-    const lines = [headers.join(",")];
-    for (const r of filteredRows) {
-      const b = r.bus;
-      lines.push([
-        r.plate,
-        b?.routeId ?? r.book?.routeId ?? "",
-        b?.destination ?? "",
-        r.status,
-        b?.lat ?? "", b?.lng ?? "",
-        b?.heading ?? "", b?.speedKph ?? "",
-        b?.online === null || b?.online === undefined ? "" : b.online ? "yes" : "no",
-        b?.updatedAt ?? "",
-        b?.odometerM ?? "",
-        b?.paxOnBoard ?? "",
-        b?.paxUp ?? "",
-        b?.paxDown ?? "",
-        r.km,
-        r.trips.length, r.riders, r.counted, r.fare,
-        r.book?.atTerminal ?? "",
-        r.book?.lastTerminal ?? "",
-        r.book?.leftTerminalMin ?? "",
-        r.book?.pathSinceTerminalM ?? "",
-        r.book?.tripBoardings ?? "",
-        r.book?.hasApc ? "yes" : "no",
-        r.votesSummary,
-      ].map(csvCell).join(","));
-    }
-    download(`fleet-${ledger.date}-${Date.now()}.csv`, lines.join("\n"), "text/csv");
+    const data = exportRows();
+    const cols = Object.keys(data[0] ?? { plate: "" });
+    download(`PBUS_${stamp}_DATA_fleet-snapshot.csv`, [cols.join(","), ...data.map((d) => cols.map((c) => csvCell((d as Record<string, unknown>)[c])).join(","))].join("\n"), "text/csv");
   }
-
-  const lineFilterOptions: LineFilter[] = ["all", "rawai-airport", "patong-old-bus-station", "dragon-line", "unassigned"];
-  const statusFilterOptions: StatusFilter[] = ["all", "moving", "dwelling", "stale", "offline"];
+  function exportJSON() {
+    download(`PBUS_${stamp}_DATA_fleet-snapshot.json`, JSON.stringify({ exportedAt: new Date().toISOString(), sources: feed.sources, buses: exportRows(), raw: visible.map((r) => r.bus) }, null, 2), "application/json");
+  }
 
   return (
-    <div className="v2 v2--operations fleet-detail" style={{ zoom: 1, minHeight: "100vh", overflow: "auto" }}>
-      <header className="v2-header fleet-detail__header">
-        <div className="v2-header__brand">
-          <span className="v2-header__eyebrow">
-            <span className="v2-header__eyebrow-full">Real Fleet</span>
-            <span className="v2-header__eyebrow-compact">Fleet</span>
-          </span>
-          <h1>Phuket Smart Bus · Fleet Detail</h1>
-          <span className="v2-header__sub">Every data point the tracker sends, per real bus</span>
-        </div>
-        <div className="fleet-detail__status">
-          <div className={`fleet-detail__pill fleet-detail__pill--${feed.status}`}>{feed.status.toUpperCase()}</div>
-          <div className="fleet-detail__meta">
-            <span><strong>Reporting:</strong> {reportingCount} / {buses.length}</span>
-            <span><strong>Server fetch:</strong> {feed.fetchedAtMs ? bkkTime(new Date(feed.fetchedAtMs).toISOString()) : "—"}</span>
-            <span><strong>Feed age:</strong> {feed.feedAgeSec === null ? "—" : ago(feed.lastOkMs ?? 0, now)}</span>
-            <span><strong>Polls:</strong> {feed.pollCount} · <strong>OK:</strong> {feed.okCount}</span>
-            <span><strong>Sources:</strong>
-              <span className={`fleet-detail__chip ${feed.sources?.keyless ? "is-on" : "is-off"}`}>
-                {feed.sources?.keyless ? "✓" : "×"} keyless
-              </span>
-              <span className={`fleet-detail__chip ${feed.sources?.token ? "is-on" : "is-off"}`}>
-                {feed.sources?.token ? "✓" : "×"} token
-              </span>
-            </span>
-            <span><strong>Ledger day:</strong> {ledger.date}</span>
+    <div className="v2 v2--operations fd">
+      <div className="fd-page">
+        <header className="fd-head">
+          <div>
+            <p className="fd-eyebrow">Phuket Smart Bus · every bus</p>
+            <h1 className="fd-title">Every bus, every detail</h1>
+            <p className="fd-sub">
+              {rows.length} buses on the two official trackers: {count("road")} on the road, {count("quiet")} lost signal today, {count("off")} not out.
+              {" "}Positions update about once a minute{feedAge !== null ? ` — last update ${feedAge < 5 ? "just now" : `${feedAge} s ago`}` : ""}. Open any bus for everything its tracker says.
+            </p>
+          </div>
+          <nav className="fd-nav" aria-label="Other views">
+            <a href={appPath("/fleet")}>Fleet now</a>
+            <a href={appPath("/research")}>Trips</a>
+            <a href={appPath("/study")}>Study</a>
+            <a href={appPath("/ops")}>Ops wall</a>
+          </nav>
+        </header>
+
+        <div className="fd-controls">
+          <input className="fd-search" type="search" placeholder="Find a bus, e.g. 1149" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Find a bus by plate" />
+          <div className="fd-chips" role="group" aria-label="Show">
+            {(["all", "road", "quiet", "off"] as Show[]).map((k) => (
+              <button key={k} type="button" className={show === k ? "is-active" : undefined} aria-pressed={show === k} onClick={() => setShow(k)}>
+                {SHOW_LABEL[k]}{k !== "all" ? ` · ${count(k)}` : ""}
+              </button>
+            ))}
+          </div>
+          <label className="fd-select"><span>Service</span>
+            <select value={svc} onChange={(e) => setSvc(e.target.value as ServiceFilter)}>
+              {(Object.keys(SERVICE_LABEL) as ServiceFilter[]).map((k) => <option key={k} value={k}>{SERVICE_LABEL[k]}</option>)}
+            </select>
+          </label>
+          <label className="fd-select"><span>Order by</span>
+            <select value={order} onChange={(e) => setOrder(e.target.value as Order)}>
+              <option value="bus">Bus number</option>
+              <option value="signal">Latest signal first</option>
+              <option value="km">Most km today</option>
+            </select>
+          </label>
+          <div className="fd-downloads">
+            <button type="button" onClick={exportCSV}>Download CSV</button>
+            <button type="button" onClick={exportJSON}>Download JSON</button>
           </div>
         </div>
-        <div className="fleet-detail__actions">
-          <a className="v2-source__btn" href="/ops">← Back to ops</a>
-          <button type="button" className="v2-source__btn" onClick={exportJSON}>Export JSON</button>
-          <button type="button" className="v2-source__btn" onClick={exportCSV}>Export CSV</button>
-        </div>
-      </header>
 
-      <div className="fleet-detail__filters">
-        <input
-          className="fleet-detail__search"
-          type="search"
-          placeholder="Search plate…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Filter by plate"
-        />
-        <div className="fleet-detail__chips" role="group" aria-label="Filter by line">
-          {lineFilterOptions.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              className={`fleet-detail__chip-btn ${lineFilter === opt ? "is-active" : ""}`}
-              onClick={() => setLineFilter(opt)}
-            >
-              {opt === "all" ? "All lines" : LINE_LABEL[opt]}
-            </button>
-          ))}
-        </div>
-        <div className="fleet-detail__chips" role="group" aria-label="Filter by status">
-          {statusFilterOptions.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              className={`fleet-detail__chip-btn ${statusFilter === opt ? "is-active" : ""}`}
-              onClick={() => setStatusFilter(opt)}
-            >
-              {opt === "all" ? "All status" : opt}
-            </button>
-          ))}
-        </div>
-        <span className="fleet-detail__count">{filteredRows.length} / {rows.length} buses</span>
+        {groups.length === 0 && <p className="fd-empty">{rows.length === 0 ? "Waiting for the trackers…" : "No bus matches."}</p>}
+
+        {groups.map((g) => (
+          <section key={g.key} className="fd-group">
+            <h2>{g.title} <span>{g.rows.length} · {g.note}</span></h2>
+            <div className="fd-scroll">
+              <table className="fd-table">
+                <thead>
+                  <tr><th>Bus</th><th>Doing</th><th>Service</th><th>Where</th><th>Last signal</th><th>Today</th></tr>
+                </thead>
+                <tbody>
+                  {g.rows.map((r) => {
+                    const isOpen = open === r.bus.plate;
+                    return [
+                      <tr key={r.bus.plate} className={`fd-row fd-row--${r.state}${isOpen ? " is-open" : ""}`}>
+                        <td>
+                          <button type="button" className="fd-plate" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : r.bus.plate)}>
+                            <span className="fd-caret" aria-hidden>{isOpen ? "−" : "+"}</span>{r.bus.plate}
+                          </button>
+                        </td>
+                        <td className="fd-doing">{doing(r)}</td>
+                        <td>{service(r)}</td>
+                        <td>{where(r)}</td>
+                        <td>{lastSignal(r, now)}</td>
+                        <td>{todayText(today?.perBus[r.bus.plate])}</td>
+                      </tr>,
+                      isOpen && (
+                        <tr key={`${r.bus.plate}-detail`} className="fd-detail-row">
+                          <td colSpan={6}><BusFacts row={r} today={today?.perBus[r.bus.plate]} /></td>
+                        </tr>
+                      ),
+                    ];
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
+
+        <p className="fd-foot">
+          Sources: the two trackers behind the official map (smartbus.phuket.cloud) — the line-fleet tracker for Airport, Patong and Dragon buses, the
+          town-fleet tracker for town routes. "Today" is our collector's record since 03:00 Bangkok. Passenger counters read zero on every bus, so they are shown as sent and never used as rider counts.
+        </p>
       </div>
-
-      <main className="fleet-detail__table-wrap">
-        <table className="fleet-detail__table">
-          <thead>
-            <tr>
-              {sortableHeader("Plate", "plate", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Line", "routeId", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Destination", "destination", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Status", "status", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Heading", "heading", sortKey, sortDir, clickHeader)}
-              {sortableHeader("km/h", "speedKph", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Pax", "paxOnBoard", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Up/Down", "paxOnBoard", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Online", "online", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Updated (BKK)", "updatedAt", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Odometer km", "odometerM", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Lat", "plate", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Lng", "plate", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Trips", "trips", sortKey, sortDir, clickHeader)}
-              {sortableHeader("km today", "km", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Riders", "riders", sortKey, sortDir, clickHeader)}
-              {sortableHeader("฿ fare", "fare", sortKey, sortDir, clickHeader)}
-              {sortableHeader("Votes", "votes", sortKey, sortDir, clickHeader)}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((r) => {
-              const b = r.bus;
-              const fixMs = b ? Date.parse(b.updatedAt) : r.ledgerFixMs ?? 0;
-              const isOpen = expandedPlate === r.plate;
-              return (
-                <Fragment key={r.plate}>
-                  <tr
-                    className={`fleet-detail__row ${isOpen ? "is-open" : ""} fleet-detail__row--${r.status}`}
-                    onClick={() => setExpandedPlate(isOpen ? null : r.plate)}
-                  >
-                    <td><strong>{r.plate}</strong></td>
-                    <td>{b?.routeId ?? r.book?.routeId ?? <span className="fleet-detail__dim">identifying</span>}</td>
-                    <td>{b?.destination || r.book?.lastTerminal || <span className="fleet-detail__dim">—</span>}</td>
-                    <td><span className={`fleet-detail__status-tag fleet-detail__status-tag--${r.status}`}>{r.status}</span></td>
-                    <td className="fleet-detail__num">{b ? `${b.heading.toString().padStart(3, " ")}° ${compass(b.heading)}` : "—"}</td>
-                    <td className="fleet-detail__num">{b ? b.speedKph.toFixed(0) : "—"}</td>
-                    <td className="fleet-detail__num">{b?.paxOnBoard ?? <span className="fleet-detail__dim">no counter</span>}</td>
-                    <td className="fleet-detail__num">{b?.paxUp != null ? `${b.paxUp}/${b.paxDown ?? "?"}` : "—"}</td>
-                    <td>{b?.online === true ? "yes" : b?.online === false ? "no" : <span className="fleet-detail__dim">—</span>}</td>
-                    <td>{b ? bkkTime(b.updatedAt) : "—"}<br /><span className="fleet-detail__ago">{ago(fixMs, now)}</span></td>
-                    <td className="fleet-detail__num">{b?.odometerM != null ? (b.odometerM / 1000).toFixed(1) : <span className="fleet-detail__dim">—</span>}</td>
-                    <td className="fleet-detail__num">{b ? b.lat.toFixed(5) : "—"}</td>
-                    <td className="fleet-detail__num">{b ? b.lng.toFixed(5) : "—"}</td>
-                    <td className="fleet-detail__num">{r.trips.length}</td>
-                    <td className="fleet-detail__num">{r.km}</td>
-                    <td className="fleet-detail__num">{r.riders}<br /><span className="fleet-detail__ago">{r.counted} counted</span></td>
-                    <td className="fleet-detail__num">฿{r.fare.toLocaleString()}</td>
-                    <td className="fleet-detail__dim">{r.votesSummary}</td>
-                  </tr>
-                  {isOpen && (
-                    <tr className="fleet-detail__expanded">
-                      <td colSpan={18}>
-                        <ExpandedDetail row={r} ledger={ledger} now={now} />
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-            {filteredRows.length === 0 && (
-              <tr><td colSpan={18} className="fleet-detail__empty">No buses match the current filter.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </main>
     </div>
   );
 }
 
-function sortableHeader(label: string, key: SortKey, currentKey: SortKey, currentDir: SortDir, onClick: (k: SortKey) => void) {
-  const isActive = currentKey === key;
+function BusFacts({ row: r, today }: { row: Row; today: Today["perBus"][string] | undefined }) {
+  const b = r.bus;
+  const counter = [b.paxOnBoard, b.paxUp, b.paxDown];
+  const facts: [string, ReactNode][] = [
+    ["Position", <><a href={`https://www.openstreetmap.org/?mlat=${b.lat}&mlon=${b.lng}#map=17/${b.lat}/${b.lng}`} target="_blank" rel="noreferrer">{b.lat.toFixed(5)}, {b.lng.toFixed(5)}</a>{r.near ? ` — near ${r.near}` : ""}{r.atDepot ? " — at the depot" : ""}</>],
+    ["Speed", `${Math.round(b.speedKph * 10) / 10} km/h, facing ${compass(b.heading)} (${Math.round(b.heading)}°)`],
+    ["Last GPS fix", `${bkkDateTime(Date.parse(b.updatedAt))} Bangkok`],
+    ["Service", `${service(r)}${b.routeId ? "" : b.feed === "keyless" ? " (this tracker never names a line)" : " (tracker names no line right now)"}`],
+    ["Tracker", b.feed === "token" ? "Line-fleet tracker (Airport, Patong, Dragon buses)" : "Town-fleet tracker (town routes)"],
+    ["Device link", b.online === true ? "Online" : b.online === false ? "Offline — the device reports it is not connected" : "Not reported"],
+    ["Odometer", b.odometerM ? `${(b.odometerM / 1000).toLocaleString("en-GB", { maximumFractionDigits: 1 })} km` : "Not sent by this tracker"],
+    ["Passenger counter", counter.every((c) => c == null) ? "Not sent" : `On board ${b.paxOnBoard ?? "—"}, boarded ${b.paxUp ?? "—"}, alighted ${b.paxDown ?? "—"}${counter.every((c) => !c) ? " — reads zero, so treated as no counter" : ""}`],
+    // Town routes have no terminals in our geometry, so "trips" only means something on a PKSB line.
+    ["Today", today ? [r.line ? `${today.trips} ${today.trips === 1 ? "trip" : "trips"} completed` : null, today.km !== null ? `${Math.round(today.km)} km driven` : null].filter(Boolean).join(" · ") || "Nothing recorded yet" : "No record yet today"],
+  ];
   return (
-    <th onClick={() => onClick(key)} className={isActive ? `is-sorted is-${currentDir}` : ""}>
-      {label}{isActive ? (currentDir === "asc" ? " ↑" : " ↓") : ""}
-    </th>
-  );
-}
-
-function readSortField(row: { plate: string; bus: LiveBus | null; book: LiveLedger["vehicles"][string] | undefined; trips: LiveTrip[]; km: number; riders: number; fare: number; status: string }, key: SortKey): string | number {
-  switch (key) {
-    case "plate": return row.plate;
-    case "routeId": return row.bus?.routeId ?? row.book?.routeId ?? "zzz";
-    case "destination": return row.bus?.destination ?? row.book?.lastTerminal ?? "";
-    case "status": return row.status;
-    case "speedKph": return row.bus?.speedKph ?? -1;
-    case "paxOnBoard": return row.bus?.paxOnBoard ?? -1;
-    case "heading": return row.bus?.heading ?? -1;
-    case "online": return row.bus?.online === true ? 2 : row.bus?.online === false ? 1 : 0;
-    case "updatedAt": return row.bus?.updatedAt ?? "";
-    case "odometerM": return row.bus?.odometerM ?? -1;
-    case "trips": return row.trips.length;
-    case "km": return row.km;
-    case "riders": return row.riders;
-    case "fare": return row.fare;
-    case "votes": return row.book?.votes ? Math.max(0, ...Object.values(row.book.votes)) : 0;
-  }
-}
-
-function ExpandedDetail({ row, ledger, now }: { row: { plate: string; bus: LiveBus | null; book: LiveLedger["vehicles"][string] | undefined; trips: LiveTrip[] }; ledger: LiveLedger; now: number }) {
-  return (
-    <div className="fleet-detail__detail">
-      <div className="fleet-detail__panel">
-        <h4>Raw tracker row</h4>
-        {row.bus ? (
-          <pre className="fleet-detail__json">{JSON.stringify(row.bus, null, 2)}</pre>
-        ) : (
-          <p className="fleet-detail__dim">No raw bus in the last poll — only ledger history.</p>
-        )}
-      </div>
-      <div className="fleet-detail__panel">
-        <h4>Ledger entry</h4>
-        {row.book ? (
-          <pre className="fleet-detail__json">{JSON.stringify(row.book, null, 2)}</pre>
-        ) : (
-          <p className="fleet-detail__dim">No ledger entry yet (bus hasn't crossed into today's date).</p>
-        )}
-        <p className="fleet-detail__dim">
-          Day {ledger.date} · DOW {ledger.dow} · first fix at {ledger.firstFixMs ? bkkTime(new Date(ledger.firstFixMs).toISOString()) : "—"}
-        </p>
-      </div>
-      <div className="fleet-detail__panel">
-        <h4>Trips today ({row.trips.length})</h4>
-        {row.trips.length === 0 ? (
-          <p className="fleet-detail__dim">No completed trips yet (still loading, or only short depot moves).</p>
-        ) : (
-          <table className="fleet-detail__trips">
-            <thead><tr><th>From</th><th>To</th><th>Start (BKK)</th><th>End (BKK)</th><th>Riders</th><th>Basis</th><th>฿</th></tr></thead>
-            <tbody>
-              {row.trips.map((t, i) => (
-                <tr key={i}>
-                  <td>{t.from ?? "—"}</td>
-                  <td>{t.to}</td>
-                  <td>{t.startMin === null ? "—" : `${String(Math.floor(t.startMin / 60) % 24).padStart(2, "0")}:${String(Math.floor(t.startMin % 60)).padStart(2, "0")}`}</td>
-                  <td>{`${String(Math.floor(t.endMin / 60) % 24).padStart(2, "0")}:${String(Math.floor(t.endMin % 60)).padStart(2, "0")}`}</td>
-                  <td className="fleet-detail__num">{t.riders}</td>
-                  <td>{t.basis}</td>
-                  <td className="fleet-detail__num">฿{(t.riders * t.fareThb).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+    <div className="fd-facts">
+      <dl>{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      <details><summary>Raw tracker row</summary><pre>{JSON.stringify(b, null, 2)}</pre></details>
     </div>
   );
 }

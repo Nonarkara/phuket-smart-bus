@@ -6,7 +6,6 @@
 # New top-level route in src/App.tsx → add it here.
 /ops        /  200
 /fleet      /  200
-/truman     /  200
 /study      /  200
 /research   /  200
 /capacity   /  200
@@ -23,7 +22,6 @@
 /toolkit    /  200
 /ops/*      /  200
 /fleet/*    /  200
-/truman/*   /  200
 /study/*    /  200
 /research/* /  200
 /capacity/* /  200

@@ -1,5 +1,4 @@
 import type { LiveFeedStatus, LiveOpsSummary } from "../../engine/liveOps";
-import { appPath } from "../../lib/paths";
 
 const ROUTE_SHORT: Record<string, string> = {
   "rawai-airport": "Airport line",
@@ -38,13 +37,6 @@ export function LiveFleetPanel({ summary, status, detail }: { summary: LiveOpsSu
             Trips &amp; km: GPS · riders: counters, else model
           </span>
         </div>
-        <a
-          href={appPath("/truman")}
-          className="v2-fleet__truman-pill"
-          title="Open Truman Show omniscient fleet observer console"
-        >
-          🎬 TRUMAN SHOW (REALITY &amp; GAP) →
-        </a>
       </header>
 
       <div className="v2-fleet__list" role="list">

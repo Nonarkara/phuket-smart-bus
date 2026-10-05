@@ -20,125 +20,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import type { LiveBus } from "@shared/pksbFeed";
-import geometry from "@shared/lineGeometry.json";
-import { projectOnLine } from "@shared/research";
 import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
-import { TrumanDirectorDeck } from "./TrumanDirectorDeck";
+import {
+  ago, BUNCH_M, bkkClock, duration, isOut, LINES, loadToday, MOVING_KPH, readRow, service, STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN,
+  type Line, type Row, type State, type Today,
+} from "./fleetRows";
 import "./fleetConsole.css";
-
-// ── what a bus is doing ────────────────────────────────────────────────────
-type State = "driving" | "standing" | "late" | "quiet" | "off";
-const FRESH_MS = 3 * 60_000;
-const QUIET_MS = 15 * 60_000;
-const OFF_MS = 12 * 3_600_000;
-const MOVING_KPH = 4;
-const ON_LINE_M = 300;
-const BUNCH_M = 1_200;
-const TERMINAL_ZONE_M = 1_000;
-/** Where each fleet sleeps (from the parked positions in the feed). */
-const DEPOTS: [number, number][] = [[7.8814, 98.4093], [7.8930, 98.3622]];
-/** Published PKSB end-to-end running time (timetable effective 18 Jan 2025). Only the Airport line is published. */
-const TIMETABLE_MIN: Record<string, number> = { "rawai-airport": 95 };
-
-const STATE_WORD: Record<State, string> = {
-  driving: "Driving", standing: "Standing", late: "Late signal", quiet: "No signal", off: "Not out today",
-};
-
-function stateOf(bus: LiveBus, now: number): State {
-  const age = now - Date.parse(bus.updatedAt);
-  if (age > OFF_MS) return "off";
-  if (age > QUIET_MS) return "quiet";
-  if (age > FRESH_MS) return "late";
-  return bus.speedKph > MOVING_KPH ? "driving" : "standing";
-}
-
-type Line = (typeof geometry)[number] & { cum: number[] };
-const LINES: Line[] = geometry.map((g) => {
-  const cum = [0];
-  for (let i = 1; i < g.poly.length; i++) {
-    const [a, b] = [g.poly[i - 1]!, g.poly[i]!];
-    const kx = 111_320 * Math.cos((a[0]! * Math.PI) / 180);
-    cum.push(cum[i - 1]! + Math.hypot((b[1]! - a[1]!) * kx, (b[0]! - a[0]!) * 110_540));
-  }
-  return { ...g, cum };
-});
-const ALL_STOPS = LINES.flatMap((l) => l.stops);
-
-function km(a: [number, number], b: [number, number]) {
-  const kx = 111.32 * Math.cos((a[0] * Math.PI) / 180);
-  return Math.hypot((b[1] - a[1]) * kx, (b[0] - a[0]) * 110.54);
-}
-const ago = (ms: number, now: number) => {
-  const s = Math.max(0, Math.round((now - ms) / 1000));
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.round(s / 60)} min ago`;
-  if (s < 86_400) return `${Math.round(s / 3600)} h ago`;
-  return `${Math.round(s / 86_400)} days ago`;
-};
-const bkkClock = (ms: number) =>
-  new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(ms));
-const duration = (min: number) => (min < 60 ? `${Math.round(min)} min` : `${Math.floor(min / 60)} h ${String(Math.round(min % 60)).padStart(2, "0")}`);
-
-type Row = {
-  bus: LiveBus;
-  state: State;
-  fixMs: number;
-  line: Line | null;
-  alongM: number | null;
-  /** "to" = toward the line's second terminal, "from" = toward the first, "lap" on a loop. */
-  dir: "to" | "from" | "lap" | null;
-  near: string | null;
-  atDepot: boolean;
-};
-
-function readRow(bus: LiveBus, now: number): Row {
-  const state = stateOf(bus, now);
-  const line = LINES.find((l) => l.routeId === bus.routeId) ?? null;
-  let alongM: number | null = null;
-  if (line) {
-    const p = projectOnLine(line, bus.lat, bus.lng);
-    if (p.offM <= ON_LINE_M) alongM = p.alongM;
-  }
-  const nearest = ALL_STOPS.reduce<{ name: string; d: number } | null>((best, s) => {
-    const d = km([bus.lat, bus.lng], [s.lat, s.lng]);
-    return !best || d < best.d ? { name: s.name, d } : best;
-  }, null);
-  const dest = (bus.destination || "").toLowerCase();
-  const dir: Row["dir"] = !line ? null : line.loop ? "lap" : !dest ? null : dest.includes(line.to.toLowerCase()) ? "to" : "from";
-  return {
-    bus, state, fixMs: Date.parse(bus.updatedAt), line, alongM, dir,
-    near: nearest && nearest.d <= 0.6 ? nearest.name : null,
-    atDepot: DEPOTS.some((d) => km([bus.lat, bus.lng], d) <= 0.5),
-  };
-}
-const isOut = (r: Row) => r.state === "driving" || r.state === "standing" || r.state === "late";
-
-// ── the server's all-day record ────────────────────────────────────────────
-type Today = {
-  perBus: Record<string, { trips: number; km: number | null }>;
-  line: Record<string, { trips: number; medianMin: number | null }>;
-};
-
-async function loadToday(): Promise<Today | null> {
-  try {
-    const [day, week] = await Promise.all([
-      fetch(appPath("/api/research/day"), { cache: "no-store" }).then((r) => r.json()),
-      fetch(`${appPath("/api/collect/week")}?days=1&detail=vehicles`, { cache: "no-store" }).then((r) => r.json()),
-    ]);
-    const perBus: Today["perBus"] = {};
-    const line: Today["line"] = {};
-    for (const l of day?.lines ?? []) {
-      const mins = (l.trips as { minutes: number }[]).map((t) => t.minutes).sort((a, b) => a - b);
-      line[l.routeId] = { trips: mins.length, medianMin: mins.length ? mins[Math.floor(mins.length / 2)]! : null };
-      for (const t of l.trips as { plate: string }[]) (perBus[t.plate] ??= { trips: 0, km: null }).trips += 1;
-    }
-    for (const v of week?.days?.[0]?.vehicles ?? []) (perBus[v.licensePlate] ??= { trips: 0, km: null }).km = v.totalDistanceKm ?? null;
-    return { perBus, line };
-  } catch {
-    return null;
-  }
-}
 
 /** "3 heading to Rawai, about every 40 min." / "None heading to Patong." */
 function heading(n: number, to: string, every: string | null): string {
@@ -233,7 +121,11 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
     }
     layer.current = L.layerGroup().addTo(m);
     map.current = m;
-    return () => { m.remove(); map.current = null; };
+    // Leaflet measures its box once; the layout settles after. Re-measure on every resize
+    // or the tiles only fill the first size (the black half-map).
+    const ro = new ResizeObserver(() => m.invalidateSize());
+    ro.observe(el.current);
+    return () => { ro.disconnect(); m.remove(); map.current = null; };
   }, []);
 
   useEffect(() => {
@@ -273,21 +165,12 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
 }
 
 // ── page ───────────────────────────────────────────────────────────────────
-// ── page ───────────────────────────────────────────────────────────────────
-export function FleetConsole({ initialMode }: { initialMode?: "truman" | "board" }) {
+export function FleetConsole() {
   const [now, setNow] = useState(() => Date.now());
   const [buses, setBuses] = useState<readonly LiveBus[]>(() => getLiveBusesRaw());
   const [feed, setFeed] = useState(() => getLiveFeedState());
   const [today, setToday] = useState<Today | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
-  const [mode, setMode] = useState<"truman" | "board">(() => {
-    if (initialMode) return initialMode;
-    if (typeof window !== "undefined") {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get("view") === "board" || p.get("mode") === "board") return "board";
-    }
-    return "truman";
-  });
 
   useEffect(() => {
     const stop = startLiveFeed();
@@ -345,75 +228,42 @@ export function FleetConsole({ initialMode }: { initialMode?: "truman" | "board"
                 : `${count("driving")} driving, ${count("standing")} standing${count("late") ? `, ${count("late")} with a late signal` : ""}. ${count("quiet")} lost signal earlier today, ${count("off")} not out. Updated ${feedAge === null ? "—" : feedAge < 5 ? "just now" : `${feedAge} s ago`}, ${bkkClock(now)} in Phuket.`}
             </p>
           </div>
-          <div className="fc-head__controls">
-            <div className="fc-mode-switch" role="group" aria-label="View mode">
-              <button
-                type="button"
-                className={`fc-mode-btn ${mode === "truman" ? "is-active" : ""}`}
-                onClick={() => setMode("truman")}
-                title="The Truman Show: Reality of the buses vs untapped demand potential"
-              >
-                🎬 TRUMAN SHOW (REALITY & GAP)
-              </button>
-              <button
-                type="button"
-                className={`fc-mode-btn ${mode === "board" ? "is-active" : ""}`}
-                onClick={() => setMode("board")}
-                title="Line-by-line station board with interval headways"
-              >
-                📋 STATION BOARD
-              </button>
-            </div>
-            <nav className="fc-nav" aria-label="Other views">
-              <a href={appPath("/ops")}>Ops wall</a>
-              <a href={appPath("/research")}>Trips</a>
-              <a href={appPath("/study")}>Study</a>
-              <a href={appPath("/fleet/raw")}>Every field</a>
-            </nav>
-          </div>
+          <nav className="fc-nav" aria-label="Other views">
+            <a href={appPath("/ops")}>Ops wall</a>
+            <a href={appPath("/research")}>Trips</a>
+            <a href={appPath("/study")}>Study</a>
+            <a href={appPath("/fleet/raw")}>Every field</a>
+          </nav>
         </header>
 
-        {mode === "truman" ? (
-          <div className="fc-truman-view">
-            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
-            <TrumanDirectorDeck
-              buses={buses}
-              realKmToday={feed.summary.kmDriven}
-              realRevenueThb={feed.summary.fareThb}
-              selectedPlate={focus}
-              onSelectPlate={setFocus}
-            />
-          </div>
-        ) : (
-          <div className="fc-main">
-            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+        <div className="fc-main">
+          <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
 
-            <aside className="fc-board" aria-label="Lines">
-              {focused && <BusDetail row={focused} now={now} today={today?.perBus[focused.bus.plate] ?? null} onClose={() => setFocus(null)} />}
+          <aside className="fc-board" aria-label="Lines">
+            {focused && <BusDetail row={focused} now={now} today={today?.perBus[focused.bus.plate] ?? null} onClose={() => setFocus(null)} />}
 
-              {attention.length > 0 && (
-                <section className="fc-attn" aria-label="Needs a look">
-                  <h2>Needs a look</h2>
-                  <ul>{attention.map((a, i) => (
-                    <li key={i} className={`is-${a.tone}`}><button type="button" onClick={() => setFocus(a.plate)}>{a.text}</button></li>
-                  ))}</ul>
-                </section>
-              )}
-
-              {LINES.map((line) => (
-                <LineBlock key={line.routeId} line={line} rows={rows.filter((r) => r.line === line)} today={today?.line[line.routeId]} focus={focus} onFocus={setFocus} />
-              ))}
-
-              <section className="fc-line">
-                <header className="fc-line__head"><h3>Town buses</h3><strong>{townOut.length} {townOut.length === 1 ? "bus" : "buses"}</strong></header>
-                <p className="fc-line__say">
-                  {townOut.filter((r) => r.state === "driving").length} driving, {townOut.filter((r) => r.state !== "driving").length} standing.
-                  {" "}These run Phuket Town routes that aren't PKSB lines, so they show on the map only.
-                </p>
+            {attention.length > 0 && (
+              <section className="fc-attn" aria-label="Needs a look">
+                <h2>Needs a look</h2>
+                <ul>{attention.map((a, i) => (
+                  <li key={i} className={`is-${a.tone}`}><button type="button" onClick={() => setFocus(a.plate)}>{a.text}</button></li>
+                ))}</ul>
               </section>
-            </aside>
-          </div>
-        )}
+            )}
+
+            {LINES.map((line) => (
+              <LineBlock key={line.routeId} line={line} rows={rows.filter((r) => r.line === line)} today={today?.line[line.routeId]} focus={focus} onFocus={setFocus} />
+            ))}
+
+            <section className="fc-line">
+              <header className="fc-line__head"><h3>Town buses</h3><strong>{townOut.length} {townOut.length === 1 ? "bus" : "buses"}</strong></header>
+              <p className="fc-line__say">
+                {townOut.filter((r) => r.state === "driving").length} driving, {townOut.filter((r) => r.state !== "driving").length} standing.
+                {" "}These run Phuket Town routes that aren't PKSB lines, so they show on the map only.
+              </p>
+            </section>
+          </aside>
+        </div>
 
         <details className="fc-all">
           <summary>All {rows.length} buses</summary>
@@ -446,11 +296,6 @@ export function FleetConsole({ initialMode }: { initialMode?: "truman" | "board"
   );
 }
 
-function service(r: Row): string {
-  if (!r.line) return r.bus.feed === "keyless" ? "Town route" : "No line given";
-  if (r.line.loop) return "Dragon loop";
-  return `${r.line.from} ↔ ${r.line.to}${r.bus.destination ? `, to ${r.bus.destination}` : ""}`;
-}
 
 function BusDetail({ row: r, now, today, onClose }: { row: Row; now: number; today: Today["perBus"][string] | null; onClose: () => void }) {
   const b = r.bus;
