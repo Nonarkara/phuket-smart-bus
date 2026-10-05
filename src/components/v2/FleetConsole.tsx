@@ -28,9 +28,9 @@ import {
 } from "./fleetRows";
 import "./fleetConsole.css";
 
-/** "3 heading to Rawai, about every 40 min." / "None heading to Patong." */
-function heading(n: number, to: string, every: string | null): string {
-  return n === 0 ? `None heading to ${to}.` : `${n} heading to ${to}${every ? `, ${every}` : ""}.`;
+/** "2 on the way to Rawai." / "None on the way to Patong." */
+function onTheWay(n: number, to: string): string {
+  return `${n === 0 ? "None" : n} on the way to ${to}.`;
 }
 
 // ── one PKSB line, in words + a small diagram ──────────────────────────────
@@ -39,10 +39,11 @@ function LineBlock({ line, rows, today, focus, onFocus }: {
 }) {
   const running = rows.filter(isOut);
   const placed = running.filter((r) => r.alongM !== null);
-  const toward = (d: "to" | "from") => running.filter((r) => r.dir === d).length;
+  // Observed only: a bus standing at a terminal is waiting there, not on its way.
+  const endM = (r: Row) => (r.alongM === null ? null : r.alongM <= TERMINAL_ZONE_M ? "from" : r.alongM >= line.lengthM - TERMINAL_ZONE_M ? "to" : null);
+  const waitingAt = (e: "from" | "to") => running.filter((r) => r.state !== "driving" && endM(r) === e).length;
+  const onWay = (d: "to" | "from") => running.filter((r) => r.dir === d && !(r.state !== "driving" && endM(r) !== null)).length;
   const median = today?.medianMin ?? null;
-  // A bus every (trip time ÷ buses heading that way) — the spacing a rider waiting by the road would see.
-  const every = (n: number) => (median && n > 0 ? `about every ${Math.max(5, Math.round(median / n / 5) * 5)} min` : null);
   const timetable = TIMETABLE_MIN[line.routeId];
 
   return (
@@ -74,10 +75,10 @@ function LineBlock({ line, rows, today, focus, onFocus }: {
         {running.length === 0
           ? "No bus on this line is reporting right now."
           : line.loop
-            ? `Buses circle Old Town${every(running.length) ? `, ${every(running.length)}` : ""}.`
+            ? `${running.filter((r) => r.state === "driving").length} driving round the loop, ${running.filter((r) => r.state !== "driving").length} standing.`
             : <>
-                {heading(toward("to"), line.to, every(toward("to")))}{" "}
-                {heading(toward("from"), line.from, every(toward("from")))}
+                {onTheWay(onWay("to"), line.to)}{" "}{onTheWay(onWay("from"), line.from)}
+                {(waitingAt("from") || waitingAt("to")) ? ` Waiting: ${[waitingAt("from") ? `${waitingAt("from")} at ${line.from}` : null, waitingAt("to") ? `${waitingAt("to")} at ${line.to}` : null].filter(Boolean).join(", ")}.` : ""}
               </>}
       </p>
       {today && (
