@@ -215,7 +215,7 @@ export function FleetConsole() {
   }, [rows]);
 
   const focused = rows.find((r) => r.bus.plate === focus) ?? null;
-  const observedServices = LINES.filter((line) => rows.some((r) => r.line === line && isOut(r))).length + (townOut.length > 0 ? 1 : 0);
+  const identifiedServices = LINES.filter((line) => rows.some((r) => r.line === line && isOut(r))).length + (townOut.length > 0 ? 1 : 0);
   const freshness = feedAge === null ? "No response" : feedAge < 5 ? "Just now" : `${feedAge} s ago`;
   const posture = rows.length === 0
     ? "Telemetry unavailable. The network is not observable from this feed."
@@ -252,7 +252,7 @@ export function FleetConsole() {
           <dl className="fc-evidence" aria-label="Evidence status">
             <div><dt>Telemetry</dt><dd>{rows.length} buses / 2 public trackers</dd></div>
             <div><dt>Freshness</dt><dd className={feedDead ? "is-neg" : undefined}>{freshness}</dd></div>
-            <div><dt>Coverage</dt><dd>{observedServices} of 4 service groups observed</dd></div>
+            <div><dt>Route identity</dt><dd>{identifiedServices} of 4 service groups identified</dd></div>
             <div><dt>Blind spot</dt><dd>Passenger load not measured</dd></div>
           </dl>
         </section>
