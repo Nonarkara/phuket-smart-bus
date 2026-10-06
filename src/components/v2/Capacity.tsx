@@ -3,21 +3,27 @@
  * now, and where do we need to add buses?
  *
  * Layout (top → bottom):
- *   1. Header strip — pulse + Bangkok clock + LIVE/SIM + service day
- *   2. Hero KPIs (4) — buses rolling · queue at airport · add NOW · missed this hour
- *   3. The Operating Equation — demand − supply = buses to add, single row
- *   4. 24-hour capacity forecast — coloured bars, direction-aware verdict per hour
- *   5. Next-action queue — top 6 hours needing attention, each with the math
- *   6. Live fleet snapshot — top 12 buses currently on the road
+ *   1. Story banner — the ONE sentence the operator reads first
+ *   2. Big numbers row — 3 KPIs at 72 px (the only data that's BIG)
+ *   3. Operating equation — demand − supply = buses to add @ HH:00
+ *   4. 24-hour capacity forecast — coloured bars, current hour outlined
+ *   5. Live strip — feed status, sources, polls, ledger day
+ *   6. Two columns: top 3 actions + next 6 hours detail
+ *   7. Fleet snapshot — top 12 buses currently on the road
  *
- * Every number traces back to the engine:
- *   demand / supply / gap  → getHourlyBalance()
- *   recommendation        → engines's busesToAdd (whole 25-seat buses)
+ * Every number traces to the same engine:
+ *   demand / supply / gap → getHourlyBalance()
+ *   recommendation       → busesToAdd (whole 25-seat buses)
  *   money                → getDayDebrief() (THB at operator's published fare)
  *   current fleet        → getOperatorFleet() + the live feed
  *   clock                → getSimulatedMinutes() (LIVE: real BKK; SIM: replay)
+ *
+ * Design ethos: 2024 ops console, not 1980s data terminal. Restrained color,
+ * generous whitespace, hierarchy carried by typography weight and size, not
+ * by borders and chips. Dr Non's house rules (no gradients, no shadows, no
+ * rounded corners) still hold.
  */
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   computeSimState,
   getDayInfo,
@@ -29,19 +35,8 @@ import {
   setSimulatedMinutes,
   setClockOverride,
   resetClockAnchor,
-  SERVICE_START,
-  DAY_TARGET_END,
 } from "../../engine/fleetSimulator";
-import {
-  getDayModelFor,
-} from "../../engine/demandSupplyEngine";
-import {
-  bangkokDow,
-  getLiveBusesRaw,
-  getLiveFeedState,
-  startLiveFeed,
-  subscribeLiveFeed,
-} from "../../engine/liveOps";
+import { bangkokDow, getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import {
   getHourlyBalance,
   getOperatorFleet,
@@ -72,9 +67,9 @@ function bkkTime(iso: string | null | undefined): string {
   }).format(d);
 }
 
-function fmtN(n: number | null | undefined, suffix = ""): string {
+function fmtN(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
-  return `${Math.round(n).toLocaleString()}${suffix}`;
+  return Math.round(n).toLocaleString();
 }
 
 function fmtThb(n: number | null | undefined): string {
@@ -99,14 +94,14 @@ function shouldUseCompact(): boolean {
 type OpsSource = "live" | "sim";
 
 function getInitialSource(): OpsSource {
-  if (typeof window === "undefined") return "auto" as never; // unused, just to silence TS
+  if (typeof window === "undefined") return "live";
   const params = new URLSearchParams(window.location.search);
   if (params.has("demo")) return "sim";
   const r = params.get("source");
   return r === "sim" ? "sim" : "live";
 }
 
-/** Animated counter — same engine as the Ops Wall's money cells. */
+/** Animated counter — eased roll so numbers feel alive. */
 function Counter({ value, suffix = "", className }: { value: number; suffix?: string; className?: string }) {
   const [display, setDisplay] = useState(value);
   useEffect(() => {
@@ -130,17 +125,14 @@ function Counter({ value, suffix = "", className }: { value: number; suffix?: st
 }
 
 export function Capacity() {
-  // ── SIM clock state ─────────────────────────────────────────────────────
   const [simMin, setSimMin] = useState(() => getSimulatedMinutes());
   const [clockState, setClockState] = useState(getClockState());
   const [source, setSource] = useState<OpsSource>(getInitialSource);
 
-  // ── LIVE feed state ─────────────────────────────────────────────────────
   const [liveFeed, setLiveFeed] = useState(() => getLiveFeedState());
   const [liveBuses, setLiveBuses] = useState(() => getLiveBusesRaw());
   const [now, setNow] = useState(() => Date.now());
 
-  // Wall-display scaling
   const [opsScale, setOpsScale] = useState(() => computeOpsScale());
   const [isCompact, setIsCompact] = useState(() => shouldUseCompact());
   useEffect(() => {
@@ -152,7 +144,7 @@ export function Capacity() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // rAF heartbeat — drives the sim clock and ref-writes the imperative text cells.
+  // rAF heartbeat drives the sim clock
   useEffect(() => {
     let raf = 0;
     let lastT = -1;
@@ -181,13 +173,11 @@ export function Capacity() {
     return () => { stop(); unsub(); clearInterval(tick); };
   }, []);
 
-  // ── Engine-derived numbers ──────────────────────────────────────────────
+  // Engine state
   const simState = useMemo(() => computeSimState(), [simMin]);
   const simDay = getSimulationDay();
   const headline = useMemo(() => getHeadlineMetrics(), [simMin]);
-
   const totals = useMemo(() => getLiveTotals(simMin), [simMin]);
-
   const balance = useMemo(() => getHourlyBalance(), [simDay]);
   const debrief = useMemo(() => getDayDebrief(), [simDay]);
   const operatorFleet = useMemo(() => getOperatorFleet(), [simMin]);
@@ -200,7 +190,7 @@ export function Capacity() {
     return out;
   }, [balance, currentHour]);
 
-  // ── LIVE: switch engine to real Bangkok clock + today's weekday ─────────
+  // LIVE: real Bangkok clock + today's weekday
   useEffect(() => {
     if (source !== "live") return;
     const dow = bangkokDow(Date.now());
@@ -213,20 +203,19 @@ export function Capacity() {
     };
   }, [source]);
 
-  // ── Derived LIVE state ──────────────────────────────────────────────────
+  // Live state
   const liveReporting = liveBuses.filter((b) => now - Date.parse(b.updatedAt) <= FRESH_FIX_MS);
   const liveMoving = liveReporting.filter((b) => b.speedKph > 4);
   const liveAgeSec = liveFeed.lastOkMs === null ? null : Math.max(0, Math.round((now - liveFeed.lastOkMs) / 1000));
   const liveSourceOk = liveFeed.sources?.keyless ?? false;
 
-  // ── Hero KPI numbers ────────────────────────────────────────────────────
+  // Hero numbers
   const currentBusesRolling = source === "live" ? liveMoving.length : simState.busesMoving;
   const currentQueue = Math.max(0, Math.round(simState.paxAtAirport));
   const currentBusesToAdd = Math.max(0, Math.ceil(currentQueue / BUS_CAPACITY));
   const currentMissedThb = simState.lostRevenueThb;
 
-  // Next 24 hours' pending actions, ranked by urgency (gap, then by hour).
-  // topActionsAll feeds the story sentence; topActions is the visible list (top 6).
+  // All hours that need attention, ranked by severity
   const topActionsAll = useMemo(() => {
     return balance
       .filter((r) => r.busesToAdd > 0 || r.emptySeatsPax >= BUS_CAPACITY)
@@ -243,25 +232,41 @@ export function Capacity() {
       }))
       .sort((a, b) => b.severity - a.severity);
   }, [balance]);
-  const topActions = topActionsAll.slice(0, 6);
+  const topActions = topActionsAll.slice(0, 3);
 
-  // The "so what" — the one sentence an operator wants to read first.
-  // Built from the same engine numbers that drive the rest of the page so
-  // it never drifts from the math underneath.
+  // Story sentence — the ONE thing the operator reads first
   const topAction = topActionsAll[0];
   const storySentence = (() => {
     if (source === "live") {
       const moving = liveMoving.length;
       const reporting = liveReporting.length;
       if (topAction && topAction.busesToAdd > 0) {
-        return `${moving} of ${reporting} buses are moving. Add ${topAction.busesToAdd} bus${topAction.busesToAdd === 1 ? "" : "es"} at ${String(topAction.hour).padStart(2, "0")}:00 to clear the ${fmtThb(topAction.missedThb)} shortfall there.`;
+        return (
+          <>
+            <strong>{moving} of {reporting} buses are moving</strong>. Add{" "}
+            <strong>{topAction.busesToAdd} bus{topAction.busesToAdd === 1 ? "" : "es"}</strong> at{" "}
+            <strong>{String(topAction.hour).padStart(2, "0")}:00</strong> to recover{" "}
+            <strong>{fmtThb(topAction.missedThb)}</strong> missed in that hour.
+          </>
+        );
       }
-      return `${moving} of ${reporting} buses are moving. No bus needed this hour.`;
+      return (
+        <>
+          <strong>{moving} of {reporting} buses are moving</strong>. No bus needed this hour.
+        </>
+      );
     }
     if (topAction && topAction.busesToAdd > 0) {
-      return `Modelled demand outpaces modelled supply for most of today. Peak: add ${topAction.busesToAdd} bus${topAction.busesToAdd === 1 ? "" : "es"} at ${String(topAction.hour).padStart(2, "0")}:00 to recover ${fmtThb(topAction.missedThb)} missed.`;
+      return (
+        <>
+          Modelled demand outpaces supply across the day. Peak: add{" "}
+          <strong>{topAction.busesToAdd} bus{topAction.busesToAdd === 1 ? "" : "es"}</strong> at{" "}
+          <strong>{String(topAction.hour).padStart(2, "0")}:00</strong> to recover{" "}
+          <strong>{fmtThb(topAction.missedThb)}</strong> missed there.
+        </>
+      );
     }
-    return `Modelled demand and supply are balanced across the modelled day.`;
+    return <>Modelled demand and supply are balanced across the day.</>;
   })();
 
   const chooseSource = (next: OpsSource) => {
@@ -274,7 +279,7 @@ export function Capacity() {
   const dayInfo = getDayInfo();
 
   return (
-    <div className={`v2 v2--operations capacity ${isCompact ? "capacity--compact" : ""}`} style={{ zoom: opsScale, minHeight: "100vh", overflow: "auto" }}>
+    <div className={`capacity ${isCompact ? "capacity--compact" : ""}`} style={{ zoom: opsScale, minHeight: "100vh" }}>
       {/* ── Header ────────────────────────────────────────────────────── */}
       <header className="capacity__header">
         <div className="capacity__brand">
@@ -283,9 +288,9 @@ export function Capacity() {
           <span className="capacity__sub">Live fleet · modelled demand · planning recommendation</span>
         </div>
 
-        <div className="capacity__clock">
+        <div className="capacity__meta">
           <span className="capacity__pulse" aria-hidden="true" />
-          <span className="capacity__day">{dayInfo.label}</span>
+          <span style={{ fontWeight: 600, color: "var(--ax-ink)" }}>{dayInfo.label}</span>
           <span className="capacity__time">{hhmm(simMin)}</span>
           <span className="capacity__bkk">BKK</span>
         </div>
@@ -311,41 +316,40 @@ export function Capacity() {
         </div>
       </header>
 
-      {/* ── Story banner — one sentence that tells the operator what to do */}
+      {/* ── Story banner — the ONE sentence the operator reads first ── */}
       <section className="capacity__story">
         <span className="capacity__story-label">{source === "live" ? "RIGHT NOW · REAL FLEET" : "TODAY · MODELLED"}</span>
         <p className="capacity__story-text">{storySentence}</p>
       </section>
 
-      {/* ── Hero KPIs ─────────────────────────────────────────────────── */}
+      {/* ── Big numbers row — 3 hero KPIs ────────────────────────────── */}
       <section className="capacity__heroes">
-        <div className="capacity__hero">
+        <div className={`capacity__hero ${currentQueue > 50 ? "capacity__hero--alert" : ""}`}>
           <span className="capacity__hero-label">{source === "live" ? "Buses moving" : "Buses rolling"}</span>
           <strong className="capacity__hero-value">
             <Counter value={currentBusesRolling} />
           </strong>
-          <span className="capacity__hero-sub">{source === "live" ? `${liveReporting.length} reporting right now` : `${fmtN(headline.fleet.totalBuses)} in fleet`}</span>
+          <span className="capacity__hero-sub">
+            {source === "live" ? `${liveReporting.length} reporting right now` : `${fmtN(headline.fleet.totalBuses)} in fleet`}
+          </span>
         </div>
-        <div className={`capacity__hero ${currentQueue > 50 ? "capacity__hero--alert" : currentQueue > 0 ? "capacity__hero--warn" : ""}`}>
+        <div className="capacity__hero">
           <span className="capacity__hero-label">Queue at airport</span>
           <strong className="capacity__hero-value">
             <Counter value={currentQueue} suffix=" pax" />
           </strong>
-          <span className="capacity__hero-sub">{simState.paxAbandoned > 0 ? `${fmtN(simState.paxAbandoned)} already walked away today` : "no walk-aways yet today"}</span>
+          <span className="capacity__hero-sub">
+            {simState.paxAbandoned > 0 ? `${fmtN(simState.paxAbandoned)} walked away today` : "no walk-aways yet today"}
+          </span>
         </div>
-        <div className={`capacity__hero ${currentBusesToAdd > 0 ? "capacity__hero--action" : ""}`}>
+        <div className={`capacity__hero ${currentBusesToAdd > 0 ? "capacity__hero--accent" : ""}`}>
           <span className="capacity__hero-label">Add buses now</span>
           <strong className="capacity__hero-value">
             <Counter value={currentBusesToAdd} suffix="" />
           </strong>
-          <span className="capacity__hero-sub">{currentBusesToAdd > 0 ? "to clear the queue at 25 seats per bus" : "queue is within supply — no add needed"}</span>
-        </div>
-        <div className="capacity__hero capacity__hero--money">
-          <span className="capacity__hero-label">Earned today</span>
-          <strong className="capacity__hero-value">
-            <Counter value={Math.round(totals.revenueThb)} className="capacity__hero-thb" />
-          </strong>
-          <span className="capacity__hero-sub">{fmtN(totals.paxDelivered)} riders × ฿{FARE_THB} · {fmtThb(currentMissedThb)} missed · {fmtN(totals.tripsCompleted)} trips</span>
+          <span className="capacity__hero-sub">
+            {currentBusesToAdd > 0 ? "to clear queue at 25 seats per bus" : "queue within supply — none needed"}
+          </span>
         </div>
       </section>
 
@@ -353,12 +357,18 @@ export function Capacity() {
       <section className="capacity__equation">
         <div className="capacity__equation-cell">
           <span className="capacity__equation-label">Demand this hour</span>
-          <strong className="capacity__equation-value">{fmtN((currentBalance?.busEligiblePax ?? 0) + (currentBalance?.outEligiblePax ?? 0))} <span className="capacity__equation-unit">pax</span></strong>
+          <strong className="capacity__equation-value">
+            {fmtN((currentBalance?.busEligiblePax ?? 0) + (currentBalance?.outEligiblePax ?? 0))}
+            <span className="capacity__equation-unit">pax</span>
+          </strong>
           <span className="capacity__equation-detail">{(currentBalance?.busEligiblePax ?? 0)} inbound · {(currentBalance?.outEligiblePax ?? 0)} outbound</span>
         </div>
         <div className="capacity__equation-cell">
           <span className="capacity__equation-label">Supply (seats)</span>
-          <strong className="capacity__equation-value">{fmtN((currentBalance?.busSeats ?? 0) + (currentBalance?.outSeats ?? 0))} <span className="capacity__equation-unit">seats</span></strong>
+          <strong className="capacity__equation-value">
+            {fmtN((currentBalance?.busSeats ?? 0) + (currentBalance?.outSeats ?? 0))}
+            <span className="capacity__equation-unit">seats</span>
+          </strong>
           <span className="capacity__equation-detail">{fmtN(currentBalance?.busSeats ?? 0)} south · {fmtN(currentBalance?.outSeats ?? 0)} north</span>
         </div>
         <div className="capacity__equation-op">−</div>
@@ -378,26 +388,52 @@ export function Capacity() {
           <span className="capacity__equation-detail">{currentBalance?.status?.toUpperCase() ?? "—"}</span>
         </div>
         <div className="capacity__equation-op">=</div>
-        <div className={`capacity__equation-cell capacity__equation-cell--action ${(currentBalance?.busesToAdd ?? 0) > 0 ? "is-action" : ""}`}>
+        <div className={`capacity__equation-cell ${(currentBalance?.busesToAdd ?? 0) > 0 ? "" : ""}`}>
           <span className="capacity__equation-label">Action</span>
-          <strong className="capacity__equation-value">
+          <strong className={`capacity__equation-value ${(currentBalance?.busesToAdd ?? 0) > 0 ? "is-ok" : ""}`}>
             {(currentBalance?.busesToAdd ?? 0) > 0
-              ? <>+<Counter value={currentBalance?.busesToAdd ?? 0} /> <span className="capacity__equation-unit">buses @ {String(currentHour).padStart(2, "0")}:00</span></>
+              ? <>+<Counter value={currentBalance?.busesToAdd ?? 0} /><span className="capacity__equation-unit">buses @ {String(currentHour).padStart(2, "0")}:00</span></>
               : <span className="capacity__equation-ok">OK · run as-is</span>}
           </strong>
           <span className="capacity__equation-detail">{fmtThb(currentBalance?.missedThb ?? 0)} missed this hour · {fmtThb(currentBalance?.earnedThb ?? 0)} earned</span>
         </div>
       </section>
 
-      {/* ── 24-hour capacity forecast ──────────────────────────────────── */}
+      {/* ── Live strip ──────────────────────────────────────────────── */}
+      {source === "live" && (
+        <section className="capacity__live-strip">
+          <div className="capacity__live-cell">
+            <span className="capacity__live-label">Feed</span>
+            <strong className="capacity__live-value">{liveFeed.status.toUpperCase()}</strong>
+            <span className="capacity__live-sub">{bkkTime(liveFeed.fetchedAtMs ? new Date(liveFeed.fetchedAtMs).toISOString() : null)} fetched · {liveAgeSec}s ago</span>
+          </div>
+          <div className="capacity__live-cell">
+            <span className="capacity__live-label">Sources</span>
+            <strong className="capacity__live-value">{liveFeed.sources?.keyless ? "keyless" : "—"} {liveFeed.sources?.token ? "+ token" : ""}</strong>
+            <span className="capacity__live-sub">edge relay from po-smartbus.phuket.cloud</span>
+          </div>
+          <div className="capacity__live-cell">
+            <span className="capacity__live-label">Polls</span>
+            <strong className="capacity__live-value">{liveFeed.okCount}/{liveFeed.pollCount}</strong>
+            <span className="capacity__live-sub">ok / total · {liveFeed.pollCount === 0 ? "warming up" : `${Math.round((liveFeed.okCount / liveFeed.pollCount) * 100)}%`}</span>
+          </div>
+          <div className="capacity__live-cell">
+            <span className="capacity__live-label">Ledger day</span>
+            <strong className="capacity__live-value">{liveFeed.ledgerDate}</strong>
+            <span className="capacity__live-sub">Bangkok calendar · rolls at midnight</span>
+          </div>
+        </section>
+      )}
+
+      {/* ── 24-hour capacity forecast ───────────────────────────────── */}
       <section className="capacity__forecast">
-        <div className="capacity__forecast-head">
+        <div className="capacity__section-head">
           <h2>24-hour capacity forecast</h2>
           <span className="capacity__forecast-legend">
-            <span className="capacity__legend-swatch capacity__legend-swatch--shortfall">shortfall</span>
-            <span className="capacity__legend-swatch capacity__legend-swatch--tight">tight</span>
-            <span className="capacity__legend-swatch capacity__legend-swatch--balanced">balanced</span>
-            <span className="capacity__legend-swatch capacity__legend-swatch--surplus">surplus</span>
+            <span><span className="capacity__legend-swatch capacity__legend-swatch--shortfall" />shortfall</span>
+            <span><span className="capacity__legend-swatch capacity__legend-swatch--tight" />tight</span>
+            <span><span className="capacity__legend-swatch capacity__legend-swatch--balanced" />balanced</span>
+            <span><span className="capacity__legend-swatch capacity__legend-swatch--surplus" />surplus</span>
           </span>
         </div>
         <div className="capacity__forecast-strip">
@@ -426,64 +462,33 @@ export function Capacity() {
           })}
         </div>
         <div className="capacity__forecast-axis">
-          <span>demand (filled) vs supply (outline) per hour · numbers above the bar = buses to add</span>
+          demand (dark) vs supply (accent) per hour · numbers above the bar = buses to add
         </div>
       </section>
 
-      {/* ── Live pattern overlay (only in LIVE) ──────────────────────── */}
-      {source === "live" && liveFeed.fetchedAtMs && (
-        <section className="capacity__live-strip">
-          <div className="capacity__live-cell">
-            <span className="capacity__live-label">Feed</span>
-            <strong className="capacity__live-value">{liveFeed.status.toUpperCase()}</strong>
-            <span className="capacity__live-sub">{bkkTime(new Date(liveFeed.fetchedAtMs).toISOString())} fetched · {liveAgeSec}s ago</span>
-          </div>
-          <div className="capacity__live-cell">
-            <span className="capacity__live-label">Sources</span>
-            <strong className="capacity__live-value">{liveFeed.sources?.keyless ? "keyless" : "—"} {liveFeed.sources?.token ? "+ token" : ""}</strong>
-            <span className="capacity__live-sub">edge relay from po-smartbus.phuket.cloud</span>
-          </div>
-          <div className="capacity__live-cell">
-            <span className="capacity__live-label">Polls</span>
-            <strong className="capacity__live-value">{liveFeed.okCount}/{liveFeed.pollCount}</strong>
-            <span className="capacity__live-sub">ok / total · {liveFeed.pollCount === 0 ? "warming up" : `${Math.round((liveFeed.okCount / liveFeed.pollCount) * 100)}%`}</span>
-          </div>
-          <div className="capacity__live-cell">
-            <span className="capacity__live-label">Ledger day</span>
-            <strong className="capacity__live-value">{liveFeed.ledgerDate}</strong>
-            <span className="capacity__live-sub">Bangkok calendar · rolls at midnight</span>
-          </div>
-        </section>
-      )}
-
-      {/* ── Two columns: next actions + next 6 hours detail ──────────── */}
+      {/* ── Two-column grid: actions + next 6 hours ────────────────── */}
       <section className="capacity__grid">
         <div className="capacity__panel">
-          <header className="capacity__panel-head">
+          <header className="capacity__section-head">
             <h2>What to do next</h2>
-            <span className="capacity__panel-meta">{debrief.shortHours} shortfall hrs · {debrief.lightHours} light hrs</span>
+            <span className="capacity__section-meta">{debrief.shortHours} shortfall hrs · {debrief.lightHours} light hrs</span>
           </header>
           {topActions.length === 0 ? (
-            <div className="capacity__panel-empty">Service window is balanced. No buses to add today.</div>
+            <div className="capacity__panel-empty">No buses to add today. Service window is balanced.</div>
           ) : (
             <ol className="capacity__actions">
               {topActions.map((a, i) => (
                 <li key={a.hour} className={`capacity__action capacity__action--${a.verdict}`}>
-                  <div className="capacity__action-head">
-                    <strong className="capacity__action-hour">{String(a.hour).padStart(2, "0")}:00</strong>
+                  <span className="capacity__action-num">0{i + 1}</span>
+                  <span className="capacity__action-hour">{String(a.hour).padStart(2, "0")}:00</span>
+                  <span className="capacity__action-text">
                     {a.busesToAdd > 0
-                      ? <span className="capacity__action-tag capacity__action-tag--add">+{a.busesToAdd} buses</span>
-                      : <span className="capacity__action-tag capacity__action-tag--light">run lighter</span>}
-                    <span className="capacity__action-money">{fmtThb(a.missedThb)} missed</span>
-                  </div>
-                  <div className="capacity__action-detail">
-                    inbound gap <strong>{fmtN(a.inGap)}</strong>
-                    {" · "}outbound gap <strong>{fmtN(a.outGap)}</strong>
-                    {a.emptySeats > 0 && <span className="capacity__action-empty"> · {fmtN(a.emptySeats)} empty seats</span>}
-                  </div>
-                  <div className="capacity__action-cost">
-                    A standby bus costs ~{fmtThb(HOURLY_OPEX_PER_BUS_THB)}/hr · recouped if even 1 rider
-                  </div>
+                      ? <>Add <strong>{a.busesToAdd} bus{a.busesToAdd === 1 ? "" : "es"}</strong> · {a.inGap} in + {a.outGap} out pax unmet</>
+                      : <>Run lighter · <strong>{a.emptySeats}</strong> empty seats (save ฿{Math.round(HOURLY_OPEX_PER_BUS_THB * (a.emptySeats / BUS_CAPACITY))})</>}
+                  </span>
+                  <span className={`capacity__action-money ${a.busesToAdd === 0 ? "is-light" : ""}`}>
+                    {a.busesToAdd > 0 ? `−${fmtThb(a.missedThb)} missed` : "save opex"}
+                  </span>
                 </li>
               ))}
             </ol>
@@ -491,9 +496,9 @@ export function Capacity() {
         </div>
 
         <div className="capacity__panel">
-          <header className="capacity__panel-head">
+          <header className="capacity__section-head">
             <h2>Next 6 hours · detail</h2>
-            <span className="capacity__panel-meta">verdict per hour · tap to replay</span>
+            <span className="capacity__section-meta">tap a row to replay</span>
           </header>
           <table className="capacity__hours-table">
             <thead>
@@ -530,12 +535,12 @@ export function Capacity() {
         </div>
       </section>
 
-      {/* ── Live fleet snapshot ───────────────────────────────────────── */}
+      {/* ── Live fleet snapshot ───────────────────────────────────── */}
       <section className="capacity__panel">
-        <header className="capacity__panel-head">
+        <header className="capacity__section-head">
           <h2>{source === "live" ? "Live fleet" : "Fleet snapshot"}</h2>
-          <span className="capacity__panel-meta">
-            {source === "live" ? `${liveReporting.length} reporting · ${liveMoving.length} moving · top 12` : `${operatorFleet.length} buses in service`}
+          <span className="capacity__section-meta">
+            {source === "live" ? `${liveReporting.length} reporting · ${liveMoving.length} moving` : `${operatorFleet.length} buses in service`}
           </span>
         </header>
         <table className="capacity__fleet-table">
@@ -589,8 +594,8 @@ export function Capacity() {
         <span>
           <strong>{dayInfo.label}</strong> · {fmtN(headline.fleet.totalBuses)} in fleet · {fmtN(headline.fleet.movingBuses)} rolling · {fmtN(simState.paxBoarded)} boarded · {fmtThb(simState.revenueThb)} earned · {fmtThb(simState.lostRevenueThb)} missed · {fmtThb(debrief.earnedThb - debrief.missedThb)} net
         </span>
-        <span className="capacity__footer-detail">
-          One engine · <code>src/engine/demandSupplyEngine.ts</code> · every number traces back · source: {source === "live" ? "real tracker" : "timetable + flight demand model"}
+        <span>
+          one engine · <code>src/engine/demandSupplyEngine.ts</code> · every number traces back · source: {source === "live" ? "real tracker" : "timetable + flight demand model"}
         </span>
       </footer>
     </div>
