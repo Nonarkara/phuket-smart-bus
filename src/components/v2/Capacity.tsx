@@ -243,10 +243,9 @@ export function Capacity() {
       if (topAction && topAction.busesToAdd > 0) {
         return (
           <>
-            <strong>{moving} of {reporting} buses are moving</strong>. Add{" "}
-            <strong>{topAction.busesToAdd} bus{topAction.busesToAdd === 1 ? "" : "es"}</strong> at{" "}
-            <strong>{String(topAction.hour).padStart(2, "0")}:00</strong> to recover{" "}
-            <strong>{fmtThb(topAction.missedThb)}</strong> missed in that hour.
+            <strong>{moving} of {reporting} observed buses are moving.</strong>{" "}
+            The planning model flags <strong>{String(topAction.hour).padStart(2, "0")}:00</strong>: test{" "}
+            <strong>+{topAction.busesToAdd} bus{topAction.busesToAdd === 1 ? "" : "es"}</strong> against real boardings before dispatch.
           </>
         );
       }
@@ -279,7 +278,7 @@ export function Capacity() {
   const dayInfo = getDayInfo();
 
   return (
-    <div className={`capacity ${isCompact ? "capacity--compact" : ""}`} style={{ zoom: opsScale, minHeight: "100vh" }}>
+    <div className={`v2 v2--operations capacity ${isCompact ? "capacity--compact" : ""}`} style={{ zoom: opsScale, minHeight: "100vh" }}>
       {/* ── Header ────────────────────────────────────────────────────── */}
       <header className="capacity__header">
         <div className="capacity__brand">
@@ -334,7 +333,7 @@ export function Capacity() {
           </span>
         </div>
         <div className="capacity__hero">
-          <span className="capacity__hero-label">Queue at airport</span>
+          <span className="capacity__hero-label">Modelled airport queue</span>
           <strong className="capacity__hero-value">
             <Counter value={currentQueue} suffix=" pax" />
           </strong>
@@ -343,12 +342,12 @@ export function Capacity() {
           </span>
         </div>
         <div className={`capacity__hero ${currentBusesToAdd > 0 ? "capacity__hero--accent" : ""}`}>
-          <span className="capacity__hero-label">Add buses now</span>
+          <span className="capacity__hero-label">Planning recommendation</span>
           <strong className="capacity__hero-value">
             <Counter value={currentBusesToAdd} suffix="" />
           </strong>
           <span className="capacity__hero-sub">
-            {currentBusesToAdd > 0 ? "to clear queue at 25 seats per bus" : "queue within supply — none needed"}
+            {currentBusesToAdd > 0 ? "validate with observed boardings before dispatch" : "modelled queue within scheduled supply"}
           </span>
         </div>
       </section>

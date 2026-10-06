@@ -215,32 +215,67 @@ export function FleetConsole() {
   }, [rows]);
 
   const focused = rows.find((r) => r.bus.plate === focus) ?? null;
+  const observedServices = LINES.filter((line) => rows.some((r) => r.line === line && isOut(r))).length + (townOut.length > 0 ? 1 : 0);
+  const freshness = feedAge === null ? "No response" : feedAge < 5 ? "Just now" : `${feedAge} s ago`;
+  const posture = rows.length === 0
+    ? "Telemetry unavailable. The network is not observable from this feed."
+    : feedDead
+      ? "Telemetry is stale. Hold operational conclusions until the trackers recover."
+      : attention.length > 0
+        ? `${attention.length} positional ${attention.length === 1 ? "exception needs" : "exceptions need"} review.`
+        : "No positional exception is visible in the current tracker fixes.";
 
   return (
     <div className="v2 v2--operations fc">
       <div className="fc-page">
         <header className="fc-head">
-          <div>
-            <p className="fc-eyebrow">Phuket Smart Bus · live fleet</p>
-            <h1 className="fc-title">{rows.length === 0 ? "Waiting for the trackers…" : `${out.length} of ${rows.length} buses are on the road.`}</h1>
-            <p className={`fc-sub${feedDead ? " is-dead" : ""}`}>
-              {feedDead
-                ? "The trackers are not answering — what you see may be old."
-                : `${count("driving")} driving, ${count("standing")} standing${count("late") ? `, ${count("late")} with a late signal` : ""}. ${count("quiet")} lost signal earlier today, ${count("off")} not out. Updated ${feedAge === null ? "—" : feedAge < 5 ? "just now" : `${feedAge} s ago`}, ${bkkClock(now)} in Phuket.`}
-            </p>
+          <div className="fc-identity">
+            <p className="fc-eyebrow">Phuket Mobility Observatory</p>
+            <span className="fc-system-id">FIELD SYSTEM / 01</span>
           </div>
           <nav className="fc-nav" aria-label="Other views">
-            <a href={appPath("/ops")}>Ops wall</a>
-            <a href={appPath("/research")}>Trips</a>
-            <a href={appPath("/study")}>Study</a>
-            <a href={appPath("/fleet/raw")}>Every field</a>
+            <a href={appPath("/ops")}>Operations</a>
+            <a href={appPath("/research")}>Trip record</a>
+            <a href={appPath("/study")}>Evidence</a>
+            <a href={appPath("/fleet/raw")}>Raw telemetry</a>
           </nav>
         </header>
 
+        <section className="fc-briefing" aria-labelledby="fleet-status-title">
+          <div className="fc-briefing__lead">
+            <p className="fc-kicker">Observed network / {bkkClock(now)} BKK</p>
+            <h1 className="fc-title" id="fleet-status-title">
+              {rows.length === 0 ? "The fleet is outside our field of view." : `${out.length} of ${rows.length} buses are visible on the road.`}
+            </h1>
+            <p className={`fc-sub${feedDead ? " is-dead" : ""}`}>{posture}</p>
+          </div>
+          <dl className="fc-evidence" aria-label="Evidence status">
+            <div><dt>Telemetry</dt><dd>{rows.length} buses / 2 public trackers</dd></div>
+            <div><dt>Freshness</dt><dd className={feedDead ? "is-neg" : undefined}>{freshness}</dd></div>
+            <div><dt>Coverage</dt><dd>{observedServices} of 4 service groups observed</dd></div>
+            <div><dt>Blind spot</dt><dd>Passenger load not measured</dd></div>
+          </dl>
+        </section>
+
         <div className="fc-main">
-          <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+          <section className="fc-mapstage" aria-label="Live network geometry">
+            <header className="fc-mapstage__head">
+              <div><strong>Network geometry</strong><span>GPS fixes on known service lines</span></div>
+              <span>{freshness}</span>
+            </header>
+            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+          </section>
 
           <aside className="fc-board" aria-label="Lines">
+            <section className={`fc-posture${attention.length > 0 ? " has-exception" : ""}`}>
+              <span className="fc-posture__label">Operational read</span>
+              <strong>{posture}</strong>
+              <dl>
+                <div><dt>Moving</dt><dd>{count("driving")}</dd></div>
+                <div><dt>Standing</dt><dd>{count("standing")}</dd></div>
+                <div><dt>Exceptions</dt><dd>{attention.length}</dd></div>
+              </dl>
+            </section>
             {focused && <BusDetail row={focused} now={now} today={today?.perBus[focused.bus.plate] ?? null} onClose={() => setFocus(null)} />}
 
             {attention.length > 0 && (
@@ -288,10 +323,10 @@ export function FleetConsole() {
           </table>
         </details>
 
-        <p className="fc-foot">
-          Positions: both official trackers behind smartbus.phuket.cloud, about one fix a minute per bus. Trips and km: our collector's record since 03:00.
-          Passenger counters read zero on every bus, so nothing here says how full a bus is.
-        </p>
+        <footer className="fc-foot">
+          <strong>Evidence boundary.</strong> Positions come from the two public trackers behind smartbus.phuket.cloud, normally about one fix a minute per bus.
+          Trips and distance come from our collector since 03:00 Bangkok. Passenger counters report zero, so this surface does not claim occupancy, ridership, revenue, or demand.
+        </footer>
       </div>
     </div>
   );
