@@ -45,6 +45,7 @@
 
 /* cards + charts */
 .rs-card { background: var(--ax-panel); border: 1px solid var(--ax-line); padding: 1em; margin-top: 1em; }
+.rs-week-say { margin: 0 0 0.8em; color: var(--ax-ink); max-width: 46em; }
 .rs-hint { margin: 0 0 0.8em; font-size: 0.8em; color: var(--ax-ink-2); max-width: 60em; }
 .rs-chart { display: block; overflow: visible; }
 .rs-scroll { overflow-x: auto; }

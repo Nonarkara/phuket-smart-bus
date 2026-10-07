@@ -365,6 +365,8 @@ export function Research() {
               <ul>{said.map((s, i) => <li key={i}>{s}</li>)}</ul>
             </section>
 
+            <WeekView routeId={line.routeId} name={line.name} loop={line.loop} date={date} />
+
             {line.trips.length > 0 && (
               <>
                 <section className="rs-card">
@@ -431,6 +433,59 @@ export function Research() {
         )}
       </div>
     </div>
+  );
+}
+
+// ── across the week: one day is a sample, a week is a pattern ─────────────
+type DaySum = { date: string; trips: number; buses: number; median: number | null };
+
+function WeekView({ routeId, name, loop, date }: { routeId: string; name: string; loop: boolean; date: string }) {
+  const [days, setDays] = useState<DaySum[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const end = Date.parse(`${date}T12:00:00Z`);
+    const dates = Array.from({ length: 7 }, (_, i) => new Date(end - (6 - i) * 86_400_000).toISOString().slice(0, 10));
+    // Finished days come from the KV cache; a day that hasn't started (or wasn't recorded) is skipped, not zeroed.
+    void Promise.all(dates.map((d) =>
+      fetch(`${appPath("/api/research/day")}?date=${d}`).then((r) => r.json()).catch(() => null).then((j: DayResponse | null): DaySum | null => {
+        const l = j?.ok ? j.lines.find((x) => x.routeId === routeId) : null;
+        if (!l) return null;
+        return { date: d, trips: l.trips.length, buses: new Set(l.trips.map((t) => t.plate)).size, median: quantile(l.trips.map((t) => t.minutes), 0.5) };
+      }),
+    )).then((all) => { if (alive) setDays(all.filter((x): x is DaySum => x !== null && x.trips > 0)); });
+    return () => { alive = false; };
+  }, [routeId, date]);
+
+  if (!days || days.length < 2) return null;
+  const tt = TIMETABLE_MIN[routeId] ?? null;
+  const word = loop ? "lap" : "trip";
+  const medians = days.map((d) => d.median).filter((m): m is number => m !== null);
+  const overall = quantile(medians, 0.5);
+  const slower = tt === null ? 0 : medians.filter((m) => m > tt).length;
+  return (
+    <section className="rs-card" aria-label="Across the week">
+      <h2>Across the last {days.length} days</h2>
+      <p className="rs-week-say">
+        On {name}, a {word} usually took {dur(overall)}
+        {tt !== null ? <>; the timetable says {dur(tt)}. {slower === days.length ? `Every one of the ${days.length} days ran slower` : `${slower} of ${days.length} days ran slower`} — a timetable built on {dur(tt)} is not one the buses can keep.</> : "."}
+      </p>
+      <div className="rs-scroll">
+        <table className="rs-table">
+          <thead><tr><th>Day</th><th className="rs-num">{loop ? "Laps" : "Trips"}</th><th className="rs-num">Buses</th><th className="rs-num">Usual {word}</th>{tt !== null && <th className="rs-num">vs timetable</th>}</tr></thead>
+          <tbody>
+            {days.map((d) => (
+              <tr key={d.date}>
+                <td>{longDate(d.date)}</td>
+                <td className="rs-num">{d.trips}</td>
+                <td className="rs-num">{d.buses}</td>
+                <td className="rs-num"><strong>{dur(d.median)}</strong></td>
+                {tt !== null && <td className="rs-num">{d.median === null ? "—" : `${d.median >= tt ? "+" : "−"}${Math.abs(Math.round(d.median - tt))} min`}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
