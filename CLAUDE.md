@@ -172,6 +172,8 @@ MONEY (combined both directions):
 
 **Nothing decorative.** If a number doesn't trace back to this chain, it shouldn't be on screen.
 
+**Real-fleet screens show only what the trackers send (hard rule, 2026-10-05).** `/fleet`, `/fleet/raw`, `/research`, `/study` and LIVE mode never attach a modelled or invented value to a real plate: no driver names (no feed carries them), no seats or occupancy (every counter reads 0 = unknown), no per-bus revenue, "missed ฿" or flight-matched losses. A modelled figure may appear only on a simulation surface, labelled "modelled". The "Truman Show" panel (1c773d4, removed in af8bea7) broke this on the default `/fleet` view and is the reason for the rule. See also `DESIGN.md` evidence rule.
+
 The hour-by-hour MISSED MONEY diagram (the basic diagram, in `HourlyBalanceChart.tsx`) is the operator's read: per hour, IN demand / OUT demand / scheduled seats both directions / a direction-aware verdict chip (ADD BUS −n when either direction is short, LIGHT when seats outnumber riders) and the ฿ missed that hour. Footer: ฿ earned / ฿ missed / hrs needing buses / hrs light (empty seats).
 
 Conservation: `demand = boarded + lost` at every minute for both directions; `getLiveTotals(t).paxDelivered = inbound.deliveredCum[t] + outbound.deliveredCum[t]` at every minute, asserted by tests.
