@@ -1,0 +1,25 @@
+# Unauthenticated research reads (/api/research/*). Pages wrangler.toml
+# cannot declare this binding. Deploy beside the site, after Pages:
+#   npx wrangler deploy -c wrangler.research.toml
+name = "phuket-smart-bus-research-gate"
+main = "workers/researchGate.ts"
+compatibility_date = "2026-07-21"
+workers_dev = false
+
+[[routes]]
+pattern = "bus.nonarkara.org/api/research/*"
+zone_name = "nonarkara.org"
+
+# 90/min per IP per colo. One /research view is 8 reads (the day plus
+# the seven-day strip). A few date changes and a CSV fit; a tight
+# scrape of the full fix table does not.
+[[ratelimits]]
+name = "RESEARCH"
+namespace_id = "8601001"
+
+  [ratelimits.simple]
+  limit = 90
+  period = 60
+
+[observability]
+enabled = true

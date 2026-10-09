@@ -20,9 +20,12 @@ async function ping(): Promise<Response> {
   });
 }
 
-async function collectTwice(): Promise<void> {
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Two pokes, 30s apart. The wait is a timer, not CPU. */
+export async function collectTwice(sleep: (ms: number) => Promise<void> = pause): Promise<void> {
   await ping().then((res) => res.text()).catch(() => {});
-  await new Promise((resolve) => setTimeout(resolve, 30_000));
+  await sleep(30_000);
   await ping().then((res) => res.text()).catch(() => {});
 }
 

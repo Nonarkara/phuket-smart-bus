@@ -57,6 +57,12 @@ npx --yes wrangler pages deploy dist/client \
   --commit-hash="$COMMIT_HASH" \
   --commit-message="$COMMIT_MESSAGE"
 
+# The research rate limit is a Worker route, not a Pages binding
+# (pages deploy rejects [[ratelimits]]). Deploy it after the origin
+# exists so /api/research/* can be fetched from pages.dev.
+echo "→ wrangler deploy research gate"
+npx --yes wrangler deploy -c wrangler.research.toml
+
 echo
 echo "→ verify deployed bytes and live API"
 bash scripts/verify-deploy.sh
