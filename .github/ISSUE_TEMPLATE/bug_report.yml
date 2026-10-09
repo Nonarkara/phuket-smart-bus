@@ -1,0 +1,29 @@
+name: Bug
+description: Something in this repository behaves differently from what the code and the docs say.
+title: "bug: "
+labels: []
+body:
+  - type: checkboxes
+    attributes:
+      label: Before opening
+      options:
+        - label: I searched existing issues and this is not a request for a secret, a token, or private tracker data.
+          required: true
+  - type: textarea
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw. Paste the route (/ops, /fleet, localhost) and any console or API error text.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Where
+      description: Live site, localhost, or a test. Include the commit or the date if you are looking at bus.nonarkara.org.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Observed or modelled
+      description: If the bug is a wrong number, say whether the screen presents it as a tracker fix or as a model output.
+    validations:
+      required: false

@@ -1,0 +1,23 @@
+name: Feature
+description: A change that would help a rider, an operator, or someone forking this for another city.
+title: "feat: "
+labels: []
+body:
+  - type: textarea
+    attributes:
+      label: Who it is for
+      description: Rider, dispatcher, researcher, or a fork. One sentence.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What should change
+      description: The behaviour you want. If it needs a new number on screen, say where that number would be computed from. Do not ask the live fleet view to invent riders, fares, or drivers.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What you already tried
+      description: A file, a route, or a workaround. Optional.
+    validations:
+      required: false

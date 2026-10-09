@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 640" role="img" aria-labelledby="heroTitle heroDesc">
+  <title id="heroTitle">Phuket Smart Bus</title>
+  <desc id="heroDesc">Original drawing. A small geometric bus sits low on an ink road, with empty paper above it and a black band at the right. Brush, washi grain, and the empty field are the picture. It is not a tracker, not a timetable, and not a character from any book.</desc>
+  <!--
+    Colour roles from Dr Non's Palette, chapter 3 / plate 69 (civic restraint).
+    Source pair: Warm Gray #a1a39a, Black #111314.
+    Day reading ground #d5d6d2 and ink #050606, night ground #64655f and ink #ffffff,
+    are the production tokens from daoPaletteRoles (55% toward white by day;
+    night shade until luminance <= 0.14). Study marks: Blue #006eb8, Lilac #b984af.
+    Seal: Burnt Sienna #ae5224 from that chapter's artifact plate.
+    See CREDITS.md. No manga artwork is reproduced.
+  -->
+  <style>
+    svg { color-scheme: light dark; }
+    .ground { fill: #d5d6d2; fill: light-dark(#d5d6d2, #64655f); }
+    .ink { fill: #050606; fill: light-dark(#050606, #ffffff); }
+    .ink-stroke { stroke: #050606; stroke: light-dark(#050606, #ffffff); }
+    .ink-soft { stroke: rgba(5, 6, 6, 0.42); stroke: light-dark(rgba(5, 6, 6, 0.42), rgba(255, 255, 255, 0.5)); }
+    .cut { fill: #d5d6d2; fill: light-dark(#d5d6d2, #64655f); }
+    .washi { fill: #050606; fill: light-dark(#050606, #ffffff); opacity: 0.09; }
+    @media (prefers-color-scheme: dark) {
+      .ground, .cut { fill: #64655f; }
+      .ink { fill: #ffffff; }
+      .ink-stroke { stroke: #ffffff; }
+      .ink-soft { stroke: rgba(255, 255, 255, 0.5); }
+      .washi { fill: #ffffff; }
+    }
+  </style>
+  <defs>
+    <filter id="washi" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="11" result="noise"/>
+      <feComponentTransfer in="noise" result="alpha">
+        <feFuncA type="linear" slope="0.7" intercept="-0.28"/>
+      </feComponentTransfer>
+      <feComposite in="SourceGraphic" in2="alpha" operator="in"/>
+    </filter>
+    <filter id="dry" x="-8%" y="-40%" width="116%" height="180%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.7" numOctaves="2" seed="4" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="dry-fine" x="-12%" y="-80%" width="124%" height="260%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- 76% reading ground, 24% companion. Palette chapter identity, not a UI frame. -->
+  <rect class="ground" x="0" y="0" width="1094" height="640"/>
+  <rect class="washi" x="0" y="0" width="1094" height="640" filter="url(#washi)"/>
+  <rect x="1094" y="0" width="346" height="640" fill="#111314"/>
+  <rect x="1094" y="0" width="2" height="640" fill="#a1a39a"/>
+
+  <!-- One ridge, broken like a dry brush. The sky above it stays empty. -->
+  <g filter="url(#dry)" fill="none" class="ink-stroke" stroke-linecap="square">
+    <path d="M56 278 C150 246 214 312 318 274 C430 232 492 308 604 266 C720 222 790 304 902 268 C990 240 1040 286 1086 262" stroke-width="8" stroke-dasharray="54 3 96 2 36 5 120 3 70 4"/>
+    <path d="M120 262 C210 236 280 292 390 258 C500 224 560 286 680 250" stroke-width="2" opacity="0.4"/>
+  </g>
+
+  <!-- Coast: three bounded blue strokes. Study blue, not a sea fill. -->
+  <g fill="none" stroke="#006eb8" stroke-linecap="square">
+    <path d="M72 456 H338" stroke-width="1.6"/>
+    <path d="M72 468 H286" stroke-width="1.15" opacity="0.8"/>
+    <path d="M72 478 H220" stroke-width="0.9" opacity="0.55"/>
+  </g>
+
+  <!-- Road, heavy then a dry edge. The bus is drawn after this, sitting on it. -->
+  <g filter="url(#dry)" fill="none" class="ink-stroke" stroke-linecap="square">
+    <path d="M36 548 C210 528 340 536 520 522 C700 508 860 534 1088 512" stroke-width="13"/>
+    <path d="M48 566 C230 548 380 556 560 542 C740 528 900 552 1072 534" class="ink-soft" stroke-width="1.25" stroke-dasharray="22 6 46 4 14 7"/>
+  </g>
+
+  <!-- Reeds. A few flicks, then stop. -->
+  <g filter="url(#dry-fine)" fill="none" class="ink-stroke" stroke-linecap="square" opacity="0.7">
+    <path d="M132 528 C134 500 128 486 136 468" stroke-width="1.4"/>
+    <path d="M148 532 C154 508 146 492 156 478" stroke-width="1"/>
+    <path d="M118 524 C112 506 116 494 108 482" stroke-width="0.8"/>
+  </g>
+
+  <!-- The bus is a measured object: rectangles and true circles. No rider. -->
+  <g transform="translate(612 436)">
+    <rect class="ink" x="0" y="22" width="108" height="40"/>
+    <rect class="ink" x="70" y="4" width="38" height="22"/>
+    <rect class="cut" x="76" y="9" width="26" height="11"/>
+    <rect class="cut" x="8" y="30" width="22" height="14"/>
+    <rect class="cut" x="36" y="30" width="22" height="14"/>
+    <path class="ink-stroke" d="M58 26 V62" stroke-width="1.25"/>
+    <circle class="cut" cx="24" cy="64" r="9"/>
+    <circle class="ink-stroke" cx="24" cy="64" r="9" fill="none" stroke-width="2.25"/>
+    <circle class="ink" cx="24" cy="64" r="2"/>
+    <circle class="cut" cx="84" cy="64" r="9"/>
+    <circle class="ink-stroke" cx="84" cy="64" r="9" fill="none" stroke-width="2.25"/>
+    <circle class="ink" cx="84" cy="64" r="2"/>
+  </g>
+
+  <!-- Seal: a square and a route crossing. No characters. -->
+  <g transform="translate(78 78)" fill="none" stroke="#ae5224" stroke-width="2.25">
+    <rect x="0.5" y="0.5" width="52" height="52"/>
+    <path d="M14 38 H40" stroke-width="1.75"/>
+    <path d="M26 14 V40" stroke-width="1.75"/>
+  </g>
+
+  <!-- Companion column. Source black, day-ground word, two study marks. -->
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" fill="#d5d6d2">
+    <rect x="1136" y="86" width="16" height="16" fill="#006eb8"/>
+    <rect x="1160" y="86" width="16" height="16" fill="#b984af"/>
+    <text x="1136" y="168" font-size="15" letter-spacing="5.5">PHUKET</text>
+    <text x="1136" y="248" font-size="64" font-weight="500" letter-spacing="1">SMART</text>
+    <text x="1136" y="322" font-size="64" font-weight="500" letter-spacing="1">BUS</text>
+    <rect x="1136" y="360" width="72" height="2" fill="#a1a39a"/>
+    <text x="1136" y="404" font-size="13" letter-spacing="1.5" fill="#a1a39a">PLATE 69</text>
+    <text x="1136" y="428" font-size="13" letter-spacing="0.4" fill="#a1a39a">WARM GRAY / BLACK</text>
+  </g>
+</svg>
