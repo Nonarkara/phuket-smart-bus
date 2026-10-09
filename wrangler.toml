@@ -16,6 +16,9 @@ preview_id = "56cdf90d2a144ff6a492c7f1467b4d22"
 
 # Every distinct GPS fix, both feeds, no expiry — the research record.
 # Written by /api/collect/tick; read by /api/research/*.
+# Those reads are unauthenticated. Do not declare a ratelimits binding
+# in this file: `wrangler pages deploy` rejects that key. The binding is
+# wrangler.research.toml, on bus.nonarkara.org/api/research/* only.
 [[d1_databases]]
 binding = "FIXES"
 database_name = "phuket-smart-bus-fixes"

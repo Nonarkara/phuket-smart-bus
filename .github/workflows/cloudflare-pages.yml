@@ -40,3 +40,14 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.86.0"
           command: pages deploy dist/client --project-name=phuket-smart-bus --branch=main
+
+      # Pages rejects a ratelimits binding. This worker is the binding,
+      # on bus.nonarkara.org/api/research/* only, and it fetches the
+      # Pages origin deployed above.
+      - name: Deploy research rate-limit gate
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.86.0"
+          command: deploy -c wrangler.research.toml

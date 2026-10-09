@@ -8,3 +8,13 @@ workers_dev = true
 
 [triggers]
 crons = ["* * * * *"]
+
+# Minute crons cannot be given more than 30s of CPU. This worker only
+# fetches the tick route twice; the 30s gap between them is a timer,
+# which does not count as CPU. 30000 ms is that platform ceiling.
+[limits]
+cpu_ms = 30000
+
+# Workers Logs, so an exceededCpu on this cap is visible.
+[observability]
+enabled = true
