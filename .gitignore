@@ -5,6 +5,7 @@ coverage
 *.tsbuildinfo
 .env
 .env.*
+!.env.example
 playwright-report
 test-results
 data/*.sqlite3
