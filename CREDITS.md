@@ -18,6 +18,10 @@ The dataset’s MIT notice:
 >
 > THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+## Closing panel
+
+`assets/manga.jpg` is original AI-assisted art made for this project.
+
 ## Everything else
 
 Map tiles, tracker feeds, timetables, flight fixtures, and photographs elsewhere in the tree have their own owners. See the data-sources table in [README.md](README.md). Do not read this file as a licence for those materials.

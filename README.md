@@ -325,3 +325,11 @@ Setup, branches, tests, and review rules: [CONTRIBUTING.md](CONTRIBUTING.md).
 Behaviour: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Vulnerabilities: [SECURITY.md](SECURITY.md), in private.
 
 Studio: [nonarkara.org](https://nonarkara.org) · [github.com/Nonarkara](https://github.com/Nonarkara)
+
+<img src="assets/manga.jpg" alt="Closing panel: a quiet street, a bus at the stop, and a few things hidden in the drawing." width="100%">
+
+*Before you close the page, see if you can find the cat with the red umbrella, 1784, the rubber duck, and a landing plane.*
+
+## Credits
+
+The hero ground and this closing panel are credited in [CREDITS.md](CREDITS.md).
