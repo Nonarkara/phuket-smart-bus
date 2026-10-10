@@ -1,28 +1,12 @@
 # Credits
 
-## Hero drawing
+## Hero
 
-`assets/hero.svg` is an original drawing made for this repository.
+`assets/hero.png` is a screenshot of the live site: the operations wall at `/ops`, and the phone passenger app at `/`. The ground behind those shots is flat. There is no illustration.
 
-The mood — a dry brush, paper grain, and a large empty field — is inspired by the ink landscapes in Takehiko Inoue’s manga *Vagabond*. No panel, figure, face, lettering, seal script, or composition from that work is reproduced. Those rights stay with the artist and the publisher. The bus is a few rectangles and circles. There is no rider.
+The ground is the day reading colour from [Dr Non’s Palette](https://dao.nonarkara.org/PALETTE-DESIGN.md), chapter 3, source plate 69 (Warm Gray `#a1a39a` and Black `#111314`). Day reading ground `#d5d6d2` is the lighter source mixed 55% toward white. The type is the source black, `#111314`. Screen values are approximations of printed colour, as that project states.
 
-## Palette tokens
-
-The colours are production tokens from [Dr Non’s Palette](https://dao.nonarkara.org/PALETTE-DESIGN.md), chapter 3, source plate 69, the pairing that document calls civic restraint.
-
-| Role | Value | Where it comes from |
-|---|---|---|
-| Source pair | Warm Gray `#a1a39a`, Black `#111314` | Plate 69 |
-| Day reading ground | `#d5d6d2` | Lighter source mixed 55% toward white |
-| Day reading ink | `#050606` | Darker source mixed 68% toward black |
-| Night reading ground | `#64655f` | Lighter source shaded 35% toward black, then 5% steps until relative luminance is at most 0.14 |
-| Night reading ink | `#ffffff` | Night reading rule |
-| Study marks | Blue `#006eb8`, Lilac `#b984af` | Chapter 3 study plate |
-| Seal | Burnt Sienna `#ae5224` | Chapter 3 artifact plate |
-
-The mix is the `daoPaletteRoles` function published in [`chapter_palettes.js`](https://dao.nonarkara.org/chapter_palettes.js) on that site. The 76/24 split (paper, then a black band) is that system’s chapter-identity proportion. Screen values are approximations of printed colour, as that project states.
-
-The historical combinations are Sanzo Wada’s, via the dataset in [`mattdesl/dictionary-of-colour-combinations`](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT, copyright © 2020 Matt DesLauriers), which corrected data first compiled by Dain M. Blodorn Kim for `dblodorn/sanzo-wada`. This drawing is not affiliated with Seigensha, the Wada estate, or those data authors, and it does not reproduce scans or cover art.
+The historical combination is Sanzo Wada’s, via the dataset in [`mattdesl/dictionary-of-colour-combinations`](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT, copyright © 2020 Matt DesLauriers), which corrected data first compiled by Dain M. Blodorn Kim for `dblodorn/sanzo-wada`. This repository is not affiliated with Seigensha, the Wada estate, or those data authors, and it does not reproduce scans or cover art.
 
 The dataset’s MIT notice:
 

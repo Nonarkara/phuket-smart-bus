@@ -1,6 +1,4 @@
-![A small geometric bus on an ink road, with empty paper above it and a black band reading PHUKET SMART BUS. The drawing is not a tracker and not a character.](assets/hero.svg)
-
-*Original drawing. Brush, paper grain, and the empty field carry the mood; the colours are Palette tokens (see [CREDITS.md](CREDITS.md)). The bus is not a GPS report, and nothing in the picture is a live count.*
+![Phuket Smart Bus. The operations wall and the phone passenger app, captured from bus.nonarkara.org, on a flat ground.](assets/hero.png)
 
 **A Phuket bus operations prototype: public-tracker positions on one side, a conserved demand model on the other, labelled so they are not the same thing.**
 
@@ -315,10 +313,10 @@ The tracker field is null, or the screen is refusing to invent one. A rise in a 
 For `bus.nonarkara.org`, Pages Functions plus the collector and research-gate workers. `server/` is the Express boundary you would put in front of direct device GPS. The UI swap the project is built around is `src/engine/dataProvider.ts` toward `src/api.ts`, at the app boundary, when that feed exists.
 
 **Does the hero show live buses?**
-No. See the caption under the image and [CREDITS.md](CREDITS.md).
+It is a screenshot of [bus.nonarkara.org/ops](https://bus.nonarkara.org/ops) and the phone passenger app, taken when this README was written. The ground behind the shots is a flat Palette colour ([CREDITS.md](CREDITS.md)). The figures in the picture are from that capture. They are not a promise of the next visit.
 
 **What licence is the code under?**
-`LICENSE` at the root is MIT, copyright © 2026 Non Arkaraprasertkul. Schedule text, tracker data, map tiles, photographs, and the *Vagabond* mood (inspiration only) are not covered by that grant. Read `LICENSE` before you redistribute.
+`LICENSE` at the root is MIT, copyright © 2026 Non Arkaraprasertkul. Schedule text, tracker data, map tiles, and photographs are not covered by that grant. Read `LICENSE` before you redistribute.
 
 ## Contributing
 
