@@ -1,5 +1,6 @@
-/* /fleet/raw — every bus, every detail. Same language as /fleet: hairlines, zero radius,
-   zero shadow, one accent; em off a root that grows with the screen.
+/* /fleet/raw — every bus, every detail.
+   Same visual language as /fleet and the operations observatory: hairlines,
+   zero radius, zero shadow, one accent; em off a root that grows with the screen.
    Three sizes: 1.6em (title) · 1em (body) · 0.8em (small). */
 
 /* html/body/#root hide overflow (app shell), so the page is its own scroller. */
@@ -8,30 +9,275 @@
   font-size: clamp(16px, calc(100vw / 85), 40px); line-height: 1.45;
 }
 :where(.fd) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
-.fd button:focus-visible, .fd a:focus-visible, .fd input:focus-visible, .fd select:focus-visible, .fd summary:focus-visible { outline: 2px solid var(--ax-accent); outline-offset: 2px; }
-.fd a { color: var(--ax-accent); }
+.fd button:focus-visible, .fd a:focus-visible, .fd input:focus-visible, .fd select:focus-visible, .fd summary:focus-visible {
+  outline: 2px solid var(--ax-accent); outline-offset: 2px;
+}
+.fd a { color: var(--ax-accent); text-decoration: none; }
+.fd a:hover { text-decoration: underline; }
 
-.fd-page { max-width: 80em; margin: 0 auto; padding: 1em 1em 4em; }
+.fd-page { max-width: 88em; margin: 0 auto; padding: 1em 1em 4em; }
 
-.fd-head { display: flex; flex-direction: column; gap: 0.8em; padding-bottom: 1em; border-bottom: 1px solid var(--ax-line); }
-.fd-eyebrow { margin: 0; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
-.fd-title { margin: 0.2em 0; font-size: 1.6em; line-height: 1.2; font-weight: 700; color: var(--ax-ink); }
-.fd-sub { margin: 0; color: var(--ax-ink-2); max-width: 52em; }
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.fd-head { display: flex; flex-direction: column; gap: 0.8em; padding-bottom: 1em; border-bottom: 2px solid var(--ax-line-2); }
+.fd-eyebrow { margin: 0; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); font-weight: 700; }
+.fd-title { margin: 0.2em 0; font-size: 1.7em; line-height: 1.15; font-weight: 700; color: var(--ax-ink); }
+.fd-sub { margin: 0; color: var(--ax-ink-2); max-width: 54em; font-size: 0.9em; }
 .fd-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
-/* Small-text controls: 3.45em × 0.8em = 44 px tap height at the 16 px floor. */
-.fd-nav a { display: flex; align-items: center; justify-content: center; min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
+.fd-nav a {
+  display: flex; align-items: center; justify-content: center; min-height: 3.45em; padding: 0 1em;
+  font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2);
+  background: var(--ax-paper); white-space: nowrap;
+}
 .fd-nav a:hover { color: var(--ax-ink); background: var(--ax-panel); }
 
-.fd-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8em 1.2em; margin: 1.2em 0; }
-.fd-search { font: inherit; min-height: 2.75em; padding: 0 0.8em; width: 100%; max-width: 16em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); }
+/* ── Interactive Stage: Map + Bus Inspector HUD ──────────────────────────── */
+.fd-stage { display: grid; grid-template-columns: 1fr; gap: 1em; margin-top: 1.2em; }
+.fd-stage__map { min-width: 0; border-top: 3px solid var(--ax-accent); background: var(--ax-panel); }
+.fd-stage__map-head {
+  min-height: 3em; padding: 0.6em 0.8em; display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1em; border-bottom: 1px solid var(--ax-line);
+}
+.fd-stage__map-head strong { font-size: 0.95em; color: var(--ax-ink); }
+.fd-stage__map-head span { font-size: 0.8em; color: var(--ax-ink-3); margin-left: 0.6em; }
+.fd-stage__freshness { font-size: 0.75em !important; font-weight: 700; color: var(--ax-accent) !important; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.fd-mapwrap { position: relative; border: 1px solid var(--ax-line); background: var(--ax-paper); }
+.fd-map { height: 26em; width: 100%; background: var(--ax-paper); }
+.fd-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.85) saturate(0.5); }
+.fd-route-poly { stroke: var(--ax-accent); stroke-opacity: 0.6; fill: none; }
+.fd-terminal-pin span {
+  position: absolute; transform: translate(-50%, -150%); white-space: nowrap;
+  font: 700 0.75em/1 var(--font-body, sans-serif); color: var(--ax-ink); background: var(--ax-paper);
+  padding: 0.25em 0.45em; border: 1px solid var(--ax-line-2);
+}
+
+.fd-map-controls { position: absolute; top: 0.6em; right: 0.6em; z-index: 500; display: flex; gap: 0.4em; }
+.fd-map-controls button {
+  min-height: 2.2em; padding: 0 0.8em; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 700; background: var(--ax-paper); color: var(--ax-ink); border: 1px solid var(--ax-line-2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.fd-map-controls button:hover { background: var(--ax-panel); color: var(--ax-accent); }
+
+.fd-legend {
+  position: absolute; left: 0.6em; bottom: 0.6em; z-index: 500; display: flex; flex-wrap: wrap; gap: 0.4em 0.9em;
+  padding: 0.4em 0.7em; background: var(--ax-paper); border: 1px solid var(--ax-line-2); font-size: 0.75em; color: var(--ax-ink-2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.fd-legend span { display: inline-flex; align-items: center; gap: 0.4em; }
+.fd-legend__arrow {
+  display: block; width: 0; height: 0; border-left: 0.35em solid transparent; border-right: 0.35em solid transparent;
+  border-bottom: 0.8em solid var(--ax-accent);
+}
+.fd-legend__dot { display: block; width: 0.75em; height: 0.75em; border-radius: 50%; background: var(--ax-ink-2); }
+.fd-legend__dot--late { background: var(--ax-warn); }
+.fd-legend__dot--quiet { background: transparent; box-shadow: inset 0 0 0 2px var(--ax-neg); }
+
+/* Bus markers on Leaflet */
+.fd-mapbus { color: var(--ax-ink-2); }
+.fd-mapbus--driving { color: var(--ax-accent); }
+.fd-mapbus--late { color: var(--ax-warn); }
+.fd-mapbus--quiet { color: var(--ax-neg); }
+.fd-mapbus__arrow, .fd-mapbus__dot { position: absolute; left: 0; top: 0; translate: -50% -50%; cursor: pointer; }
+.fd-mapbus__arrow {
+  width: 0; height: 0; border-left: 0.55em solid transparent; border-right: 0.55em solid transparent;
+  border-bottom: 1.3em solid currentColor; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+}
+.fd-mapbus__dot {
+  width: 0.85em; height: 0.85em; border-radius: 50%; background: currentColor;
+  box-shadow: 0 0 0 1px var(--ax-paper), 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+.fd-mapbus--quiet .fd-mapbus__dot { background: transparent; box-shadow: inset 0 0 0 2px currentColor; }
+.fd-mapbus.is-focus .fd-mapbus__arrow {
+  border-left-width: 0.75em; border-right-width: 0.75em; border-bottom-width: 1.6em;
+  filter: drop-shadow(0 0 8px var(--ax-accent));
+}
+.fd-mapbus.is-focus .fd-mapbus__dot {
+  width: 1.15em; height: 1.15em; box-shadow: 0 0 0 2px var(--ax-paper), 0 0 10px var(--ax-accent);
+}
+.fd-mapbus__label {
+  position: absolute; left: 0; top: 0; translate: -50% -250%; white-space: nowrap;
+  font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-paper); background: var(--ax-accent);
+  padding: 0.25em 0.45em; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* ── Bus Inspection HUD ──────────────────────────────────────────────────── */
+.fd-hud, .fd-hud-placeholder {
+  background: var(--ax-panel); border: 1px solid var(--ax-line); border-top: 3px solid var(--ax-accent);
+  padding: 1em; display: flex; flex-direction: column; gap: 0.8em;
+}
+.fd-hud__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1em; }
+.fd-hud__tag { display: block; font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ax-ink-3); font-weight: 700; }
+.fd-hud__plate { margin: 0.1em 0 0; font-size: 1.6em; font-weight: 700; color: var(--ax-ink); font-family: var(--font-mono, monospace); }
+.fd-hud__close { min-height: 2em; padding: 0 0.5em; font-size: 0.9em; color: var(--ax-ink-3); }
+.fd-hud__close:hover { color: var(--ax-ink); }
+
+.fd-hud__status {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.8em; padding: 0.7em 0.8em;
+  background: var(--ax-paper); border: 1px solid var(--ax-line-2); border-left: 3px solid var(--ax-line-2);
+}
+.fd-hud__status--driving { border-left-color: var(--ax-accent); }
+.fd-hud__status--late { border-left-color: var(--ax-warn); }
+.fd-hud__status--quiet { border-left-color: var(--ax-neg); }
+.fd-hud__status-main strong { display: block; font-size: 0.9em; color: var(--ax-ink); }
+.fd-hud__status-main span { display: block; font-size: 0.75em; color: var(--ax-ink-3); }
+
+.fd-hud__badge {
+  display: inline-block; padding: 0.25em 0.5em; font-size: 0.7em; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; background: var(--ax-panel); color: var(--ax-ink-2); border: 1px solid var(--ax-line-2); white-space: nowrap;
+}
+.fd-hud__badge.is-good { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fd-hud__badge.is-warn { color: var(--ax-warn); border-color: var(--ax-warn); }
+
+.fd-hud__progress { display: flex; flex-direction: column; gap: 0.3em; margin: 0.2em 0; }
+.fd-hud__progress-labels { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ax-ink-3); }
+.fd-hud__progress-track { height: 4px; background: var(--ax-line-2); border-radius: 2px; overflow: hidden; }
+.fd-hud__progress-fill { height: 100%; background: var(--ax-accent); transition: width 0.3s ease; }
+
+.fd-hud__grid { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6em; border-top: 1px solid var(--ax-line); padding-top: 0.8em; }
+.fd-hud__grid div { display: flex; flex-direction: column; }
+.fd-hud__grid dt { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-3); margin-bottom: 0.1em; }
+.fd-hud__grid dd { margin: 0; font-size: 0.85em; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+
+.fd-hud__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); margin-top: 0.4em; }
+.fd-hud__actions button {
+  min-height: 2.8em; padding: 0 0.8em; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 700; background: var(--ax-paper); color: var(--ax-ink-2); text-align: center;
+}
+.fd-hud__actions button:hover { background: var(--ax-panel); color: var(--ax-accent); }
+
+/* HUD Placeholder */
+.fd-hud-placeholder h3 { margin: 0; font-size: 1.2em; color: var(--ax-ink); }
+.fd-hud-placeholder p { margin: 0; font-size: 0.85em; color: var(--ax-ink-2); }
+.fd-hud-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5em; border-top: 1px solid var(--ax-line); padding-top: 0.8em; }
+.fd-hud-kpis div { display: flex; flex-direction: column; }
+.fd-hud-kpis strong { font: 700 1.4em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-hud-kpis span { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-3); margin-top: 0.2em; }
+
+/* ── Fleet Efficiency Analytics Section ───────────────────────────────────── */
+.fd-analytics { margin-top: 2em; padding-top: 1.5em; border-top: 1px solid var(--ax-line); }
+.fd-analytics__head { margin-bottom: 1em; }
+.fd-analytics__title { margin: 0.2em 0; font-size: 1.4em; font-weight: 700; color: var(--ax-ink); }
+.fd-analytics__sub { margin: 0; font-size: 0.85em; color: var(--ax-ink-2); max-width: 60em; }
+
+.fd-analytics__grid { display: grid; grid-template-columns: 1fr; gap: 1em; }
+.fd-card {
+  background: var(--ax-panel); border: 1px solid var(--ax-line); padding: 1.1em;
+  display: flex; flex-direction: column; gap: 0.8em;
+}
+.fd-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.8em; }
+.fd-card__head h3 { margin: 0; font-size: 0.95em; font-weight: 700; color: var(--ax-ink); }
+.fd-card__note { margin: 0; font-size: 0.75em; color: var(--ax-ink-3); border-top: 1px solid var(--ax-line); padding-top: 0.6em; }
+.fd-card__nominal { margin: 0; font-size: 0.8em; color: var(--ax-accent); }
+
+.fd-badge {
+  display: inline-block; padding: 0.2em 0.5em; font-size: 0.7em; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; background: var(--ax-paper); color: var(--ax-ink-2); border: 1px solid var(--ax-line-2);
+}
+.fd-badge--rate { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fd-badge--good { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fd-badge--warn { color: var(--ax-warn); border-color: var(--ax-warn); }
+
+/* State Bar */
+.fd-state-bar {
+  display: flex; height: 1em; width: 100%; background: var(--ax-line-2); overflow: hidden; gap: 1px;
+}
+.fd-state-bar__seg { height: 100%; transition: width 0.3s ease; }
+.fd-state-bar__seg.is-driving { background: var(--ax-accent); }
+.fd-state-bar__seg.is-standing { background: #5a6673; }
+.fd-state-bar__seg.is-late { background: var(--ax-warn); }
+.fd-state-bar__seg.is-quiet { background: var(--ax-neg); }
+.fd-state-bar__seg.is-off { background: #262e38; }
+
+.fd-card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5em; margin-top: 0.2em; }
+.fd-card__stats div { display: flex; flex-direction: column; }
+.fd-card__stats strong { font: 700 1.25em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-card__stats span { font-size: 0.7em; color: var(--ax-ink-3); margin-top: 0.2em; white-space: nowrap; }
+
+/* Speed Histogram */
+.fd-speed-hist { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6em; height: 6.5em; align-items: end; padding: 0.5em 0; }
+.fd-speed-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 0.25em; }
+.fd-speed-col__val { font: 700 0.8em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-speed-col__track { width: 100%; max-width: 2.5em; flex: 1; background: var(--ax-paper); display: flex; align-items: flex-end; border: 1px solid var(--ax-line-2); }
+.fd-speed-col__fill { width: 100%; transition: height 0.3s ease; }
+.fd-speed-col__fill.is-idle { background: #5a6673; }
+.fd-speed-col__fill.is-warn { background: var(--ax-warn); }
+.fd-speed-col__fill.is-good { background: #38bdf8; }
+.fd-speed-col__fill.is-accent { background: var(--ax-accent); }
+.fd-speed-col__lbl { font-size: 0.65em; text-transform: uppercase; color: var(--ax-ink-3); letter-spacing: 0.06em; text-align: center; }
+
+/* Bunching Alerts & Corridor Rails */
+.fd-bunching-alert { display: flex; flex-direction: column; gap: 0.6em; }
+.fd-bunching-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.8em; padding: 0.7em 0.8em;
+  background: #231f14; border: 1px solid var(--ax-warn); border-left: 4px solid var(--ax-warn);
+}
+.fd-bunching-icon { font-size: 1.2em; }
+.fd-bunching-info { flex: 1; min-width: 14em; }
+.fd-bunching-info strong { display: block; font-size: 0.85em; color: #fff7e5; }
+.fd-bunching-info p { margin: 0.2em 0 0; font-size: 0.75em; color: #d5c399; }
+.fd-bunching-actions { display: flex; gap: 0.4em; }
+.fd-bunching-actions button {
+  min-height: 2.4em; padding: 0 0.6em; font-size: 0.7em; font-weight: 700; text-transform: uppercase;
+  background: var(--ax-paper); color: var(--ax-ink); border: 1px solid var(--ax-line-2);
+}
+.fd-bunching-actions button:hover { border-color: var(--ax-warn); color: var(--ax-warn); }
+
+.fd-corridors { display: flex; flex-direction: column; gap: 0.8em; margin-top: 0.5em; border-top: 1px solid var(--ax-line); padding-top: 0.8em; }
+.fd-corridor-row { display: grid; grid-template-columns: 12em 1fr; align-items: center; gap: 1em; }
+.fd-corridor-label strong { display: block; font-size: 0.85em; color: var(--ax-ink); }
+.fd-corridor-label span { font-size: 0.7em; color: var(--ax-ink-3); }
+.fd-corridor-track { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.6em; }
+.fd-corridor-end { font-size: 0.7em; color: var(--ax-ink-3); white-space: nowrap; }
+.fd-corridor-line { position: relative; height: 2.2em; display: flex; align-items: center; }
+.fd-corridor-rail { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: var(--ax-line-2); }
+.fd-corridor-bus {
+  position: absolute; top: 50%; translate: -50% -50%; display: inline-flex; align-items: center; gap: 0.2em;
+  padding: 0.15em 0.35em; background: var(--ax-paper); border: 1px solid var(--ax-line-2);
+  font: 700 0.65em/1 var(--font-mono, monospace); color: var(--ax-ink-2); cursor: pointer;
+}
+.fd-corridor-bus.is-driving { color: var(--ax-accent); border-color: var(--ax-accent); }
+.fd-corridor-bus.is-late { color: var(--ax-warn); border-color: var(--ax-warn); }
+.fd-corridor-bus:hover { background: var(--ax-accent); color: var(--ax-paper); }
+.fd-corridor-arrow { font-size: 0.8em; }
+
+/* Mileage Ranking */
+.fd-mileage-list { display: flex; flex-direction: column; gap: 0.4em; }
+.fd-mileage-row {
+  display: grid; grid-template-columns: 5.5em 1fr 4.5em 2em; align-items: center; gap: 0.6em;
+  padding: 0.35em 0.5em; background: var(--ax-paper); border: 1px solid var(--ax-line);
+}
+.fd-mileage-row:hover { border-color: var(--ax-accent); }
+.fd-mileage-plate { font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-mileage-track { height: 4px; background: var(--ax-line-2); border-radius: 2px; overflow: hidden; }
+.fd-mileage-fill { height: 100%; background: var(--ax-accent); transition: width 0.3s ease; }
+.fd-mileage-km { font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-ink-2); text-align: right; }
+.fd-mileage-trips { font-size: 0.7em; color: var(--ax-ink-3); text-align: right; }
+
+/* ── Telemetry Ledger Table Section ───────────────────────────────────────── */
+.fd-table-section { margin-top: 2.2em; padding-top: 1.5em; border-top: 2px solid var(--ax-line-2); }
+.fd-table-head { display: flex; flex-direction: column; gap: 0.8em; margin-bottom: 1em; }
+.fd-table-head h2 { margin: 0.2em 0 0; font-size: 1.3em; font-weight: 700; color: var(--ax-ink); }
+
+.fd-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8em 1.2em; margin-bottom: 1.2em; }
+.fd-search {
+  font: inherit; min-height: 2.75em; padding: 0 0.8em; width: 100%; max-width: 16em;
+  color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2);
+}
 .fd-search::placeholder { color: var(--ax-ink-3); }
 .fd-chips { display: flex; flex-wrap: wrap; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
-.fd-chips button { min-height: 2.75em; padding: 0 0.9em; background: var(--ax-paper); color: var(--ax-ink-2); white-space: nowrap; }
+.fd-chips button { min-height: 2.75em; padding: 0 0.9em; background: var(--ax-paper); color: var(--ax-ink-2); white-space: nowrap; font-size: 0.85em; }
 .fd-chips button.is-active { background: var(--ax-ink); color: var(--ax-paper); font-weight: 700; }
 .fd-select { display: inline-flex; align-items: center; gap: 0.5em; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
-.fd-select select { font: inherit; font-size: 1.25em; text-transform: none; letter-spacing: 0; min-height: 2.2em; padding: 0 0.5em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); color-scheme: dark; }
+.fd-select select {
+  font: inherit; font-size: 1.2em; text-transform: none; letter-spacing: 0; min-height: 2.2em;
+  padding: 0 0.5em; color: var(--ax-ink); background: var(--ax-panel); border: 1px solid var(--ax-line-2); color-scheme: dark;
+}
 .fd-downloads { display: flex; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
-.fd-downloads button { min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; background: var(--ax-paper); color: var(--ax-ink-2); }
+.fd-downloads button {
+  min-height: 3.2em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--ax-paper); color: var(--ax-ink-2); font-weight: 700;
+}
 .fd-downloads button:hover { color: var(--ax-ink); background: var(--ax-panel); }
 
 .fd-group { margin-top: 1.5em; }
@@ -39,9 +285,12 @@
 .fd-group h2 span { font-weight: 400; font-size: 0.8em; color: var(--ax-ink-3); margin-left: 0.5em; }
 .fd-scroll { overflow-x: auto; border: 1px solid var(--ax-line); background: var(--ax-panel); }
 .fd-table { width: 100%; border-collapse: collapse; }
-.fd-table th { text-align: left; padding: 0.6em 0.9em; font-size: 0.8em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap; }
-.fd-table td { padding: 0.35em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75em; font-weight: 700; color: var(--ax-ink); }
+.fd-table th {
+  text-align: left; padding: 0.6em 0.9em; font-size: 0.8em; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap;
+}
+.fd-table td { padding: 0.4em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.6em; font-weight: 700; color: var(--ax-ink); font-family: var(--font-mono, monospace); }
 .fd-caret { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3); font-weight: 400; }
 .fd-doing { color: var(--ax-ink) !important; }
 .fd-row--driving .fd-doing { color: var(--ax-accent) !important; }
@@ -49,6 +298,14 @@
 .fd-row--quiet .fd-doing { color: var(--ax-neg) !important; }
 .fd-row--off td { color: var(--ax-ink-3); }
 .fd-row.is-open td { background: var(--ax-paper); }
+.fd-row.is-focus td { background: rgba(70, 185, 134, 0.09) !important; border-bottom-color: var(--ax-accent); }
+.fd-row.is-focus .fd-plate { color: var(--ax-accent); }
+
+.fd-row-action {
+  min-height: 2.2em; padding: 0 0.6em; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 700; color: var(--ax-ink-2); border: 1px solid var(--ax-line-2); background: var(--ax-paper);
+}
+.fd-row-action:hover { color: var(--ax-accent); border-color: var(--ax-accent); }
 
 .fd-detail-row > td { padding: 0 !important; background: var(--ax-paper); white-space: normal; }
 .fd-facts { padding: 0.8em 1em 1em 2.6em; border-left: 3px solid var(--ax-accent); }
@@ -57,23 +314,36 @@
 .fd-facts dt { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-3); padding-top: 0.2em; }
 .fd-facts dd { margin: 0; color: var(--ax-ink); }
 .fd-facts details { margin-top: 0.6em; font-size: 0.8em; color: var(--ax-ink-2); }
-.fd-facts summary { min-height: 3.45em; display: flex; align-items: center; cursor: pointer; }
-.fd-facts pre { overflow-x: auto; margin: 0; padding: 0.8em; background: var(--ax-panel); border: 1px solid var(--ax-line); }
+.fd-facts summary { min-height: 3em; display: flex; align-items: center; cursor: pointer; font-weight: 700; color: var(--ax-ink); }
+.fd-facts pre { overflow-x: auto; margin: 0; padding: 0.8em; background: var(--ax-panel); border: 1px solid var(--ax-line); color: var(--ax-ink); font-size: 0.85em; }
 
-.fd-empty { color: var(--ax-ink-2); }
-.fd-foot { margin: 1.5em 0 0; font-size: 0.8em; color: var(--ax-ink-3); max-width: 70em; }
+.fd-empty { color: var(--ax-ink-2); font-size: 0.9em; margin: 1em 0; }
+.fd-foot { margin: 2em 0 0; font-size: 0.8em; color: var(--ax-ink-3); max-width: 76em; line-height: 1.6; border-top: 1px solid var(--ax-line); padding-top: 1em; }
 
-/* phone: keep Bus, Doing, Last signal; the rest is one tap away in the row */
+/* ── Responsive Breakpoints ──────────────────────────────────────────────── */
 @media (max-width: 719px) {
-  .fd-table th:nth-child(3), .fd-table td:nth-child(3), .fd-table th:nth-child(4), .fd-table td:nth-child(4),
+  .fd-table th:nth-child(3), .fd-table td:nth-child(3),
+  .fd-table th:nth-child(4), .fd-table td:nth-child(4),
   .fd-table th:nth-child(6), .fd-table td:nth-child(6) { display: none; }
   .fd-detail-row > td { display: table-cell !important; }
   .fd-facts { padding-left: 1em; }
   .fd-facts dl div { grid-template-columns: 1fr; gap: 0; }
   .fd-search { max-width: none; }
+  .fd-card__stats { grid-template-columns: 1fr 1fr; }
+  .fd-corridor-row { grid-template-columns: 1fr; gap: 0.4em; }
+  .fd-hud__grid { grid-template-columns: 1fr; }
 }
+
 @media (min-width: 720px) {
   .fd-page { padding: 1.5em 2em 4em; }
   .fd-head { flex-direction: row; justify-content: space-between; align-items: flex-start; }
+  .fd-table-head { flex-direction: row; justify-content: space-between; align-items: flex-start; }
   .fd-nav { grid-template-columns: repeat(4, auto); flex-shrink: 0; }
+  .fd-analytics__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fd-card--wide { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1040px) {
+  .fd-stage { grid-template-columns: minmax(0, 1.75fr) minmax(22em, 0.85fr); align-items: start; }
+  .fd-map { height: calc(100vh - 20em); min-height: 28em; }
 }
