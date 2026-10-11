@@ -53,6 +53,7 @@ COMMIT_MESSAGE="${1:-$(git log -1 --pretty=%s)}"
 echo "→ wrangler pages deploy dist/client ($COMMIT_HASH)"
 npx --yes wrangler pages deploy dist/client \
   --project-name phuket-smart-bus \
+  --branch=main \
   --commit-dirty=true \
   --commit-hash="$COMMIT_HASH" \
   --commit-message="$COMMIT_MESSAGE"
