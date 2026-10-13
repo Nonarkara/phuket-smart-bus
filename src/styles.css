@@ -15167,7 +15167,8 @@ a { color: var(--tint); }
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     grid-template-rows: auto auto auto minmax(0, 1fr);
   }
-  .v2--operations .v2-map > .v2-map__stage { grid-column: 1; grid-row: 1 / -1; min-height: 0; border-right: 1px solid var(--ax-line-2); }
+  /* overflow: hidden keeps the map's badges and alert banner inside the map. */
+  .v2--operations .v2-map > .v2-map__stage { grid-column: 1; grid-row: 1 / -1; min-height: 0; overflow: hidden; border-right: 1px solid var(--ax-line-2); }
   .v2--operations .v2-map > :not(.v2-map__stage) { grid-column: 2; min-width: 0; }
   .v2--operations .v2-map > :last-child { min-height: 0; overflow-y: auto; }
   .v2--operations .v2-map__hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
