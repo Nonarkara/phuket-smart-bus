@@ -128,3 +128,13 @@ export function service(r: Row): string {
   if (r.line.loop) return "Dragon loop";
   return `${r.line.from} ↔ ${r.line.to}${r.bus.destination ? `, to ${r.bus.destination}` : ""}`;
 }
+
+/**
+ * The whole island as the PKSB lines span it, Airport (north) to Rawai (south).
+ * Island maps open on this frame so the long north–south shape fills the map top to bottom.
+ */
+export const ISLAND_BOUNDS: [[number, number], [number, number]] = (() => {
+  const pts = LINES.flatMap((l) => l.poly);
+  const lats = pts.map((p) => p[0]!), lngs = pts.map((p) => p[1]!);
+  return [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
+})();

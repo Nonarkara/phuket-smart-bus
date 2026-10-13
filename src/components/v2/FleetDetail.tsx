@@ -24,7 +24,7 @@ import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } f
 import { appPath } from "../../lib/paths";
 import {
   ago, bkkClock, BUNCH_M, duration, isOut, LINES, loadToday, MOVING_KPH, readRow, service,
-  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today,
+  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today, ISLAND_BOUNDS,
 } from "./fleetRows";
 import "./fleetDetail.css";
 
@@ -98,7 +98,6 @@ function FleetDetailMap({
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
-  const framed = useRef(false);
 
   useEffect(() => {
     if (!el.current || map.current) return;
@@ -134,7 +133,14 @@ function FleetDetailMap({
     layer.current = L.layerGroup().addTo(m);
     map.current = m;
 
-    const ro = new ResizeObserver(() => m.invalidateSize());
+    // Open on the whole island and keep it framed while the full-height column settles,
+    // until someone pans or scrolls the map themselves.
+    let touched = false;
+    m.on("dragstart", () => { touched = true; });
+    el.current.addEventListener("wheel", () => { touched = true; }, { passive: true });
+    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(ISLAND_BOUNDS, { padding: [16, 16] }); };
+    frame();
+    const ro = new ResizeObserver(frame);
     ro.observe(el.current);
     return () => {
       ro.disconnect();
@@ -161,15 +167,6 @@ function FleetDetailMap({
       );
       marker.on("click", () => onSelect(r.bus.plate));
       marker.addTo(g);
-    }
-
-    const out = shown.filter(isOut);
-    if (!framed.current && map.current && out.length >= 2) {
-      map.current.fitBounds(L.latLngBounds(out.map((r) => [r.bus.lat, r.bus.lng] as [number, number])), {
-        padding: [30, 30],
-        maxZoom: 13,
-      });
-      framed.current = true;
     }
   }, [rows, focus, onSelect]);
 
@@ -317,7 +314,7 @@ function BusInspectorHUD({
         </div>
         <div>
           <dt>Trips Today</dt>
-          <dd>{today?.trips ? `${today.trips} ${today.trips === 1 ? "trip" : "trips"} completed` : "0 trips finished"}</dd>
+          <dd>{!row.line ? "Not counted — no PKSB line" : today?.trips ? `${today.trips} ${today.trips === 1 ? "trip" : "trips"} completed` : "None finished yet"}</dd>
         </div>
         <div>
           <dt>Tracker Source</dt>
@@ -325,7 +322,7 @@ function BusInspectorHUD({
         </div>
         <div>
           <dt>Device Link</dt>
-          <dd>{b.online === true ? "Online" : b.online === false ? "Offline" : "Connected"}</dd>
+          <dd>{b.online === true ? "Online" : b.online === false ? "Offline" : "Not reported"}</dd>
         </div>
       </dl>
 
@@ -701,7 +698,20 @@ export function FleetDetail() {
 
   return (
     <div className="v2 v2--operations fd">
-      <div className="fd-page">
+      <div className="fd-shell">
+        <div className="fd-stage__map">
+            <header className="fd-stage__map-head">
+              <div>
+                <strong>Interactive Fleet Map</strong>
+                <span>{count("road")} buses transmitting live positions</span>
+              </div>
+              <span className="fd-stage__freshness">
+                {feedAge === null ? "Waiting for relay" : feedAge < 5 ? "Live stream" : `${feedAge}s delay`}
+              </span>
+            </header>
+            <FleetDetailMap rows={rows} focus={focus} onSelect={handleSelectBus} />
+          </div>
+      <div className="fd-rail">
         <header className="fd-head">
           <div>
             <p className="fd-eyebrow">Phuket Smart Bus · Real Telemetry & Operational Observatory</p>
@@ -721,19 +731,8 @@ export function FleetDetail() {
         </header>
 
         {/* ── Interactive Stage: Live Map + Bus Inspector HUD ───────────── */}
-        <section className="fd-stage" aria-label="Live fleet map and telemetry inspector">
-          <div className="fd-stage__map">
-            <header className="fd-stage__map-head">
-              <div>
-                <strong>Interactive Fleet Map</strong>
-                <span>{count("road")} buses transmitting live positions</span>
-              </div>
-              <span className="fd-stage__freshness">
-                {feedAge === null ? "Waiting for relay" : feedAge < 5 ? "Live stream" : `${feedAge}s delay`}
-              </span>
-            </header>
-            <FleetDetailMap rows={rows} focus={focus} onSelect={handleSelectBus} />
-          </div>
+        <section className="fd-stage" aria-label="Bus inspector">
+
 
           <aside className="fd-stage__sidebar">
             {focusedRow ? (
@@ -908,6 +907,7 @@ export function FleetDetail() {
           Sources: the two trackers behind the official map (smartbus.phuket.cloud) — the line-fleet tracker for Airport, Patong and Dragon buses, and the
           town-fleet tracker for town routes. &quot;Today&quot; is our collector&apos;s record since 03:00 Bangkok. Passenger counters read zero on every bus, so they are shown as sent and never used as rider counts.
         </p>
+      </div>
       </div>
     </div>
   );

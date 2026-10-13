@@ -15142,3 +15142,34 @@ a { color: var(--tint); }
   .capacity__panel { min-width: 0; overflow-x: auto; }
   .capacity__hours-table, .capacity__fleet-table { min-width: 680px; }
 }
+
+/* ── /ops header story: one line or nothing ──────────────────────────────────
+   The header grid gives the story whatever the brand, tabs, clock and links leave:
+   111 px at 1440. Its four stacked lines spilled above the viewport and across the
+   OPS tab. The figure is modelled demand the left column already shows, so below
+   1700 px it steps aside; above, it is one truncated line. */
+.v2 .v2-header__story {
+  min-width: 0; overflow: hidden; flex-direction: row; flex-wrap: nowrap;
+  align-items: baseline; justify-content: flex-start; gap: 10px; padding: 0 16px;
+}
+.v2 .v2-header__story > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.v2 .v2-header__story > .v2-header__story-detail:last-child { display: none; }
+@media (max-width: 1699px) { .v2 .v2-header__story { visibility: hidden; padding: 0; } }
+
+/* ── /ops map column: the island gets the full height ───────────────────────
+   Phuket is long and thin. The map used to share its column with the conditions
+   strip, the four cards and the fleet table and got a 962×240 letterbox. On a wide
+   wall the map section splits: the map runs top to bottom on the left, the strip,
+   cards (2×2), status line and fleet table stack on the right. */
+@media (min-width: 1000px) {
+  .v2--operations .v2-map {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .v2--operations .v2-map > .v2-map__stage { grid-column: 1; grid-row: 1 / -1; min-height: 0; border-right: 1px solid var(--ax-line-2); }
+  .v2--operations .v2-map > :not(.v2-map__stage) { grid-column: 2; min-width: 0; }
+  .v2--operations .v2-map > :last-child { min-height: 0; overflow-y: auto; }
+  .v2--operations .v2-map__hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v2--operations .v2-map > .v2-conditions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

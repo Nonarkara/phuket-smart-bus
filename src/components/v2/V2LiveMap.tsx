@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { ISLAND_BOUNDS } from "./fleetRows";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap, CircleMarker, Tooltip } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
@@ -474,15 +475,25 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
   const map = useMap();
   useEffect(() => {
     let raf = 0;
+    let touched = false;
+    const onDrag = () => { touched = true; };
+    map.on("dragstart", onDrag);
+    // The map column now runs the full height of the wall, so the corridor frame fits the
+    // island's bus lines (Airport to Rawai) to whatever height it gets, and re-fits as the
+    // layout settles — until an operator pans it. The island frame keeps its fixed view
+    // (it exists to show the ferry lanes east of the island).
     const fix = () => {
       map.invalidateSize();
-      const { center, zoom } = FRAMES[frame];
-      map.setView(center, zoom, { animate: false });
+      if (touched) return;
+      if (frame === "corridor") map.fitBounds(ISLAND_BOUNDS, { padding: [12, 12], animate: false });
+      else map.setView(FRAMES.island.center, FRAMES.island.zoom, { animate: false });
     };
     raf = requestAnimationFrame(() => {
       raf = requestAnimationFrame(fix);
     });
-    return () => cancelAnimationFrame(raf);
+    const ro = new ResizeObserver(fix);
+    ro.observe(map.getContainer());
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); map.off("dragstart", onDrag); };
   }, [map, frame]);
   return null;
 }
