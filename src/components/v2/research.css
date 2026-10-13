@@ -46,6 +46,13 @@
 /* cards + charts */
 .rs-card { background: var(--ax-panel); border: 1px solid var(--ax-line); padding: 1em; margin-top: 1em; }
 .rs-week-say { margin: 0 0 0.8em; color: var(--ax-ink); max-width: 46em; }
+/* the whole record — the headline finding, above the single-day view */
+.rs-period { margin: 0 0 1.5em; padding: 1em 1.1em; background: var(--ax-panel); border: 1px solid var(--ax-line); border-top: 3px solid var(--ax-accent); }
+.rs-period h2 { margin: 0 0 0.6em; font-size: 1em; font-weight: 700; color: var(--ax-ink); }
+.rs-period ul { margin: 0 0 0.8em; padding: 0; list-style: none; display: grid; gap: 0.55em; }
+.rs-period li { color: var(--ax-ink); max-width: 52em; padding-left: 0.9em; border-left: 2px solid var(--ax-line-2); }
+.rs-period__plan { margin: 0.4em 0 0.8em; border-top: 1px solid var(--ax-line); }
+.rs-period__plan summary { min-height: 2.75em; display: flex; align-items: center; cursor: pointer; font-weight: 700; color: var(--ax-accent); }
 .rs-hint { margin: 0 0 0.8em; font-size: 0.8em; color: var(--ax-ink-2); max-width: 60em; }
 .rs-chart { display: block; overflow: visible; }
 .rs-scroll { overflow-x: auto; }

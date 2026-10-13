@@ -24,8 +24,9 @@ import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } f
 import { appPath } from "../../lib/paths";
 import {
   ago, BUNCH_M, bkkClock, duration, isOut, LINES, loadToday, MOVING_KPH, readRow, service, STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN,
-  type Line, type Row, type State, type Today,
+  ISLAND_BOUNDS, type Line, type Row, type State, type Today,
 } from "./fleetRows";
+import { lineInsight, type SlimDay } from "@shared/insights";
 import "./fleetConsole.css";
 
 /** "2 on the way to Rawai." / "None on the way to Patong." */
@@ -106,7 +107,6 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
-  const framed = useRef(false);
 
   useEffect(() => {
     if (!el.current || map.current) return;
@@ -124,7 +124,14 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
     map.current = m;
     // Leaflet measures its box once; the layout settles after. Re-measure on every resize
     // or the tiles only fill the first size (the black half-map).
-    const ro = new ResizeObserver(() => m.invalidateSize());
+    // Open on the whole island, and keep it framed as the map settles to full height —
+    // until someone pans or scrolls the map themselves.
+    let touched = false;
+    m.on("dragstart", () => { touched = true; });
+    el.current.addEventListener("wheel", () => { touched = true; }, { passive: true });
+    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(ISLAND_BOUNDS, { padding: [16, 16] }); };
+    frame();
+    const ro = new ResizeObserver(frame);
     ro.observe(el.current);
     return () => { ro.disconnect(); m.remove(); map.current = null; };
   }, []);
@@ -139,11 +146,6 @@ function FleetMap({ rows, focus, onFocus }: { rows: Row[]; focus: string | null;
         .bindTooltip(`${r.bus.plate} · ${STATE_WORD[r.state]}${r.near ? ` · near ${r.near}` : ""}`, { direction: "top", offset: [0, -10] })
         .on("click", () => onFocus(r.bus.plate))
         .addTo(g);
-    }
-    const out = shown.filter(isOut);
-    if (!framed.current && map.current && out.length >= 2) {
-      map.current.fitBounds(L.latLngBounds(out.map((r) => [r.bus.lat, r.bus.lng] as [number, number])), { padding: [30, 30], maxZoom: 13 });
-      framed.current = true;
     }
   }, [rows, focus, onFocus]);
 
@@ -227,7 +229,16 @@ export function FleetConsole() {
 
   return (
     <div className="v2 v2--operations fc">
-      <div className="fc-page">
+      <div className="fc-shell">
+        <section className="fc-mapstage" aria-label="Live network geometry">
+            <header className="fc-mapstage__head">
+              <div><strong>Network geometry</strong><span>GPS fixes on known service lines</span></div>
+              <span>{freshness}</span>
+            </header>
+            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
+        </section>
+
+        <div className="fc-rail">
         <header className="fc-head">
           <div className="fc-identity">
             <p className="fc-eyebrow">Phuket Mobility Observatory</p>
@@ -257,16 +268,7 @@ export function FleetConsole() {
           </dl>
         </section>
 
-        <div className="fc-main">
-          <section className="fc-mapstage" aria-label="Live network geometry">
-            <header className="fc-mapstage__head">
-              <div><strong>Network geometry</strong><span>GPS fixes on known service lines</span></div>
-              <span>{freshness}</span>
-            </header>
-            <FleetMap rows={rows} focus={focus} onFocus={setFocus} />
-          </section>
-
-          <aside className="fc-board" aria-label="Lines">
+        <aside className="fc-board" aria-label="Lines">
             <section className={`fc-posture${attention.length > 0 ? " has-exception" : ""}`}>
               <span className="fc-posture__label">Operational read</span>
               <strong>{posture}</strong>
@@ -287,6 +289,8 @@ export function FleetConsole() {
               </section>
             )}
 
+            <RecordCard />
+
             {LINES.map((line) => (
               <LineBlock key={line.routeId} line={line} rows={rows.filter((r) => r.line === line)} today={today?.line[line.routeId]} focus={focus} onFocus={setFocus} />
             ))}
@@ -298,8 +302,7 @@ export function FleetConsole() {
                 {" "}These run Phuket Town routes that aren't PKSB lines, so they show on the map only.
               </p>
             </section>
-          </aside>
-        </div>
+        </aside>
 
         <details className="fc-all">
           <summary>All {rows.length} buses</summary>
@@ -327,6 +330,7 @@ export function FleetConsole() {
           <strong>Evidence boundary.</strong> Positions come from the two public trackers behind smartbus.phuket.cloud, normally about one fix a minute per bus.
           Trips and distance come from our collector since 03:00 Bangkok. Passenger counters report zero, so this surface does not claim occupancy, ridership, revenue, or demand.
         </footer>
+        </div>
       </div>
     </div>
   );
@@ -351,6 +355,27 @@ function BusDetail({ row: r, now, today, onClose }: { row: Row; now: number; tod
         {b.odometerM ? ` Odometer ${Math.round(b.odometerM / 1000).toLocaleString()} km.` : ""}
       </p>
       <details><summary>Raw tracker row</summary><pre>{JSON.stringify(b, null, 2)}</pre></details>
+    </section>
+  );
+}
+
+/** The long view beside the live one: what every recorded day says, one sentence per line. */
+function RecordCard() {
+  const [days, setDays] = useState<SlimDay[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetch(appPath("/api/research/period")).then((r) => r.json()).then((j) => { if (alive && j?.ok) setDays(j.days); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  if (!days) return null;
+  const said = LINES.map((l) => ({ l, ins: lineInsight(days, l.routeId, { from: l.from, to: l.to, loop: l.loop, timetableMin: TIMETABLE_MIN[l.routeId] ?? null }) }))
+    .filter((x) => x.ins && x.ins.days >= 3);
+  if (said.length === 0) return null;
+  return (
+    <section className="fc-record" aria-label="From the recorded days">
+      <h2>From {said[0]!.ins!.days} days of GPS</h2>
+      <ul>{said.map(({ l, ins }) => <li key={l.routeId}><strong>{l.name}.</strong> {ins!.sentences[0]!.replace(/^Over \d+ days, /, "")}</li>)}</ul>
+      <a href={appPath("/research")}>Every finding, hour by hour →</a>
     </section>
   );
 }

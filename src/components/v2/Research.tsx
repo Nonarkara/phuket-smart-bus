@@ -17,6 +17,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { appPath } from "../../lib/paths";
+import { dirLabel, lineInsight, type SlimDay } from "@shared/insights";
 import "./research.css";
 
 type Trip = {
@@ -360,6 +361,8 @@ export function Research() {
 
         {line && (
           <>
+            <PeriodView routeId={line.routeId} name={line.name} from={line.from} to={line.to} loop={line.loop} />
+
             <section className="rs-short" aria-label="In short">
               <h2>In short — {line.name}</h2>
               <ul>{said.map((s, i) => <li key={i}>{s}</li>)}</ul>
@@ -438,6 +441,61 @@ export function Research() {
 
 // ── across the week: one day is a sample, a week is a pattern ─────────────
 type DaySum = { date: string; trips: number; buses: number; median: number | null };
+
+// ── the whole record: what every recorded day says together ───────────────
+function PeriodView({ routeId, name, from, to, loop }: { routeId: string; name: string; from: string; to: string; loop: boolean }) {
+  const [period, setPeriod] = useState<{ days: SlimDay[]; pending: string[] } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetch(appPath("/api/research/period")).then((r) => r.json()).then((j) => { if (alive && j?.ok) setPeriod({ days: j.days, pending: j.pending ?? [] }); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const names = { from, to, loop, timetableMin: TIMETABLE_MIN[routeId] ?? null };
+  const ins = useMemo(() => (period ? lineInsight(period.days, routeId, names) : null), [period, routeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!ins || ins.days < 3) return null;
+  const word = loop ? "lap" : "trip";
+  const hours = [...new Set(ins.byHour.map((h) => h.hour))].sort((a, b) => a - b);
+  const cell = (dir: string, hour: number) => ins.byHour.find((h) => h.dir === dir && h.hour === hour);
+  return (
+    <section className="rs-period" aria-label={`What ${ins.days} days of GPS show`}>
+      <h2>What {ins.days} days of GPS show — {name}</h2>
+      <ul>{ins.sentences.map((x, i) => <li key={i}>{x}</li>)}</ul>
+      <details className="rs-period__plan">
+        <summary>A timetable these buses can keep — running time by the hour they leave</summary>
+        <p className="rs-hint">
+          Pooled over {ins.days} days ({ins.trips} {word}s). "Usually" is the median; "plan for" is the time 85% of real {word}s made.
+          Hours with fewer than 3 {word}s are left out.
+        </p>
+        <div className="rs-scroll">
+          <table className="rs-table">
+            <thead>
+              <tr><th>Leaving at</th>{ins.dirs.map((d) => <th key={d} colSpan={2} className="rs-num">{dirLabel(names, d)}</th>)}</tr>
+              <tr><th />{ins.dirs.flatMap((d) => [<th key={`${d}u`} className="rs-num">usually</th>, <th key={`${d}p`} className="rs-num">plan for</th>])}</tr>
+            </thead>
+            <tbody>
+              {hours.map((h) => (
+                <tr key={h}>
+                  <td>{hhmm(h * 60)}</td>
+                  {ins.dirs.flatMap((d) => {
+                    const c = cell(d, h);
+                    return [
+                      <td key={`${d}u`} className="rs-num">{c ? `${dur(c.median)} (${c.n})` : "—"}</td>,
+                      <td key={`${d}p`} className="rs-num"><strong>{c ? dur(c.p85) : "—"}</strong></td>,
+                    ];
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <p className="rs-hint">
+        A wait counts from one recorded {word} start to the next; a bus whose tracker went quiet mid-{word} leaves no {word}, so a long wait can be a missing bus or a missing signal.
+        {period && period.pending.length > 0 ? ` ${period.pending.length} more ${period.pending.length === 1 ? "day is" : "days are"} still being analysed — refresh in a minute.` : ""}
+      </p>
+    </section>
+  );
+}
 
 function WeekView({ routeId, name, loop, date }: { routeId: string; name: string; loop: boolean; date: string }) {
   const [days, setDays] = useState<DaySum[] | null>(null);
