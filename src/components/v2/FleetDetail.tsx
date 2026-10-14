@@ -24,7 +24,7 @@ import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } f
 import { appPath } from "../../lib/paths";
 import {
   ago, bkkClock, BUNCH_M, duration, isOut, LINES, loadToday, MOVING_KPH, readRow, service,
-  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today, ISLAND_BOUNDS,
+  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today, ISLAND_BOUNDS, CORRIDOR_LANDMARKS,
 } from "./fleetRows";
 import "./fleetDetail.css";
 
@@ -104,6 +104,8 @@ function FleetDetailMap({
     const m = L.map(el.current, {
       center: [7.93, 98.33],
       zoom: 11,
+      zoomSnap: 0.1,
+      zoomDelta: 0.25,
       minZoom: 9,
       maxZoom: 18,
       worldCopyJump: false,
@@ -120,14 +122,13 @@ function FleetDetailMap({
         weight: 3,
         interactive: false,
       }).addTo(m);
-      const [a, b] = [line.poly[0]!, line.poly[line.poly.length - 1]!];
-      const ends = line.loop ? [{ at: a, name: "Dragon loop" }] : [{ at: a, name: line.from }, { at: b, name: line.to }];
-      for (const e of ends) {
-        L.marker([e.at[0]!, e.at[1]!], {
-          interactive: false,
-          icon: L.divIcon({ className: "fd-terminal-pin", html: `<span>${e.name}</span>`, iconSize: [0, 0] }),
-        }).addTo(m);
-      }
+    }
+
+    for (const lm of CORRIDOR_LANDMARKS) {
+      L.marker([lm.lat, lm.lng], {
+        interactive: false,
+        icon: L.divIcon({ className: `fd-landmark-pin fd-landmark-pin--${lm.role}`, html: `<span>${lm.name}</span>`, iconSize: [0, 0] }),
+      }).addTo(m);
     }
 
     layer.current = L.layerGroup().addTo(m);
@@ -138,7 +139,7 @@ function FleetDetailMap({
     let touched = false;
     m.on("dragstart", () => { touched = true; });
     el.current.addEventListener("wheel", () => { touched = true; }, { passive: true });
-    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(ISLAND_BOUNDS, { padding: [16, 16] }); };
+    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(ISLAND_BOUNDS, { padding: [16, 12] }); };
     frame();
     const ro = new ResizeObserver(frame);
     ro.observe(el.current);

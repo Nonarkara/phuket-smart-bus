@@ -256,6 +256,10 @@ export type SimState = {
     isBoarding?: boolean;
     /** Real tracker bus: position is observed, load is the model's estimate. */
     paxEstimated?: boolean;
+    /** Human-readable direction, e.g. "Bus to Rawai" or "Bus to Airport". */
+    directionLabel?: string | null;
+    destination?: string | null;
+    speedKph?: number;
   }[];
 };
 

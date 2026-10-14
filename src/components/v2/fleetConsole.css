@@ -54,11 +54,15 @@
 /* Filter the whole tile pane, not each tile: per-tile filters leave a seam grid. */
 .fc-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.85) saturate(0.5); }
 .fc-route { stroke: #c9d2da; stroke-opacity: 0.55; fill: none; }
-.fc-terminal span {
+.fc-terminal span, .fc-landmark-pin span {
   position: absolute; transform: translate(-50%, -150%); white-space: nowrap;
   font: 700 0.8em/1 var(--font-body, sans-serif); color: var(--ax-ink); background: var(--ax-paper);
-  padding: 0.2em 0.4em; border: 1px solid var(--ax-line-2);
+  padding: 0.2em 0.45em; border: 1px solid var(--ax-line-2); border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3); pointer-events: none;
 }
+.fc-landmark-pin--airport span { border-color: var(--ax-accent); color: var(--ax-accent); font-weight: 800; }
+.fc-landmark-pin--terminus span { border-color: #2dd4bf; color: #2dd4bf; }
+.fc-landmark-pin--town span { border-color: #93c5fd; color: #93c5fd; }
 .fc-legend {
   position: absolute; left: 0.6em; bottom: 0.6em; z-index: 500; display: flex; flex-wrap: wrap; gap: 0.4em 1em;
   padding: 0.4em 0.7em; background: var(--ax-paper); border: 1px solid var(--ax-line-2); font-size: 0.8em; color: var(--ax-ink-2);

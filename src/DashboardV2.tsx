@@ -96,10 +96,11 @@ function computeOpsScale(): number {
   return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
 }
 
-/** A laptop should get the focused briefing, not a cropped wall console. */
+/** Handheld devices (< 960px) get the mobile briefing; laptops and desktops
+ * get the full operations console with the tall top-to-bottom island map. */
 function shouldUseCompactOps(): boolean {
   if (typeof window === "undefined") return false;
-  return window.innerWidth < 1360 || window.innerHeight < 820;
+  return window.innerWidth < 960;
 }
 
 /** "boarded so far · 163 delivered · 56% of riders" — the collected card.

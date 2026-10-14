@@ -12694,7 +12694,7 @@ a { color: var(--tint); }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.v2-brief__map-frame { height: 330px; }
+.v2-brief__map-frame { height: 65vh; min-height: 440px; }
 .v2-brief__map-frame > .v2-map__frame,
 .v2-brief__map-frame .v2-map__canvas { height: 100%; min-height: 0; }
 .v2-brief__note { padding: 12px 18px; font-size: var(--t-micro) !important; }
@@ -12843,7 +12843,7 @@ a { color: var(--tint); }
   .v2-brief { display: flex; flex-direction: column; }
   .v2-brief__decision { padding: 18px 16px; }
   .v2-brief h2 { font-size: 20px; }
-  .v2-brief__map-frame { height: 260px; }
+  .v2-brief__map-frame { height: 65vh; min-height: 420px; }
   .v2-brief__totals { grid-template-columns: 1fr 1fr; flex: none; }
   .v2-brief__totals strong { font-size: 20px; }
   .v2-brief__hours { grid-template-columns: 1fr; }
@@ -15161,7 +15161,7 @@ a { color: var(--tint); }
    strip, the four cards and the fleet table and got a 962×240 letterbox. On a wide
    wall the map section splits: the map runs top to bottom on the left, the strip,
    cards (2×2), status line and fleet table stack on the right. */
-@media (min-width: 1000px) {
+@media (min-width: 900px) {
   .v2--operations .v2-map {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
@@ -15174,3 +15174,92 @@ a { color: var(--tint); }
   .v2--operations .v2-map__hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v2--operations .v2-map > .v2-conditions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ── Human Orientation Landmarks on the Phuket Corridor ─────────────────── */
+.v2-landmark-icon {
+  pointer-events: none;
+}
+.v2-landmark-badge {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgba(10, 14, 20, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #e6edf3;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+}
+.v2-landmark-badge--airport {
+  border-color: rgba(245, 158, 11, 0.7);
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  font-size: 12px;
+}
+.v2-landmark-badge--terminus {
+  border-color: rgba(22, 184, 176, 0.7);
+  background: rgba(22, 184, 176, 0.14);
+  color: #2dd4bf;
+  font-size: 11.5px;
+}
+.v2-landmark-badge--town {
+  border-color: rgba(147, 197, 253, 0.6);
+  color: #93c5fd;
+}
+.v2-landmark-badge--hub {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.v2-landmark-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.v2-landmark-name {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.v2-landmark-sub {
+  font-size: 9.5px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+/* Landmarks in FleetConsole (/fleet) and FleetDetail (/fleet/raw) */
+.fc-landmark-pin, .fd-landmark-pin {
+  pointer-events: none;
+}
+.fc-landmark-pin span, .fd-landmark-pin span {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+  white-space: nowrap;
+  font: 700 0.75em/1 var(--font-mono, monospace);
+  color: var(--ax-ink);
+  background: var(--ax-paper);
+  padding: 0.25em 0.5em;
+  border: 1px solid var(--ax-line-2);
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.fc-landmark-pin--airport span, .fd-landmark-pin--airport span {
+  border-color: var(--ax-accent);
+  color: var(--ax-accent);
+  font-weight: 800;
+}
+.fc-landmark-pin--terminus span, .fd-landmark-pin--terminus span {
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+}
+

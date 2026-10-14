@@ -52,11 +52,15 @@
 .fd-map { position: absolute; inset: 0; background: var(--ax-paper); }
 .fd-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.85) saturate(0.5); }
 .fd-route-poly { stroke: var(--ax-accent); stroke-opacity: 0.6; fill: none; }
-.fd-terminal-pin span {
+.fd-terminal-pin span, .fd-landmark-pin span {
   position: absolute; transform: translate(-50%, -150%); white-space: nowrap;
   font: 700 0.75em/1 var(--font-body, sans-serif); color: var(--ax-ink); background: var(--ax-paper);
-  padding: 0.25em 0.45em; border: 1px solid var(--ax-line-2);
+  padding: 0.25em 0.5em; border: 1px solid var(--ax-line-2); border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); pointer-events: none;
 }
+.fd-landmark-pin--airport span { border-color: var(--ax-accent); color: var(--ax-accent); font-weight: 800; }
+.fd-landmark-pin--terminus span { border-color: #2dd4bf; color: #2dd4bf; }
+.fd-landmark-pin--town span { border-color: #93c5fd; color: #93c5fd; }
 
 .fd-map-controls { position: absolute; top: 0.6em; right: 0.6em; z-index: 500; display: flex; gap: 0.4em; }
 .fd-map-controls button {

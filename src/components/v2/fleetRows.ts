@@ -138,3 +138,29 @@ export const ISLAND_BOUNDS: [[number, number], [number, number]] = (() => {
   const lats = pts.map((p) => p[0]!), lngs = pts.map((p) => p[1]!);
   return [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
 })();
+
+export type CorridorLandmark = {
+  id: string;
+  name: string;
+  sub?: string;
+  lat: number;
+  lng: number;
+  role: "airport" | "terminus" | "hub" | "town";
+};
+
+/**
+ * Key visual landmarks along Phuket island from North to South.
+ * Gives human observers instant mental orientation:
+ * ✈ HKT Airport at the top, Patong on the west, Old Town on the east, Rawai at the bottom.
+ */
+export const CORRIDOR_LANDMARKS: readonly CorridorLandmark[] = [
+  { id: "hkt", name: "✈ HKT Airport", sub: "Arrival Curb", lat: 8.1132, lng: 98.3169, role: "airport" },
+  { id: "bangtao", name: "Bang Tao", sub: "Cherngtalay", lat: 7.9950, lng: 98.3000, role: "hub" },
+  { id: "kamala", name: "Kamala", sub: "Beach", lat: 7.9520, lng: 98.2830, role: "hub" },
+  { id: "patong", name: "Patong", sub: "Beach & Nightlife", lat: 7.8960, lng: 98.2970, role: "hub" },
+  { id: "karon", name: "Karon / Kata", sub: "Resorts", lat: 7.8350, lng: 98.2990, role: "hub" },
+  { id: "oldtown", name: "Phuket Town", sub: "Terminal 1", lat: 7.8840, lng: 98.3920, role: "town" },
+  { id: "chalong", name: "Chalong Pier", sub: "Boats & Ferries", lat: 7.8220, lng: 98.3440, role: "hub" },
+  { id: "rawai", name: "Rawai Beach", sub: "South Terminus", lat: 7.7730, lng: 98.3180, role: "terminus" },
+] as const;
+

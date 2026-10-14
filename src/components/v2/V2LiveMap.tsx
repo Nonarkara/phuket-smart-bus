@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
-import { ISLAND_BOUNDS } from "./fleetRows";
+import { ISLAND_BOUNDS, CORRIDOR_LANDMARKS } from "./fleetRows";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap, CircleMarker, Tooltip } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
@@ -97,10 +97,28 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
 
 function busTooltip(vehicle: SimState["vehicles"][number]) {
   const isFerry = FERRY_ROUTES.has(vehicle.route);
-  if (isFerry) return `${vehicle.plate} · scheduled vessel`;
-  return vehicle.paxEstimated
-    ? `${vehicle.plate} · live GPS · ~${vehicle.pax}/${BUS_CAP} est.`
-    : `${vehicle.plate} · ${vehicle.pax}/${BUS_CAP}`;
+  if (isFerry) return `⛴ ${vehicle.plate} · Scheduled ferry`;
+
+  const isSouthbound = vehicle.heading > 90 && vehicle.heading < 270;
+  const dir = vehicle.directionLabel
+    ? vehicle.directionLabel
+    : isSouthbound
+      ? "Southbound to Rawai"
+      : "Northbound to Airport";
+
+  const loadText = vehicle.paxEstimated
+    ? `~${vehicle.pax}/${BUS_CAP} pax (est)`
+    : `${vehicle.pax}/${BUS_CAP} pax`;
+
+  const motionText = vehicle.isBoarding
+    ? "Boarding at curb"
+    : vehicle.status === "moving"
+      ? vehicle.speedKph
+        ? `${Math.round(vehicle.speedKph)} km/h`
+        : "Moving"
+      : "Standing";
+
+  return `🚌 ${vehicle.plate} · ${dir} · ${motionText} · ${loadText}`;
 }
 
 function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], focused: boolean) {
@@ -360,18 +378,37 @@ function AircraftLayer({
   return null;
 }
 
-function HktMarker() {
-  return (
-    <CircleMarker
-      center={[7.8804, 98.3923]}
-      radius={6}
-      pathOptions={{ color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.85, weight: 1 }}
-    >
-      <Tooltip direction="top" offset={[0, -4]} permanent={false}>
-        HKT · Phuket Airport
-      </Tooltip>
-    </CircleMarker>
-  );
+function CorridorLandmarksLayer() {
+  const map = useMap();
+  useEffect(() => {
+    const markers: L.Marker[] = [];
+    for (const lm of CORRIDOR_LANDMARKS) {
+      const isAirport = lm.role === "airport";
+      const isTerminus = lm.role === "terminus";
+      const isTown = lm.role === "town";
+      const cls = `v2-landmark-badge v2-landmark-badge--${lm.role}`;
+      const icon = L.divIcon({
+        className: "v2-landmark-icon",
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+        html: `<div class="${cls}">
+          <span class="v2-landmark-dot"></span>
+          <span class="v2-landmark-name">${lm.name}</span>
+          ${lm.sub ? `<span class="v2-landmark-sub">${lm.sub}</span>` : ""}
+        </div>`,
+      });
+      const marker = L.marker([lm.lat, lm.lng], {
+        icon,
+        interactive: false,
+        zIndexOffset: isAirport ? 800 : isTerminus ? 700 : isTown ? 600 : 500,
+      }).addTo(map);
+      markers.push(marker);
+    }
+    return () => {
+      for (const m of markers) map.removeLayer(m);
+    };
+  }, [map]);
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -485,7 +522,7 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
     const fix = () => {
       map.invalidateSize();
       if (touched) return;
-      if (frame === "corridor") map.fitBounds(ISLAND_BOUNDS, { padding: [12, 12], animate: false });
+      if (frame === "corridor") map.fitBounds(ISLAND_BOUNDS, { padding: [16, 12], animate: false });
       else map.setView(FRAMES.island.center, FRAMES.island.zoom, { animate: false });
     };
     raf = requestAnimationFrame(() => {
@@ -677,6 +714,8 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
       <MapContainer
         center={FRAMES.corridor.center}
         zoom={FRAMES.corridor.zoom}
+        zoomSnap={0.1}
+        zoomDelta={0.25}
         minZoom={6}
         className="v2-map__canvas"
         zoomControl={false}
@@ -700,7 +739,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <IncidentOverlay enabled={layers.incidents} />
         <RoutePolylines maritimeFlag={env.maritimeFlag} />
         <PiersLayer enabled={layers.piers} />
-        <HktMarker />
+        <CorridorLandmarksLayer />
         <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
         <SyncMapView frame={frame} />
