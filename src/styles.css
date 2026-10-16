@@ -11090,6 +11090,11 @@ a { color: var(--tint); }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* The tag is shrink-0, so the direction has to be the one that gives way.
+     Without an explicit flex basis it kept its content width and the two
+     spans painted on top of each other. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .v2-fleet__route-progress {
   position: relative;
