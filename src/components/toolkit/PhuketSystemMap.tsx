@@ -124,8 +124,8 @@ export function PhuketSystemMap() {
           className="pc-system-map__canvas"
         >
           <TileLayer
-            attribution="&copy; OpenStreetMap &copy; CARTO"
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ActualRoutes />
           <StopDots />
