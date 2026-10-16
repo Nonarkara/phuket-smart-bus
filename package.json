@@ -66,12 +66,12 @@
     "@types/react-dom": "^19.0.4",
     "@types/supertest": "^7.2.0",
     "@vitejs/plugin-react-swc": "^3.8.0",
-    "concurrently": "^9.1.2",
+    "concurrently": "^10.0.6",
     "jsdom": "^26.0.0",
     "supertest": "^7.0.0",
-    "tsx": "^4.19.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.2",
     "vite": "^6.2.1",
-    "vitest": "^3.0.8"
+    "vitest": "^5.0.5"
   }
 }
