@@ -323,6 +323,17 @@ The /ops "Missed Money" diagram tracks BOTH directions independently. A combined
 ### 11. Money must be combined, but conservation must be direction-by-direction
 All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH directions from one SSOT (`getLiveTotals ← atMinute ← day model`). Conservation laws: `outDemand = outBoarded + outLost` AND `demand = boarded + abandoned + waiting` at every minute, INDEPENDENTLY for each leg. The combined figure is the sum, never a model of its own.
 
+### 12. Overlapping text on the wall is usually a collapsed grid track, not a flex bug
+Two commits (`24031e2`, `ed796b8`) "fixed" the fleet table's route badge painting over the destination by adding flex rules to the two spans. Both were wrong, and both stayed broken after deploying. Measuring computed geometry on production showed the real cause:
+
+```
+grid-template-columns: 96px 0px 72px 64px 48px 44px 52px 84px
+```
+
+The route track was **0px wide**. The wide-wall map grid gives the fleet panel ~430px while its eight columns need ~600px at the wall's 14px; `minmax(0, 1fr)` collapsed the one flexible track to nothing, and because `.v2-fleet__list` clipped on x, the `flex: 0 0 auto` tag then painted over the destination and the Speed cell. The flex declarations were never the cause — they were consequences of a track with no width.
+
+**Apply when:** text overlaps or wraps on the wall. Dump `getComputedStyle().gridTemplateColumns` and the ancestor widths before editing any child rule. A track reading `0px` (or far below its content) is a container-too-narrow problem; fix the budget — give the panel the width it needs or state a `min-width` and let it scroll — never the contents. Also compare the **column headers**, not the data: the headers here needed ~480px on their own, which proves eight columns can never fit that rail at the mandated 13px type floor. The fix was `.v2-fleet` spanning the full map section (`grid-column: 1 / -1`) with `.v2-map__stage` reduced to `grid-row: 1 / 4` — width doubled, height unchanged, because both occupied the same grid row.
+
 ---
 
 ## Deployment
