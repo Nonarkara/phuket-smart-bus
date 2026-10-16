@@ -13,6 +13,7 @@
  * It does not write again.
  */
 import { buildLiveBusResponse, type LiveBusEnv } from "../live-buses";
+import { hasSecret } from "../../../shared/secret";
 import { liveBusesToPings, recordFleetSample, RECORD_MIN_GAP_MS } from "../../../shared/recordFleet";
 import type { LiveBus } from "../../../shared/pksbFeed";
 import { storeFixes, type D1Like } from "../../../shared/fixStore";
@@ -24,7 +25,7 @@ const HEADERS = {
   "cache-control": "no-store",
 };
 
-type TickEnv = LiveBusEnv & { FIXES?: D1Like };
+type TickEnv = LiveBusEnv & { FIXES?: D1Like; TICK_TOKEN?: string };
 type TickContext = {
   env: TickEnv;
 };
@@ -67,6 +68,15 @@ export async function collectTick(env: TickEnv, fetchImpl: typeof fetch = fetch)
   );
 }
 
-export async function onRequestGet(context: TickContext): Promise<Response> {
+/**
+ * Only the collector may tick: each call fetches both trackers (one with the
+ * PKSB bearer token) and writes the study record. Without TICK_TOKEN set as a
+ * Pages secret the route is closed — an anonymous caller could otherwise burn
+ * our quota on PKSB's servers and race the day ledger from many edge locations.
+ */
+export async function onRequestGet(context: TickContext & { request: Request }): Promise<Response> {
+  if (!hasSecret(context.request, context.env.TICK_TOKEN)) {
+    return new Response(JSON.stringify({ ok: false, error: "tick is for the collector only" }), { status: 403, headers: HEADERS });
+  }
   return collectTick(context.env);
 }

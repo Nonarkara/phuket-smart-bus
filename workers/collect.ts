@@ -7,15 +7,22 @@
  * route itself drops anything inside a 25 s gap, so a double
  * schedule cannot double-count.
  *
+ * The tick route only answers a request carrying TICK_TOKEN (a secret on
+ * both this worker and the Pages project). This worker has no public URL and
+ * no fetch handler: the cron is the only way in.
+ *
  * Deploy: npx wrangler deploy -c wrangler.collector.toml
  */
 const TICK_URL = "https://bus.nonarkara.org/api/collect/tick";
 
-async function ping(): Promise<Response> {
+export type CollectorEnv = { TICK_TOKEN?: string };
+
+async function ping(token: string): Promise<Response> {
   return fetch(TICK_URL, {
     headers: {
       accept: "application/json",
       "user-agent": "phuket-smart-bus-collector",
+      authorization: `Bearer ${token}`,
     },
   });
 }
@@ -23,21 +30,16 @@ async function ping(): Promise<Response> {
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** Two pokes, 30s apart. The wait is a timer, not CPU. */
-export async function collectTwice(sleep: (ms: number) => Promise<void> = pause): Promise<void> {
-  await ping().then((res) => res.text()).catch(() => {});
+export async function collectTwice(token: string, sleep: (ms: number) => Promise<void> = pause): Promise<void> {
+  await ping(token).then((res) => res.text()).catch(() => {});
   await sleep(30_000);
-  await ping().then((res) => res.text()).catch(() => {});
+  await ping(token).then((res) => res.text()).catch(() => {});
 }
 
 export default {
-  async scheduled(_event: unknown, _env: unknown, ctx: { waitUntil(promise: Promise<unknown>): void }) {
-    ctx.waitUntil(collectTwice());
-  },
-  async fetch() {
-    const res = await ping();
-    return new Response(await res.text(), {
-      status: res.status,
-      headers: { "content-type": res.headers.get("content-type") ?? "application/json" },
-    });
+  async scheduled(_event: unknown, env: CollectorEnv, ctx: { waitUntil(promise: Promise<unknown>): void }) {
+    const token = env.TICK_TOKEN?.trim();
+    if (!token) { console.error("TICK_TOKEN is not set: the tick route will refuse this collector"); return; }
+    ctx.waitUntil(collectTwice(token));
   },
 };

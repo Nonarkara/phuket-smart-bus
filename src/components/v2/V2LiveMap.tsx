@@ -95,6 +95,11 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
   });
 }
 
+/** Leaflet tooltips render strings as HTML; aircraft text comes from a third-party feed. */
+function esc(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
 function busTooltip(vehicle: SimState["vehicles"][number]) {
   const isFerry = FERRY_ROUTES.has(vehicle.route);
   if (isFerry) return `⛴ ${vehicle.plate} · Scheduled ferry`;
@@ -284,7 +289,7 @@ function AircraftLayer({
       for (const ac of list) {
         let marker = liveMarkers.current.get(ac.hex);
         const alt = ac.altitudeFt == null ? "?" : `${Math.round(ac.altitudeFt)} ft`;
-        const tip = `${ac.callsign} · ADS-B · ${alt}${ac.military ? " · MIL" : ""}`;
+        const tip = `${esc(ac.callsign)} · ADS-B · ${esc(alt)}${ac.military ? " · MIL" : ""}`;
         if (!marker) {
           marker = L.marker([ac.lat, ac.lon], { icon: buildPlaneIcon(ac.heading, true), zIndexOffset: 400 }).addTo(map);
           marker.bindTooltip(tip, { direction: "top" });
@@ -307,7 +312,7 @@ function AircraftLayer({
       }
       for (const b of beads) {
         let marker = schedMarkers.current.get(b.id);
-        const tip = `${b.callsign} · ${b.kind === "arr" ? "ARR" : "DEP"} ${b.city} · schedule ${b.minutesToEvent >= 0 ? `in ${b.minutesToEvent}m` : `${-b.minutesToEvent}m ago`}`;
+        const tip = `${esc(b.callsign)} · ${b.kind === "arr" ? "ARR" : "DEP"} ${esc(b.city)} · schedule ${b.minutesToEvent >= 0 ? `in ${b.minutesToEvent}m` : `${-b.minutesToEvent}m ago`}`;
         if (!marker) {
           marker = L.marker([b.lat, b.lon], { icon: buildPlaneIcon(b.heading, false), zIndexOffset: 300 }).addTo(map);
           marker.bindTooltip(tip, { direction: "top" });

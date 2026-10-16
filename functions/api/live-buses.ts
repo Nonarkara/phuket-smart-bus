@@ -53,10 +53,16 @@ function reply(body: Omit<LiveBusFeed, "fetchedAt" | "source">, httpStatus: numb
   });
 }
 
+/** The whole fleet is ~30 KB; 2 MB is a broken or hostile upstream, not a busy day. */
+const MAX_UPSTREAM_BYTES = 2_000_000;
+
 async function fetchJson(fetchImpl: typeof fetch, url: string, headers: Record<string, string>): Promise<unknown> {
   const res = await fetchImpl(url, { headers, signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  if (Number(res.headers.get("content-length") ?? 0) > MAX_UPSTREAM_BYTES) throw new Error("upstream response too large");
+  const text = await res.text();
+  if (text.length > MAX_UPSTREAM_BYTES) throw new Error("upstream response too large");
+  return JSON.parse(text);
 }
 
 export async function buildLiveBusResponse(env: LiveBusEnv, fetchImpl: typeof fetch = fetch): Promise<Response> {

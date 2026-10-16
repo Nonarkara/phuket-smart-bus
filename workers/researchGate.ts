@@ -18,7 +18,10 @@ import {
 
 const PAGES_ORIGIN = "https://phuket-smart-bus.pages.dev";
 
-export type ResearchGateEnv = { RESEARCH?: RateLimitBinding };
+export type ResearchGateEnv = { RESEARCH?: RateLimitBinding; RESEARCH_GATE_TOKEN?: string };
+
+/** The Pages origin only serves research reads that carry this header (see functions/api/research/_middleware.ts). */
+export const GATE_HEADER = "x-research-gate";
 
 export async function gateResearch(
   request: Request,
@@ -37,7 +40,9 @@ export async function gateResearch(
   const incoming = new URL(request.url);
   const originUrl = new URL(`${incoming.pathname}${incoming.search}`, PAGES_ORIGIN);
   // Do not follow a redirect back onto bus.nonarkara.org — that route is this worker.
-  return fetchImpl(new Request(originUrl, request), { redirect: "manual" });
+  const forwarded = new Request(originUrl, request);
+  if (env.RESEARCH_GATE_TOKEN) forwarded.headers.set(GATE_HEADER, env.RESEARCH_GATE_TOKEN);
+  return fetchImpl(forwarded, { redirect: "manual" });
 }
 
 export default {

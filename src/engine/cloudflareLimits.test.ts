@@ -45,9 +45,13 @@ describe("cloudflare cost guard", () => {
     vi.stubGlobal("fetch", fetchMock);
     try {
       const before = cpuMs();
-      await collectTwice(async () => {});
+      await collectTwice("tok-123", async () => {});
       const spent = cpuMs() - before;
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      // every poke carries the collector's secret
+      for (const call of fetchMock.mock.calls as unknown as [string, RequestInit][]) {
+        expect((call[1].headers as Record<string, string>).authorization).toBe("Bearer tok-123");
+      }
       expect(spent).toBeLessThan(30_000);
     } finally {
       vi.unstubAllGlobals();
@@ -138,23 +142,47 @@ describe("cloudflare cost guard", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("lets a Pages research read through when no binding is configured", async () => {
+  it("refuses a direct Pages research read (pages.dev skips the gate) without the gate's secret header", async () => {
+    const next = vi.fn(async () => json("{\"ok\":true}"));
+    for (const env of [{}, { RESEARCH_GATE_TOKEN: "gate-secret" }]) {
+      const res = await onRequest({ request: new Request("https://phuket-smart-bus.pages.dev/api/research/day"), env, next });
+      expect(res.status).toBe(403);
+    }
+    const wrong = await onRequest({
+      request: new Request("https://phuket-smart-bus.pages.dev/api/research/day", { headers: { "x-research-gate": "guess" } }),
+      env: { RESEARCH_GATE_TOKEN: "gate-secret" }, next,
+    });
+    expect(wrong.status).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("serves a research read the gate forwarded with its secret header", async () => {
     const next = vi.fn(async () => json("{\"ok\":true}"));
     const res = await onRequest({
-      request: new Request("https://bus.nonarkara.org/api/research/day"),
-      env: {},
-      next,
+      request: new Request("https://phuket-smart-bus.pages.dev/api/research/day", { headers: { "x-research-gate": "gate-secret" } }),
+      env: { RESEARCH_GATE_TOKEN: "gate-secret" }, next,
     });
     expect(res.status).toBe(200);
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it("still answers a collector HTTP poke", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => json("{\"ok\":true}", 200)));
+  it("the gate stamps its secret on what it forwards", async () => {
+    let seen = "";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => { seen = (input as Request).headers.get("x-research-gate") ?? ""; return json("{}"); });
+    await gateResearch(new Request("https://bus.nonarkara.org/api/research/day"),
+      { RESEARCH: { limit: async () => ({ success: true }) }, RESEARCH_GATE_TOKEN: "gate-secret" }, fetchMock as unknown as typeof fetch);
+    expect(seen).toBe("gate-secret");
+  });
+
+  it("the collector has no public fetch handler — the cron is the only way in", async () => {
+    expect((collector as Record<string, unknown>).fetch).toBeUndefined();
+    const fetchMock = vi.fn(async () => json("{}"));
+    vi.stubGlobal("fetch", fetchMock);
     try {
-      const res = await collector.fetch();
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ ok: true });
+      const waits: Promise<unknown>[] = [];
+      await collector.scheduled({}, {}, { waitUntil: (p) => { waits.push(p); } });
+      expect(waits).toHaveLength(0); // no TICK_TOKEN: refuses to poke rather than poke unauthenticated
+      expect(fetchMock).not.toHaveBeenCalled();
     } finally {
       vi.unstubAllGlobals();
     }

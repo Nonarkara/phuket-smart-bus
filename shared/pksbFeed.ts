@@ -107,10 +107,19 @@ export function isOnPhuketIsland(lat: number, lng: number): boolean {
 }
 const inPhuket = isOnPhuketIsland;
 
-/** "10-1230ภูเก็ต", "10-1230 ภูเก็ต", "10-1230" → "10-1230". */
+/**
+ * Text from a third-party tracker, made safe to store and to put in map HTML:
+ * letters (Thai combining marks included), digits, space and . - ( ) / only,
+ * capped. A compromised or spoofed upstream cannot smuggle markup through it.
+ */
+export function cleanText(raw: unknown, max: number): string {
+  return String(raw ?? "").replace(/[^\p{L}\p{M}\p{N} .\-()/]/gu, "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+/** "10-1230ภูเก็ต", "10-1230 ภูเก็ต", "10-1230" → "10-1230". Anything else is cleaned and capped. */
 export function plateKey(raw: string): string {
   const match = raw.match(/\d{1,3}-\d{3,4}/);
-  return match ? match[0] : raw.replace(/\s+/g, "").trim();
+  return match ? match[0] : cleanText(raw, 20).replace(/\s+/g, "");
 }
 
 export function inferPksbRoute(record: PksbRawRecord): LiveBusRouteId | null {
@@ -161,7 +170,7 @@ export function parsePksbRecord(record: PksbRawRecord, nowMs = Date.now()): Live
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || !inPhuket(lat, lng)) return null;
 
   const direction = record.data.determineBusDirection;
-  const destination = String((Array.isArray(direction) ? direction[2] : "") || record.data.buffer || record.buffer || "").trim();
+  const destination = cleanText((Array.isArray(direction) ? direction[2] : "") || record.data.buffer || record.buffer || "", 60);
   const rawPlate = record.data.vhc?.lc || record.licence || String(record.id);
   // `time` is when the server polled, so an offline bus parked 13 days ago
   // carries a fresh `time`. The fix is `gpstime`, Bangkok wall time
@@ -175,7 +184,7 @@ export function parsePksbRecord(record: PksbRawRecord, nowMs = Date.now()): Live
   return {
     id: String(record.id),
     plate: plateKey(rawPlate),
-    vehicleId: record.data.vhc?.id || rawPlate,
+    vehicleId: cleanText(record.data.vhc?.id || rawPlate, 40),
     lat,
     lng,
     heading: finiteOrNull(record.data.azm) ?? 0,
@@ -256,7 +265,7 @@ export function parseKeylessRow(row: KeylessRawRow, nowMs = Date.now()): LiveBus
   return {
     id: plateKey(rawPlate),
     plate: plateKey(rawPlate),
-    vehicleId: rawPlate,
+    vehicleId: cleanText(rawPlate, 40),
     lat,
     lng,
     heading: finiteOrNull(inner.HangXiang) ?? 0,
@@ -277,6 +286,8 @@ export function parseKeylessFeed(json: unknown, nowMs = Date.now()): LiveBus[] {
   return parseRows(json, ["data", "vehicles", "rows", "result"], (row) => parseKeylessRow(row as KeylessRawRow, nowMs));
 }
 
+export const MAX_FEED_ROWS = 500;
+
 function parseRows(json: unknown, wrapperKeys: string[], parse: (row: unknown) => LiveBus | null): LiveBus[] {
   let rows: unknown[] = [];
   if (Array.isArray(json)) rows = json;
@@ -287,7 +298,8 @@ function parseRows(json: unknown, wrapperKeys: string[], parse: (row: unknown) =
     }
   }
   const out: LiveBus[] = [];
-  for (const row of rows) {
+  // The real fleet is ~54 buses; anything far beyond that is a broken or hostile upstream.
+  for (const row of rows.slice(0, MAX_FEED_ROWS)) {
     try {
       const bus = parse(row);
       if (bus) out.push(bus);

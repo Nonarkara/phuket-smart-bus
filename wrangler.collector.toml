@@ -4,7 +4,8 @@
 name = "phuket-smart-bus-collector"
 main = "workers/collect.ts"
 compatibility_date = "2026-07-21"
-workers_dev = true
+# No public URL: the cron is the only way in. TICK_TOKEN is a worker secret.
+workers_dev = false
 
 [triggers]
 crons = ["* * * * *"]

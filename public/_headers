@@ -1,0 +1,19 @@
+# Cloudflare Pages headers for the static site (Vite copies public/ into dist/client).
+# They do not apply to Pages Functions — functions/api/_middleware.ts sets those.
+#
+# Framing: enforced. The depa · USDOT toolkit (depa-usdot.nonarkara.org) embeds
+# /ops?view=toolkit in an iframe, so frame-ancestors allows it; nothing else may
+# frame the site. (X-Frame-Options: DENY would have blocked that embed.)
+#
+# Content-Security-Policy-Report-Only: not enforced yet. With no report endpoint,
+# violations appear only in each browser's console. The hosts are the ones the
+# client requests; the script hash is index.html's one inline script — rebuild it
+# if that script changes. Enforce once a week of use shows no violations.
+
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  Content-Security-Policy: frame-ancestors 'self' https://depa-usdot.nonarkara.org
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-ZML5YxVKV7K+QNY5ZeL17DzSRM1lD8PVjTdp8UkPTl4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com https://tilecache.rainviewer.com https://api-gateway.gistda.or.th https://ocean.gistda.or.th https://gibs.earthdata.nasa.gov; connect-src 'self' https://script.google.com https://ipapi.co https://api.rainviewer.com https://pm25.gistda.or.th https://api.airplanes.live; frame-src https://bus.nonarkara.org https://app.powerbi.com; worker-src 'self'

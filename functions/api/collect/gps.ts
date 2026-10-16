@@ -11,6 +11,7 @@
  * are landing, plus the revenue rollup of those batches only.
  */
 
+import { hasSecret } from "../../../shared/secret";
 import { gpsBatchKey, gpsDayKey, GPS_HISTORY_TTL_S, applyBusesToDay, emptyGpsDay, type GpsBatch, type GpsDay } from "../../../shared/gpsBatch";
 import { computeRevenueFromBatches } from "./revenue";
 
@@ -79,13 +80,6 @@ function isCollectPayload(value: unknown): value is CollectPayload {
   return true;
 }
 
-/** Equal-length compare that doesn't stop at the first differing byte. */
-function sameSecret(a: string, b: string): boolean {
-  if (a.length !== b.length || a.length === 0) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
 
 /** How far a posted batch's own clock may sit from ours. Stops back-dating into a study day. */
 const MAX_CLOCK_SKEW_MS = 10 * 60_000;
@@ -93,9 +87,7 @@ const MAX_CLOCK_SKEW_MS = 10 * 60_000;
 export async function onRequestPost(context: PagesEventContext): Promise<Response> {
   // This feeds the same day ledger as the study. Without a secret, anyone
   // could post a bus with a rising counter into any date. Unset = closed.
-  const expected = context.env.INGEST_TOKEN?.trim() ?? "";
-  const given = (context.request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  if (!expected || !sameSecret(given, expected)) {
+  if (!hasSecret(context.request, context.env.INGEST_TOKEN)) {
     return new Response(JSON.stringify({ error: "ingest is closed without the INGEST_TOKEN secret" }), {
       status: 403,
       headers: { "Content-Type": "application/json", ...CORS },

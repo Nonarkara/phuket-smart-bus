@@ -1,4 +1,4 @@
-import { collectTick } from "../../functions/api/collect/tick";
+import { collectTick, onRequestGet as tickGet } from "../../functions/api/collect/tick";
 import { onRequestPost } from "../../functions/api/collect/gps";
 import { GPS_HISTORY_TTL_S } from "../../shared/gpsBatch";
 import { recordFleetSample, type FleetKv } from "../../shared/recordFleet";
@@ -136,5 +136,24 @@ describe("GET /api/collect/tick", () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(kv.puts).toHaveLength(0);
+  });
+
+  it("/api/collect/tick answers only the collector: no token, a wrong token, or no secret set = 403, nothing fetched", async () => {
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    try {
+      const cases: [Record<string, string>, { TICK_TOKEN?: string }][] = [
+        [{}, { TICK_TOKEN: "t0k" }],
+        [{ authorization: "Bearer nope" }, { TICK_TOKEN: "t0k" }],
+        [{ authorization: "Bearer t0k" }, {}],
+      ];
+      for (const [headers, env] of cases) {
+        const res = await tickGet({ request: new Request("https://bus.nonarkara.org/api/collect/tick", { headers }), env });
+        expect(res.status).toBe(403);
+      }
+      expect(fetchImpl).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
