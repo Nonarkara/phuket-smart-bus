@@ -81,3 +81,20 @@ were leaking; this pass closes the sharpest holes.
 - [ ] Wire USDOT photo dump into Field Notes (next)
 - [ ] Merge legacy TouristApp map+compare into PassengerApp (next)
 - [ ] CDPT when asked
+
+---
+
+## 2026-10-16 · Orchestration pass — audits, merges, hygiene
+
+- [x] Reviewed every open branch, worktree and PR from the other agents. Landed PR #4 (DAY·60s freezes at 24:00 → 0539ae2) and PR #12 (security headers, fixed hash → af0e15f). Closed #1 as superseded.
+- [x] Security: tick needs `TICK_TOKEN`; research reads need the gate header (closes the pages.dev bypass); open proxy `/api/vehicles/last` deleted; collector worker has no public URL; tracker text sanitised, feed size capped; aircraft tooltips escaped; API security headers.
+- [x] Deps: vitest 5, concurrently 10, tsx latest — `npm audit` 0.
+- [x] Trees: 3 worktrees removed, 13 local + 23 remote branches deleted, 8 `archive/*` tags kept. Left: `main`, `depa-usdot.nonarkara.org`.
+- [x] Verified live: tick 403 without token / 200 with; research 200 via bus.nonarkara.org, 403 via pages.dev; collector writing (fresh samples); all 12 routes load 200 headless.
+
+### Needs Dr Non
+- PKSB bearer token sits in public git history (cd95f46) — ask PKSB to rotate it.
+- `.claude/settings.local.json` holds literal tokens in allow-rules — delete those lines.
+- Visitor tracker (src/main.tsx) sends IP/city/UA to Google Apps Script without a notice (PDPA) — and the script now answers 401, so it records nothing. Keep (fix script + add notice) or remove?
+- airplanes.live blocks us (403, "contact us"). The /ops aircraft overlay falls back to schedule beads. Email contact@airplanes.live if live aircraft matter.
+- CSP is report-only. Enforce after a clean week.
