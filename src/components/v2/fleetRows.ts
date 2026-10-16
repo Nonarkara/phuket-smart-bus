@@ -130,14 +130,28 @@ export function service(r: Row): string {
 }
 
 /**
- * The whole island as the PKSB lines span it, Airport (north) to Rawai (south).
- * Island maps open on this frame so the long north–south shape fills the map top to bottom.
+ * The bus corridor as the PKSB lines span it: Airport (north) to Rawai (south).
+ * This is NOT the island — it is the working strip the fleet actually runs, and
+ * it covers barely half the island's length. Maps that need the whole island
+ * must fit ISLAND_BOUNDS below.
  */
-export const ISLAND_BOUNDS: [[number, number], [number, number]] = (() => {
+export const CORRIDOR_BOUNDS: [[number, number], [number, number]] = (() => {
   const pts = LINES.flatMap((l) => l.poly);
   const lats = pts.map((p) => p[0]!), lngs = pts.map((p) => p[1]!);
   return [[Math.min(...lats) - 0.01, Math.min(...lngs) - 0.01], [Math.max(...lats) + 0.01, Math.max(...lngs) + 0.01]];
 })();
+
+/**
+ * The whole island, coastline to coastline. Phuket is ~543 km², 48 km north–south
+ * and 21 km at its widest, centred on 7.9366°N 98.3529°E — so this box runs
+ * ~7.72°N to ~8.15°N. Fitting CORRIDOR_BOUNDS instead leaves both ends of the
+ * island off-screen, which is why the map looked permanently cropped: it was
+ * framing the bus lines, not the island it claims to show.
+ */
+export const ISLAND_BOUNDS: [[number, number], [number, number]] = [
+  [7.72, 98.256],
+  [8.155, 98.45],
+];
 
 export type CorridorLandmark = {
   id: string;

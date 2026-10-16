@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
-import { ISLAND_BOUNDS, CORRIDOR_LANDMARKS } from "./fleetRows";
+import { ISLAND_BOUNDS, CORRIDOR_BOUNDS, CORRIDOR_LANDMARKS } from "./fleetRows";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap, CircleMarker, Tooltip } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
@@ -27,15 +27,23 @@ export type V2MapHandle = { syncNow: (vehicles: SimState["vehicles"]) => void };
 
 export type MapLayerId = "buses" | "flights" | "piers" | "rain" | "incidents";
 
-/** Where the default frame lives. `corridor` is the Airport Line road at zoom
- *  12 (~38 m/px) — the only frame where a 30 km/h bus visibly travels. `island`
- *  is the old zoom-10 view that also fits the ferry lanes (~151 m/px, buses
- *  crawl at 0.5 px/s). Corridor is the default; island is one chip away. */
+/** The two framings the wall offers, and what each one is FOR.
+ *
+ *  - `island` fits the whole coastline — 7.72°N to 8.155°N, the island's real
+ *    48 km length. This is the default, because a wall that shows an operator a
+ *    cropped island has failed at the only job a map has on a wall: show the
+ *    whole place the buses live in.
+ *  - `corridor` fits the strip the PKSB lines actually run, Airport to Rawai
+ *    (~36 km). Tighter, and the frame to use when you want the working routes
+ *    rather than the geography.
+ *
+ * The `center`/`zoom` here are only the pre-fit starting view; `SyncMapView`
+ * calls fitBounds immediately, so the real framing is the bounds, not these. */
 export type MapFrame = "corridor" | "island";
 
 const FRAMES: Record<MapFrame, { center: [number, number]; zoom: number }> = {
-  corridor: { center: [7.945, 98.335], zoom: 12 },
-  island: { center: [7.88, 98.49], zoom: 10 },
+  corridor: { center: [7.945, 98.335], zoom: 11 },
+  island: { center: [7.9375, 98.353], zoom: 10.6 },
 };
 
 type V2LiveMapProps = {
@@ -383,15 +391,24 @@ function AircraftLayer({
   return null;
 }
 
-function CorridorLandmarksLayer() {
+function CorridorLandmarksLayer({ frame }: { frame: MapFrame }) {
   const map = useMap();
   useEffect(() => {
     const markers: L.Marker[] = [];
-    for (const lm of CORRIDOR_LANDMARKS) {
+    // On the whole-island frame every badge is ~40% of the island's width, so
+    // eight of them bury the geography they are meant to label. Keep the three
+    // anchors that orient you — Airport north, Town east, Rawai south — and
+    // drop the sub-line. The corridor frame is where the full set earns its
+    // place, because there the map is zoomed to the strip they describe.
+    const wholeIsland = frame === "island";
+    const shown = wholeIsland
+      ? CORRIDOR_LANDMARKS.filter((lm) => lm.role === "airport" || lm.role === "town" || lm.role === "terminus")
+      : CORRIDOR_LANDMARKS;
+    for (const lm of shown) {
       const isAirport = lm.role === "airport";
       const isTerminus = lm.role === "terminus";
       const isTown = lm.role === "town";
-      const cls = `v2-landmark-badge v2-landmark-badge--${lm.role}`;
+      const cls = `v2-landmark-badge v2-landmark-badge--${lm.role}${wholeIsland ? " is-compact" : ""}`;
       const icon = L.divIcon({
         className: "v2-landmark-icon",
         iconSize: [0, 0],
@@ -399,7 +416,7 @@ function CorridorLandmarksLayer() {
         html: `<div class="${cls}">
           <span class="v2-landmark-dot"></span>
           <span class="v2-landmark-name">${lm.name}</span>
-          ${lm.sub ? `<span class="v2-landmark-sub">${lm.sub}</span>` : ""}
+          ${lm.sub && !wholeIsland ? `<span class="v2-landmark-sub">${lm.sub}</span>` : ""}
         </div>`,
       });
       const marker = L.marker([lm.lat, lm.lng], {
@@ -412,7 +429,7 @@ function CorridorLandmarksLayer() {
     return () => {
       for (const m of markers) map.removeLayer(m);
     };
-  }, [map]);
+  }, [map, frame]);
   return null;
 }
 
@@ -520,15 +537,27 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
     let touched = false;
     const onDrag = () => { touched = true; };
     map.on("dragstart", onDrag);
-    // The map column now runs the full height of the wall, so the corridor frame fits the
-    // island's bus lines (Airport to Rawai) to whatever height it gets, and re-fits as the
-    // layout settles — until an operator pans it. The island frame keeps its fixed view
-    // (it exists to show the ferry lanes east of the island).
+
+    // The map is not the whole frame: the layer/frame bar and the flight badge
+    // sit across the top, the legend across the bottom. fitBounds knows nothing
+    // about them, so an un-padded fit puts the island's two ends underneath —
+    // which is precisely how this map looked permanently cropped, northern tip
+    // hidden by the flight badge and Rawai hidden by the legend. Measure the
+    // real chrome and fit into what is actually left.
+    const chromePadding = () => {
+      const host = map.getContainer().parentElement;
+      const h = (sel: string) => host?.querySelector<HTMLElement>(sel)?.offsetHeight ?? 0;
+      const top = Math.max(h(".v2-map__top-controls"), h(".v2-map__flight-badge"), h(".v2-map__maritime-banner")) + 14;
+      const bottom = h(".v2-map__legend") + 14;
+      return { paddingTopLeft: [16, top] as [number, number], paddingBottomRight: [16, bottom] as [number, number] };
+    };
+
+    // Re-fits whenever the column resizes, until an operator pans it themselves.
     const fix = () => {
       map.invalidateSize();
       if (touched) return;
-      if (frame === "corridor") map.fitBounds(ISLAND_BOUNDS, { padding: [16, 12], animate: false });
-      else map.setView(FRAMES.island.center, FRAMES.island.zoom, { animate: false });
+      const bounds = frame === "island" ? ISLAND_BOUNDS : CORRIDOR_BOUNDS;
+      map.fitBounds(bounds, { ...chromePadding(), animate: false });
     };
     raf = requestAnimationFrame(() => {
       raf = requestAnimationFrame(fix);
@@ -606,7 +635,7 @@ function LayerToggles({
         className={`v2-map__layer-btn v2-map__layer-btn--frame ${frame === "corridor" ? "is-active" : ""}`}
         aria-pressed={frame === "corridor"}
         onClick={() => onFrame("corridor")}
-        title="Frame the Airport Line corridor"
+        title="Frame the Airport–Rawai corridor the PKSB lines run"
       >
         Corridor
       </button>
@@ -646,7 +675,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
     ...DEFAULT_LAYERS,
     ...layersProp,
   }));
-  const [frame, setFrame] = useState<MapFrame>("corridor");
+  const [frame, setFrame] = useState<MapFrame>("island");
   const [flightInfo, setFlightInfo] = useState<{ liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }>({
     liveCount: 0,
     modelCount: 0,
@@ -717,8 +746,8 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <span><i className="is-live-plane" /> live aircraft</span>
       </div>
       <MapContainer
-        center={FRAMES.corridor.center}
-        zoom={FRAMES.corridor.zoom}
+        center={FRAMES.island.center}
+        zoom={FRAMES.island.zoom}
         zoomSnap={0.1}
         zoomDelta={0.25}
         minZoom={6}
@@ -744,7 +773,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <IncidentOverlay enabled={layers.incidents} />
         <RoutePolylines maritimeFlag={env.maritimeFlag} />
         <PiersLayer enabled={layers.piers} />
-        <CorridorLandmarksLayer />
+        <CorridorLandmarksLayer frame={frame} />
         <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
         <SyncMapView frame={frame} />

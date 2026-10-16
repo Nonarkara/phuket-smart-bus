@@ -24,7 +24,7 @@ import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } f
 import { appPath } from "../../lib/paths";
 import {
   ago, bkkClock, BUNCH_M, duration, isOut, LINES, loadToday, MOVING_KPH, readRow, service,
-  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today, ISLAND_BOUNDS, CORRIDOR_LANDMARKS,
+  STATE_WORD, TERMINAL_ZONE_M, TIMETABLE_MIN, type Line, type Row, type State, type Today, CORRIDOR_BOUNDS, CORRIDOR_LANDMARKS,
 } from "./fleetRows";
 import "./fleetDetail.css";
 
@@ -139,7 +139,7 @@ function FleetDetailMap({
     let touched = false;
     m.on("dragstart", () => { touched = true; });
     el.current.addEventListener("wheel", () => { touched = true; }, { passive: true });
-    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(ISLAND_BOUNDS, { padding: [16, 12] }); };
+    const frame = () => { m.invalidateSize(); if (!touched) m.fitBounds(CORRIDOR_BOUNDS, { padding: [16, 12] }); };
     frame();
     const ro = new ResizeObserver(frame);
     ro.observe(el.current);
