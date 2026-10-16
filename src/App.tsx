@@ -271,14 +271,13 @@ export default function App() {
     return <Suspense fallback={<RouteLoading />}><PassengerApp /></Suspense>;
   }
 
-  // This branch is the research-and-development hub — a tabbed research page
-  // that replaced the single-scroll ToolkitShowcase. The existing
-  // operational surfaces remain available at /ops, /v2, /ride.
-  // On the rider domain, "/" is the passenger front door (mobile: bare
-  // PassengerApp above; desktop: the phone-frame + Operator Console shell
-  // below) — not this research hub. Only the explicit /toolkit path opens
-  // it there; every other domain still gets the hub at "/".
-  if (pathname.startsWith("/toolkit") || (pathname === "/" && !isRiderDomain)) {
+  // The toolkit research hub lives at the explicit /toolkit path only.
+  // "/" is the bus front door: the operations wall, because this project's
+  // canonical domain is bus.nonarkara.org. The toolkit site publishes from
+  // its own `depa-usdot.nonarkara.org` branch, which carries its own
+  // index.html — so serving the hub here at "/" only hid the bus console
+  // behind the front door of the domain it belongs to.
+  if (pathname.startsWith("/toolkit")) {
     return <Suspense fallback={<RouteLoading />}><ToolkitHub /></Suspense>;
   }
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { getMockApiPayload } from "./test/fixtures/appApiFixtures";
@@ -88,11 +88,29 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
   });
 
-  it("uses the toolkit as the branch landing page", async () => {
+  it("lands on the operations wall — the toolkit stays on its own path", async () => {
+    // The toolkit publishes from the `depa-usdot.nonarkara.org` branch, which
+    // carries its own index.html. On this branch `main` serves bus.nonarkara.org,
+    // so "/" is the operations wall; the hub is reached at /toolkit. Serving the
+    // hub at "/" also made the hub's own "Live system ↗" link a self-link.
     window.history.replaceState({}, "", "/");
     render(<App />);
 
-    // The landing starts with the passenger decision, then follows it through the system.
+    await waitFor(
+      () => {
+        expect(window.location.pathname === "/" || window.location.pathname === "/ops").toBe(true);
+      },
+      { timeout: 15_000 }
+    );
+    expect(
+      screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
+    ).not.toBeInTheDocument();
+  }, 30_000);
+
+  it("serves the toolkit hub at the explicit /toolkit path", async () => {
+    window.history.replaceState({}, "", "/toolkit");
+    render(<App />);
+
     expect(
       await screen.findByRole("heading", {
         name: /what if an airport passenger can find the bus/i
@@ -102,7 +120,6 @@ describe("App", () => {
     expect(screen.getByLabelText("Evidence status legend")).toHaveTextContent(
       /Observed.*cited or published record/i
     );
-    expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
     expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
   }, 30_000);
 
