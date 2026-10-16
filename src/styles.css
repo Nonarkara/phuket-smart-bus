@@ -11078,6 +11078,11 @@ a { color: var(--tint); }
   background: rgba(245, 158, 11, 0.12);
   color: var(--amber);
   border-radius: 0;
+  /* The ops wall scales this label up to 14px, at which point "Airport line"
+     wraps inside the 1fr column and rides up over the column header. Keep it
+     on one line and let the destination text truncate instead. */
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 .v2-fleet__route-dir {
   font-size: 11px;
@@ -14553,7 +14558,14 @@ a { color: var(--tint); }
 .v2-livebar__basis { margin-left: auto; font-size: 13px; color: var(--ax-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
-.v2 .v2-fleet__row--live { grid-template-columns: 96px minmax(0, 1fr) 72px 64px 48px 44px 52px 84px; }
+.v2 .v2-fleet__row--live {
+  grid-template-columns: 96px minmax(0, 1fr) 72px 64px 48px 44px 52px 84px;
+  /* Every cell is single-line, so the row height is the header height. Without
+     this a long destination stretched the row and pushed its first cell up over
+     the column header. */
+  align-items: center;
+}
+.v2 .v2-fleet__row--live > * { min-width: 0; }
 .v2-fleet__row--live.is-silent { opacity: 0.45; }
 .v2-fleet__plate-live { font-family: var(--font-mono); font-weight: 700; color: var(--ax-ink); }
 .v2-fleet__num { font-variant-numeric: tabular-nums; text-align: right; color: var(--ax-ink-2); }
