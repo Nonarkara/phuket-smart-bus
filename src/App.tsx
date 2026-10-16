@@ -272,10 +272,11 @@ export default function App() {
   }
 
   // The toolkit research hub lives at the explicit /toolkit path only.
-  // "/" is the bus front door: the operations wall, because this project's
-  // canonical domain is bus.nonarkara.org. The toolkit site publishes from
-  // its own `depa-usdot.nonarkara.org` branch, which carries its own
-  // index.html — so serving the hub here at "/" only hid the bus console
+  // "/" is the bus front door: the passenger app on a phone, and on desktop
+  // the dual-audience shell that offers rider and operator entry points. The
+  // operator wall itself is one hop away at /ops. The toolkit site publishes
+  // from its own `depa-usdot.nonarkara.org` branch, which carries its own
+  // index.html — so serving the hub here at "/" only hid the bus system
   // behind the front door of the domain it belongs to.
   if (pathname.startsWith("/toolkit")) {
     return <Suspense fallback={<RouteLoading />}><ToolkitHub /></Suspense>;

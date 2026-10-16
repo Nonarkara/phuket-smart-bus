@@ -88,11 +88,12 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
   });
 
-  it("lands on the operations wall — the toolkit stays on its own path", async () => {
+  it("lands on the bus front door, not the toolkit — the hub stays on its own path", async () => {
     // The toolkit publishes from the `depa-usdot.nonarkara.org` branch, which
     // carries its own index.html. On this branch `main` serves bus.nonarkara.org,
-    // so "/" is the operations wall; the hub is reached at /toolkit. Serving the
-    // hub at "/" also made the hub's own "Live system ↗" link a self-link.
+    // so "/" is the bus system (passenger app on a phone, the dual-audience
+    // shell on desktop) and the operator wall is at /ops. Serving the hub at "/"
+    // also made the hub's own "Live system ↗" link a self-link.
     window.history.replaceState({}, "", "/");
     render(<App />);
 

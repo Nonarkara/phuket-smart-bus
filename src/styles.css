@@ -10973,7 +10973,10 @@ a { color: var(--tint); }
   flex-direction: column;
   gap: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  /* Scroll sideways rather than clip. The ops wall is a three-column board and
+     the fleet panel gets ~430px there, which is narrower than the table it
+     has to hold; clipping just made cells paint over each other. */
+  overflow-x: auto;
   padding-right: 6px;
   flex: 1;
   min-height: 0;
@@ -11078,9 +11081,8 @@ a { color: var(--tint); }
   background: rgba(245, 158, 11, 0.12);
   color: var(--amber);
   border-radius: 0;
-  /* The ops wall scales this label up to 14px, at which point "Airport line"
-     wraps inside the 1fr column and rides up over the column header. Keep it
-     on one line and let the destination text truncate instead. */
+  /* Keep the badge on one line. The destination gives way instead — it is the
+     half that can lose information without hiding which line a bus is on. */
   white-space: nowrap;
   flex: 0 0 auto;
 }
@@ -11090,9 +11092,6 @@ a { color: var(--tint); }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* The tag is shrink-0, so the direction has to be the one that gives way.
-     Without an explicit flex basis it kept its content width and the two
-     spans painted on top of each other. */
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -14564,11 +14563,17 @@ a { color: var(--tint); }
 
 /* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
 .v2 .v2-fleet__row--live {
-  grid-template-columns: 96px minmax(0, 1fr) 72px 64px 48px 44px 52px 84px;
+  grid-template-columns: 96px minmax(150px, 1fr) 72px 64px 48px 44px 52px 84px;
   /* Every cell is single-line, so the row height is the header height. Without
      this a long destination stretched the row and pushed its first cell up over
      the column header. */
   align-items: center;
+  /* Floor for the row. At the wall's 14px these eight columns need ~600px; the
+     panel's own column is ~430px. With minmax(0,1fr) the route track resolved
+     to 0 and its non-shrinking tag painted straight over the destination and
+     the Speed cell — which is the overlap, not a flex bug. Stating the floor
+     makes the list scroll sideways instead of collapsing into itself. */
+  min-width: 600px;
 }
 .v2 .v2-fleet__row--live > * { min-width: 0; }
 .v2-fleet__row--live.is-silent { opacity: 0.45; }
@@ -14576,6 +14581,10 @@ a { color: var(--tint); }
 .v2-fleet__num { font-variant-numeric: tabular-nums; text-align: right; color: var(--ax-ink-2); }
 .v2-fleet__num--money { color: var(--ax-accent); font-weight: 700; }
 .v2-fleet__row--live.v2-fleet__row--header > span:nth-child(n + 3) { text-align: right; }
+
+/* The ops wall scales the legacy five-column fleet table to 14px as well, and
+   that one needs ~520px in a ~430px panel. Same floor, same reason. */
+.v2--operations .v2-fleet__row { min-width: 520px; }
 
 /* ── Real-Bus Study screen ─────────────────────────────────────────────────
    /study — patient, consistent, true. Dark theme via the v2 operations
