@@ -14563,16 +14563,18 @@ a { color: var(--tint); }
 
 /* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
 .v2 .v2-fleet__row--live {
-  grid-template-columns: 96px minmax(150px, 1fr) 72px 64px 48px 44px 52px 84px;
+  grid-template-columns: 96px minmax(150px, 1fr) 72px 84px 48px 44px 52px 84px;
   /* Every cell is single-line, so the row height is the header height. Without
      this a long destination stretched the row and pushed its first cell up over
      the column header. */
   align-items: center;
-  /* Floor for the row. At the wall's 14px these eight columns need ~600px; the
-     panel's own column is ~430px. With minmax(0,1fr) the route track resolved
-     to 0 and its non-shrinking tag painted straight over the destination and
-     the Speed cell — which is the overlap, not a flex bug. Stating the floor
-     makes the list scroll sideways instead of collapsing into itself. */
+  /* Floor for the row, and the reason the columns are sized the way they are.
+     "On board" gets 84px because at the wall's 13px header type the label needs
+     ~75px and used to wrap onto two lines, which cost a visible data row.
+     The 150px route floor is a backstop: the table now spans the full width of
+     the map section (~926px), so it only bites on a narrow wall — where
+     minmax(0,1fr) would otherwise resolve the track to 0 and the non-shrinking
+     route tag would paint straight over the destination and the Speed cell. */
   min-width: 600px;
 }
 .v2 .v2-fleet__row--live > * { min-width: 0; }
