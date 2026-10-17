@@ -20,7 +20,9 @@
  */
 
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { getAirportDepartures, getPublishedTravelMinutesFromAirport, getSimulatedMinutes } from "../../engine/fleetSimulator";
+import { getAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
+import { getBangkokNowFractionalMinutes } from "../../engine/time";
+import { LiveArrivals } from "./LiveArrivals";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
 import { getHeadlineMetrics, type HeadlineMetrics } from "../../engine/headlineMetrics";
 import { ADSB_POLL_MS, fetchAdsbAroundHkt } from "../../engine/adsbFlights";
@@ -48,13 +50,14 @@ const QUICK_DESTINATIONS = [
 ];
 
 /* -------------------------------------------------------------------------
- * Live bus time — pure functions of the engine, ticking every 250ms
+ * Bangkok wall clock — a rider's countdown runs on real time, never the
+ * 30× simulation clock the operations wall replays.
  * ----------------------------------------------------------------------- */
 
-function useSimulatedMinute() {
-  const [now, setNow] = useState(() => getSimulatedMinutes());
+function useBangkokMinute() {
+  const [now, setNow] = useState(() => getBangkokNowFractionalMinutes());
   useEffect(() => {
-    const id = setInterval(() => setNow(getSimulatedMinutes()), 250);
+    const id = setInterval(() => setNow(getBangkokNowFractionalMinutes()), 1000);
     return () => clearInterval(id);
   }, []);
   return now;
@@ -242,7 +245,7 @@ function MockQR({ payload }: { payload: string }) {
 type Step = "home" | "destination" | "payment" | "ticket";
 
 export function PassengerApp() {
-  const simMinutes = useSimulatedMinute();
+  const simMinutes = useBangkokMinute();
   const countdown = useNextBusCountdown(simMinutes);
   const operator = useOperatorMetrics();
   const [step, setStep] = useState<Step>("home");
@@ -267,9 +270,9 @@ export function PassengerApp() {
     const oldDescription = description?.content;
     document.documentElement.classList.add("passenger-site-mode");
     document.body.classList.add("passenger-site-mode");
-    document.title = "Phuket Smart Bus · ฿100 to Patong";
+    document.title = "Phuket Smart Bus · live buses";
     if (description) {
-      description.content = "See the next Phuket Smart Bus from HKT airport, choose a destination and try the single-ride or 3-day pass prototype.";
+      description.content = "Where every Phuket Smart Bus is right now, and how many minutes until the next one reaches your stop — from the buses' own GPS.";
     }
     return () => {
       document.documentElement.classList.remove("passenger-site-mode");
@@ -369,7 +372,7 @@ export function PassengerApp() {
       )}
 
       <footer className="pa-footer">
-        <span>Prototype fares · live timetable simulation · no real payment</span>
+        <span>Live GPS from the PKSB trackers · prototype fares · no real payment</span>
         <a href="https://depa-usdot.nonarkara.org/" className="pa-footer__link">
           How this system was built
         </a>
@@ -517,8 +520,9 @@ function HomeStep({
 }) {
   return (
     <main className="pa-home">
-      <h1 className="sr-only">Phuket Smart Bus tickets and next airport departure</h1>
-      <section className="pa-countdown" aria-live="polite">
+      <h1 className="sr-only">Phuket Smart Bus — where the buses are and when the next one reaches your stop</h1>
+      <LiveArrivals timetableNext={formatClock(countdown.depMin)} />
+      <section className="pa-countdown">
         <span className="pa-countdown__label">Next scheduled bus leaves in</span>
         <strong className="pa-countdown__time">
           {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
