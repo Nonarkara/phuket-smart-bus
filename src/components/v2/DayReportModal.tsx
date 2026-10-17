@@ -17,6 +17,7 @@ import { useEffect, useMemo } from "react";
 import { getDayDebrief, DAILY_OPEX_PER_BUS_THB, TRIP_OPEX_THB, type DebriefHour } from "../../engine/v2OpsPanel";
 import { BUS_CAPACITY, FARE_THB } from "../../engine/demandSupplyEngine";
 import { scrubToHour } from "./DemandPanel";
+import { getMeasuredAirportSupply } from "../../engine/fleetSimulator";
 
 interface Props {
   isOpen: boolean;
@@ -59,13 +60,14 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
   const addTop = report.addHours.slice(0, 6);
   const lightTop = report.lightHoursList.slice(0, 6);
   const best = report.bestFleet;
+  const ranOn = getMeasuredAirportSupply();
 
   return (
     <div className="v2-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-label="End of day report">
       <div className="v2-modal v2-report" onClick={(e) => e.stopPropagation()}>
         <header className="v2-modal__header v2-report__header">
           <div>
-            <span className="v2-modal__eyebrow">End of day · {report.dayLabel} · 24-hour model, both directions</span>
+            <span className="v2-modal__eyebrow">End of day · {report.dayLabel} · 24-hour model, both directions · {ranOn ? `buses as they ran on ${ranOn.date}` : "buses as published"}</span>
             <h2 className="v2-modal__title">
               {report.collectedPax.toLocaleString()} riders collected of {report.couldHavePax.toLocaleString()} who wanted a bus · {report.capturePct}%
             </h2>
@@ -120,7 +122,7 @@ export function DayReportModal({ isOpen, simDay, onClose, onReplay }: Props) {
                 <small>riders outnumbered seats · sorted by ฿ missed</small>
               </header>
               {addTop.length === 0 ? (
-                <p className="v2-report__empty">No hour ran short. The timetable covered every rider.</p>
+                <p className="v2-report__empty">No hour ran short. The buses covered every rider.</p>
               ) : (
                 <table>
                   <thead>

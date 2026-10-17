@@ -19,7 +19,7 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, SERVICE_END } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, getSupplyVersion, SERVICE_END } from "./fleetSimulator";
 import {
   atMinute,
   getDayModel,
@@ -124,11 +124,9 @@ export const DESTINATIONS: Destination[] = [
 // sourced from demandSupplyEngine.BUS_CAPACITY so the engine's queue caps
 // and the live-totals capacity denominator cannot drift.
 
-/** Memoized schedule data — schedules are static for the session. */
-let _cachedAirportDepartures: number[] | null = null;
+/** Airport departures in force for the active day (measured or published). */
 function airportDepartures(): number[] {
-  if (!_cachedAirportDepartures) _cachedAirportDepartures = getAirportDepartures().sort((a, b) => a - b);
-  return _cachedAirportDepartures;
+  return getAirportDepartures().slice().sort((a, b) => a - b);
 }
 
 
@@ -640,10 +638,12 @@ export type HourlyDemandSupply = {
 // Memoized per day-of-week — multiple consumers poll this every second;
 // recomputing 24 buckets every call wastes work. The day picker switches
 // getSimulationDay(), which switches which memo entry is served.
+let hourlyByDowVersion = -1;
 const hourlyByDow = new Map<number, HourlyDemandSupply[]>();
 
 export function getHourlyDemandSupply(): HourlyDemandSupply[] {
   const dow = getSimulationDay();
+  if (hourlyByDowVersion !== getSupplyVersion()) { hourlyByDow.clear(); hourlyByDowVersion = getSupplyVersion(); }
   const hit = hourlyByDow.get(dow);
   if (hit) return hit;
 

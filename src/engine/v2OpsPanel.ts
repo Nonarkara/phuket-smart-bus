@@ -22,7 +22,7 @@
 
 import type { VehiclePosition } from "@shared/types";
 import { getOpsFlightSchedule, getSimulationDay, getDayLabel } from "./opsFlightSchedule";
-import { getSimulatedMinutes, getVehiclesNow, SERVICE_END } from "./fleetSimulator";
+import { getSimulatedMinutes, getSupplyVersion, getVehiclesNow, SERVICE_END } from "./fleetSimulator";
 import {
   atMinute,
   getDayModel,
@@ -81,10 +81,12 @@ function classify(inGap: number, outGap: number, demand: number, seats: number):
 }
 
 /** Memoized per day-of-week — the /ops day picker switches the active day. */
+let balanceByDowVersion = -1;
 const balanceByDow = new Map<number, HourlyBalance[]>();
 
 export function getHourlyBalance(): HourlyBalance[] {
   const dow = getSimulationDay();
+  if (balanceByDowVersion !== getSupplyVersion()) { balanceByDow.clear(); balanceByDowVersion = getSupplyVersion(); }
   const hit = balanceByDow.get(dow);
   if (hit) return hit;
 

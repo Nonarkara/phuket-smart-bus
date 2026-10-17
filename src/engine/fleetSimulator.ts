@@ -11,6 +11,7 @@ import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG, ROUTE_DEFINITIONS } from "./config";
 import { getLiveTelemetryVehicles, normalizeVehicleKey } from "./liveGpsReceiver";
+import { getSimulationDay } from "./opsFlightSchedule";
 
 // Detailed timetables — imported from src/data/timetables (copied from server/)
 import airportToRawaiTimetable from "../data/timetables/airport-to-rawai.json";
@@ -399,7 +400,7 @@ export function getScheduleSupply(): {
   const allDeps: number[] = [];
 
   for (const routeId of routeIds) {
-    const profiles = profilesByRoute[routeId];
+    const profiles = runningProfiles(routeId);
     const capacity = routeId === "dragon-line" ? 15 : routeId.includes("ferry") ? 100 : 25;
     for (const profile of profiles) {
       for (const dep of profile.departures) {
@@ -418,9 +419,8 @@ export function getScheduleSupply(): {
   };
 }
 
-/** Get departures from the Airport → Rawai direction only.
- *  Used by the demand-supply engine for airport passenger boarding. */
-export function getAirportDepartures(): number[] {
+/** Published Airport → Rawai departures (PKSB timetable, 18 Jan 2025). */
+export function getPublishedAirportDepartures(): number[] {
   const profiles = profilesByRoute["rawai-airport"];
   if (!profiles) return [];
   const airportProfile = profiles.find((p) => p.directionLabel === "Bus to Rawai");
@@ -432,7 +432,7 @@ export function getAirportDepartures(): number[] {
  *  (null Rawai times) still count — first/last non-null from the PKSB JSON. */
 export type AirportboundTrip = { originDepMin: number; airportArriveMin: number };
 
-export function getAirportboundTrips(): AirportboundTrip[] {
+export function getPublishedAirportboundTrips(): AirportboundTrip[] {
   const timetable = rawaiToAirportTimetable as DetailedTimetable;
   return timetable.departures
     .map((dep) => {
@@ -444,6 +444,51 @@ export function getAirportboundTrips(): AirportboundTrip[] {
     })
     .filter((t): t is AirportboundTrip => t !== null)
     .sort((a, b) => a.originDepMin - b.originDepMin);
+}
+
+// ── airport-line supply: as the real buses ran, or as published ──────────
+/** One recorded day of the Airport line, as the trackers saw it. */
+export type MeasuredAirportSupply = {
+  /** Bangkok date the departures were recorded. */
+  date: string;
+  southbound: number[];
+  northbound: AirportboundTrip[];
+  /** Median end-to-end minutes of that day's recorded trips. */
+  medianTripMin: number | null;
+};
+let measuredByDow: Partial<Record<number, MeasuredAirportSupply>> = {};
+let supplyVersion = 0;
+
+/** Install measured supply per weekday (0 = SUN). `{}` returns every day to the timetable. */
+export function setMeasuredAirportSupply(byDow: Partial<Record<number, MeasuredAirportSupply>>): void {
+  measuredByDow = byDow;
+  supplyVersion += 1;
+}
+/** Bumps whenever the supply changes — caches keyed by day check it. */
+export function getSupplyVersion(): number {
+  return supplyVersion;
+}
+export function getMeasuredAirportSupply(dow = getSimulationDay()): MeasuredAirportSupply | null {
+  return measuredByDow[dow] ?? null;
+}
+
+/** Airport → Rawai departures the simulation runs: measured for that weekday when recorded, else published. */
+export function getAirportDepartures(dow = getSimulationDay()): number[] {
+  return measuredByDow[dow]?.southbound ?? getPublishedAirportDepartures();
+}
+export function getAirportboundTrips(dow = getSimulationDay()): AirportboundTrip[] {
+  return measuredByDow[dow]?.northbound ?? getPublishedAirportboundTrips();
+}
+
+/** The direction profiles with the airport line's departures swapped for the supply in force. */
+function runningProfiles(routeId: OperationalRouteId): DirectionProfile[] {
+  const profiles = profilesByRoute[routeId];
+  const m = routeId === "rawai-airport" ? getMeasuredAirportSupply() : null;
+  if (!m) return profiles;
+  return profiles.map((p) =>
+    p.directionLabel === "Bus to Rawai" ? { ...p, departures: m.southbound }
+    : p.directionLabel === "Bus to Airport" ? { ...p, departures: m.northbound.map((t) => t.originDepMin) }
+    : p);
 }
 
 /** Published stop ids on Airport → Rawai that the rider UI can name. */
@@ -467,9 +512,9 @@ export function getNextPublishedStopArrival(
   const dayMin = ((nowMin % 1440) + 1440) % 1440;
 
   if (dest === "Airport") {
-    const next = getAirportboundTrips().find((t) => t.airportArriveMin > dayMin);
+    const next = getPublishedAirportboundTrips().find((t) => t.airportArriveMin > dayMin);
     if (!next) {
-      const first = getAirportboundTrips()[0];
+      const first = getPublishedAirportboundTrips()[0];
       if (!first) return null;
       const arriveMin = first.airportArriveMin + 1440;
       return { arriveMin, waitMin: arriveMin - dayMin };
@@ -1005,7 +1050,7 @@ function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now:
   const pool = fleetByRoute[routeId];
   if (!pool || pool.length === 0) return [];
 
-  const occs = profilesByRoute[routeId].flatMap((p) => buildTripOccurrences(p, nowMin));
+  const occs = runningProfiles(routeId).flatMap((p) => buildTripOccurrences(p, nowMin));
   if (occs.length === 0) return [];
 
   // Priority: active > prestart > layover, then by closeness to now
@@ -1385,7 +1430,7 @@ export function listLandTripAssignments(nowMin: number): AssignedTripLeg[] {
     if (!pool || pool.length === 0) continue;
 
     const freeAt = new Array<number>(pool.length).fill(SERVICE_START - 120);
-    const allDeps = profilesByRoute[routeId]
+    const allDeps = runningProfiles(routeId)
       .flatMap((p) => p.departures.map((dep) => ({ profile: p, dep })))
       .sort((a, b) => a.dep - b.dep || a.profile.directionLabel.localeCompare(b.profile.directionLabel));
 

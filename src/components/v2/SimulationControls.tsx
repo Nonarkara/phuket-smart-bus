@@ -35,9 +35,13 @@ interface SimulationControlsProps {
   onDayChange: (dow: number) => void;
   onStartDaySweep: () => void;
   onOpenDayReport?: () => void;
+  /** Which bus supply the simulation runs; null while the record loads. */
+  supplyLabel?: string | null;
+  supplyTitle?: string;
+  onToggleSupply?: () => void;
 }
 
-export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange, onStartDaySweep, onOpenDayReport }: SimulationControlsProps) {
+export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange, onStartDaySweep, onOpenDayReport, supplyLabel, supplyTitle, onToggleSupply }: SimulationControlsProps) {
   const [sliderValue, setSliderValue] = useState(getSimulatedMinutes());
 
   // Animate slider thumb while playing (polled locally at 100ms)
@@ -64,6 +68,11 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
           </button>
         ))}
       </div>
+      {supplyLabel && onToggleSupply && (
+        <button type="button" className="v2-timebar__report" onClick={onToggleSupply} title={supplyTitle}>
+          {supplyLabel}
+        </button>
+      )}
       <button
         type="button"
         className="v2-timebar__play"

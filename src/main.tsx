@@ -28,6 +28,17 @@ import "leaflet/dist/leaflet.css";
     .catch(() => send(b));
 })();
 
+// A deploy replaces the hashed chunks; a tab opened before it 404s on its next
+// lazy import and goes blank. Reload once to pick up the new build.
+window.addEventListener("vite:preloadError", (event) => {
+  try {
+    if (sessionStorage.getItem("pksb-chunk-reload")) return;
+    sessionStorage.setItem("pksb-chunk-reload", "1");
+  } catch { return; }
+  event.preventDefault();
+  window.location.reload();
+});
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

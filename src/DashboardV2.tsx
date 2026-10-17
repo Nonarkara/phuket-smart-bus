@@ -30,7 +30,11 @@ import {
   SERVICE_START,
   DAY_TARGET_END,
   DAY_SPEED,
+  setMeasuredAirportSupply,
+  type MeasuredAirportSupply,
 } from "./engine/fleetSimulator";
+import { measuredSupplyByDow } from "./engine/measuredSupply";
+import type { SlimDay } from "@shared/insights";
 import { bangkokDow, getLiveFeedState, getLiveMapVehicles, startLiveFeed, subscribeLiveFeed } from "./engine/liveOps";
 import { getBangkokNowFractionalMinutes } from "./engine/time";
 import {
@@ -168,6 +172,29 @@ export default function DashboardV2() {
   // 24:00 (the sweep flag is armed by the button, disarmed by any scrub),
   // and on demand from the DAY REPORT button.
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // ── bus supply: the departures the real buses made, or the timetable ────
+  // The simulation runs on the Airport line as it actually ran (latest
+  // recorded day of the same weekday); TIMETABLE switches back to the
+  // published PKSB schedule for comparison.
+  const [measured, setMeasured] = useState<Partial<Record<number, MeasuredAirportSupply>>>({});
+  const [supplyMode, setSupplyMode] = useState<"ran" | "timetable">("ran");
+  useEffect(() => {
+    let alive = true;
+    fetch(appPath("/api/research/period"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { days?: SlimDay[] } | null) => { if (alive && d?.days) setMeasured(measuredSupplyByDow(d.days)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => {
+    setMeasuredAirportSupply(supplyMode === "ran" ? measured : {});
+    setState(computeSimState());
+  }, [measured, supplyMode]);
+  const ranOn = supplyMode === "ran" ? measured[simDay] ?? null : null;
+  const supplyLabel = ranOn
+    ? `AS RAN · ${new Date(`${ranOn.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).toUpperCase()}`
+    : "TIMETABLE";
   const sweepArmedRef = useRef(false);
 
   // Day picker: switch the engine's active day and replay it from 05:30.
@@ -567,6 +594,11 @@ export default function DashboardV2() {
             onDayChange={handleDayChange}
             onStartDaySweep={handleStartDaySweep}
             onOpenDayReport={() => setIsReportOpen(true)}
+            supplyLabel={Object.keys(measured).length ? supplyLabel : null}
+            supplyTitle={ranOn
+              ? `Airport line runs the ${ranOn.southbound.length} departures from the airport and ${ranOn.northbound.length} trips to it that the trackers recorded on ${ranOn.date} (complete trips only; published timetable: ~25 each way). Click for the timetable.`
+              : "Airport line runs the published PKSB timetable. Click for the departures the real buses made."}
+            onToggleSupply={() => setSupplyMode((m) => (m === "ran" ? "timetable" : "ran"))}
           />
         )}
       </header>

@@ -20,7 +20,7 @@
  */
 
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { getAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
+import { getPublishedAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../../engine/time";
 import { LiveArrivals } from "./LiveArrivals";
 import { getOpsFlightSchedule } from "../../engine/opsFlightSchedule";
@@ -66,7 +66,7 @@ function useBangkokMinute() {
 function useNextBusCountdown(now: number) {
   return useMemo(() => {
     const dayMin = now % 1440;
-    const departures = getAirportDepartures().slice().sort((a, b) => a - b);
+    const departures = getPublishedAirportDepartures().slice().sort((a, b) => a - b);
     const firstToday = departures.find((d) => d > dayMin);
     const next = firstToday ?? (departures[0] ?? 0) + 24 * 60; // wraps tomorrow
     const deltaMin = next - dayMin;

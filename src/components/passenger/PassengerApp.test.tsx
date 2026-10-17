@@ -6,6 +6,9 @@ import { PassengerApp } from "./PassengerApp";
 
 vi.mock("../../engine/fleetSimulator", () => ({
   getAirportDepartures: () => [780],
+  getPublishedAirportDepartures: () => [780],
+  getSupplyVersion: () => 0,
+  getMeasuredAirportSupply: () => null,
   getPublishedTravelMinutesFromAirport: () => 70,
   // headlineMetrics reads getVehiclesNow + getSimulatedMinutes; the test
   // doesn't exercise the operator pane, so empty values are fine.

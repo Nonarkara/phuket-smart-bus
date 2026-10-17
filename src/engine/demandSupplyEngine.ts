@@ -24,7 +24,7 @@ import {
   getDayLabel,
   type OpsFlight
 } from "./opsFlightSchedule";
-import { getAirportDepartures, getAirportboundTrips, type AirportboundTrip } from "./fleetSimulator";
+import { getAirportDepartures, getAirportboundTrips, getMeasuredAirportSupply, getSupplyVersion, type AirportboundTrip } from "./fleetSimulator";
 import { captureRateFor, CHECK_IN_LEAD_MIN, MAX_EARLY_ARRIVAL_MIN } from "./travelBehavior";
 
 // ---------------------------------------------------------------------------
@@ -395,12 +395,12 @@ function buildDayModel(dow: number): DayModel {
   const schedule = getOpsFlightScheduleFor(dow);
   const arrivals = schedule.filter((f) => f.type === "arr" && f.mode === "flight");
   const departingFlights = schedule.filter((f) => f.type === "dep" && f.mode === "flight");
-  const departures = getAirportDepartures();
+  const departures = getAirportDepartures(dow);
   const inflow = buildInflow(arrivals);
 
   const base = simulateDay(inflow, departures);
   const deliveredCum = buildDelivered(base.trips);
-  const outbound = buildOutbound(departingFlights, getAirportboundTrips());
+  const outbound = buildOutbound(departingFlights, getAirportboundTrips(dow));
 
   const snapshots: DaySnapshot[] = [];
   for (let m = 0; m < DAY_MIN; m += 5) {
@@ -461,7 +461,19 @@ function buildDayModel(dow: number): DayModel {
 }
 
 /** Day model for a specific day of week (0=SUN … 6=SAT). Memoized per dow. */
+/** Every day-keyed cache here is only valid for one bus supply. */
+let cachedSupplyVersion = -1;
+function checkSupply(): void {
+  const v = getSupplyVersion();
+  if (v === cachedSupplyVersion) return;
+  cachedSupplyVersion = v;
+  modelByDow.clear();
+  scenarioCache.clear();
+  cachedWeek = null;
+}
+
 export function getDayModelFor(dow: number): DayModel {
+  checkSupply();
   let m = modelByDow.get(dow);
   if (!m) {
     m = buildDayModel(dow);
@@ -509,6 +521,7 @@ export type WeekEconomics = {
 let cachedWeek: WeekEconomics | null = null;
 
 export function getWeekEconomics(): WeekEconomics {
+  checkSupply();
   if (cachedWeek) return cachedWeek;
   const order = [1, 2, 3, 4, 5, 6, 0]; // MON..SUN
   const days = order.map((dow) => {
@@ -620,8 +633,8 @@ export type HourlyCorridor = {
 
 export function getHourlyCorridor(): HourlyCorridor[] {
   const model = getDayModel();
-  const departures = getAirportDepartures();
-  const northbound = getAirportboundTrips();
+  const departures = getAirportDepartures(getSimulationDay());
+  const northbound = getAirportboundTrips(getSimulationDay());
 
   const out: HourlyCorridor[] = [];
   for (let h = 0; h < 24; h++) {
@@ -715,6 +728,7 @@ export function getFleetScenario(deltaBuses: number): FleetScenario {
   const dow = getSimulationDay();
   const delta = Math.max(-5, Math.min(10, Math.round(deltaBuses)));
   const key = `${dow}:${delta}`;
+  checkSupply();
   const hit = scenarioCache.get(key);
   if (hit) return hit;
 
@@ -724,8 +738,8 @@ export function getFleetScenario(deltaBuses: number): FleetScenario {
   const departingFlights = schedule.filter((f) => f.type === "dep" && f.mode === "flight");
   const inflow = buildInflow(arrivals);
 
-  let southbound = getAirportDepartures();
-  let northbound = getAirportboundTrips();
+  let southbound = getAirportDepartures(dow);
+  let northbound = getAirportboundTrips(dow);
 
   if (delta > 0) {
     // Southbound legs target the worst arrival-queue moments…
@@ -733,7 +747,8 @@ export function getFleetScenario(deltaBuses: number): FleetScenario {
     southbound = plan.departures;
     // …and the same physical buses run northbound half a duty cycle later.
     const HALF_CYCLE = Math.round(DUTY_CYCLE_MIN / 2);
-    const TRIP_MIN = 95;
+    // An added bus runs as long as that day's real trips took (published: 95).
+    const TRIP_MIN = Math.round(getMeasuredAirportSupply(dow)?.medianTripMin ?? 95);
     for (const start of plan.startedAt) {
       for (let t = start + HALF_CYCLE; t < DAY_MIN; t += DUTY_CYCLE_MIN) {
         northbound = [...northbound, { originDepMin: t, airportArriveMin: t + TRIP_MIN }];
