@@ -10675,10 +10675,18 @@ a { color: var(--tint); }
 .v2-map__legend {
   position: absolute;
   left: 10px;
+  right: 10px;
   bottom: 10px;
   z-index: 1000;
   display: flex;
-  gap: 12px;
+  /* Seven keys do not fit on one line once the map column is this narrow —
+     measured 502px of content in a 396px stage, which silently amputated
+     "pier/harbor" and "live aircraft" off the right edge. Wrap instead of
+     overflowing; SyncMapView measures this element's height, so the island
+     framing follows the extra row on its own. */
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 6px;
   padding: 7px 9px;
   background: rgba(10, 14, 20, .86);
   color: rgba(255,255,255,.76);
@@ -14383,6 +14391,25 @@ a { color: var(--tint); }
 .v2--operations .v2-timebar { grid-column: 1 / -1; grid-row: 2; }
 .v2--operations .v2-header__story { overflow: visible; flex-wrap: wrap; row-gap: 0; column-gap: 12px; align-content: center; }
 .v2--operations .v2-header__story-label { flex-basis: auto; }
+
+/* Below the wall breakpoint the header collapses to a single column, but the
+   cockpit rules above still pin each child to an explicit `grid-column: 1…5`.
+   Those explicit placements then build five implicit columns inside a one-column
+   grid, so the LIVE/SIM switch ran to x=508 in a 390px viewport — nav buttons
+   (TOOLKIT, STUDY, CAPACITY, DEVICES) clipped off the right edge and the brand
+   text overlapped the clock. Release the placements and let it stack. */
+@media (max-width: 1180px) {
+  .v2--operations .v2-header { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .v2--operations .v2-header > * { grid-column: 1 !important; grid-row: auto !important; }
+  .v2--operations .v2-timebar { grid-column: 1 !important; }
+  /* Eight nav buttons cannot fit a phone in one line. Wrap rather than bleed. */
+  .v2--operations .v2-source { flex-wrap: wrap; margin-left: 0; }
+  /* Same for the timebar: day picker, transport, DAY REPORT and the speed
+     stack are a wall-width instrument. On a phone they wrap to as many rows as
+     they need instead of running 89px past the edge. */
+  .v2--operations .v2-timebar { flex-wrap: wrap; gap: 8px; }
+  .v2--operations .v2-timebar__slider { min-width: 0; flex: 1 1 160px; }
+}
 
 /* Next-30-min callout: one line per flight, three across */
 .v2--operations .v2-body--operations .v2-flights__callout-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
