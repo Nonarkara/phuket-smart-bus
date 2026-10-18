@@ -406,7 +406,11 @@ page failing the anti-slop rules. `/capacity` and the rider app passed.
 What it actually was: `.v2-map__hero-card` carried `border: 1px` **and**
 `backdrop-filter: blur(14px)` while sitting on an opaque panel — four glass
 tiles in a 2×2 grid, with nothing behind them to blur and nothing the border
-separated. `.v2-conditions__item` had `min-height: 64px` under two lines of
+separated. **Correction (same day, checked with `getComputedStyle` on production):**
+that base rule never reached the screen — `.v2 .v2-map__hero-card` (line ~9566)
+already set an opaque panel, no border, no blur, so removing it changed nothing.
+Read computed styles, not the first matching rule, before claiming a visual fix.
+`.v2-conditions__item` had `min-height: 64px` under two lines of
 text, and the conditions strip drew an outer border around a grid whose 1px
 gaps already made the hairlines. Decoration that carried no information, which
 is exactly what rule 5 and rule 7 exist to catch.
