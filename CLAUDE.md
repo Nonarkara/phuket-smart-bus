@@ -423,9 +423,9 @@ numbers. Run `bash scripts/design-audit.sh` and check against 1–7.
 
 Still open on `/ops`, deliberately not fixed in that pass: no single focal
 point (rule 6 — the map is one peer among ~8 equal-weight blocks), the left
-column's dense small grey mono text (rule 7), and labels still truncating with
-"…" in the conditions strip and hero details (rule 1). Those are structural
-layout work, not decoration removal.
+column's dense small grey mono text (rule 7). Those are structural layout work,
+not decoration removal. (The "…" truncation in the conditions strip and hero
+details was fixed in ebd4525: the lines wrap, at the 13 px floor.)
 
 ---
 
