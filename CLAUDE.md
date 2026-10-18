@@ -274,7 +274,7 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 ### The Operations Wall — what is on screen and why
 
 - Left column, top to bottom: **flight board** (24-h rail + next-30-min callout), the **operating equation** (demand − seats = buses to add, right now), the **demand-vs-supply balance chart** (24 columns, IN/OUT bars ABOVE the axis = riders without a seat → add a bus, BELOW = seats without a rider → run lighter, verdict row in whole buses), then the seven-hour table (scrolls).
-- Map column: conditions strip → four hero cards (**waiting now · collected · could have collected · buses rolling**; collected + walked away + waiting = could have, per frame, from one `atMinute()`) → map → fleet table.
+- Map section (≥1200 px, 2026-10-18 focal pass): the **island map runs the full body height** on the left; the rail on the right leads with **one headline — ฿ missed today (modelled)** and its sum, `wanted = collected + took a Grab + waiting`, all from one `atMinute()` frame; then conditions, then the fleet table (with real height). The duplicate status line is hidden (its next-departure fact is in the fleet subtitle). Footer is one slim row. LIVE keeps four cards (buses reporting · trips · riders · fares) — GPS cannot see who walked away, so LIVE has no missed figure. Below 1200 px `/ops` serves the briefing view. One PKSB bus count everywhere: the fleet table excludes the Orange Line 8411 competitor (it shares the airport route id). Footer trips/km are bus figures: both directions, full 54 km line, measured trip length when AS RAN.
 - **DAY REPORT** (timebar button, and auto-opens when DAY·60s freezes on 24:00): `getDayDebrief()` — 3-term conservation `collected + lost + waiting = couldHave` at midnight (the 22:30 curb queue is a different, larger number), hours to add buses (฿ missed there), hours to run lighter (whole empty trips × ฿217 opex), and −2…+8 whole-day fleet re-runs netted against ฿2,192/bus-day (฿800k/yr ÷ 365 ÷ 16 h, same constant as /roi).
 - **LIVE mode** swaps the hero cards (buses reporting · trips completed · riders est. · fares est.), the fleet table (`LiveFleetPanel`: plate · heading to · speed · seen · trips · km · ฿ est.), the footer, and the timebar (`LiveFeedBar`: feed age, observed-since, pricing basis, DEVICES → telemetry console). LIVE and SIM containers carry distinct React `key`s — the SIM cells are ref-written per frame, and reused DOM froze a stale ฿ once.
 - Basemap is plain OpenStreetMap + a "smart invert" CSS filter (`invert(1) hue-rotate(180deg)`, never `grayscale` first). **Not CARTO** — CARTO's raster tiles started demanding an API key and watermarked the whole map. The design reference is 1440×900 css px scaled by `zoom`; every ops surface must fit above the fold at that size — the left column may scroll, the map column never does.
@@ -421,11 +421,9 @@ element. That is the signature of ornament, not breakage — go looking for
 `min-height` under short text, and grids of N equal cards holding N unrelated
 numbers. Run `bash scripts/design-audit.sh` and check against 1–7.
 
-Still open on `/ops`, deliberately not fixed in that pass: no single focal
-point (rule 6 — the map is one peer among ~8 equal-weight blocks), the left
-column's dense small grey mono text (rule 7). Those are structural layout work,
-not decoration removal. (The "…" truncation in the conditions strip and hero
-details was fixed in ebd4525: the lines wrap, at the 13 px floor.)
+Rule 6 (focal point) was resolved the same day (focal pass, above). Rule 7 — the
+left column's dense small grey mono text — is still open. (The "…" truncation in
+the conditions strip and hero details was fixed in ebd4525.)
 
 ---
 
