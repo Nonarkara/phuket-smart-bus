@@ -8,6 +8,8 @@ import { DriverProfileSheet } from "./DriverProfileSheet";
 interface OperatorFleetPanelProps {
   rows: OperatorFleetRow[];
   waitingAtCurb: number;
+  /** Minutes to the next airport departure; shown instead of the curb count, which the headline already carries. */
+  nextDepartureMin?: number | null;
 }
 
 type Filter = "all" | "issues" | "moving" | "idle";
@@ -32,7 +34,7 @@ const PROBLEM_DESC: Record<NonNullable<BusProblem>, string> = {
  * Each row shows: driver face + name, plate, route, status, load bar, ETA.
  * Click / Enter opens the driver dossier (sim-derived day record).
  */
-export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelProps) {
+export function OperatorFleetPanel({ rows, waitingAtCurb, nextDepartureMin = null }: OperatorFleetPanelProps) {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
@@ -73,9 +75,10 @@ export function OperatorFleetPanel({ rows, waitingAtCurb }: OperatorFleetPanelPr
             )}
           </strong>
           <span className="v2-fleet__sub">
-            {waitingAtCurb > 0
-              ? `${waitingAtCurb} pax waiting at curb · click a driver for today's record`
-              : "Curb queue clear · click a driver for today's record"}
+            {nextDepartureMin != null
+              ? `Next airport departure in ${nextDepartureMin} min · `
+              : waitingAtCurb > 0 ? `${waitingAtCurb} pax waiting at curb · ` : "Curb queue clear · "}
+            click a driver for today's record
           </span>
         </div>
         <div className="v2-fleet__chips" role="toolbar" aria-label="Filter fleet">

@@ -21,8 +21,10 @@ function emptyMessage(status: LiveFeedStatus, detail: string | null): string {
   }
 }
 
-/** One row per real bus: its line, where it's heading, who's on board, and
- *  what today's observed trips are worth. */
+/** One row per real bus: its line, where it's heading, who's on board, and its
+ *  trips and km today — all from the trackers. No ฿ per plate: fares on a real
+ *  bus would be modelled, and real-fleet screens never put a modelled figure on
+ *  a real plate (CLAUDE.md hard rule, 2026-10-05). */
 export function LiveFleetPanel({ summary, status, detail }: { summary: LiveOpsSummary; status: LiveFeedStatus; detail: string | null }) {
   const { rows } = summary;
   return (
@@ -44,11 +46,10 @@ export function LiveFleetPanel({ summary, status, detail }: { summary: LiveOpsSu
           <span>Bus</span>
           <span>Line → heading to</span>
           <span>Speed</span>
-          <span>On board</span>
+          <span>On bus</span>
           <span>Seen</span>
           <span>Trips</span>
           <span>Km</span>
-          <span>฿ today</span>
         </div>
         {rows.map((row) => (
           <div role="listitem" key={row.plate} className={`v2-fleet__row v2-fleet__row--live ${row.reporting ? "" : "is-silent"}`}>
@@ -66,7 +67,6 @@ export function LiveFleetPanel({ summary, status, detail }: { summary: LiveOpsSu
             <span className="v2-fleet__num" title={row.reporting ? "Last fix" : "Not reporting — last fix"}>{seen(row.lastSeenSec)}</span>
             <span className="v2-fleet__num">{row.trips}</span>
             <span className="v2-fleet__num">{row.km.toFixed(1)}</span>
-            <span className="v2-fleet__num v2-fleet__num--money">฿{row.fareThb.toLocaleString()}</span>
           </div>
         ))}
         {rows.length === 0 && <div className="v2-fleet__empty">{emptyMessage(status, detail)}</div>}

@@ -15329,3 +15329,69 @@ a { color: var(--tint); }
   color: #2dd4bf;
 }
 
+
+/* ── /ops focal pass (2026-10-18) ─────────────────────────────────────────────
+   One thing wins. The island map runs the full height of the body; the rail
+   beside it leads with one number — baht missed today — and the sum that
+   proves it. Conditions and the fleet table follow, quieter. The footer drops
+   to one slim row: its figures support, they do not compete. Phuket is ~21 km
+   wide and 48 km tall, so a ~350–570 px map column shows the whole island and
+   leaves the rail the ≥500 px the fleet tables need (lesson 12). Below 1200 px
+   the rail would be too narrow, so the earlier arrangement (fleet table full
+   width along the bottom) stays in force there. */
+@media (min-width: 1200px) {
+  .v2--operations .v2-map {
+    grid-template-columns: minmax(340px, 0.7fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .v2--operations .v2-map > .v2-map__stage { grid-column: 1; grid-row: 1 / -1; }
+  .v2--operations .v2-map > .v2-map__hero { grid-row: 1; }
+  .v2--operations .v2-map > .v2-conditions { grid-row: 2; }
+  /* The status line repeated the fleet table's own All / Moving counts; its
+     one unique fact (next departure) now sits in the table's subtitle. */
+  .v2--operations .v2-map > .v2-map__overlay { display: none; }
+  .v2--operations .v2-map > .v2-fleet { grid-column: 2; grid-row: 4; min-height: 0; overflow-y: auto; }
+
+  /* Simulated fleet table: five tracks that fit a ~470 px list. */
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) { grid-template-columns: 104px minmax(124px, 1fr) 72px 72px 44px; min-width: 0; column-gap: 8px; }
+  /* The avatar is a simulated driver's illustration; in the rail the plate and
+     name identify the bus, and the 28 px face forced every row to three lines. */
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__face { display: none; }
+  /* Route cell: line tag and heading share a line when they fit, wrap when they
+     don't; the progress bar takes its own line. Never clip the heading. */
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__route { flex-wrap: wrap; row-gap: 3px; }
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__route-dir { flex: 0 0 auto; min-width: 0; }
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__route-progress { flex: 0 0 100%; }
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__driver-name { white-space: normal; overflow: visible; text-overflow: clip; }
+  /* Live fleet table (no per-plate ฿ column): seven tracks in the same list. */
+  .v2--operations .v2-fleet__row--live { grid-template-columns: 76px minmax(112px, 1fr) 60px 52px 40px 42px 44px; min-width: 0; column-gap: 6px; }
+  /* Fleet header in the rail: title line, then the subtitle, then the filters.
+     Nothing clipped, nothing squeezed into a one-word-wide column. */
+  .v2--operations .v2-fleet__head { flex-wrap: wrap; row-gap: 6px; }
+  .v2--operations .v2-fleet__head > div { flex: 1 1 100%; flex-wrap: wrap; overflow: visible; row-gap: 2px; }
+  .v2--operations .v2-fleet__sub { flex: 1 1 100%; white-space: normal; font-size: 13px; }
+}
+
+/* The headline: the largest figure on the wall, and the only one in warn. */
+.v2--operations .v2-map__hero.v2-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 20px;
+  background: var(--ax-panel);
+  border-bottom: 1px solid var(--ax-line-2);
+}
+.v2-headline__label { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-ink-2); }
+.v2-headline__value { font-family: var(--font-mono); font-size: 52px; line-height: 1; letter-spacing: -0.02em; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
+.v2-headline__why { font-size: 14px; color: var(--ax-ink-2); }
+.v2-headline__sum { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 15px; color: var(--ax-ink-2); }
+.v2-headline__sum b { font-family: var(--font-mono); font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+
+/* Supporting cast: conditions step back. */
+.v2--operations .v2-conditions__value { font-size: 15px; }
+
+/* Footer: one slim row of supporting figures. */
+.v2--operations .v2-accum { padding: 0; }
+.v2--operations .v2-accum__item { padding: 8px 16px; gap: 2px; }
+.v2--operations .v2-accum__val { font-size: 20px; }
+.v2--operations .v2-accum__label { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 600; white-space: nowrap; }

@@ -101,11 +101,10 @@ describe("HeadlineMetrics — single source of truth", () => {
     expect(h.today.revenueThb).toBe(h.today.paxDelivered * 100);
   });
 
-  it("onTimePct ∈ [70, 99] (defaults to 97 when no buses active)", () => {
-    setClockOverride(() => 720);
+  it("onTimePct is the share of buses moving now, 0–100", () => {
     const h = getHeadlineMetrics();
-    expect(h.onTimePct).toBeGreaterThanOrEqual(70);
-    expect(h.onTimePct).toBeLessThanOrEqual(99);
+    const total = h.fleet.movingBuses + h.fleet.dwellingBuses;
+    expect(h.onTimePct).toBe(total > 0 ? Math.round((h.fleet.movingBuses / total) * 100) : 0);
   });
 
   it("fleet count never reports impossible '15 buses with 20 moving' state", () => {

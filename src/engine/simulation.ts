@@ -19,7 +19,13 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, getSupplyVersion, SERVICE_END } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, getMeasuredAirportSupply, getSupplyVersion, SERVICE_END } from "./fleetSimulator";
+import lineGeometry from "@shared/lineGeometry.json";
+
+/** Airport ↔ Rawai road length, from the official GIS line (~54 km). A bus trip covers all of it. */
+const AIRPORT_LINE_KM = (lineGeometry.find((l) => l.routeId === "rawai-airport")?.lengthM ?? 54_252) / 1000;
+/** Published end-to-end running time (PKSB timetable, 18 Jan 2025). */
+const PUBLISHED_TRIP_MIN = 95;
 import {
   atMinute,
   getDayModel,
@@ -290,10 +296,6 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   const eng = atMinute(nowMin);
   const deps = airportDepartures();
   const departedBuses = deps.filter((d) => d <= nowMin);
-  // Weighted average trip duration across destinations. The dominant trip
-  // (Airport → Patong via Surin/Kamala) is 100 min, with shorter hops to
-  // Old Town and Laguna; 75 min is the round-trip-aware average.
-  const avgTripMin = 75;
   const nextDep = deps.find((d) => d > nowMin);
   // Combined both directions: arriving pax ride out, departing pax ride back.
   // The engine's `atMinute` exposes both cumulatives; the per-frame
@@ -306,15 +308,18 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   // for the same pax-km. co2SavedKg is the bus vs taxi delta.
   const co2TaxiKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_CAR);
   const co2BusKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_BUS);
-  const tripsCompleted = departedBuses.filter((d) => d + avgTripMin <= nowMin).length;
-  // kmDriven — accumulated distance based on the SOUTHBOUND timetable. A
-  // completed trip counts its full AVG_TRIP_KM (~35 km from the line
-  // config weighted by the destination mix); a bus still mid-trip counts
-  // half — the partial-trip approximation. Northbound distance is
-  // included in the line P&L (getLineMetrics) and the bottom accumulator
-  // strip averages across both directions via the destination mix, so we
-  // don't double-count here.
-  const kmDriven = tripsCompleted * Math.round(AVG_TRIP_KM) + (departedBuses.length - tripsCompleted) * Math.round(AVG_TRIP_KM / 2);
+  // Bus trips and bus-km, BOTH directions. A trip runs the whole line
+  // (AIRPORT_LINE_KM) and takes that day's measured median when the simulation
+  // runs on recorded departures, else the published 95 min. A bus still on the
+  // road counts the share of the line it has covered. (Passenger-km — the 28 km
+  // average ride — is a different quantity and only feeds CO₂.)
+  const tripMin = getMeasuredAirportSupply()?.medianTripMin ?? PUBLISHED_TRIP_MIN;
+  const legs = [
+    ...departedBuses.map((d) => ({ start: d, end: d + tripMin })),
+    ...getAirportboundTrips().filter((t) => t.originDepMin <= nowMin).map((t) => ({ start: t.originDepMin, end: t.airportArriveMin })),
+  ];
+  const tripsCompleted = legs.filter((l) => l.end <= nowMin).length;
+  const kmDriven = Math.round(legs.reduce((km, l) => km + AIRPORT_LINE_KM * Math.min(1, (nowMin - l.start) / Math.max(1, l.end - l.start)), 0));
   return {
     simMinutes: nowMin,
     waiting: eng.waiting,

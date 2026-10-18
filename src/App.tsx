@@ -439,7 +439,7 @@ function LiveStatsWidget() {
       </div>
       <div className="live-stat">
         <span className="live-stat__val"><AnimatedCounter value={stats.onTime} suffix="%" /></span>
-        <span className="live-stat__label">Modelled on-time</span>
+        <span className="live-stat__label">Modelled buses moving now</span>
       </div>
       <div className="live-stat">
         <span className="live-stat__val">{co2Label}</span>

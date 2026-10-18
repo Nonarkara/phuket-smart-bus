@@ -226,7 +226,9 @@ function getVehiclesCached(): VehiclePosition[] {
 export function getOperatorFleet(): OperatorFleetRow[] {
   const nowMin = getSimulatedMinutes();
   const waiting = atMinute(nowMin).waiting;
-  const vehicles = getVehiclesCached().filter((v) => isBusRoute(v.routeId));
+  // Orange Line 8411 is the government competitor: it shares the airport
+  // route id on the map but is not a PKSB bus, so it never enters this table.
+  const vehicles = getVehiclesCached().filter((v) => isBusRoute(v.routeId) && !v.vehicleId.startsWith("orange-"));
 
   return vehicles
     .map((v): OperatorFleetRow => {

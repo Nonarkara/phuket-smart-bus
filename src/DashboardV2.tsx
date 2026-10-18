@@ -100,24 +100,13 @@ function computeOpsScale(): number {
   return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
 }
 
-/** Handheld devices (< 960px) get the mobile briefing; laptops and desktops
- * get the full operations console with the tall top-to-bottom island map. */
+/** Phones and tablets (< 1200px) get the briefing; laptops, desktops and walls
+ * get the full console with the island map running top to bottom. Between
+ * 960 and 1200 px the map/rail split leaves the rail too narrow for the
+ * headline and the fleet table, so those screens read the briefing too. */
 function shouldUseCompactOps(): boolean {
   if (typeof window === "undefined") return false;
-  return window.innerWidth < 960;
-}
-
-/** "boarded so far · 163 delivered · 56% of riders" — the collected card.
- *  Money is deliberately NOT repeated here: the footer's "Money on the table"
- *  is the one revenue figure on screen (delivered × fare). */
-function collectedDetail(t: { paxBoarded: number; paxDelivered: number; paxWantBus: number }): string {
-  const pct = t.paxWantBus > 0 ? Math.round((t.paxBoarded / t.paxWantBus) * 100) : 100;
-  return `boarded so far · ${t.paxDelivered.toLocaleString()} delivered · ${pct}% of riders`;
-}
-
-/** "1,072 walked away · 202 still waiting" — the could-have-collected card. */
-function couldHaveDetail(t: { paxAbandoned: number; waiting: number }): string {
-  return `${t.paxAbandoned.toLocaleString()} walked away (฿${(t.paxAbandoned * 100).toLocaleString()}) · ${t.waiting.toLocaleString()} still waiting`;
+  return window.innerWidth < 1200;
 }
 
 function formatClockLabel(min: number): string {
@@ -143,7 +132,6 @@ export default function DashboardV2() {
     const t = getSimulatedMinutes();
     return {
       tot: getLiveTotals(t),
-      moving: getMapVehicles(t).filter((v) => v.status === "moving").length,
       clock: formatClockLabel(t),
     };
   });
@@ -155,18 +143,15 @@ export default function DashboardV2() {
   const mapRef = useRef<V2MapHandle>(null);
   const clockRef = useRef<HTMLSpanElement>(null);
   const revEarnedRef = useRef<HTMLSpanElement>(null);
-  const revLostRef = useRef<HTMLSpanElement>(null);
-  const revMeterRef = useRef<HTMLSpanElement>(null);
   const paxRef = useRef<HTMLSpanElement>(null);
   const tripsRef = useRef<HTMLSpanElement>(null);
   const kmRef = useRef<HTMLSpanElement>(null);
   const co2Ref = useRef<HTMLSpanElement>(null);
   const demandQueueRef = useRef<HTMLElement>(null);
-  const supplyRollingRef = useRef<HTMLElement>(null);
+  const missedRef = useRef<HTMLElement>(null);
+  const walkedRef = useRef<HTMLElement>(null);
   const collectedRef = useRef<HTMLElement>(null);
-  const collectedDetailRef = useRef<HTMLElement>(null);
   const couldHaveRef = useRef<HTMLElement>(null);
-  const couldHaveDetailRef = useRef<HTMLElement>(null);
 
   // End-of-day report: opens by itself when the DAY·60s sweep freezes on
   // 24:00 (the sweep flag is armed by the button, disarmed by any scrub),
@@ -226,7 +211,6 @@ export default function DashboardV2() {
   const serviceGap = state.paxAtAirport;
   const standbyBusesNeeded = Math.ceil(serviceGap / 25);
   const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
-  const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
 
   // Hourly demand-supply balance rows. Memoized by the engine.
   const hourlyBalance = getHourlyBalance();
@@ -366,29 +350,20 @@ export default function DashboardV2() {
       const totals = getLiveTotals(t);
       const vehicles = getMapVehicles(t);
       mapRef.current?.syncNow(vehicles);
-      const moving = vehicles.filter((v) => v.status === "moving").length;
 
       if (clockRef.current) clockRef.current.textContent = formatClockLabel(t);
 
       if (revEarnedRef.current) revEarnedRef.current.textContent = `฿${totals.revenueThb.toLocaleString()}`;
-      if (revLostRef.current) revLostRef.current.textContent = `−฿${totals.lostRevenueThb.toLocaleString()}`;
-      if (revMeterRef.current) {
-        const denom = totals.revenueThb + totals.lostRevenueThb;
-        revMeterRef.current.style.width = denom > 0 ? `${(totals.revenueThb / denom) * 100}%` : "0%";
-      }
+      if (missedRef.current) missedRef.current.textContent = `฿${totals.lostRevenueThb.toLocaleString()}`;
+      if (walkedRef.current) walkedRef.current.textContent = totals.paxAbandoned.toLocaleString();
       if (paxRef.current) paxRef.current.textContent = totals.paxDelivered.toLocaleString();
       if (tripsRef.current) tripsRef.current.textContent = totals.tripsCompleted.toLocaleString();
       if (kmRef.current) kmRef.current.textContent = totals.kmDriven.toLocaleString();
       if (co2Ref.current) co2Ref.current.textContent = totals.co2SavedKg.toLocaleString();
       if (demandQueueRef.current) demandQueueRef.current.textContent = totals.waiting.toLocaleString();
-      if (supplyRollingRef.current) supplyRollingRef.current.textContent = moving.toLocaleString();
-      // Collected vs could-have-collected: boarded so far against everyone
-      // who wanted a bus so far (= boarded + walked away + still waiting).
-      // Conservation holds per frame because all three come from one atMinute().
+      // wanted = collected + took a Grab + waiting, all from one atMinute().
       if (collectedRef.current) collectedRef.current.textContent = totals.paxBoarded.toLocaleString();
-      if (collectedDetailRef.current) collectedDetailRef.current.textContent = collectedDetail(totals);
       if (couldHaveRef.current) couldHaveRef.current.textContent = totals.paxWantBus.toLocaleString();
-      if (couldHaveDetailRef.current) couldHaveDetailRef.current.textContent = couldHaveDetail(totals);
     };
 
     const runFrame = () => {
@@ -452,11 +427,8 @@ export default function DashboardV2() {
         <div className="v2-alert-banner">
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
-            <strong>
-              {serviceGap.toLocaleString()} pax in the airport queue now
-              {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today (฿${state.lostRevenueThb.toLocaleString()} lost)`}.
-            </strong>
-            <span>Next departure absorbs 25. Dispatching {standbyBusesNeeded} standby buses would clear the current queue.</span>
+            <strong>{serviceGap.toLocaleString()} riders waiting at the airport curb now.</strong>
+            <span>The next departure takes 25. {standbyBusesNeeded} standby buses would clear the queue.</span>
           </div>
         </div>
       )}
@@ -699,27 +671,19 @@ export default function DashboardV2() {
               </div>
             </div>
             ) : (
-            <div className="v2-map__hero" key="hero-sim">
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Waiting now</span>
-                <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">at the airport curb · give up after 60 min</span>
-              </div>
-              <div className="v2-map__hero-card v2-map__hero-card--earned">
-                <span className="v2-map__hero-label">Collected</span>
-                <strong className="v2-map__hero-value" ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail" ref={collectedDetailRef}>{collectedDetail(initFrame.tot)}</span>
-              </div>
-              <div className="v2-map__hero-card v2-map__hero-card--missed">
-                <span className="v2-map__hero-label">Could have collected</span>
-                <strong className="v2-map__hero-value" ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail" ref={couldHaveDetailRef}>{couldHaveDetail(initFrame.tot)}</span>
-              </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Buses rolling</span>
-                <strong className="v2-map__hero-value" ref={supplyRollingRef}>{initFrame.moving.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">moving now · both directions</span>
-              </div>
+            <div className="v2-map__hero v2-headline" key="hero-sim">
+              {/* The one number the wall leads with. Every term of the sum
+                  below comes from the same atMinute() frame, so
+                  wanted = collected + took a Grab + waiting holds per frame. */}
+              <span className="v2-headline__label">Missed today · modelled</span>
+              <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
+              <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>
+              <p className="v2-headline__sum">
+                <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted a bus</span>
+                <span>= <b ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</b> collected</span>
+                <span>+ <b ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</b> took a Grab</span>
+                <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting at the airport</span>
+              </p>
             </div>
             )}
             <div className="v2-map__stage">
@@ -738,8 +702,7 @@ export default function DashboardV2() {
             <div className="v2-map__overlay">
               {source === "live"
                 ? <span className="v2-map__stat">{liveSummary.busesReporting} live · {liveSummary.busesMoving} moving</span>
-                : <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>}
-              <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
+                : <span className="v2-map__stat"><Counter value={operatorRows.length} /> PKSB buses out · <Counter value={operatorRows.filter((r) => r.status === "MOVING").length} /> on a trip and moving</span>}
               {state.nextDeparture !== null && (
                 <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
               )}
@@ -748,7 +711,7 @@ export default function DashboardV2() {
                 see WHERE every bus is while reading the table below. */}
             {source === "live"
               ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
-              : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />}
+              : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
           </section>
 
         </main>
@@ -798,39 +761,32 @@ export default function DashboardV2() {
             React-bound (they change slowly, coarse cadence is imperceptible). */}
         <div className="v2-accum" key="accum-sim">
           <div className="v2-accum__item">
-            <span className="v2-accum__val"><Counter value={metrics.fleet.totalBuses} /></span>
-            <span className="v2-accum__label">Buses Now</span>
+            <span className="v2-accum__val"><Counter value={operatorRows.length} /></span>
+            <span className="v2-accum__label">PKSB buses out</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val" ref={tripsRef}>{initFrame.tot.tripsCompleted.toLocaleString()}</span>
-            <span className="v2-accum__label">Trips Today</span>
+            <span className="v2-accum__label">Trips done · airport line</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val" ref={kmRef}>{initFrame.tot.kmDriven.toLocaleString()}</span>
-            <span className="v2-accum__label">Km Today</span>
+            <span className="v2-accum__label">Bus-km · airport line</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val" ref={paxRef}>{initFrame.tot.paxDelivered.toLocaleString()}</span>
+            <span className="v2-accum__label">Riders delivered</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
-            <span className="v2-accum__val" ref={paxRef}>{initFrame.tot.paxDelivered.toLocaleString()}</span>
-            <span className="v2-accum__label">Pax Delivered</span>
+            <span className="v2-accum__val" ref={revEarnedRef}>฿{initFrame.tot.revenueThb.toLocaleString()}</span>
+            <span className="v2-accum__label">Fares · delivered × ฿100</span>
           </div>
-          {/* The money on both sides of the bar: earned climbing against
-              walked-away-to-capacity. Two accents only (green / amber), a
-              hairline proportion meter — §11/§14 compliant. */}
-          <div className="v2-accum__item v2-accum__item--twin">
-            <span className="v2-accum__twin">
-              <span className="v2-accum__earned" ref={revEarnedRef}>฿{initFrame.tot.revenueThb.toLocaleString()}</span>
-              <span className="v2-accum__lost"><span ref={revLostRef}>−฿{initFrame.tot.lostRevenueThb.toLocaleString()}</span> walked away</span>
-            </span>
-            <span className="v2-accum__meter"><span className="v2-accum__meter-fill" ref={revMeterRef} /></span>
-            <span className="v2-accum__label">Money on the table</span>
-          </div>
-          <div className="v2-accum__item v2-accum__item--green">
+          <div className="v2-accum__item">
             <span className="v2-accum__val"><span ref={co2Ref}>{initFrame.tot.co2SavedKg.toLocaleString()}</span> kg</span>
-            <span className="v2-accum__label">CO₂ Saved</span>
+            <span className="v2-accum__label">CO₂ saved vs taxi</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val">{metrics.now.avgLoadPct}%</span>
-            <span className="v2-accum__label">Avg Load</span>
+            <span className="v2-accum__label">Avg load · airport line</span>
           </div>
         </div>
         </>
