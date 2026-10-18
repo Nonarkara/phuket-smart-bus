@@ -14585,7 +14585,14 @@ a { color: var(--tint); }
 .v2-source__btn--fleet { text-decoration: none; color: var(--ax-ink-2); }
 .v2-source__btn--fleet:hover { color: var(--ax-accent); background: var(--ax-paper); }
 
+/* The wall is wide, so the feed bar is one line. On a phone it is not: with
+   `nowrap` plus `overflow: hidden` the DEVICES button (which opens the GPS
+   telemetry console) sat at x=503 in a 390px viewport — present in the DOM,
+   impossible to tap. Let it wrap instead of amputating a control. */
 .v2 .v2-livebar { gap: 16px; flex-wrap: nowrap; overflow: hidden; }
+@media (max-width: 1180px) {
+  .v2 .v2-livebar { flex-wrap: wrap; overflow: visible; row-gap: 8px; }
+}
 .v2-livebar__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ax-ink-3); flex-shrink: 0; }
 .v2-livebar--live .v2-livebar__dot { background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite; }
 .v2-livebar--unconfigured .v2-livebar__dot,
