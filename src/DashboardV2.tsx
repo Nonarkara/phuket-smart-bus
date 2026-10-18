@@ -736,16 +736,11 @@ export default function DashboardV2() {
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
             <span className="v2-accum__val">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</span>
-            <span className="v2-accum__label">{liveSummary.riders === 0 ? "Riders · not measured" : liveSummary.ridersCounted === liveSummary.riders ? "Riders · counted" : "Riders · part est."}</span>
+            <span className="v2-accum__label">{liveSummary.riders === 0 ? "Riders · not measured" : liveSummary.ridersCounted === liveSummary.riders ? "Riders · counted" : "Riders · partly modelled"}</span>
           </div>
-          <div className="v2-accum__item v2-accum__item--twin">
-            <span className="v2-accum__twin">
-              <span className="v2-accum__earned">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</span>
-              <span className="v2-accum__lost">
-                {liveSummary.observedSinceMin !== null ? `since ${hhmm(liveSummary.observedSinceMin)}` : "awaiting first trip"}
-              </span>
-            </span>
-            <span className="v2-accum__label">Fares Today · riders × ฿100</span>
+          <div className="v2-accum__item v2-accum__item--accent">
+            <span className="v2-accum__val">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</span>
+            <span className="v2-accum__label">Fares · riders × ฿100{liveSummary.observedSinceMin !== null ? ` · since ${hhmm(liveSummary.observedSinceMin)}` : ""}</span>
           </div>
           <div className="v2-accum__item v2-accum__item--green">
             <span className="v2-accum__val">{liveSummary.co2SavedKg.toLocaleString()} kg</span>

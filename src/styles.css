@@ -15365,6 +15365,10 @@ a { color: var(--tint); }
   .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__driver-name { white-space: normal; overflow: visible; text-overflow: clip; }
   /* Live fleet table (no per-plate ฿ column): seven tracks in the same list. */
   .v2--operations .v2-fleet__row--live { grid-template-columns: 76px minmax(112px, 1fr) 60px 52px 40px 42px 44px; min-width: 0; column-gap: 6px; }
+  .v2--operations .v2-fleet__row--live .v2-fleet__route { flex-wrap: wrap; row-gap: 2px; }
+  .v2--operations .v2-fleet__row--live .v2-fleet__route-dir { flex: 0 0 auto; min-width: 0; white-space: normal; }
+  /* The narrower map column: the sea-state alert spans the map and wraps. */
+  .v2--operations .v2-map__maritime-banner { left: 12px; right: 12px; width: auto; max-width: none; white-space: normal; font-size: 13px; }
   /* Fleet header in the rail: title line, then the subtitle, then the filters.
      Nothing clipped, nothing squeezed into a one-word-wide column. */
   .v2--operations .v2-fleet__head { flex-wrap: wrap; row-gap: 6px; }
