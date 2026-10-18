@@ -36,7 +36,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    testTimeout: 10_000,
+    // The two jsdom map tests take 11–14 s when other jobs load the machine (load avg 84
+    // on 2026-10-18); the timeout exists to catch hangs, not to time renders.
+    testTimeout: 30_000,
     exclude: [...configDefaults.exclude, "e2e/**", ".claude/**", ".worktrees/**"],
     setupFiles: ["./src/test/setup.ts"]
   }
