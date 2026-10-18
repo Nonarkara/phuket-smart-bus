@@ -255,7 +255,7 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 
 ### The Tourist App (Mobile First)
 
-- iOS-inspired: Inter font, 17px base, 1.41 line height
+- Warm paper surface (`--paper`), Source Sans 3 body at 17px / 1.41 line height, Josefin Sans for display. **Not Inter** — see the anti-slop rules below and the ban at the top of `src/styles.css`.
 - Bottom sheet with "Next bus to Patong" countdown (mm:ss format, ticks every 200ms at 30×)
 - Route pills along the top for quick route switching
 - Map badge shows simulated Bangkok clock + bus count + next departure
@@ -287,6 +287,69 @@ Tuk-tuk range is intentionally wide — they're unmetered, unregulated, and the 
 - Counter numbers: `requestAnimationFrame` with ease-out cubic over 1200ms
 - Flight flash: `@keyframes v2-flash` 3s ease-out
 - Tick interval: 1s for vehicle positions, 1s for stats, 200ms for countdown timer
+
+---
+
+## Anti-slop design rules (HARD — never re-create these)
+
+These are known AI design-slop patterns. They sit **on top of** the palette and
+type rules at the top of `src/styles.css`, and on top of the map-first rule: on
+an operations surface the map is the hero and gets the most area.
+
+Check every page you touch before shipping. A hit is a defect, not a preference.
+
+1. **Boxes fit their content.** No card, button or panel much wider or taller
+   than the text inside it. Padding proportional to type size (~0.5–1.5× line
+   height), never a fixed fat pad. No fixed/min-heights that leave dead space
+   under short text. **An ellipsis truncating a label means the box lost.** Fix
+   the box or shorten the copy — do not ship the "…".
+2. **Balanced composition.** Deliberate grid, balanced visual weight. No heavy
+   side beside an empty side, no orphan block. Check 1440 / 1024 / 390 and
+   squint: the masses should balance.
+3. **Readable line length.** Body lines 45–75 characters, ideally 60–70;
+   `max-width: 65ch` for prose. Thai/Chinese keep the same physical measure
+   (~30–45 characters). Wide screens get columns or margins, never a
+   full-width paragraph.
+4. **No AI-slop fonts.** Banned as primary: Inter, Poppins, Montserrat, Roboto,
+   Open Sans, Lato, DM Sans, Space Grotesk, Geist, Plus Jakarta Sans, Manrope,
+   Nunito, system-ui-as-design-font. This project's canonical set is already
+   set: **Josefin Sans** (display) + **Source Sans 3** (body) + **JetBrains
+   Mono** (numerics) + **IBM Plex Sans Thai** (non-looped Thai). Max two
+   families per surface.
+5. **No lazy ornaments.** No decorative boxes, borders, cards, dividers or
+   icon tiles added only to fill space or balance a page. Every container must
+   group things that belong together; if removing it loses no meaning, remove
+   it. A grid of N equal bordered boxes holding N unrelated numbers is the
+   single most common slop in this repo — prefer space or one hairline between
+   items over a box around each.
+6. **Clear hierarchy: something must win.** One obvious first thing (the map,
+   the hero number, the headline), then a clear second and third. Real contrast:
+   ≥1.5–2× type step between levels, plus weight, colour and space. No grid of
+   equal-weight cards. **If you squint at a screenshot and cannot name the focal
+   point in one second, it fails.**
+7. **More slop to kill.** Centre-everything and symmetric card grids used by
+   default; fake depth (stacked shadows, glassmorphism, one radius everywhere);
+   vague slogan heroes; filler copy ("Unlock…", "Seamless", "Revolutionize") and
+   fake stats; too many colours (one meaningful accent); thick top/bottom bars
+   and padded chrome that shrink the content; icons and badges on every line;
+   dense pages where all the text is the same small grey.
+
+### Pre-ship gate (mechanical, then human)
+
+```bash
+bash scripts/design-audit.sh          # screenshots every route at 1440/1024/390
+```
+
+1. Screenshot each route at **1440, 1024 and 390**.
+2. List every hit against rules 1–7 **with the element that hit it**.
+3. Fix, then screenshot again.
+4. **A different agent or the human reviews the result. Never self-review** —
+   that is how all of this got shipped the first time.
+
+### Standing audit record
+
+Checked 2026-10-18 against the live site at 1440/1024/390. `/capacity` and the
+rider app at 390 pass. `/ops` was the offender — see lesson 13.
 
 ---
 
@@ -336,9 +399,31 @@ The route track was **0px wide**. The wide-wall map grid gives the fleet panel ~
 
 **Apply when:** text overlaps or wraps on the wall. Dump `getComputedStyle().gridTemplateColumns` and the ancestor widths before editing any child rule. A track reading `0px` (or far below its content) is a container-too-narrow problem; fix the budget — give the panel the width it needs or state a `min-width` and let it scroll — never the contents. Also compare the **column headers**, not the data: the headers here needed ~480px on their own, which proves eight columns can never fit that rail at the mandated 13px type floor. The fix was `.v2-fleet` spanning the full map section (`grid-column: 1 / -1`) with `.v2-map__stage` reduced to `grid-row: 1 / 4` — width doubled, height unchanged, because both occupied the same grid row.
 
----
+### 13. The wall was a grid of glass tiles, and nobody was checking
+A slop audit on 2026-10-18 (1440 / 1024 / 390, live) found `/ops` was the one
+page failing the anti-slop rules. `/capacity` and the rider app passed.
 
-## Deployment
+What it actually was: `.v2-map__hero-card` carried `border: 1px` **and**
+`backdrop-filter: blur(14px)` while sitting on an opaque panel — four glass
+tiles in a 2×2 grid, with nothing behind them to blur and nothing the border
+separated. `.v2-conditions__item` had `min-height: 64px` under two lines of
+text, and the conditions strip drew an outer border around a grid whose 1px
+gaps already made the hairlines. Decoration that carried no information, which
+is exactly what rule 5 and rule 7 exist to catch.
+
+**Apply when:** a page feels "AI-generated" but you cannot point at one broken
+element. That is the signature of ornament, not breakage — go looking for
+`backdrop-filter`, stacked `border` on containers that don't group anything,
+`min-height` under short text, and grids of N equal cards holding N unrelated
+numbers. Run `bash scripts/design-audit.sh` and check against 1–7.
+
+Still open on `/ops`, deliberately not fixed in that pass: no single focal
+point (rule 6 — the map is one peer among ~8 equal-weight blocks), the left
+column's dense small grey mono text (rule 7), and labels still truncating with
+"…" in the conditions strip and hero details (rule 1). Those are structural
+layout work, not decoration removal.
+
+---
 
 - **Platform**: Cloudflare Pages (Production environment, project `phuket-smart-bus`) — this is what actually serves `bus.nonarkara.org`. Confirm with `curl -sI https://bus.nonarkara.org/` — the `server: cloudflare` header is the tell.
 - **Build**: `npx vite build` → `dist/client/`

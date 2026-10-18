@@ -6070,10 +6070,13 @@ a { color: var(--tint); }
   flex-direction: column;
   gap: 2px;
   padding: 12px 14px;
+  /* No box, no blur. These four sat on an opaque panel, so a 1px border and a
+     14px backdrop-filter were decoration with nothing behind them to separate —
+     four glass tiles in a grid, which is the signature AI-dashboard look. On
+     the ops wall the hero occupies its own grid cell and is already grouped by
+     space; the type carries the hierarchy, the frame did nothing. */
   border-radius: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(8, 12, 18, 0.86);
-  backdrop-filter: blur(14px);
+  background: transparent;
 }
 .v2-map__hero-label { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.42); }
 .v2-map__hero-value { font-family: var(--font-mono); font-size: 24px; color: #ffffff; font-variant-numeric: tabular-nums; }
@@ -10822,7 +10825,8 @@ a { color: var(--tint); }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* No outer border: the 1px cell gaps already draw the hairlines. An outline
+     around the whole strip just adds a second frame around the same thing. */
   flex-shrink: 0;
 }
 .v2-conditions__item {
@@ -10831,7 +10835,8 @@ a { color: var(--tint); }
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-height: 64px;
+  /* No min-height. "AQI 38" with one detail line is short, and a 64px floor
+     left a band of dead space under it — a box taller than its text. */
 }
 .v2-conditions__label {
   font-family: var(--font-mono);
