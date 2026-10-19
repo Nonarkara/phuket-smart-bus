@@ -231,7 +231,11 @@
 .fc-lessons li p { color: var(--tk-muted); font-size: 0.88rem; line-height: 1.5; }
 
 /* The published timetable, scanned. It is the evidence for the "20
-   departures" figure, so it has to be readable, not distorted. */
+   departures" figure, so it has to be readable, not distorted. The <img>
+   carries width="724" height="1024", and an HTML height attribute becomes
+   the used CSS height — so with the toolkit's width:100% the 724x1024
+   portrait rendered at 1216x1024, stretched 1.68x across the page.
+   height:auto restores the ratio. */
 .pb-evidence { margin: 48px 0; }
 .pb-evidence img { width: 100%; height: auto; }
 .pb-evidence figcaption { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--tk-muted); max-width: 65ch; }

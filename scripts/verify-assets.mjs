@@ -189,6 +189,13 @@ for (const [logical, local] of localByLogical) {
 if (problems.length) {
   console.error(`error: the deployed asset graph does not match the local build (${problems.length} problem(s)):`);
   for (const p of problems) console.error(`  - ${p}`);
+  console.error(
+    "\nhint: a build-time variable is the usual cause when the difference is one chunk.\n" +
+      "      VITE_GISTDA_API_KEY must carry the SAME value in .env and in the\n" +
+      "      repository secret, or the GISTDA incident layer is compiled out of\n" +
+      "      one of the two builds and the two builds of one commit are two\n" +
+      "      different products."
+  );
   process.exit(1);
 }
 
