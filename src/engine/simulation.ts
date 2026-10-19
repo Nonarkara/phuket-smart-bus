@@ -19,7 +19,13 @@ import { getOpsFlightSchedule, getDayLabel, getDayVolumeFactor, getSimulationDay
 // chart says "served 50 pax" while the buses haven't moved yet.
 // ---------------------------------------------------------------------------
 
-import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips } from "./fleetSimulator";
+import { getSimulatedMinutes, getAirportDepartures, getAirportboundTrips, getMeasuredAirportSupply, getSupplyVersion, SERVICE_END } from "./fleetSimulator";
+import lineGeometry from "@shared/lineGeometry.json";
+
+/** Airport ↔ Rawai road length, from the official GIS line (~54 km). A bus trip covers all of it. */
+const AIRPORT_LINE_KM = (lineGeometry.find((l) => l.routeId === "rawai-airport")?.lengthM ?? 54_252) / 1000;
+/** Published end-to-end running time (PKSB timetable, 18 Jan 2025). */
+const PUBLISHED_TRIP_MIN = 95;
 import {
   atMinute,
   getDayModel,
@@ -30,8 +36,8 @@ import {
 } from "./demandSupplyEngine";
 import { regionFor } from "./travelBehavior";
 
-const SVC_START = 360; // 06:00 — chart axis floor (matches fleetSimulator)
-const SVC_END = 1350;  // 22:30 — matches fleetSimulator SERVICE_END (PKSB last departure 23:30, last arrival ~22:30)
+const SVC_START = 360; // 06:00 — chart axis floor
+const SVC_END = SERVICE_END; // 24:00 — in-service arrivals include the late-night flights the engine already models
 
 export function simNow(): number {
   return getSimulatedMinutes();
@@ -124,11 +130,9 @@ export const DESTINATIONS: Destination[] = [
 // sourced from demandSupplyEngine.BUS_CAPACITY so the engine's queue caps
 // and the live-totals capacity denominator cannot drift.
 
-/** Memoized schedule data — schedules are static for the session. */
-let _cachedAirportDepartures: number[] | null = null;
+/** Airport departures in force for the active day (measured or published). */
 function airportDepartures(): number[] {
-  if (!_cachedAirportDepartures) _cachedAirportDepartures = getAirportDepartures().sort((a, b) => a - b);
-  return _cachedAirportDepartures;
+  return getAirportDepartures().slice().sort((a, b) => a - b);
 }
 
 
@@ -254,6 +258,12 @@ export type SimState = {
     /** True for the airport-line bus at the curb boarding the queue right now.
      *  The one vehicle that earns the accent colour on the map. */
     isBoarding?: boolean;
+    /** Real tracker bus: position is observed, load is the model's estimate. */
+    paxEstimated?: boolean;
+    /** Human-readable direction, e.g. "Bus to Rawai" or "Bus to Airport". */
+    directionLabel?: string | null;
+    destination?: string | null;
+    speedKph?: number;
   }[];
 };
 
@@ -286,10 +296,6 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   const eng = atMinute(nowMin);
   const deps = airportDepartures();
   const departedBuses = deps.filter((d) => d <= nowMin);
-  // Weighted average trip duration across destinations. The dominant trip
-  // (Airport → Patong via Surin/Kamala) is 100 min, with shorter hops to
-  // Old Town and Laguna; 75 min is the round-trip-aware average.
-  const avgTripMin = 75;
   const nextDep = deps.find((d) => d > nowMin);
   // Combined both directions: arriving pax ride out, departing pax ride back.
   // The engine's `atMinute` exposes both cumulatives; the per-frame
@@ -302,15 +308,18 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   // for the same pax-km. co2SavedKg is the bus vs taxi delta.
   const co2TaxiKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_CAR);
   const co2BusKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_BUS);
-  const tripsCompleted = departedBuses.filter((d) => d + avgTripMin <= nowMin).length;
-  // kmDriven — accumulated distance based on the SOUTHBOUND timetable. A
-  // completed trip counts its full AVG_TRIP_KM (~35 km from the line
-  // config weighted by the destination mix); a bus still mid-trip counts
-  // half — the partial-trip approximation. Northbound distance is
-  // included in the line P&L (getLineMetrics) and the bottom accumulator
-  // strip averages across both directions via the destination mix, so we
-  // don't double-count here.
-  const kmDriven = tripsCompleted * Math.round(AVG_TRIP_KM) + (departedBuses.length - tripsCompleted) * Math.round(AVG_TRIP_KM / 2);
+  // Bus trips and bus-km, BOTH directions. A trip runs the whole line
+  // (AIRPORT_LINE_KM) and takes that day's measured median when the simulation
+  // runs on recorded departures, else the published 95 min. A bus still on the
+  // road counts the share of the line it has covered. (Passenger-km — the 28 km
+  // average ride — is a different quantity and only feeds CO₂.)
+  const tripMin = getMeasuredAirportSupply()?.medianTripMin ?? PUBLISHED_TRIP_MIN;
+  const legs = [
+    ...departedBuses.map((d) => ({ start: d, end: d + tripMin })),
+    ...getAirportboundTrips().filter((t) => t.originDepMin <= nowMin).map((t) => ({ start: t.originDepMin, end: t.airportArriveMin })),
+  ];
+  const tripsCompleted = legs.filter((l) => l.end <= nowMin).length;
+  const kmDriven = Math.round(legs.reduce((km, l) => km + AIRPORT_LINE_KM * Math.min(1, (nowMin - l.start) / Math.max(1, l.end - l.start)), 0));
   return {
     simMinutes: nowMin,
     waiting: eng.waiting,
@@ -443,6 +452,16 @@ const LOCAL_OCCUPANCY: Record<string, number> = {
   "patong-old-bus-station": 0.42, // daytime local commuter average (Phuket survey est.)
   "dragon-line":            0.31, // tourist loop — lighter, point-to-point riders
 };
+
+/** Riders + fare for one trip on a local (non-airport) line — the same
+ *  capacity × occupancy the line P&L uses. Null for the airport line, whose
+ *  load comes from the flight-driven demand model instead. */
+export function getLocalLineTripEstimate(lineId: string): { riders: number; fareThb: number; tripMinutes: number } | null {
+  const occupancy = LOCAL_OCCUPANCY[lineId];
+  const config = LINE_CONFIG[lineId];
+  if (occupancy === undefined || !config) return null;
+  return { riders: Math.round(config.capacity * occupancy), fareThb: config.fare, tripMinutes: config.tripDurationMinutes };
+}
 
 export function getLineMetrics(): LineMetrics[] {
   const state = computeSimState();
@@ -624,10 +643,12 @@ export type HourlyDemandSupply = {
 // Memoized per day-of-week — multiple consumers poll this every second;
 // recomputing 24 buckets every call wastes work. The day picker switches
 // getSimulationDay(), which switches which memo entry is served.
+let hourlyByDowVersion = -1;
 const hourlyByDow = new Map<number, HourlyDemandSupply[]>();
 
 export function getHourlyDemandSupply(): HourlyDemandSupply[] {
   const dow = getSimulationDay();
+  if (hourlyByDowVersion !== getSupplyVersion()) { hourlyByDow.clear(); hourlyByDowVersion = getSupplyVersion(); }
   const hit = hourlyByDow.get(dow);
   if (hit) return hit;
 

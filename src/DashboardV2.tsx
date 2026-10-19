@@ -24,10 +24,19 @@ import {
   getClockState,
   getSimulatedMinutes,
   setSimulatedMinutes,
+  setClockOverride,
   resetClockAnchor,
   startDaySweep,
   SERVICE_START,
+  DAY_TARGET_END,
+  DAY_SPEED,
+  setMeasuredAirportSupply,
+  type MeasuredAirportSupply,
 } from "./engine/fleetSimulator";
+import { measuredSupplyByDow } from "./engine/measuredSupply";
+import type { SlimDay } from "@shared/insights";
+import { bangkokDow, getLiveFeedState, getLiveMapVehicles, startLiveFeed, subscribeLiveFeed } from "./engine/liveOps";
+import { getBangkokNowFractionalMinutes } from "./engine/time";
 import {
   buildFlightHourBuckets,
   getOpsFlightSchedule,
@@ -51,9 +60,29 @@ import { OpsBriefing } from "./components/v2/OpsBriefing";
 import { PhuketConditionsStrip } from "./components/v2/PhuketConditionsStrip";
 import { BusPlanPanel } from "./components/v2/BusPlanPanel";
 import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
-import { isLiveGpsActive, getLiveTelemetryVehicles } from "./engine/liveGpsReceiver";
+import { DayReportModal } from "./components/v2/DayReportModal";
+import { LiveFleetPanel } from "./components/v2/LiveFleetPanel";
+import { LiveFeedBar } from "./components/v2/LiveFeedBar";
+import { appPath } from "./lib/paths";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
+
+/** LIVE = real PKSB buses on the real clock; SIMULATION = the replay engine. */
+type OpsSource = "live" | "sim";
+
+/** `?source=live|sim` pins the choice; no param = LIVE whenever real buses are
+ *  reporting, SIMULATION otherwise (night, feed down). `?demo=` is always sim. */
+function getInitialSourcePref(): OpsSource | "auto" {
+  if (typeof window === "undefined") return "auto";
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("demo")) return "sim";
+  const requested = params.get("source");
+  return requested === "live" || requested === "sim" ? requested : "auto";
+}
+
+function hhmm(min: number): string {
+  return `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(Math.floor(min % 60)).padStart(2, "0")}`;
+}
 
 function getInitialViewMode(): ViewMode {
   if (typeof window === "undefined") return "operations";
@@ -71,10 +100,13 @@ function computeOpsScale(): number {
   return Math.min(2.5, Math.max(1, Math.min(widthScale, heightScale)));
 }
 
-/** A laptop should get the focused briefing, not a cropped wall console. */
+/** Phones and tablets (< 1200px) get the briefing; laptops, desktops and walls
+ * get the full console with the island map running top to bottom. Between
+ * 960 and 1200 px the map/rail split leaves the rail too narrow for the
+ * headline and the fleet table, so those screens read the briefing too. */
 function shouldUseCompactOps(): boolean {
   if (typeof window === "undefined") return false;
-  return window.innerWidth < 1360 || window.innerHeight < 820;
+  return window.innerWidth < 1200;
 }
 
 function formatClockLabel(min: number): string {
@@ -100,7 +132,6 @@ export default function DashboardV2() {
     const t = getSimulatedMinutes();
     return {
       tot: getLiveTotals(t),
-      moving: getMapVehicles(t).filter((v) => v.status === "moving").length,
       clock: formatClockLabel(t),
     };
   });
@@ -112,15 +143,44 @@ export default function DashboardV2() {
   const mapRef = useRef<V2MapHandle>(null);
   const clockRef = useRef<HTMLSpanElement>(null);
   const revEarnedRef = useRef<HTMLSpanElement>(null);
-  const revLostRef = useRef<HTMLSpanElement>(null);
-  const revMeterRef = useRef<HTMLSpanElement>(null);
   const paxRef = useRef<HTMLSpanElement>(null);
   const tripsRef = useRef<HTMLSpanElement>(null);
   const kmRef = useRef<HTMLSpanElement>(null);
   const co2Ref = useRef<HTMLSpanElement>(null);
   const demandQueueRef = useRef<HTMLElement>(null);
-  const supplyRollingRef = useRef<HTMLElement>(null);
+  const missedRef = useRef<HTMLElement>(null);
   const walkedRef = useRef<HTMLElement>(null);
+  const collectedRef = useRef<HTMLElement>(null);
+  const couldHaveRef = useRef<HTMLElement>(null);
+
+  // End-of-day report: opens by itself when the DAY·60s sweep freezes on
+  // 24:00 (the sweep flag is armed by the button, disarmed by any scrub),
+  // and on demand from the DAY REPORT button.
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // ── bus supply: the departures the real buses made, or the timetable ────
+  // The simulation runs on the Airport line as it actually ran (latest
+  // recorded day of the same weekday); TIMETABLE switches back to the
+  // published PKSB schedule for comparison.
+  const [measured, setMeasured] = useState<Partial<Record<number, MeasuredAirportSupply>>>({});
+  const [supplyMode, setSupplyMode] = useState<"ran" | "timetable">("ran");
+  useEffect(() => {
+    let alive = true;
+    fetch(appPath("/api/research/period"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { days?: SlimDay[] } | null) => { if (alive && d?.days) setMeasured(measuredSupplyByDow(d.days)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => {
+    setMeasuredAirportSupply(supplyMode === "ran" ? measured : {});
+    setState(computeSimState());
+  }, [measured, supplyMode]);
+  const ranOn = supplyMode === "ran" ? measured[simDay] ?? null : null;
+  const supplyLabel = ranOn
+    ? `AS RAN · ${new Date(`${ranOn.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).toUpperCase()}`
+    : "TIMETABLE";
+  const sweepArmedRef = useRef(false);
 
   // Day picker: switch the engine's active day and replay it from 05:30.
   // All engine memos are keyed on the day, so every panel re-derives; the rAF
@@ -135,6 +195,8 @@ export default function DashboardV2() {
 
   // One-touch cinematic: sweep the whole service day in ~60s, then freeze.
   const handleStartDaySweep = () => {
+    setIsReportOpen(false);
+    sweepArmedRef.current = true;
     startDaySweep();
     setClockState(getClockState());
   };
@@ -149,7 +211,6 @@ export default function DashboardV2() {
   const serviceGap = state.paxAtAirport;
   const standbyBusesNeeded = Math.ceil(serviceGap / 25);
   const currentDemandPax = currentHourBucket?.arrivalPax ?? 0;
-  const currentDeparturePax = currentHourBucket?.departurePax ?? 0;
 
   // Hourly demand-supply balance rows. Memoized by the engine.
   const hourlyBalance = getHourlyBalance();
@@ -180,7 +241,7 @@ export default function DashboardV2() {
   // Queue timeline snapshots
   const queueTimeline = getQueueTimeline();
 
-  // Wall-screen scaling: zoom the .v2 element itself. `zoom` on the <html>
+  // Wall-screen scaling: zoom the .v2 element itself. `zoom` on the document
   // root is unreliable in current Chrome (standardized zoom ignores it),
   // which is why /ops rendered microscopic on large displays. A JS-computed
   // factor on a normal element is honored everywhere. All fonts inside the
@@ -197,17 +258,58 @@ export default function DashboardV2() {
   }, []);
 
   const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState(false);
-  const [isGpsActive, setIsGpsActive] = useState(() => isLiveGpsActive());
-  const [liveGpsCount, setLiveGpsCount] = useState(0);
 
+  // ── LIVE ⇄ SIMULATION ──────────────────────────────────────────────────
+  // The tracker is polled for as long as the console is open. The week
+  // archive is /api/collect/tick (a minute cron), not this screen.
+  const [sourcePref, setSourcePref] = useState(getInitialSourcePref);
+  const [live, setLive] = useState(() => getLiveFeedState());
   useEffect(() => {
-    const checkGps = () => {
-      setIsGpsActive(isLiveGpsActive());
-      setLiveGpsCount(getLiveTelemetryVehicles().size);
+    const stop = startLiveFeed();
+    const refresh = () => setLive(getLiveFeedState());
+    const unsubscribe = subscribeLiveFeed(refresh);
+    const tick = setInterval(refresh, 1000); // "feed 6s old", "seen 40s" tick
+    return () => { stop(); unsubscribe(); clearInterval(tick); };
+  }, []);
+  const liveAvailable = live.summary.busesReporting > 0 && live.feedAgeSec !== null && live.feedAgeSec < 120;
+  const source: OpsSource = sourcePref === "auto" ? (liveAvailable ? "live" : "sim") : sourcePref;
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
+  const liveSummary = live.summary;
+
+  const chooseSource = (next: OpsSource) => {
+    setSourcePref(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("source", next);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  // LIVE runs the demand model on the real Bangkok clock and today's weekday,
+  // so the flight board, equation and balance chart describe THIS hour while
+  // the map shows real buses. Leaving LIVE hands the replay clock back.
+  useEffect(() => {
+    if (source !== "live") return;
+    const dow = bangkokDow(Date.now());
+    setSimulationDay(dow);
+    setSimDayState(dow);
+    setClockOverride(() => getBangkokNowFractionalMinutes());
+    setState(computeSimState());
+    return () => {
+      setClockOverride(null);
+      resetClockAnchor();
+      setState(computeSimState());
+      setClockState(getClockState());
     };
-    checkGps();
-    const interval = setInterval(checkGps, 1500);
-    return () => clearInterval(interval);
+  }, [source]);
+
+  // Any "replay this hour" click (hour tables, balance chart, flight board)
+  // made while LIVE switches to SIMULATION at that hour.
+  useEffect(() => {
+    const onScrub = () => {
+      if (sourceRef.current === "live") chooseSource("sim");
+    };
+    window.addEventListener("pksb:scrub-to-hour", onScrub);
+    return () => window.removeEventListener("pksb:scrub-to-hour", onScrub);
   }, []);
 
   const handleViewModeChange = (next: Exclude<ViewMode, "live">) => {
@@ -238,26 +340,30 @@ export default function DashboardV2() {
     let stopped = false;
 
     const writeFrame = (t: number) => {
+      if (sourceRef.current === "live") {
+        // Real buses, tweened between tracker fixes. The live money cells are
+        // React-bound (they change per trip, not per frame).
+        mapRef.current?.syncNow(getLiveMapVehicles());
+        if (clockRef.current) clockRef.current.textContent = formatClockLabel(t);
+        return;
+      }
       const totals = getLiveTotals(t);
       const vehicles = getMapVehicles(t);
       mapRef.current?.syncNow(vehicles);
-      const moving = vehicles.filter((v) => v.status === "moving").length;
 
       if (clockRef.current) clockRef.current.textContent = formatClockLabel(t);
 
       if (revEarnedRef.current) revEarnedRef.current.textContent = `฿${totals.revenueThb.toLocaleString()}`;
-      if (revLostRef.current) revLostRef.current.textContent = `−฿${totals.lostRevenueThb.toLocaleString()}`;
-      if (revMeterRef.current) {
-        const denom = totals.revenueThb + totals.lostRevenueThb;
-        revMeterRef.current.style.width = denom > 0 ? `${(totals.revenueThb / denom) * 100}%` : "0%";
-      }
+      if (missedRef.current) missedRef.current.textContent = `฿${totals.lostRevenueThb.toLocaleString()}`;
+      if (walkedRef.current) walkedRef.current.textContent = totals.paxAbandoned.toLocaleString();
       if (paxRef.current) paxRef.current.textContent = totals.paxDelivered.toLocaleString();
       if (tripsRef.current) tripsRef.current.textContent = totals.tripsCompleted.toLocaleString();
       if (kmRef.current) kmRef.current.textContent = totals.kmDriven.toLocaleString();
       if (co2Ref.current) co2Ref.current.textContent = totals.co2SavedKg.toLocaleString();
       if (demandQueueRef.current) demandQueueRef.current.textContent = totals.waiting.toLocaleString();
-      if (supplyRollingRef.current) supplyRollingRef.current.textContent = moving.toLocaleString();
-      if (walkedRef.current) walkedRef.current.textContent = totals.paxAbandoned.toLocaleString();
+      // wanted = collected + took a Grab + waiting, all from one atMinute().
+      if (collectedRef.current) collectedRef.current.textContent = totals.paxBoarded.toLocaleString();
+      if (couldHaveRef.current) couldHaveRef.current.textContent = totals.paxWantBus.toLocaleString();
     };
 
     const runFrame = () => {
@@ -266,6 +372,18 @@ export default function DashboardV2() {
       if (t !== lastFrameT) {
         lastFrameT = t;
         writeFrame(t);
+        // The DAY·60s sweep clamps + pauses on DAY_TARGET_END; that freeze is
+        // the cue for the debrief. Scrubbing/speed changes clear runOnce in
+        // the engine, so a manual pause elsewhere never triggers it.
+        if (sweepArmedRef.current) {
+          const clock = getClockState();
+          if (clock.speed !== DAY_SPEED) {
+            sweepArmedRef.current = false; // a manual speed/scrub left the sweep
+          } else if (t >= DAY_TARGET_END - 0.01 && clock.mode === "paused") {
+            sweepArmedRef.current = false;
+            setIsReportOpen(true);
+          }
+        }
         if (lastFrameMs - lastCoarseMs >= 250) {
           lastCoarseMs = lastFrameMs;
           setState(computeSimState());
@@ -305,15 +423,12 @@ export default function DashboardV2() {
   return (
     <div className={`v2 v2--${viewMode}`} style={{ zoom: opsScale }}>
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
-      {serviceGap > 25 && (
+      {source === "sim" && serviceGap > 25 && (
         <div className="v2-alert-banner">
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
-            <strong>
-              {serviceGap.toLocaleString()} pax in the airport queue now
-              {state.paxAbandoned > 0 && ` · ${state.paxAbandoned.toLocaleString()} already walked away today (฿${state.lostRevenueThb.toLocaleString()} lost)`}.
-            </strong>
-            <span>Next departure absorbs 25. Dispatching {standbyBusesNeeded} standby buses would clear the current queue.</span>
+            <strong>{serviceGap.toLocaleString()} riders waiting at the airport curb now.</strong>
+            <span>The next departure takes 25. {standbyBusesNeeded} standby buses would clear the queue.</span>
           </div>
         </div>
       )}
@@ -376,29 +491,88 @@ export default function DashboardV2() {
           <span className="v2-header__time" ref={clockRef}>{initFrame.clock}</span>
           <span className="v2-header__sep" aria-hidden="true">·</span>
           <span className="v2-header__speed">
-            {clockState.speed}× {clockState.mode === 'playing' ? '▶' : '⏸'}
+            {source === "live" ? "REAL TIME" : `${clockState.speed}× ${clockState.mode === 'playing' ? '▶' : '⏸'}`}
           </span>
         </div>
 
-        {/* Live GPS Telemetry Status Pill */}
-        <button
-          type="button"
-          className={`v2-header__telemetry-pill ${isGpsActive ? "is-live" : "is-sim"}`}
-          onClick={() => setIsTelemetryModalOpen(true)}
-          title="Click to inspect Live GPS Telemetry Console or test live hardware ingestion"
-        >
-          <span className="v2-telemetry-dot" />
-          <span>{isGpsActive ? `LIVE GPS (${liveGpsCount})` : "TIMETABLE SIM"}</span>
-        </button>
+        {/* Data source: real PKSB buses on the real clock, or the replay. */}
+        <div className="v2-source" role="group" aria-label="Data source">
+          <button
+            type="button"
+            className={`v2-source__btn v2-source__btn--live ${source === "live" ? "is-active" : ""} ${liveAvailable ? "is-available" : ""}`}
+            aria-pressed={source === "live"}
+            onClick={() => chooseSource("live")}
+            title="Real buses from the Phuket Smart Bus tracker, real Bangkok clock, today's fares"
+          >
+            <span className="v2-telemetry-dot" aria-hidden="true" />
+            LIVE{liveSummary.busesReporting > 0 ? ` · ${liveSummary.busesReporting}` : ""}
+          </button>
+          <button
+            type="button"
+            className={`v2-source__btn ${source === "sim" ? "is-active" : ""}`}
+            aria-pressed={source === "sim"}
+            onClick={() => chooseSource("sim")}
+            title="Replay any day from the timetable + flight demand model"
+          >
+            SIMULATION
+          </button>
+          {/* Deep link to the dedicated Fleet Detail screen — every data point
+              per real bus (raw GPS, pax counter, odometer, day ledger). Always
+              visible (works in SIM too — the day ledger survives either way). */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/fleet")}
+            title="Every data point the live tracker sent, per real bus"
+          >
+            FLEET
+          </a>
+          {/* Deep link to the Real-Bus Study screen — daily/weekly/monthly
+              aggregates of the KV archive, side-by-side with modelled boarders
+              from the flight schedule. */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/study")}
+            title="Patient, consistent, true numbers from the live tracker"
+          >
+            STUDY
+          </a>
+          {/* Capacity command — the single-screen dispatcher view. Live
+              operation + live gap + live recommendation, one number per
+              decision. */}
+          <a
+            className="v2-source__btn v2-source__btn--fleet"
+            href={appPath("/capacity")}
+            title="One-screen capacity command — live operation + live gap + live recommendation"
+          >
+            CAPACITY
+          </a>
+        </div>
 
-        {/* Time Bar & Simulation controls */}
-        <SimulationControls
-          clockState={clockState}
-          onClockStateChange={setClockState}
-          simDay={simDay}
-          onDayChange={handleDayChange}
-          onStartDaySweep={handleStartDaySweep}
-        />
+        {source === "live" ? (
+          <LiveFeedBar
+            status={live.status}
+            detail={live.detail}
+            feedAgeSec={live.feedAgeSec}
+            busesReporting={liveSummary.busesReporting}
+            observedSinceMin={liveSummary.observedSinceMin}
+            countersOnline={liveSummary.paxOnBoardNow !== null}
+            onOpenDevices={() => setIsTelemetryModalOpen(true)}
+          />
+        ) : (
+          <SimulationControls
+            clockState={clockState}
+            onClockStateChange={setClockState}
+            simDay={simDay}
+            onDayChange={handleDayChange}
+            onStartDaySweep={handleStartDaySweep}
+            onOpenDayReport={() => setIsReportOpen(true)}
+            supplyLabel={Object.keys(measured).length ? supplyLabel : null}
+            supplyTitle={ranOn
+              ? `Airport line runs the ${ranOn.southbound.length} departures from the airport and ${ranOn.northbound.length} trips to it that the trackers recorded on ${ranOn.date} (complete trips only; published timetable: ~25 each way). Click for the timetable.`
+              : "Airport line runs the published PKSB timetable. Click for the departures the real buses made."}
+            onToggleSupply={() => setSupplyMode((m) => (m === "ran" ? "timetable" : "ran"))}
+          />
+        )}
       </header>
 
       {viewMode === 'toolkit' ? (
@@ -444,32 +618,27 @@ export default function DashboardV2() {
           standbyBuses={standbyBusesNeeded}
           nextDeparture={state.nextDeparture}
           hourlyBalance={hourlyBalance}
+          live={source === "live" ? {
+            busesMoving: liveSummary.busesMoving,
+            trips: liveSummary.tripsCompleted,
+            km: liveSummary.kmDriven,
+            riders: liveSummary.riders,
+            fareThb: liveSummary.fareThb,
+          } : null}
         />
       ) : (
         // OPERATIONS view — one decision rail, one geographic truth
         <main className="v2-body v2-body--operations">
+          {/* Top strip — the 24-hour rail is genuinely a horizontal timeline
+              and stays full-width. Below it, the body is two columns: the map
+              is the hero on the left (≥60% of the first screen), and the side
+              rail carries the story + equation + conditions + fleet on the
+              right. Anything that used to live INSIDE .v2-map (hero, fleet,
+              conditions) now lives in the side rail — so the canvas is full
+              bleed and the bus markers are never letterboxed. */}
           <FlightTimeline flights={dailyFlights} simMinutes={state.simMinutes} />
-          <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
 
           <section className="v2-map">
-            <PhuketConditionsStrip />
-            <div className="v2-map__hero">
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Demand Queue</span>
-                <strong className="v2-map__hero-value" ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">waiting at airport curb</span>
-              </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Supply Rolling</span>
-                <strong className="v2-map__hero-value" ref={supplyRollingRef}>{initFrame.moving.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">buses moving now</span>
-              </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Walked Away</span>
-                <strong className="v2-map__hero-value" ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">gave up after 60 min queue</span>
-              </div>
-            </div>
             <div className="v2-map__stage">
               <V2LiveMap
                 ref={mapRef}
@@ -484,68 +653,157 @@ export default function DashboardV2() {
               />
             </div>
             <div className="v2-map__overlay">
-              <span className="v2-map__stat"><Counter value={metrics.fleet.totalBuses} /> buses · <Counter value={metrics.fleet.movingBuses} /> moving</span>
-              <span className="v2-map__next">Demand this hour: {currentDemandPax.toLocaleString()} in · {currentDeparturePax.toLocaleString()} out</span>
+              {source === "live"
+                ? <span className="v2-map__stat">{liveSummary.busesReporting} live · {liveSummary.busesMoving} moving</span>
+                : <span className="v2-map__stat"><Counter value={operatorRows.length} /> PKSB buses out · <Counter value={operatorRows.filter((r) => r.status === "MOVING").length} /> on a trip and moving</span>}
               {state.nextDeparture !== null && (
                 <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
               )}
             </div>
-            {/* The operator fleet table — sits under the map so operators
-                see WHERE every bus is while reading the table below. */}
-            <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} />
           </section>
+
+          <aside className="v2-side-rail">
+            {/* Distinct keys: the SIMULATION cells are ref-written per frame, so
+                React must never reuse those DOM nodes for LIVE (it would update
+                text nodes the rAF loop already replaced and freeze stale ฿). */}
+            {source === "live" ? (
+              <div className="v2-side-rail__story" key="story-live">
+                <div className="v2-side-rail__story-card">
+                  <span className="v2-side-rail__story-label">Buses reporting</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.busesReporting.toLocaleString()}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.busesOnLine} on a line · {liveSummary.busesMoving} moving
+                    {liveSummary.paxOnBoardNow !== null ? ` · ${liveSummary.paxOnBoardNow} on board now` : ""}
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card">
+                  <span className="v2-side-rail__story-label">Trips completed</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.tripsCompleted.toLocaleString()}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · {liveSummary.kmDriven.toLocaleString()} km
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card v2-side-rail__story-card--earned">
+                  <span className="v2-side-rail__story-label">Riders today</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.riders > 0
+                      ? `${liveSummary.ridersCounted.toLocaleString()} counted · ${(liveSummary.riders - liveSummary.ridersCounted).toLocaleString()} modelled`
+                      : "not measured — passenger counters read 0"}
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card v2-side-rail__story-card--earned">
+                  <span className="v2-side-rail__story-label">Fares today</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</strong>
+                  <span className="v2-side-rail__story-detail">{liveSummary.riders > 0 ? "riders × fare" : "unknown until counters report"}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="v2-side-rail__story v2-headline" key="story-sim">
+                <span className="v2-headline__label">Missed today · modelled</span>
+                <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
+                <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>
+                <p className="v2-headline__sum">
+                  <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted a bus</span>
+                  <span>= <b ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</b> collected</span>
+                  <span>+ <b ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</b> took a Grab</span>
+                  <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting at the airport</span>
+                </p>
+              </div>
+            )}
+
+            <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+            <PhuketConditionsStrip />
+            {/* The operator fleet table — now lives in the side rail below
+                conditions, where its wide rows can sit next to the map. */}
+            {source === "live"
+              ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
+              : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
+          </aside>
 
         </main>
       )}
 
       <footer className="v2-footer">
+        {source === "live" ? (
+        // LIVE accumulator: observed supply (buses, trips, km) and estimated
+        // money. No "walked away" cell — GPS can't see who didn't board.
+        <div className="v2-accum" key="accum-live">
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.busesReporting}</span>
+            <span className="v2-accum__label">Buses Reporting</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.tripsCompleted.toLocaleString()}</span>
+            <span className="v2-accum__label">Trips Today · GPS</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val">{liveSummary.kmDriven.toLocaleString()}</span>
+            <span className="v2-accum__label">Km Today · GPS</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--accent">
+            <span className="v2-accum__val">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</span>
+            <span className="v2-accum__label">{liveSummary.riders === 0 ? "Riders · not measured" : liveSummary.ridersCounted === liveSummary.riders ? "Riders · counted" : "Riders · partly modelled"}</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--accent">
+            <span className="v2-accum__val">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</span>
+            <span className="v2-accum__label">Fares · riders × ฿100{liveSummary.observedSinceMin !== null ? ` · since ${hhmm(liveSummary.observedSinceMin)}` : ""}</span>
+          </div>
+          <div className="v2-accum__item v2-accum__item--green">
+            <span className="v2-accum__val">{liveSummary.co2SavedKg.toLocaleString()} kg</span>
+            <span className="v2-accum__label">CO₂ Saved · airport line</span>
+          </div>
+        </div>
+        ) : (
+        <>
         {/* Accumulator bar. The streaming cells (trips/km/pax/money/CO₂) render
             STATIC opening placeholders and are ref-written by the rAF loop each
             frame — never re-bound to React state, so the 4Hz coarse re-render
             can't clobber the buttery live numbers. Buses Now / Avg Load stay
             React-bound (they change slowly, coarse cadence is imperceptible). */}
-        <div className="v2-accum">
+        <div className="v2-accum" key="accum-sim">
           <div className="v2-accum__item">
-            <span className="v2-accum__val"><Counter value={metrics.fleet.totalBuses} /></span>
-            <span className="v2-accum__label">Buses Now</span>
+            <span className="v2-accum__val"><Counter value={operatorRows.length} /></span>
+            <span className="v2-accum__label">PKSB buses out</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val" ref={tripsRef}>{initFrame.tot.tripsCompleted.toLocaleString()}</span>
-            <span className="v2-accum__label">Trips Today</span>
+            <span className="v2-accum__label">Trips done · airport line</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val" ref={kmRef}>{initFrame.tot.kmDriven.toLocaleString()}</span>
-            <span className="v2-accum__label">Km Today</span>
+            <span className="v2-accum__label">Bus-km · airport line</span>
+          </div>
+          <div className="v2-accum__item">
+            <span className="v2-accum__val" ref={paxRef}>{initFrame.tot.paxDelivered.toLocaleString()}</span>
+            <span className="v2-accum__label">Riders delivered</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
-            <span className="v2-accum__val" ref={paxRef}>{initFrame.tot.paxDelivered.toLocaleString()}</span>
-            <span className="v2-accum__label">Pax Delivered</span>
+            <span className="v2-accum__val" ref={revEarnedRef}>฿{initFrame.tot.revenueThb.toLocaleString()}</span>
+            <span className="v2-accum__label">Fares · delivered × ฿100</span>
           </div>
-          {/* The money on both sides of the bar: earned climbing against
-              walked-away-to-capacity. Two accents only (green / amber), a
-              hairline proportion meter — §11/§14 compliant. */}
-          <div className="v2-accum__item v2-accum__item--twin">
-            <span className="v2-accum__twin">
-              <span className="v2-accum__earned" ref={revEarnedRef}>฿{initFrame.tot.revenueThb.toLocaleString()}</span>
-              <span className="v2-accum__lost"><span ref={revLostRef}>−฿{initFrame.tot.lostRevenueThb.toLocaleString()}</span> walked away</span>
-            </span>
-            <span className="v2-accum__meter"><span className="v2-accum__meter-fill" ref={revMeterRef} /></span>
-            <span className="v2-accum__label">Money on the table</span>
-          </div>
-          <div className="v2-accum__item v2-accum__item--green">
+          <div className="v2-accum__item">
             <span className="v2-accum__val"><span ref={co2Ref}>{initFrame.tot.co2SavedKg.toLocaleString()}</span> kg</span>
-            <span className="v2-accum__label">CO₂ Saved</span>
+            <span className="v2-accum__label">CO₂ saved vs taxi</span>
           </div>
           <div className="v2-accum__item">
             <span className="v2-accum__val">{metrics.now.avgLoadPct}%</span>
-            <span className="v2-accum__label">Avg Load</span>
+            <span className="v2-accum__label">Avg load · airport line</span>
           </div>
         </div>
+        </>
+        )}
       </footer>
 
       <TelemetryStatusModal
         isOpen={isTelemetryModalOpen}
         onClose={() => setIsTelemetryModalOpen(false)}
+      />
+      <DayReportModal
+        isOpen={isReportOpen}
+        simDay={simDay}
+        onClose={() => setIsReportOpen(false)}
+        onReplay={handleStartDaySweep}
       />
     </div>
   );

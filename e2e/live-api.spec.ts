@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
   await installMapTileMocks(page);
 });
 
-test("live api stays reachable while the tourist shell boots", async ({ page, request }) => {
+test("live api stays reachable while the legacy tourist shell boots", async ({ page, request }) => {
   const [routesResponse, healthResponse] = await Promise.all([
     request.get(`${apiBaseURL}/api/routes`),
     request.get(`${apiBaseURL}/api/health`)
@@ -24,7 +24,7 @@ test("live api stays reachable while the tourist shell boots", async ({ page, re
   expect(routesResponse.ok()).toBeTruthy();
   expect(healthResponse.ok()).toBeTruthy();
 
-  await page.goto("/");
+  await page.goto("/tourist");
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toBeVisible();
@@ -32,7 +32,7 @@ test("live api stays reachable while the tourist shell boots", async ({ page, re
 });
 
 test("live api serves the info tab stop flow end to end", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/tourist");
   await page.getByRole("button", { name: "More" }).click();
 
   await expect(page.getByRole("button", { name: "Stops" })).toBeVisible();

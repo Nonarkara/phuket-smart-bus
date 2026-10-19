@@ -457,7 +457,7 @@ export const PB: Record<string, Entry> = {
   pbStat1Label: e("formal bus operators in Phuket", "ผู้ประกอบการรถบัสทางการในภูเก็ต", "普吉的正式巴士运营商", "푸껫의 공식 버스 운영사"),
   pbStat1Note: e("PKCD/PKSB \u00b7 Phuket Mahanakorn \u00b7 Orange Line", "PKCD/PKSB \u00b7 ภูเก็ตมหานคร \u00b7 สายส้ม", "PKCD/PKSB \u00b7 普吉马哈纳空 \u00b7 橙线", "PKCD/PKSB \u00b7 푸껫 마하나콘 \u00b7 오렌지 라인"),
   pbStat2Label: e("daily Airport Line departures (each direction)", "เที่ยวรถสายสนามบินต่อวัน (แต่ละทิศทาง)", "每日机场线出发班次（每个方向）", "일일 공항 노선 출발편 (각 방향)"),
-  pbStat2Note: e("PKSB timetable, effective Jan 2025", "ตารางเวลา PKSB มีผล ม.ค. 2025", "PKSB时刻表，2025年1月生效", "PKSB 시간표, 2025년 1월 시행"),
+  pbStat2Note: e("in the model (the published schedule says ~25)", "ในโมเดล (ตารางเวลาที่ประกาศระบุ ~25)", "模型中（公布的时刻表为约25班）", "모델 기준(공식 시간표는 약 25편)"),
   pbStat3Label: e("flat fare, Airport \u2194 Rawai (95 min)", "ค่าโดยสารราคาเดียว สนามบิน \u2194 ราไวย์ (95 นาที)", "统一票价，机场 ↔ 拉威（95分钟）", "균일 요금, 공항 ↔ 라와이 (95분)"),
   pbStat3Note: e("vs \u0e32600\u20131,200 Grab/taxi", "เทียบกับ \u0e32600\u20131,200 Grab/แท็กซี่", "对比฿600–1,200打车/出租车", "Grab/택시 ฿600–1,200 대비"),
   pbStat4Label: e("Dragon Line average boardings", "การขึ้นรถเฉลี่ยสายมังกร", "龙线平均上车人数", "드래곤 라인 평균 승차"),

@@ -77,7 +77,7 @@ const BEATS: Beat[] = [
     status: "Build-ready",
     title: "GPS tells us where. A tablet tells the driver why. A counter tells us how full.",
     body: "Start with three instruments, not a shopping catalogue: vehicle position, a driver task screen and anonymous boarding/alighting counts. Each feed has a job and an ingest path already waiting in the production backend.",
-    proof: "Telemetry, seat, driver-attention and passenger-flow types and endpoints already exist in this repository.",
+    proof: "Telemetry, seat, driver-attention and passenger-flow types and endpoints already exist in this repository. The types are not the hardware: the passenger counters on the current fleet have never reported above zero (checked 29 Sep 2026), so nothing on this site presents a rider count as observed. See limitation 06.",
     href: "#proof",
     link: "Trace research into code"
   },

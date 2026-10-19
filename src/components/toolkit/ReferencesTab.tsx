@@ -89,7 +89,7 @@ const REFERENCES: Reference[] = [
   {
     category: "grey-literature",
     text: "C9 Hotelworks — “Phuket Hotel & Tourism Update,” March 2026,",
-    meta: "17.4M pax in 2025; airport operating at 39% above designed capacity.",
+    meta: "17.4M pax in 2025 (a secondary figure; AOT's own Annual Report 2025 says 17.5M); airport operating at 39% above designed capacity.",
     href: "https://c9hotelworks.com/wp-content/uploads/2026/03/Phuket-Hotel-Tourism-Update.pdf"
   },
   {

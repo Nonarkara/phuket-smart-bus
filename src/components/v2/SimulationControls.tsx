@@ -34,9 +34,14 @@ interface SimulationControlsProps {
   simDay: number;
   onDayChange: (dow: number) => void;
   onStartDaySweep: () => void;
+  onOpenDayReport?: () => void;
+  /** Which bus supply the simulation runs; null while the record loads. */
+  supplyLabel?: string | null;
+  supplyTitle?: string;
+  onToggleSupply?: () => void;
 }
 
-export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange, onStartDaySweep }: SimulationControlsProps) {
+export function SimulationControls({ clockState, onClockStateChange, simDay, onDayChange, onStartDaySweep, onOpenDayReport, supplyLabel, supplyTitle, onToggleSupply }: SimulationControlsProps) {
   const [sliderValue, setSliderValue] = useState(getSimulatedMinutes());
 
   // Animate slider thumb while playing (polled locally at 100ms)
@@ -63,6 +68,11 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
           </button>
         ))}
       </div>
+      {supplyLabel && onToggleSupply && (
+        <button type="button" className="v2-timebar__report" onClick={onToggleSupply} title={supplyTitle}>
+          {supplyLabel}
+        </button>
+      )}
       <button
         type="button"
         className="v2-timebar__play"
@@ -97,10 +107,20 @@ export function SimulationControls({ clockState, onClockStateChange, simDay, onD
           type="button"
           className="v2-timebar__day-sweep"
           onClick={onStartDaySweep}
-          title="Replay the whole service day (05:30 → 22:30) in ~60 seconds"
+          title="Replay the whole day (05:30 → 24:00) in ~60 seconds"
         >
           ▶ DAY · 60s
         </button>
+        {onOpenDayReport && (
+          <button
+            type="button"
+            className="v2-timebar__report"
+            onClick={onOpenDayReport}
+            title="End-of-day debrief: where to add buses, where to run lighter, what ±N buses would have earned"
+          >
+            DAY REPORT
+          </button>
+        )}
         {SPEED_OPTIONS.map((s) => (
           <button
             key={s}

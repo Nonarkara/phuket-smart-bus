@@ -94,18 +94,19 @@ export function getHeadlineMetrics(): HeadlineMetrics {
   const movingBuses = buses.filter((v) => v.status === "moving").length;
   const dwellingBuses = buses.length - movingBuses;
 
-  // Average load: paxOnboard / (activeBuses × BUS_CAPACITY).
-  // paxOnboard = boarded today - delivered today. Always ≤ active capacity.
+  // Average load: paxOnboard / (airport-line buses on the road × BUS_CAPACITY).
+  // The rider model is the airport line only, so Patong and Dragon buses are
+  // not in the denominator. paxOnboard = boarded today − delivered today.
   const paxOnboard = Math.max(0, state.paxBoarded - state.paxDelivered);
-  const activeCapacity = Math.max(1, buses.length * BUS_CAPACITY);
+  const airportBuses = buses.filter((v) => v.routeId === "rawai-airport").length;
+  const activeCapacity = Math.max(1, airportBuses * BUS_CAPACITY);
   const avgLoadPct = Math.min(100, Math.round((paxOnboard / activeCapacity) * 100));
 
-  // On-time KPI: % of active buses currently moving (vs dwelling beyond schedule).
-  // Defaults to 97 when no buses are active (avoid a "0% on time" first-paint flash).
+  // Share of buses on the road that are moving right now. (This used to be
+  // labelled "on-time": the same share +2, clamped to 70–99 — nothing measured
+  // punctuality.) No buses out → 0.
   const total = movingBuses + dwellingBuses;
-  const onTimePct = total > 0
-    ? Math.min(99, Math.max(70, Math.round((movingBuses / total) * 100 + 2)))
-    : 97;
+  const onTimePct = total > 0 ? Math.round((movingBuses / total) * 100) : 0;
 
   return {
     simMinutes,

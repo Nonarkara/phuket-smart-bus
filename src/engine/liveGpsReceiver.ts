@@ -12,6 +12,7 @@
 
 import type { LatLngTuple, OperationalRouteId, TelemetrySource, VehiclePosition } from "@shared/types";
 import { text } from "./i18n";
+import { recordFleetEfficiencySample } from "./fleetEfficiency";
 
 export interface LiveGpsPing {
   vehicleId: string;
@@ -107,6 +108,7 @@ export function ingestBatchGps(records: LiveGpsPing[]): void {
   for (const record of records) {
     ingestGpsPing(record);
   }
+  recordFleetEfficiencySample(records);
 }
 
 /**

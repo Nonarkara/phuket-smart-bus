@@ -10,6 +10,12 @@
       "custom_domain": true
     }
   ],
+  // Host router: rewrite the URL, drop the preview robots header, stream
+  // the body. 50 ms is above that work. Logs stay on so an exceededCpu
+  // on this cap is visible.
+  "limits": {
+    "cpu_ms": 50
+  },
   "observability": {
     "enabled": true
   }

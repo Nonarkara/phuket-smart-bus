@@ -361,7 +361,7 @@ export function LiveMap({
 
   return (
     <div className="map-frame" data-testid={testId}>
-      <MapContainer center={center} zoom={11} scrollWheelZoom={false} className="map-canvas" minZoom={10} maxZoom={16} worldCopyJump={false}>
+      <MapContainer center={center} zoom={11} zoomSnap={0.1} zoomDelta={0.25} scrollWheelZoom={false} className="map-canvas" minZoom={10} maxZoom={16} worldCopyJump={false}>
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

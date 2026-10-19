@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-09-29 · Read the raw feed before trusting a report about it
+- **What went wrong:** A collector shipped with a "fresh fix" count, "0 boardings is the counter, not a guess", and km from GPS traces. The raw tracker showed GPSTime is Bangkok wall time stamped `Z` (every fix 7 h in the future → every bus "fresh"), Speed is tenths of km/h, the passenger counter reads 0 on every field for all 24 buses while 8 drive, and an odometer (`LiCheng`) sat unused. Tests passed because fixtures were written from assumed rows, not captured ones.
+- **Correct behaviour:** Capture one real row and build the fixture from it. Cross-check units against a second physical signal (odometer vs trace, speed vs distance/time). Treat a sensor that never leaves zero as absent, not as a zero reading.
+- **How to recognise:** "fresh" > "online"; a speed over 200 km/h on a city bus; every counter identical across a fleet; a zoned timestamp nearer to local wall time than to UTC.
+
 ## 2026-06-26 · Conservation law before code (V1 vs V2 post-mortem)
 
 - **What went wrong:** V1 (many agents, months) produced incoherent, mostly-fake numbers. Two vehicle engines, three fake data paths, two flight sources — none agreed. Numbers looked plausible; none balanced.

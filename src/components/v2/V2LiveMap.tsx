@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { ISLAND_BOUNDS, CORRIDOR_BOUNDS, CORRIDOR_LANDMARKS } from "./fleetRows";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, useMap, CircleMarker, Tooltip } from "react-leaflet";
 import type { LatLngTuple } from "@shared/types";
@@ -26,15 +27,23 @@ export type V2MapHandle = { syncNow: (vehicles: SimState["vehicles"]) => void };
 
 export type MapLayerId = "buses" | "flights" | "piers" | "rain" | "incidents";
 
-/** Where the default frame lives. `corridor` is the Airport Line road at zoom
- *  12 (~38 m/px) — the only frame where a 30 km/h bus visibly travels. `island`
- *  is the old zoom-10 view that also fits the ferry lanes (~151 m/px, buses
- *  crawl at 0.5 px/s). Corridor is the default; island is one chip away. */
+/** The two framings the wall offers, and what each one is FOR.
+ *
+ *  - `island` fits the whole coastline — 7.72°N to 8.155°N, the island's real
+ *    48 km length. This is the default, because a wall that shows an operator a
+ *    cropped island has failed at the only job a map has on a wall: show the
+ *    whole place the buses live in.
+ *  - `corridor` fits the strip the PKSB lines actually run, Airport to Rawai
+ *    (~36 km). Tighter, and the frame to use when you want the working routes
+ *    rather than the geography.
+ *
+ * The `center`/`zoom` here are only the pre-fit starting view; `SyncMapView`
+ * calls fitBounds immediately, so the real framing is the bounds, not these. */
 export type MapFrame = "corridor" | "island";
 
 const FRAMES: Record<MapFrame, { center: [number, number]; zoom: number }> = {
-  corridor: { center: [7.945, 98.335], zoom: 12 },
-  island: { center: [7.88, 98.49], zoom: 10 },
+  corridor: { center: [7.945, 98.335], zoom: 11 },
+  island: { center: [7.9375, 98.353], zoom: 10.6 },
 };
 
 type V2LiveMapProps = {
@@ -94,9 +103,35 @@ function buildBusMarkerIcon(vehicle: SimState["vehicles"][number]) {
   });
 }
 
+/** Leaflet tooltips render strings as HTML; aircraft text comes from a third-party feed. */
+function esc(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
 function busTooltip(vehicle: SimState["vehicles"][number]) {
   const isFerry = FERRY_ROUTES.has(vehicle.route);
-  return isFerry ? `${vehicle.plate} · scheduled vessel` : `${vehicle.plate} · ${vehicle.pax}/${BUS_CAP}`;
+  if (isFerry) return `⛴ ${vehicle.plate} · Scheduled ferry`;
+
+  const isSouthbound = vehicle.heading > 90 && vehicle.heading < 270;
+  const dir = vehicle.directionLabel
+    ? vehicle.directionLabel
+    : isSouthbound
+      ? "Southbound to Rawai"
+      : "Northbound to Airport";
+
+  const loadText = vehicle.paxEstimated
+    ? `~${vehicle.pax}/${BUS_CAP} pax (est)`
+    : `${vehicle.pax}/${BUS_CAP} pax`;
+
+  const motionText = vehicle.isBoarding
+    ? "Boarding at curb"
+    : vehicle.status === "moving"
+      ? vehicle.speedKph
+        ? `${Math.round(vehicle.speedKph)} km/h`
+        : "Moving"
+      : "Standing";
+
+  return `🚌 ${vehicle.plate} · ${dir} · ${motionText} · ${loadText}`;
 }
 
 function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], focused: boolean) {
@@ -262,7 +297,7 @@ function AircraftLayer({
       for (const ac of list) {
         let marker = liveMarkers.current.get(ac.hex);
         const alt = ac.altitudeFt == null ? "?" : `${Math.round(ac.altitudeFt)} ft`;
-        const tip = `${ac.callsign} · ADS-B · ${alt}${ac.military ? " · MIL" : ""}`;
+        const tip = `${esc(ac.callsign)} · ADS-B · ${esc(alt)}${ac.military ? " · MIL" : ""}`;
         if (!marker) {
           marker = L.marker([ac.lat, ac.lon], { icon: buildPlaneIcon(ac.heading, true), zIndexOffset: 400 }).addTo(map);
           marker.bindTooltip(tip, { direction: "top" });
@@ -285,7 +320,7 @@ function AircraftLayer({
       }
       for (const b of beads) {
         let marker = schedMarkers.current.get(b.id);
-        const tip = `${b.callsign} · ${b.kind === "arr" ? "ARR" : "DEP"} ${b.city} · schedule ${b.minutesToEvent >= 0 ? `in ${b.minutesToEvent}m` : `${-b.minutesToEvent}m ago`}`;
+        const tip = `${esc(b.callsign)} · ${b.kind === "arr" ? "ARR" : "DEP"} ${esc(b.city)} · schedule ${b.minutesToEvent >= 0 ? `in ${b.minutesToEvent}m` : `${-b.minutesToEvent}m ago`}`;
         if (!marker) {
           marker = L.marker([b.lat, b.lon], { icon: buildPlaneIcon(b.heading, false), zIndexOffset: 300 }).addTo(map);
           marker.bindTooltip(tip, { direction: "top" });
@@ -356,18 +391,46 @@ function AircraftLayer({
   return null;
 }
 
-function HktMarker() {
-  return (
-    <CircleMarker
-      center={[7.8804, 98.3923]}
-      radius={6}
-      pathOptions={{ color: "#f59e0b", fillColor: "#f59e0b", fillOpacity: 0.85, weight: 1 }}
-    >
-      <Tooltip direction="top" offset={[0, -4]} permanent={false}>
-        HKT · Phuket Airport
-      </Tooltip>
-    </CircleMarker>
-  );
+function CorridorLandmarksLayer({ frame }: { frame: MapFrame }) {
+  const map = useMap();
+  useEffect(() => {
+    const markers: L.Marker[] = [];
+    // On the whole-island frame every badge is ~40% of the island's width, so
+    // eight of them bury the geography they are meant to label. Keep the three
+    // anchors that orient you — Airport north, Town east, Rawai south — and
+    // drop the sub-line. The corridor frame is where the full set earns its
+    // place, because there the map is zoomed to the strip they describe.
+    const wholeIsland = frame === "island";
+    const shown = wholeIsland
+      ? CORRIDOR_LANDMARKS.filter((lm) => lm.role === "airport" || lm.role === "town" || lm.role === "terminus")
+      : CORRIDOR_LANDMARKS;
+    for (const lm of shown) {
+      const isAirport = lm.role === "airport";
+      const isTerminus = lm.role === "terminus";
+      const isTown = lm.role === "town";
+      const cls = `v2-landmark-badge v2-landmark-badge--${lm.role}${wholeIsland ? " is-compact" : ""}`;
+      const icon = L.divIcon({
+        className: "v2-landmark-icon",
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+        html: `<div class="${cls}">
+          <span class="v2-landmark-dot"></span>
+          <span class="v2-landmark-name">${lm.name}</span>
+          ${lm.sub && !wholeIsland ? `<span class="v2-landmark-sub">${lm.sub}</span>` : ""}
+        </div>`,
+      });
+      const marker = L.marker([lm.lat, lm.lng], {
+        icon,
+        interactive: false,
+        zIndexOffset: isAirport ? 800 : isTerminus ? 700 : isTown ? 600 : 500,
+      }).addTo(map);
+      markers.push(marker);
+    }
+    return () => {
+      for (const m of markers) map.removeLayer(m);
+    };
+  }, [map, frame]);
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -378,9 +441,9 @@ function HktMarker() {
 // the hero corridor and gets a heavier ink line; local lines and ferry lanes
 // are lighter/dashed. Vehicles carry the accent, the roads don't compete.
 const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string; weight: number; marine?: boolean }[] = [
-  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#c8d1db", weight: 3.5 },
-  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#8b97a4", weight: 2 },
-  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#8b97a4", weight: 2 },
+  { routeId: "rawai-airport", firstStop: [8.108, 98.317], color: "#e6edf3", weight: 4.5 },
+  { routeId: "patong-old-bus-station", firstStop: [7.884101493, 98.39575082], color: "#9aa8b6", weight: 2.5 },
+  { routeId: "dragon-line", firstStop: [7.885774, 98.39478], color: "#9aa8b6", weight: 2.5 },
   { routeId: "rassada-phi-phi", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
   { routeId: "rassada-ao-nang", firstStop: [7.8557, 98.4013], color: "#5f7d95", weight: 1.5, marine: true },
   { routeId: "bang-rong-koh-yao", firstStop: [8.0133, 98.4186], color: "#5f7d95", weight: 1.5, marine: true },
@@ -471,15 +534,37 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
   const map = useMap();
   useEffect(() => {
     let raf = 0;
+    let touched = false;
+    const onDrag = () => { touched = true; };
+    map.on("dragstart", onDrag);
+
+    // The map is not the whole frame: the layer/frame bar and the flight badge
+    // sit across the top, the legend across the bottom. fitBounds knows nothing
+    // about them, so an un-padded fit puts the island's two ends underneath —
+    // which is precisely how this map looked permanently cropped, northern tip
+    // hidden by the flight badge and Rawai hidden by the legend. Measure the
+    // real chrome and fit into what is actually left.
+    const chromePadding = () => {
+      const host = map.getContainer().parentElement;
+      const h = (sel: string) => host?.querySelector<HTMLElement>(sel)?.offsetHeight ?? 0;
+      const top = Math.max(h(".v2-map__top-controls"), h(".v2-map__flight-badge"), h(".v2-map__maritime-banner")) + 14;
+      const bottom = h(".v2-map__legend") + 14;
+      return { paddingTopLeft: [16, top] as [number, number], paddingBottomRight: [16, bottom] as [number, number] };
+    };
+
+    // Re-fits whenever the column resizes, until an operator pans it themselves.
     const fix = () => {
       map.invalidateSize();
-      const { center, zoom } = FRAMES[frame];
-      map.setView(center, zoom, { animate: false });
+      if (touched) return;
+      const bounds = frame === "island" ? ISLAND_BOUNDS : CORRIDOR_BOUNDS;
+      map.fitBounds(bounds, { ...chromePadding(), animate: false });
     };
     raf = requestAnimationFrame(() => {
       raf = requestAnimationFrame(fix);
     });
-    return () => cancelAnimationFrame(raf);
+    const ro = new ResizeObserver(fix);
+    ro.observe(map.getContainer());
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); map.off("dragstart", onDrag); };
   }, [map, frame]);
   return null;
 }
@@ -550,7 +635,7 @@ function LayerToggles({
         className={`v2-map__layer-btn v2-map__layer-btn--frame ${frame === "corridor" ? "is-active" : ""}`}
         aria-pressed={frame === "corridor"}
         onClick={() => onFrame("corridor")}
-        title="Frame the Airport Line corridor"
+        title="Frame the Airport–Rawai corridor the PKSB lines run"
       >
         Corridor
       </button>
@@ -590,7 +675,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
     ...DEFAULT_LAYERS,
     ...layersProp,
   }));
-  const [frame, setFrame] = useState<MapFrame>("corridor");
+  const [frame, setFrame] = useState<MapFrame>("island");
   const [flightInfo, setFlightInfo] = useState<{ liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }>({
     liveCount: 0,
     modelCount: 0,
@@ -647,7 +732,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
 
       {env.maritimeFlag === "red" && (
         <div className="v2-map__maritime-banner is-red" role="alert">
-          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore (ห้ามเรือเล็กออกจากฝั่ง)
+          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore <span lang="th">(ห้ามเรือเล็กออกจากฝั่ง)</span>
         </div>
       )}
 
@@ -661,24 +746,34 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <span><i className="is-live-plane" /> live aircraft</span>
       </div>
       <MapContainer
-        center={FRAMES.corridor.center}
-        zoom={FRAMES.corridor.zoom}
+        center={FRAMES.island.center}
+        zoom={FRAMES.island.zoom}
+        zoomSnap={0.1}
+        zoomDelta={0.25}
         minZoom={6}
         className="v2-map__canvas"
         zoomControl={false}
         scrollWheelZoom={true}
         worldCopyJump={false}
       >
+        {/* CARTO's dark_all basemap now gates its raster tiles behind an API
+            key (the tiles came back as an "API KEY REQUIRED" watermark in
+            production — CARTO changed this after this map was switched to
+            it). Plain OpenStreetMap is the durable keyless fallback; the
+            .v2-basemap-tile CSS filter tones it for the dark room without
+            the old grayscale+invert combo that crushed it into a black
+            smear — see the filter rule in styles.css. */}
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
           className="v2-basemap-tile"
         />
         <RainOverlay enabled={layers.rain} />
         <IncidentOverlay enabled={layers.incidents} />
         <RoutePolylines maritimeFlag={env.maritimeFlag} />
         <PiersLayer enabled={layers.piers} />
-        <HktMarker />
+        <CorridorLandmarksLayer frame={frame} />
         <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
         <SyncMapView frame={frame} />

@@ -91,7 +91,8 @@ function buildHourCols(flights: OpsFlight[]): HourCol[] {
 export function FlightTimeline({ flights, simMinutes }: FlightTimelineProps) {
   const cols = buildHourCols(flights)
   const currentHour = Math.floor(simMinutes / 60) % 24
-  const minutesIntoHour = simMinutes % 60
+  // The sim clock is fractional (smooth bus motion); the board shows whole minutes.
+  const minutesIntoHour = Math.floor(simMinutes % 60)
 
   // Day totals
   const totalFlights = flights.length

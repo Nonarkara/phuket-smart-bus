@@ -6,6 +6,9 @@ import { PassengerApp } from "./PassengerApp";
 
 vi.mock("../../engine/fleetSimulator", () => ({
   getAirportDepartures: () => [780],
+  getPublishedAirportDepartures: () => [780],
+  getSupplyVersion: () => 0,
+  getMeasuredAirportSupply: () => null,
   getPublishedTravelMinutesFromAirport: () => 70,
   // headlineMetrics reads getVehiclesNow + getSimulatedMinutes; the test
   // doesn't exercise the operator pane, so empty values are fine.
@@ -13,7 +16,11 @@ vi.mock("../../engine/fleetSimulator", () => ({
   getSimulatedMinutes: () => 750,
   // simulation.computeSimState pulls these; empty array keeps the engine
   // a no-op for the chrome-only assertions this file makes.
-  getAirportboundTrips: () => []
+  getAirportboundTrips: () => [],
+  SERVICE_START: 330,
+  SERVICE_END: 1440,
+  DAY_TARGET_END: 1440,
+  DAY_SPEED: 1110,
 }));
 
 vi.mock("../../engine/time", () => ({
@@ -29,6 +36,16 @@ vi.mock("../../engine/time", () => ({
   parseClockMinutes: () => 0
 }));
 
+vi.mock("../../engine/liveOps", () => ({
+  getLiveBusesRaw: () => [],
+  getLiveFeedState: () => ({ status: "connecting", lastOkMs: null }),
+  getLiveLedgerSnapshot: () => ({ vehicles: {} }),
+  startLiveFeed: () => () => {},
+  subscribeLiveFeed: () => () => {},
+}));
+vi.mock("./RiderMap", () => ({ RiderMap: () => null }));
+globalThis.fetch = vi.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+
 vi.mock("../../engine/adsbFlights", () => ({
   ADSB_POLL_MS: 45_000,
   fetchAdsbAroundHkt: () => new Promise(() => {}),
@@ -39,6 +56,9 @@ describe("PassengerApp", () => {
   it("shows the timetable-based passenger decision before the ticket choices", () => {
     render(<PassengerApp />);
 
+    expect(screen.getByRole("heading", { name: "Next real buses" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Toward Rawai" })).toBeInTheDocument();
+    expect(screen.getByText("Connecting to the bus trackers…")).toBeInTheDocument();
     expect(screen.getByText("Next scheduled bus leaves in")).toBeInTheDocument();
     expect(screen.getByText("30:00")).toBeInTheDocument();
     expect(screen.getByText(/70 min to Patong on the published timetable/i)).toBeInTheDocument();

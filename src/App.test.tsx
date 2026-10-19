@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { getMockApiPayload } from "./test/fixtures/appApiFixtures";
@@ -88,22 +88,76 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Request Bus" })).toBeInTheDocument();
   });
 
-  it("uses the toolkit as the branch landing page", async () => {
+  it("lands on the bus front door, not the toolkit — the hub stays on its own path", async () => {
+    // The toolkit publishes from the `depa-usdot.nonarkara.org` branch, which
+    // carries its own index.html. On this branch `main` serves bus.nonarkara.org,
+    // so "/" is the bus system (passenger app on a phone, the dual-audience
+    // shell on desktop) and the operator wall is at /ops. Serving the hub at "/"
+    // also made the hub's own "Live system ↗" link a self-link.
     window.history.replaceState({}, "", "/");
     render(<App />);
 
-    // The landing starts with the passenger decision, then follows it through the system.
+    await waitFor(
+      () => {
+        expect(window.location.pathname === "/" || window.location.pathname === "/ops").toBe(true);
+      },
+      { timeout: 15_000 }
+    );
+    expect(
+      screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
+    ).not.toBeInTheDocument();
+  }, 30_000);
+
+  it("serves the toolkit hub at the explicit /toolkit path", async () => {
+    window.history.replaceState({}, "", "/toolkit");
+    render(<App />);
+
     expect(
       await screen.findByRole("heading", {
         name: /what if an airport passenger can find the bus/i
-      })
+      }, { timeout: 15_000 })
     ).toBeInTheDocument();
     expect(screen.getByText(/Ten questions/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Evidence status legend")).toHaveTextContent(
       /Observed.*cited or published record/i
     );
-    expect(screen.getByRole("link", { name: "Live system ↗" })).toHaveAttribute("href", "https://bus.nonarkara.org/");
     expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
+  }, 30_000);
+
+  it("shows the desktop passenger shell — not the bare mobile app or the toolkit hub — for a desktop visitor on the rider domain", async () => {
+    // Regression test: isRiderDomain used to short-circuit to the bare
+    // mobile PassengerApp (or fall into the toolkit hub) for EVERY visitor
+    // to bus.nonarkara.org, desktop included. A desktop visitor must reach
+    // a real intro page, not a phone-frame on a satellite backdrop. The
+    // new shell is `.desktop-rider` — a centered phone column with brand
+    // top-left and a top-right nav pointing at the other surfaces.
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, hostname: "bus.nonarkara.org", pathname: "/" }
+    });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1400 });
+    window.dispatchEvent(new Event("resize"));
+    window.history.replaceState({}, "", "/");
+
+    try {
+      render(<App />);
+
+      // Brand top-left
+      expect(await screen.findByText(/Phuket Smart Bus/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^OPS$/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^TOOLKIT$/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^FLEET$/i })).toBeInTheDocument();
+      // TouristApp mounted inside the phone column — the mobile map is the
+      // positive signal that the rider app is on screen, not the toolkit.
+      expect(await screen.findByTestId("live-map")).toBeInTheDocument();
+      // Toolkit hub heading must NOT appear at / on the rider domain.
+      expect(
+        screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
+      ).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
+    }
   });
 
   it("switches between Map and More tabs", async () => {

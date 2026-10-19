@@ -1,0 +1,25 @@
+# Best-effort backstop, not a 5-minute guarantee. The minute path is
+# workers/collect.ts. GitHub delays and skips scheduled runs: on
+# 2026-09-29 this fired once in four hours. It only helps if the worker
+# cron stops while Pages and KV are fine; the week report's coverage
+# column is what shows a gap. The tick route only answers the collector:
+# TICK_TOKEN is a repository secret, the same value the Pages project and
+# the collector worker hold.
+name: Collect live buses
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record one tracker sample
+        run: |
+          curl -fsS --retry 5 --retry-all-errors --retry-delay 15 --max-time 40 \
+            -A "phuket-smart-bus-collector" \
+            -H "accept: application/json" \
+            -H "authorization: Bearer ${{ secrets.TICK_TOKEN }}" \
+            "https://bus.nonarkara.org/api/collect/tick"

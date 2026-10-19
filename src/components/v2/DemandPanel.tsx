@@ -12,6 +12,12 @@ import { HourlyBalanceChart } from "./HourlyBalanceChart";
 export function scrubToHour(hour: number) {
   setSimulatedMinutes(hour * 60);
   pause();
+  // In LIVE the replay clock isn't on screen; the console listens for this
+  // and switches to SIMULATION so the click replays that hour instead of
+  // silently doing nothing.
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pksb:scrub-to-hour", { detail: { hour } }));
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -30,11 +30,11 @@ jobs:
       # buses flying off the polyline, dead-zone right bar, time drift between
       # the map clock and the metrics clock, and broken day-of-week fuzz.
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npm run typecheck
       - name: Test
         run: npm test
 
-      - run: npx vite build
+      - run: npm run build:client
       - name: Copy 404.html for SPA routing
         run: cp dist/client/index.html dist/client/404.html
       - uses: actions/upload-pages-artifact@v3

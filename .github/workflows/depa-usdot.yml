@@ -38,15 +38,15 @@ jobs:
         run: npm test
 
       - name: Build
-        run: npx vite build
+        run: npm run build:client
 
-      - name: Copy SPA fallback
-        run: cp dist/client/index.html dist/client/404.html
+      - name: Include Pages Functions
+        run: cp -R functions dist/client/functions
 
       - name: Deploy toolkit branch to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.81.1"
+          wranglerVersion: "4.86.0"
           command: pages deploy dist/client --project-name=${{ env.PAGES_PROJECT }} --branch=${{ env.TOOLKIT_BRANCH }}

@@ -39,7 +39,7 @@ const LIMITATIONS: Limitation[] = [
   {
     number: "03",
     what: "The Vegas comparison is structurally right but numerically stale.",
-    why: "Vegas in 2005 had 38M visitors, a 4-mile Strip, zero ride-hailing, and a $6M/yr profitable corridor by year 3. Phuket in 2025 has 17.4M arrivals, a 32-km airport corridor, an entrenched Grab monopoly, and no public airport bus. The transfer is real but the coefficients are not 1:1 — Phuket is colder than Vegas was at launch, and the policy environment is different.",
+    why: "Vegas in 2005 had 38M visitors, a 4-mile Strip, zero ride-hailing, and a $6M/yr profitable corridor by year 3. Phuket in 2025 has 17.5M arrivals (AOT Annual Report 2025), a 32-km airport corridor, an entrenched Grab monopoly, and no public airport bus. The transfer is real but the coefficients are not 1:1 — Phuket is colder than Vegas was at launch, and the policy environment is different.",
     what_changes_it: "A Phuket-specific Origin & Destination survey of 2,000+ arriving passengers, weighted by hour and nationality."
   },
   {
@@ -53,6 +53,12 @@ const LIMITATIONS: Limitation[] = [
     what: "The monsoon and accident data are the most likely place for the future to break the model.",
     why: "Climate is shifting. The 2,200 mm/year rainfall normal is from the 30-year TMD record. The 320 mm in 4 hours in June 2024 was an orographic-lift event whose frequency distribution is not yet in the simulator.",
     what_changes_it: "Annual updates of the rainfall distribution and a 5-year forward look at road-flooding frequency."
+  },
+  {
+    number: "06",
+    what: "The buses report position, but no bus reports how full it is.",
+    why: "The operator's trackers send a passenger-counter field. On 29 September 2026 every one of the 24 tracked buses reported zero on that field, at 11:00, with eight of them driving. A counter that has never read above zero is not a counter reading zero \u2014 it is no counter. So the live system shows positions, speeds and distances, and every rider count and every fare is either counted from a working counter or modelled from a matched run. Nothing on this site reports a fare of zero as if it were observed; a missing counter is shown as missing.",
+    what_changes_it: "Automatic passenger counters enabled and reporting on the CMSV6 platform, confirmed over a week of live service, with boarding counts reconciled against ticketing."
   }
 ];
 
@@ -70,7 +76,7 @@ const COUNTER_ARGUMENTS: { argument: string; response: string }[] = [
     response: "Las Vegas built a US$650M monorail for 3.9 miles of Strip. It went bankrupt twice and sold for US$24.3M in 2020. The same corridor, same year, was served by a 100-seat double-decker bus on the existing road that paid for itself for a decade. The vehicle that fits the corridor wins, not the one that wins design awards."
   },
   {
-    argument: "17.4M passengers per year sounds like a lot, but the airport bus only serves one corridor.",
+    argument: "17.5M passengers per year sounds like a lot, but the airport bus only serves one corridor.",
     response: "The airport corridor is the spine. Once it runs, the same vehicles can serve Rawai, Patong, the old town and the convention centre at off-peak hours. Capex for the bus is a sunk cost; the marginal revenue of a second corridor is high."
   },
   {
@@ -111,7 +117,7 @@ export function CriticalReading() {
         <p>
           A research site is most useful when it shows its own limits. This
           page is for the reader who already trusts the headline and wants
-          to know where the seams are. Five limitations. Five
+          to know where the seams are. Six limitations. Six
           counter-arguments. Five open questions. Each one points to the
           specific evidence that would close it.
         </p>

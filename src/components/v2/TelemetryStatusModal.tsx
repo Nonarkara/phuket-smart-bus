@@ -10,6 +10,14 @@ import {
   type TelemetryHealthStatus,
 } from "../../engine/liveGpsReceiver";
 import { getVehiclesNow } from "../../engine/fleetSimulator";
+import {
+  getFleetEfficiencySummary,
+  exportFleetEfficiencyJson,
+  exportFleetEfficiencyCsv,
+  resetFleetEfficiencyLedger,
+  type FleetEfficiencySummary,
+} from "../../engine/fleetEfficiency";
+import { getLiveFeedState } from "../../engine/liveOps";
 
 interface TelemetryStatusModalProps {
   isOpen: boolean;
@@ -29,27 +37,41 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
       : "/api/vehicles/all";
   });
 
+  // The tracker relay is polled by engine/liveOps (it drives LIVE mode); the
+  // modal reads its health and the fleet efficiency ledger for financial reporting.
+  const [feed, setFeed] = useState(() => getLiveFeedState());
+  const [efficiency, setEfficiency] = useState<FleetEfficiencySummary>(() => getFleetEfficiencySummary());
+
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
       setHealth(getTelemetryHealth());
+      setFeed(getLiveFeedState());
+      setEfficiency(getFleetEfficiencySummary());
     }, 1000);
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const allVehicles = getVehiclesNow();
-  const liveCount = allVehicles.filter((v) => v.telemetrySource === "direct_gps").length;
-  const simCount = allVehicles.length - liveCount;
-
   // Filter the roster by the selected source. Memoised on filter + the
   // current set of vehicles so the user can focus on the live fleet without
   // the sim buses drowning it out.
+  //
+  // NOTE: `getVehiclesNow()` and the filter memo stay ABOVE the
+  // `if (!isOpen) return null` early return — React tracks hooks by call
+  // order, so a hook that only fires on the open path would throw
+  // "Rendered more hooks than during the previous render" (#310) the first
+  // time the modal opens. getVehiclesNow is cheap (a plain read of the
+  // fleet roster) so calling it on every render — closed or open — is fine.
+  const allVehicles = isOpen ? getVehiclesNow() : [];
   const filteredVehicles = useMemo(() => {
     if (sourceFilter === "all") return allVehicles;
     return allVehicles.filter((v) => v.telemetrySource === sourceFilter);
   }, [allVehicles, sourceFilter]);
+
+  if (!isOpen) return null;
+
+  const liveCount = allVehicles.filter((v) => v.telemetrySource === "direct_gps").length;
+  const simCount = allVehicles.length - liveCount;
 
   const handleToggleStream = () => {
     const next = toggleSimulatedGpsStream();
@@ -76,6 +98,39 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
     setEndpointSaved(true);
     setHealth(getTelemetryHealth());
     window.setTimeout(() => setEndpointSaved(false), 2400);
+  };
+
+  const handleDownloadJson = () => {
+    const data = exportFleetEfficiencyJson();
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pksb-fleet-efficiency-report-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadCsv = () => {
+    const data = exportFleetEfficiencyCsv();
+    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pksb-fleet-efficiency-data-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetEfficiency = () => {
+    if (typeof window !== "undefined" && window.confirm("Reset the 1-week fleet efficiency calibration ledger?")) {
+      resetFleetEfficiencyLedger();
+      setEfficiency(getFleetEfficiencySummary());
+    }
   };
 
   return (
@@ -119,6 +174,23 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
               </strong>
               <small>{health.lastPingTime ? new Date(health.lastPingTime).toLocaleTimeString() : "Awaiting stream"}</small>
             </div>
+
+            <div className="v2-telemetry-hud__stat">
+              <span>UPSTREAM POLL</span>
+              <strong className={
+                feed.status === "offline" ? "text-warn" :
+                feed.feedAgeSec !== null && feed.feedAgeSec < 60 ? "text-accent" :
+                "text-ink"
+              }>
+                {feed.status === "offline" ? "ERROR" :
+                  feed.feedAgeSec === null ? "STARTING…" :
+                  `${feed.feedAgeSec}s ago`}
+              </strong>
+              <small>
+                {feed.okCount}/{feed.pollCount} polls OK · {feed.summary.busesReporting} buses
+                {feed.status === "offline" && feed.detail ? ` · ${feed.detail}` : ""}
+              </small>
+            </div>
           </div>
 
           {/* Mode Selector & Quick Actions */}
@@ -149,34 +221,205 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 </button>
               </div>
 
-              <div className="v2-telemetry-sim-btns">
+              {/*
+                The injection controls FABRICATE positions for REAL PKSB plate
+                numbers (กข 1001-1010) and tag them "direct_gps". On a dev
+                machine that is a test fixture. On a published wall it is a lie
+                a reader can act on — and a government-facing research site
+                cannot ship one. So they exist only in a development build.
+              */}
+              {import.meta.env.DEV ? (
+                <div className="v2-telemetry-sim-btns">
+                  <button
+                    type="button"
+                    className="v2-btn v2-btn--primary"
+                    onClick={() => {
+                      simulateLiveGpsBurst();
+                      setHealth(getTelemetryHealth());
+                    }}
+                  >
+                    Inject Live GPS Pulse (10 Buses) — test data
+                  </button>
+                  <button
+                    type="button"
+                    className={`v2-btn ${isStreaming ? "v2-btn--warn" : "v2-btn--ghost"}`}
+                    onClick={handleToggleStream}
+                  >
+                    {isStreaming ? "Stop Stream" : "Continuous GPS Stream (2s) — test data"}
+                  </button>
+                  <button
+                    type="button"
+                    className="v2-btn v2-btn--ghost"
+                    onClick={() => {
+                      clearTelemetry();
+                      setHealth(getTelemetryHealth());
+                    }}
+                  >
+                    Clear Telemetry
+                  </button>
+                </div>
+              ) : (
+                <p className="v2-telemetry-note">
+                  Test-data injection is not present in a production build. The
+                  figures below come from the operator&rsquo;s tracker relay
+                  (<code>/api/live-buses</code>), which reports real positions
+                  for real plates.
+                </p>
+              )}
+            </div>
+          </section>
+
+          {/* Fleet Efficiency & 1-Week Calibration */}
+          <section className="v2-telemetry-section">
+            <div className="v2-telemetry-section__header">
+              <div>
+                <h3>Fleet Efficiency &amp; 1-Week Calibration</h3>
+                <small className="v2-telemetry-sub">
+                  Observed hardware signals calibrate cycle times, stop dwelling, and required fleet size for HKT airport demand.
+                </small>
+              </div>
+              <div className="v2-telemetry-export-btns">
                 <button
                   type="button"
-                  className="v2-btn v2-btn--primary"
-                  onClick={() => {
-                    simulateLiveGpsBurst();
-                    setHealth(getTelemetryHealth());
-                  }}
+                  className="v2-btn v2-btn--ghost v2-btn--sm"
+                  onClick={handleDownloadJson}
+                  title="Download complete calibration ledger as JSON"
                 >
-                  Inject Live GPS Pulse (10 Buses)
+                  Download JSON
                 </button>
                 <button
                   type="button"
-                  className={`v2-btn ${isStreaming ? "v2-btn--warn" : "v2-btn--ghost"}`}
-                  onClick={handleToggleStream}
+                  className="v2-btn v2-btn--ghost v2-btn--sm"
+                  onClick={handleDownloadCsv}
+                  title="Export fleet efficiency metrics as CSV for Excel/Numbers"
                 >
-                  {isStreaming ? "Stop Stream" : "Continuous GPS Stream (2s)"}
+                  Export CSV
                 </button>
                 <button
                   type="button"
-                  className="v2-btn v2-btn--ghost"
-                  onClick={() => {
-                    clearTelemetry();
-                    setHealth(getTelemetryHealth());
-                  }}
+                  className="v2-btn v2-btn--ghost v2-btn--sm text-warn"
+                  onClick={handleResetEfficiency}
+                  title="Reset recorded efficiency samples"
                 >
-                  Clear Telemetry
+                  Reset Ledger
                 </button>
+              </div>
+            </div>
+
+            <div className="v2-telemetry-hud">
+              <div className="v2-telemetry-hud__stat">
+                <span>MOVING / TRANSIT RATIO</span>
+                <strong className={efficiency.movingRatioPct >= 70 ? "text-accent" : "text-warn"}>
+                  {efficiency.movingRatioPct}%
+                </strong>
+                <small>{efficiency.fleetUtilizationPct}% total fleet utilization</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>AVERAGE OPERATING SPEED</span>
+                <strong className="text-ink">
+                  {efficiency.avgFleetSpeedKph} km/h
+                </strong>
+                <small>{efficiency.totalKmTracked} km tracked across {efficiency.daysCollected} day(s)</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>BUNCHING INCIDENTS</span>
+                <strong className={efficiency.detectedBunchingIncidents === 0 ? "text-accent" : "text-warn"}>
+                  {efficiency.detectedBunchingIncidents}
+                </strong>
+                <small>Buses &lt; 600m apart on same route</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>CYCLE TIME CALIBRATION</span>
+                <strong className={efficiency.cycleTimeInflationFactor > 1.1 ? "text-warn" : "text-accent"}>
+                  {efficiency.observedCycleTimeMin} min
+                </strong>
+                <small>95m nominal ({efficiency.cycleTimeInflationFactor}× inflation)</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat v2-telemetry-hud__stat--span2">
+                <span>OPTIMAL FLEET SIZING RECOMMENDATION</span>
+                <strong className={efficiency.recommendation.surplusDeficit > 0 ? "text-warn" : "text-accent"}>
+                  {efficiency.recommendation.recommendedBuses} Active Buses Required
+                </strong>
+                <small>{efficiency.recommendation.summaryText}</small>
+              </div>
+            </div>
+
+            {/* Real Bus Financial & Revenue Ledger */}
+            <div className="v2-telemetry-hud v2-telemetry-hud--finance">
+              <div className="v2-telemetry-hud__stat">
+                <span>FARES FROM PASSENGER COUNTERS</span>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-gain">฿{efficiency.totalRevenueThb.toLocaleString()}</strong>
+                    <small>{efficiency.totalPaxServed.toLocaleString()} counted boardings @ ฿100 · {efficiency.countersReporting} bus(es) counting</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">Unknown</strong>
+                    <small>No bus's passenger counter has read above zero. Riders aren't measured, so fares and margin aren't shown.</small>
+                  </>
+                )}
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>ESTIMATED OPERATING COST</span>
+                <strong className="text-ink">
+                  ฿{efficiency.totalOperatingCostThb.toLocaleString()}
+                </strong>
+                <small>฿35/km across {efficiency.totalKmTracked} km driven</small>
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>NET OPERATING MARGIN</span>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className={efficiency.netMarginThb >= 0 ? "text-gain" : "text-warn"}>
+                      {efficiency.netMarginThb >= 0 ? "+" : "−"}฿{Math.abs(efficiency.netMarginThb).toLocaleString()}
+                    </strong>
+                    <small>{efficiency.profitMarginPct}% margin on counted fares</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">—</strong>
+                    <small>Needs counted fares</small>
+                  </>
+                )}
+              </div>
+
+              <div className="v2-telemetry-hud__stat">
+                <span>PASSENGER BENEFIT</span>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-gain">฿{efficiency.passengerSavingsThb.toLocaleString()} Saved</strong>
+                    <small>vs Grab/taxi · {efficiency.totalCo2SavedKg} kg CO₂ saved</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-warn">—</strong>
+                    <small>Needs counted riders</small>
+                  </>
+                )}
+              </div>
+
+              <div className="v2-telemetry-hud__stat v2-telemetry-hud__stat--span2">
+                <span>REVENUE DENSITY &amp; EFFICIENCY</span>
+                {efficiency.countersReporting > 0 ? (
+                  <>
+                    <strong className="text-ink">
+                      ฿{efficiency.revenuePerKm} / km · ฿{efficiency.revenuePerActiveBus.toLocaleString()} / active bus
+                    </strong>
+                    <small>Counted fares over GPS kilometres</small>
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-ink">—</strong>
+                    <small>Kilometres are measured; fares aren't until a counter reports</small>
+                  </>
+                )}
               </div>
             </div>
           </section>
@@ -246,7 +489,11 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                   <tr>
                     <th>Bus Plate</th>
                     <th>Telemetry Source</th>
-                    <th>Current Coordinates</th>
+                    <th>Distance</th>
+                    <th>Trips</th>
+                    <th>Pax</th>
+                    <th>Gross Revenue</th>
+                    <th>Net Margin</th>
                     <th>Speed</th>
                     <th>Signal Freshness</th>
                     <th>Status</th>
@@ -255,6 +502,16 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                 <tbody>
                   {filteredVehicles.map((v) => {
                     const isGps = v.telemetrySource === "direct_gps";
+                    const eff = efficiency.vehicles.find(
+                      (ev) => ev.vehicleId === v.vehicleId || ev.licensePlate === v.licensePlate
+                    );
+                    const rev = eff?.revenueThb ?? 0;
+                    const margin = eff?.netMarginThb ?? 0;
+                    const km = eff?.totalDistanceKm ?? 0;
+                    const trips = eff?.tripsCompleted ?? 0;
+                    const pax = eff?.paxServed ?? 0;
+                    const counted = (eff?.apcBoardings ?? 0) > 0;
+
                     return (
                       <tr key={v.vehicleId || v.id} className={isGps ? "is-live-gps" : ""}>
                         <td><strong>{v.licensePlate || v.vehicleId}</strong></td>
@@ -264,8 +521,20 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                           </span>
                         </td>
                         <td>
-                          <span className="v2-font-mono">
-                            {v.coordinates[0].toFixed(4)}, {v.coordinates[1].toFixed(4)}
+                          <span>
+                            {isGps ? `${km.toFixed(1)} km` : "—"}
+                          </span>
+                        </td>
+                        <td>{isGps ? trips : "—"}</td>
+                        <td>{isGps && counted ? pax : isGps ? "no counter" : "—"}</td>
+                        <td>
+                          <strong className={rev > 0 ? "text-gain" : "text-ink"}>
+                            {isGps && counted ? `฿${rev.toLocaleString()}` : "—"}
+                          </strong>
+                        </td>
+                        <td>
+                          <span className={margin > 0 ? "text-gain" : margin < 0 ? "text-warn" : "text-ink"}>
+                            {isGps && counted ? `${margin >= 0 ? "+" : "−"}฿${Math.abs(margin).toLocaleString()}` : "—"}
                           </span>
                         </td>
                         <td>{v.speedKph} km/h</td>
@@ -280,7 +549,7 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                   })}
                   {filteredVehicles.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="v2-telemetry-empty">
+                      <td colSpan={10} className="v2-telemetry-empty">
                         No vehicles match this filter.{" "}
                         {sourceFilter !== "all" && (
                           <button type="button" className="v2-btn-link" onClick={() => setSourceFilter("all")}>

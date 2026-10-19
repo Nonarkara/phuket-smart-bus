@@ -46,6 +46,11 @@ import { appPath, routePath } from "./lib/paths";
 
 const DashboardV2 = lazy(() => import("./DashboardV2"));
 const ToolkitHub = lazy(() => import("./components/toolkit/ToolkitHub"));
+const FleetDetail = lazy(() => import("./components/v2/FleetDetail").then((m) => ({ default: m.FleetDetail })));
+const FleetConsole = lazy(() => import("./components/v2/FleetConsole").then((m) => ({ default: m.FleetConsole })));
+const Study = lazy(() => import("./components/v2/Study").then((m) => ({ default: m.Study })));
+const Research = lazy(() => import("./components/v2/Research").then((m) => ({ default: m.Research })));
+const Capacity = lazy(() => import("./components/v2/Capacity").then((m) => ({ default: m.Capacity })));
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
 );
@@ -80,10 +85,13 @@ type MapRouteFilter = RouteId | "all-core";
 
 const VIEW_PATHS: Record<AppView, string> = { map: appPath("/"), more: appPath("/more") };
 
-function getInitialView(): AppView | "ops" {
+function getInitialView(): AppView | "ops" | "fleet" | "study" | "capacity" {
   if (typeof window === "undefined") return "map";
   const p = routePath(window.location.pathname);
   if (p.startsWith("/ops")) return "ops";
+  if (p.startsWith("/fleet")) return "fleet";
+  if (p.startsWith("/study") || p.startsWith("/research")) return "study";
+  if (p.startsWith("/capacity")) return "capacity";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
 }
@@ -214,20 +222,60 @@ export default function App() {
     return <RoiCalculator />;
   }
 
+  // /fleet — every data point about every real bus on the live tracker.
+  // Lives outside the desktop-shell so an operator can pop it open full-screen
+  // next to the ops wall.
+  // /fleet/raw keeps the every-field table for debugging; /fleet is the console people read.
+  if (pathname.startsWith("/fleet/raw")) {
+    return <Suspense fallback={<RouteLoading />}><FleetDetail /></Suspense>;
+  }
+  if (pathname.startsWith("/fleet")) {
+    return <Suspense fallback={<RouteLoading />}><FleetConsole /></Suspense>;
+  }
+
+  // /study — patient, consistent, true daily + weekly + monthly view of the
+  // real-bus archive (KV-backed via /api/collect/week). Joins tracked km,
+  // counted boarders (or null), modelled boarders from the engine, and the
+  // flight arrivals behind each modelled figure.
+  if (pathname.startsWith("/study")) {
+    return <Suspense fallback={<RouteLoading />}><Study /></Suspense>;
+  }
+
+  // /research — real trips from the permanent fix record: time–distance
+  // diagram, trip times, headways, stop-to-stop minutes, schedule running times.
+  if (pathname.startsWith("/research")) {
+    return <Suspense fallback={<RouteLoading />}><Research /></Suspense>;
+  }
+
+  // /capacity — one-screen capacity command: live operation + live gap +
+  // live recommendation. Hero KPIs, the operating equation, 24h forecast
+  // strip, what-to-do-next queue. The screen a dispatcher would keep open.
+  if (pathname.startsWith("/capacity")) {
+    return <Suspense fallback={<RouteLoading />}><Capacity /></Suspense>;
+  }
+
   // bus.nonarkara.org is the passenger front door — the only screen a
   // rider sees on a phone. The operator console lives at /ops.
+  // isMobile-gated: without it, EVERY visitor to bus.nonarkara.org — desktop
+  // included — got the bare mobile PassengerApp stretched full-width with no
+  // phone frame, no hero background, no Operator Console sidebar. Desktop
+  // visitors must still fall through to the desktop-shell below.
   const isRiderDomain =
     typeof window !== "undefined" &&
     (window.location.hostname === "bus.nonarkara.org" ||
       window.location.hostname.startsWith("bus."));
-  if (isRiderDomain && (pathname === "/" || pathname === "")) {
+  if (isRiderDomain && isMobile && (pathname === "/" || pathname === "")) {
     return <Suspense fallback={<RouteLoading />}><PassengerApp /></Suspense>;
   }
 
-  // This branch is the research-and-development hub — a tabbed research page
-  // that replaced the single-scroll ToolkitShowcase. The existing
-  // operational surfaces remain available at /ops, /v2, /ride.
-  if (pathname === "/" || pathname.startsWith("/toolkit")) {
+  // The toolkit research hub lives at the explicit /toolkit path only.
+  // "/" is the bus front door: the passenger app on a phone, and on desktop
+  // the dual-audience shell that offers rider and operator entry points. The
+  // operator wall itself is one hop away at /ops. The toolkit site publishes
+  // from its own `depa-usdot.nonarkara.org` branch, which carries its own
+  // index.html — so serving the hub here at "/" only hid the bus system
+  // behind the front door of the domain it belongs to.
+  if (pathname.startsWith("/toolkit")) {
     return <Suspense fallback={<RouteLoading />}><ToolkitHub /></Suspense>;
   }
 
@@ -255,46 +303,35 @@ export default function App() {
     </>;
   }
 
-  // Desktop: smartphone frame + side panel + background carousel
+  // Desktop: real intro page — the actual mobile rider app, full-bleed,
+  // with a slim overlay header giving access to the rest of the product.
+  // The previous "smartphone frame on a satellite backdrop" was pure slop:
+  // a photo dictated legibility, the phone mockup was decoration, and the
+  // "Open in your phone for the best experience" copy asked visitors to
+  // leave. The mobile TouristApp is responsive — its map fills the
+  // viewport on any size, its hero stays anchored, and the route pills
+  // work at any width. So a desktop visitor lands ON the app, not on a
+  // brochure for it. The header offers the four corners (OPS / INSIGHTS /
+  // TOOLKIT / ROI) without crowding the surface.
   return (
-    <div className="desktop-shell">
-      <DesktopBackground />
-      <div className="desktop-shell__side desktop-shell__side--left" />
-      <div className="phone-frame">
-        <div className="phone-frame__notch" />
-        <div className="phone-frame__screen">
-          <TouristApp onToggle={goOps} />
-        </div>
-        <div className="phone-frame__home" />
-      </div>
-      <div className="desktop-shell__side desktop-shell__side--right">
-        <div className="desktop-shell__brand">
-          <h2 className="desktop-shell__title">Phuket Smart Bus</h2>
-          <p className="desktop-shell__subtitle">Real-time transit for Phuket Island</p>
-        </div>
-        <LiveStatsWidget />
-        <button className="desktop-shell__ops-btn" type="button" onClick={goOps}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          Operator Console
-        </button>
-        <div className="desktop-shell__more">
-          <span className="desktop-shell__more-label">Explore the system</span>
-          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=insights`}>
-            <strong>Insights</strong><span>See demand become a dispatch decision</span>
-          </a>
-          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=toolkit`}>
-            <strong>Toolkit</strong><span>Read the research, method and assumptions</span>
-          </a>
-          <a className="desktop-shell__link" href={appPath("/roi")}>
-            <strong>Financial model</strong><span>Test fleet size, capture and fare</span>
-          </a>
-          <a className="desktop-shell__link" href={appPath("/governor")}>
-            <strong>Public impact</strong><span>Safety, savings and CO₂ in one view</span>
-          </a>
-          <a className="desktop-shell__link desktop-shell__link--quiet" href={appPath("/driver/กข 1001 ภูเก็ต")}>Driver tablet →</a>
-          <a className="desktop-shell__link desktop-shell__link--quiet" href={`${appPath("/")}?demo=tuesday`}>Watch the day unfold →</a>
-        </div>
-        <p className="desktop-shell__hint">Open in your phone for the best experience</p>
+    <div className="desktop-rider">
+      <a className="desktop-rider__brand" href={appPath("/")} aria-label="Phuket Smart Bus, home">
+        <span className="desktop-rider__brand-mark">PSB</span>
+        <span className="desktop-rider__brand-text">
+          <strong>Phuket Smart Bus</strong>
+          <small>Better on phone · same app</small>
+        </span>
+      </a>
+      <nav className="desktop-rider__nav" aria-label="Other surfaces">
+        <a href={appPath("/ops")}>OPS</a>
+        <a href={`${appPath("/v2")}?view=insights`}>INSIGHTS</a>
+        <a href={`${appPath("/v2")}?view=toolkit`}>TOOLKIT</a>
+        <a href={appPath("/roi")}>ROI</a>
+        <a href={appPath("/governor")}>IMPACT</a>
+        <a href={appPath("/fleet")}>FLEET</a>
+      </nav>
+      <div className="desktop-rider__app">
+        <TouristApp onToggle={goOps} />
       </div>
       {DEMO_MODE && <DemoCaption />}
     </div>
@@ -334,27 +371,14 @@ function computeBadge(allV: VehiclePosition[]): string {
  *  is hidden — raf throttles to ~1 Hz (or stops entirely) under those
  *  conditions and the display gets visibly stuck. */
 function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) {
-  const [display, setDisplay] = useState(value);
-  useEffect(() => {
-    if (value === display) return;
-    const from = display;
-    const diff = value - from;
-    const duration = 1500;
-    const t0 = performance.now();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const step = () => {
-      const p = Math.min(1, (performance.now() - t0) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + diff * eased));
-      if (p < 1) timer = setTimeout(step, 33);
-    };
-    step();
-    return () => { if (timer) clearTimeout(timer); };
-    // We intentionally exclude `display` from deps — including it would
-    // restart the animation on every frame.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-  return <span>{display.toLocaleString()}{suffix ?? ""}</span>;
+  void value; void suffix;
+  // Previously animated counters for the desktop ad-board's stat tiles.
+  // The new desktop rider is a real intro page; the live counters are now
+  // rendered by the rAF loop in DashboardV2, where they belong. This is a
+  // 0-byte no-op kept as a stable export so any future surface can import
+  // it without surprising behavior. If unused in a tree-shaken bundle, the
+  // build will drop it.
+  return null;
 }
 
 /* ── Live stats for landing page (animated, dynamic, alive) ──
@@ -363,81 +387,21 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) 
  *  from the same struct so the bus count on the badge always equals
  *  the bus count on the right-bar widget. */
 function LiveStatsWidget() {
-  const [headline, setHeadline] = useState(() => getHeadlineMetrics());
-  useEffect(() => {
-    const id = setInterval(() => setHeadline(getHeadlineMetrics()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const riders = headline.today.paxDelivered;
-  const co2 = headline.today.co2SavedKg;
-  const co2Label = co2 >= 1000 ? `${(co2 / 1000).toFixed(1)}t` : `${Math.round(co2)} kg`;
-  const stats = { riders, buses: headline.fleet.totalBuses, co2, onTime: headline.onTimePct };
-
-  return (
-    <div className="live-stats">
-      <div className="live-stat">
-        <span className="live-stat__val"><AnimatedCounter value={stats.riders} /></span>
-        <span className="live-stat__label">Riders today</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val"><span className="live-pulse" /><AnimatedCounter value={stats.buses} /></span>
-        <span className="live-stat__label">Buses active</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val"><AnimatedCounter value={stats.onTime} suffix="%" /></span>
-        <span className="live-stat__label">On-time</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val">{co2Label}</span>
-        <span className="live-stat__label">CO₂ saved</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Rotating Phuket background images (Unsplash, free to use) ── */
-const PHUKET_PHOTOS = [
-  "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&q=80",  // Phi Phi aerial
-  "https://images.unsplash.com/photo-1537956965359-7573183d1f57?w=1920&q=80",  // Long-tail boats turquoise
-  "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1920&q=80",     // Phang Nga Bay karsts
-  "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?w=1920&q=80",  // Beach sunset
-  "https://images.unsplash.com/photo-1504214208698-ea1916a2195a?w=1920&q=80",  // Thai temple sunset
-  "https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=1920&q=80",  // Tropical beach palms
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",  // Crystal clear water
-];
-
-function DesktopBackground() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % PHUKET_PHOTOS.length);
-    }, 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="desktop-bg">
-      {PHUKET_PHOTOS.map((src, i) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className={`desktop-bg__img ${i === activeIndex ? "is-active" : ""}`}
-          loading={i === 0 ? "eager" : "lazy"}
-        />
-      ))}
-      <div className="desktop-bg__scrim" />
-    </div>
-  );
+  // Used as a stat tile on /desktop pre-shell-pulse; no longer mounted on the
+  // new desktop rider. Kept available because V2Shared.test and other specs
+  // import the engine function `getHeadlineMetrics` via this path; deleting it
+  // here would break a couple of import-only references. Inline no-op.
+  return null;
 }
 
 function TouristApp({ onToggle }: { onToggle: () => void }) {
   const [lang, setLang] = useState<Lang>(getStoredLang);
   const [view, setView] = useState<AppView>(() => {
+    // Parent routes /ops /fleet /study /capacity /toolkit /v2 /governor /roi
+    // /driver before reaching TouristApp, so TouristApp only renders on
+    // "/" or /more* paths.
     const init = getInitialView();
-    return init === "ops" ? "map" : init;
+    return init === "ops" || init === "fleet" || init === "study" || init === "capacity" ? "map" : init;
   });
   const [morePanel, setMorePanel] = useState<MorePanel>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -590,7 +554,9 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
   useEffect(() => {
     function handlePopState() {
       const init = getInitialView();
-      if (init !== "ops") setView(init);
+      // TouristApp only mounts on / or /more* paths, so ignore ops/fleet/study/capacity.
+      if (init === "ops" || init === "fleet" || init === "study" || init === "capacity") return;
+      setView(init);
     }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);

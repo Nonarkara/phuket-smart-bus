@@ -11,6 +11,7 @@ import { getStopsForRoute, getDirectionPolyline } from "./routes";
 import { buildPolylineCumMeters as sharedBuildCum, posOnPolyline as sharedPosOn } from "./polyline";
 import { FERRY_ROUTE_IDS, OPERATIONAL_ROUTE_IDS, ORANGE_LINE_CONFIG, ROUTE_DEFINITIONS } from "./config";
 import { getLiveTelemetryVehicles, normalizeVehicleKey } from "./liveGpsReceiver";
+import { getSimulationDay } from "./opsFlightSchedule";
 
 // Detailed timetables — imported from src/data/timetables (copied from server/)
 import airportToRawaiTimetable from "../data/timetables/airport-to-rawai.json";
@@ -399,7 +400,7 @@ export function getScheduleSupply(): {
   const allDeps: number[] = [];
 
   for (const routeId of routeIds) {
-    const profiles = profilesByRoute[routeId];
+    const profiles = runningProfiles(routeId);
     const capacity = routeId === "dragon-line" ? 15 : routeId.includes("ferry") ? 100 : 25;
     for (const profile of profiles) {
       for (const dep of profile.departures) {
@@ -418,9 +419,8 @@ export function getScheduleSupply(): {
   };
 }
 
-/** Get departures from the Airport → Rawai direction only.
- *  Used by the demand-supply engine for airport passenger boarding. */
-export function getAirportDepartures(): number[] {
+/** Published Airport → Rawai departures (PKSB timetable, 18 Jan 2025). */
+export function getPublishedAirportDepartures(): number[] {
   const profiles = profilesByRoute["rawai-airport"];
   if (!profiles) return [];
   const airportProfile = profiles.find((p) => p.directionLabel === "Bus to Rawai");
@@ -432,7 +432,7 @@ export function getAirportDepartures(): number[] {
  *  (null Rawai times) still count — first/last non-null from the PKSB JSON. */
 export type AirportboundTrip = { originDepMin: number; airportArriveMin: number };
 
-export function getAirportboundTrips(): AirportboundTrip[] {
+export function getPublishedAirportboundTrips(): AirportboundTrip[] {
   const timetable = rawaiToAirportTimetable as DetailedTimetable;
   return timetable.departures
     .map((dep) => {
@@ -444,6 +444,51 @@ export function getAirportboundTrips(): AirportboundTrip[] {
     })
     .filter((t): t is AirportboundTrip => t !== null)
     .sort((a, b) => a.originDepMin - b.originDepMin);
+}
+
+// ── airport-line supply: as the real buses ran, or as published ──────────
+/** One recorded day of the Airport line, as the trackers saw it. */
+export type MeasuredAirportSupply = {
+  /** Bangkok date the departures were recorded. */
+  date: string;
+  southbound: number[];
+  northbound: AirportboundTrip[];
+  /** Median end-to-end minutes of that day's recorded trips. */
+  medianTripMin: number | null;
+};
+let measuredByDow: Partial<Record<number, MeasuredAirportSupply>> = {};
+let supplyVersion = 0;
+
+/** Install measured supply per weekday (0 = SUN). `{}` returns every day to the timetable. */
+export function setMeasuredAirportSupply(byDow: Partial<Record<number, MeasuredAirportSupply>>): void {
+  measuredByDow = byDow;
+  supplyVersion += 1;
+}
+/** Bumps whenever the supply changes — caches keyed by day check it. */
+export function getSupplyVersion(): number {
+  return supplyVersion;
+}
+export function getMeasuredAirportSupply(dow = getSimulationDay()): MeasuredAirportSupply | null {
+  return measuredByDow[dow] ?? null;
+}
+
+/** Airport → Rawai departures the simulation runs: measured for that weekday when recorded, else published. */
+export function getAirportDepartures(dow = getSimulationDay()): number[] {
+  return measuredByDow[dow]?.southbound ?? getPublishedAirportDepartures();
+}
+export function getAirportboundTrips(dow = getSimulationDay()): AirportboundTrip[] {
+  return measuredByDow[dow]?.northbound ?? getPublishedAirportboundTrips();
+}
+
+/** The direction profiles with the airport line's departures swapped for the supply in force. */
+function runningProfiles(routeId: OperationalRouteId): DirectionProfile[] {
+  const profiles = profilesByRoute[routeId];
+  const m = routeId === "rawai-airport" ? getMeasuredAirportSupply() : null;
+  if (!m) return profiles;
+  return profiles.map((p) =>
+    p.directionLabel === "Bus to Rawai" ? { ...p, departures: m.southbound }
+    : p.directionLabel === "Bus to Airport" ? { ...p, departures: m.northbound.map((t) => t.originDepMin) }
+    : p);
 }
 
 /** Published stop ids on Airport → Rawai that the rider UI can name. */
@@ -467,9 +512,9 @@ export function getNextPublishedStopArrival(
   const dayMin = ((nowMin % 1440) + 1440) % 1440;
 
   if (dest === "Airport") {
-    const next = getAirportboundTrips().find((t) => t.airportArriveMin > dayMin);
+    const next = getPublishedAirportboundTrips().find((t) => t.airportArriveMin > dayMin);
     if (!next) {
-      const first = getAirportboundTrips()[0];
+      const first = getPublishedAirportboundTrips()[0];
       if (!first) return null;
       const arriveMin = first.airportArriveMin + 1440;
       return { arriveMin, waitMin: arriveMin - dayMin };
@@ -1005,7 +1050,7 @@ function buildVehiclesForRoute(routeId: OperationalRouteId, nowMin: number, now:
   const pool = fleetByRoute[routeId];
   if (!pool || pool.length === 0) return [];
 
-  const occs = profilesByRoute[routeId].flatMap((p) => buildTripOccurrences(p, nowMin));
+  const occs = runningProfiles(routeId).flatMap((p) => buildTripOccurrences(p, nowMin));
   if (occs.length === 0) return [];
 
   // Priority: active > prestart > layover, then by closeness to now
@@ -1167,15 +1212,17 @@ export const SERVICE_END = 1440;    // 24:00 (00:00 next day) — clock-wrap cei
 export const SERVICE_WINDOW = SERVICE_END - SERVICE_START;
 const SIM_OPEN_MIN = 720;    // 12:00 — every visit lands in the busy midday
 
-// "Watch the whole day in ~60 seconds." The operational day with real
-// flights/departures runs 05:30 → 22:30 (SVC_END in simulation.ts = 1350);
-// 22:30 → 24:00 is a dead post-service tail (no flights, no departures).
-// DAY_SPEED sweeps exactly SERVICE_START→DAY_TARGET_END in 60 real seconds:
-// speed = sim-minutes advanced per real-minute, and (1350−330)=1020 sim-min
-// in 60s = 1020 sim-min per real-minute. So the film opens on the empty
-// pre-dawn curb and lands precisely on the end-of-day earned-vs-lost totals.
-export const DAY_TARGET_END = 1350;   // 22:30 — last delivery of the service day
-export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1020× → 60.0s sweep
+// "Watch the whole day in ~60 seconds." The model day is 05:30 → 24:00 —
+// same bounds as SERVICE_START/SERVICE_END. The last 90 minutes are live:
+// two more airport-line departures (22:40, 23:30) and a 60-min patience
+// rundown that turns the 22:30 curb queue (~100+ waiting) into the
+// midnight tail the debrief reports (0–24 still waiting). Freezing at
+// 22:30 used to open the day report on different numbers than the live
+// cards. DAY_SPEED = sim-minutes advanced per real-minute, so
+// (1440−330)=1110 sim-min in 60s. Film opens on the empty pre-dawn curb
+// and lands on the same 24:00 totals the debrief uses.
+export const DAY_TARGET_END = SERVICE_END; // 24:00 — freeze = debrief close
+export const DAY_SPEED = DAY_TARGET_END - SERVICE_START; // 1110× → 60.0s sweep
 
 // ---------------------------------------------------------------------------
 // Controllable simulation clock — replaces the old wall-clock-only anchor.
@@ -1223,9 +1270,8 @@ export function getSimulatedMinutes(): number {
     simClock.lastRealTime = now;
 
     if (simClock.runOnce) {
-      // DAY·60s cinematic: clamp on the final delivery and freeze, so the
-      // sweep ends on the payoff shot (end-of-day earned-vs-lost totals)
-      // instead of looping past into the empty post-service tail.
+      // DAY·60s cinematic: clamp on midnight and freeze, so the sweep ends
+      // on the same 24:00 totals the debrief reads, then the report opens.
       if (simClock.currentMinutes >= DAY_TARGET_END) {
         simClock.currentMinutes = DAY_TARGET_END;
         simClock.mode = 'paused';
@@ -1254,7 +1300,7 @@ export function resetClockAnchor(): void {
   simClock.lastRealTime = Date.now();
 }
 
-/** One-touch cinematic: replay the whole service day (05:30 → 22:30) in ~60
+/** One-touch cinematic: replay the whole model day (05:30 → 24:00) in ~60
  *  real seconds, then freeze on the end-of-day totals. runOnce is set AFTER
  *  setSpeed/setSimulatedMinutes because both clear it. */
 export function startDaySweep(): void {
@@ -1283,7 +1329,7 @@ export function togglePlayPause(): void {
 }
 
 /** Set playback speed (1× to 1200×). The 1200 ceiling admits the DAY·60s
- *  preset (1020×); 60× was the old cap that made a full day take 18.5 min. */
+ *  preset (1110×); 60× was the old cap that made a full day take 18.5 min. */
 export function setSpeed(s: number): void {
   simClock.speed = Math.max(1, Math.min(1200, s));
   simClock.lastRealTime = Date.now();
@@ -1292,6 +1338,15 @@ export function setSpeed(s: number): void {
 
 export function getClockState(): { mode: SimClockState['mode']; speed: number } {
   return { mode: simClock.mode, speed: simClock.speed };
+}
+
+/**
+ * True when the simulation is actively running (playing at >1× speed, or running a day sweep).
+ * When false (paused, or real-time 1× playback), the system displays real GPS positions
+ * from the live tracker whenever available.
+ */
+export function isSimulating(): boolean {
+  return simClock.runOnce || (simClock.mode === 'playing' && simClock.speed > 1);
 }
 
 /** All vehicles including orange line competitor, at the simulated instant. */
@@ -1306,7 +1361,12 @@ export function getVehiclesNow(now = new Date(), overrideMin?: number): VehicleP
   const orange = buildOrangeLineVehicles(nowMin, now);
   const base = [...smart, ...orange];
 
-  // Merge direct GPS telemetry if available
+  // When we simulate, the bus will use the simulation algorithm we have designed.
+  if (isSimulating()) {
+    return base;
+  }
+
+  // When the simulation is not running, we let the bus run according to the real GPS.
   const liveMap = getLiveTelemetryVehicles(now.getTime());
   if (!liveMap || liveMap.size === 0) {
     return base;
@@ -1370,7 +1430,7 @@ export function listLandTripAssignments(nowMin: number): AssignedTripLeg[] {
     if (!pool || pool.length === 0) continue;
 
     const freeAt = new Array<number>(pool.length).fill(SERVICE_START - 120);
-    const allDeps = profilesByRoute[routeId]
+    const allDeps = runningProfiles(routeId)
       .flatMap((p) => p.departures.map((dep) => ({ profile: p, dep })))
       .sort((a, b) => a.dep - b.dep || a.profile.directionLabel.localeCompare(b.profile.directionLabel));
 

@@ -17,7 +17,15 @@ type Claim = {
   source: string;
   sourceHref: string;
   verified: string; // YYYY-MM-DD
-  freshness: "Live" | "Annual" | "Quarterly";
+  /**
+   * How often a figure is re-checked, NOT how strong it is.
+   *   Live      the live tracker feed — it moves on its own
+   *   Published a fixed published or documented figure; it does not move on a
+   *             clock tick. A timetable is Published, not Live.
+   *   Annual    a published yearly report
+   *   Quarterly a regular public-data release
+   */
+  freshness: "Live" | "Published" | "Annual" | "Quarterly";
 };
 
 const CLAIMS: Claim[] = [
@@ -31,9 +39,9 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "HKT passenger movements 2025",
-    figure: "17.4M (10M international + 6.6M domestic · 106,581 flights)",
-    source: "The Thaiger / C9 Hotelworks (citing AOT 2025 monthly series)",
-    sourceHref: "https://thethaiger.com/news/national/phuket-airport-sees-flight-and-passenger-surge-in-2025-recovery",
+    figure: "17.5M passenger movements · 106,585 aircraft movements (a secondary source, C9 Hotelworks, reports 17.4M — the two published figures differ by 0.1M and this page uses the AOT figure)",
+    source: "Airports of Thailand (AOT) — Annual Report 2025",
+    sourceHref: "https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf",
     verified: "2026-07-15",
     freshness: "Annual"
   },
@@ -83,14 +91,22 @@ const CLAIMS: Claim[] = [
     source: "This repository · engine/travelBehavior.ts",
     sourceHref: "https://github.com/Nonarkara/phuket-smart-bus/blob/main/src/engine/travelBehavior.ts",
     verified: "2026-07-15",
-    freshness: "Live"
+    freshness: "Published"
   },
   {
     number: "PKSB Airport Line timetable",
-    figure: "≈ 25 departures/day · first 05:30 · last 23:30 · 95 min trip",
+    figure: "≈ 25 departures/day published (PKSB schedule, effective 18 Jan 2025) · first 05:30 · last 23:30 · 95 min trip. The model runs on the 20 departures in src/data/timetables/rawai-to-airport.json, and the recorded fleet ran 13–20 complete trips each way on 2–16 Oct.",
     source: "Phuket Smart Bus Co. (PKSB) · official schedule",
     sourceHref: "https://www.pkbsbus.com/",
     verified: "2026-07-15",
+    freshness: "Published"
+  },
+  {
+    number: "PKSB fleet reporting now",
+    figure: "Live: buses reporting and moving, straight from the operator's tracker, with the age of the last fix",
+    source: "PKSB tracker relay · /api/live-buses (keyless + token feeds merged at the edge)",
+    sourceHref: "https://bus.nonarkara.org/ops",
+    verified: "2026-10-20",
     freshness: "Live"
   },
   {
@@ -120,9 +136,10 @@ export function DataProvenance() {
         <p>
           The numbers above are the load-bearing claims of the argument. This
           table shows the source for each, the verification date, and how
-          often the figure is re-checked. "Live" means the simulation
-          computes the number on every clock tick; "Annual" means a
-          published yearly report; "Quarterly" means a regular
+          often the figure is re-checked. "Live" means the operator's
+          tracker is reporting it now; "Published" means a fixed published
+          or documented figure that does not move on a clock tick; "Annual"
+          means a published yearly report; "Quarterly" means a regular
           public-data release.
         </p>
         <p className="dp-section__method">

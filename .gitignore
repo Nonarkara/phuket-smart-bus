@@ -5,6 +5,7 @@ coverage
 *.tsbuildinfo
 .env
 .env.*
+!.env.example
 playwright-report
 test-results
 data/*.sqlite3
@@ -16,7 +17,18 @@ data/*.sqlite3-wal
 .claude/scheduled_tasks.lock
 .claude/worktrees/
 .claude/journal/
+# Per-machine Claude Code permissions; can hold literal tokens in allow-rules
+.claude/settings.local.json
 
 # Local editor state
 .vscode/
 .worktrees/
+
+# Local Cloudflare Pages dev/deploy state
+.wrangler/
+# Local Wrangler secrets (never commit: these are the Pages/Worker secrets)
+.dev.vars
+.dev.vars.*
+
+# non-slop render screenshots
+non-slop-shots/

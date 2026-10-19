@@ -19,6 +19,9 @@ export function getMapVehicles(nowMin: number): SimState["vehicles"] {
     pax: vehiclePax(vehicle),
     plate: vehicle.licensePlate,
     isBoarding: isBoardingAtCurb(vehicle, nowMin),
+    directionLabel: vehicle.directionLabel ?? null,
+    destination: vehicle.destination?.en ?? null,
+    speedKph: vehicle.speedKph,
   }));
 }
 
