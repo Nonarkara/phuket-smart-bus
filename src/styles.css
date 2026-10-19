@@ -4647,7 +4647,10 @@ a { color: var(--amber-text); }
 
 .roi-nav-tab.is-active {
   color: #0b1a2e;
-  border-bottom-color: #007aff;
+  /* Was #007aff — iOS system blue, the last blue on a page whose accent is
+     the amber. The underline marks the active tab; the weight and the
+     colour of the label say it in words too. */
+  border-bottom-color: var(--amber);
 }
 
 .roi-kpi-strip {

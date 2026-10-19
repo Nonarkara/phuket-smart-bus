@@ -88,25 +88,41 @@ for (const route of ["/more", "/info", "/stops", "/ride", "/compare"]) {
 }
 
 // --- 3. the /roi page must carry no blue ----------------------------------
+// Check EVERY colour property, not a convenient few. The first version of
+// this probe looked at color, backgroundColor, borderTopColor and
+// borderLeftColor — and missed #007aff on the active tab's
+// border-bottom-color, which is how a blue survived a fix that claimed to
+// remove them.
 await p.goto(BASE + "/roi", { waitUntil: "load", timeout: 30000 });
-await p.waitForTimeout(2000);
-const blues = await p.evaluate(() => {
+await p.waitForTimeout(2500);
+const PROPS = [
+  "color", "backgroundColor",
+  "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
+  "outlineColor", "textDecorationColor", "columnRuleColor", "caretColor",
+];
+const blues = await p.evaluate((props) => {
   const hits = [];
+  const isBlue = (r, g, b) => b > 120 && b - r > 40 && b - g > 25;
   for (const e of document.querySelectorAll("*")) {
     const cs = getComputedStyle(e);
-    for (const prop of ["color", "backgroundColor", "borderTopColor", "borderLeftColor"]) {
+    if (cs.visibility === "hidden" || cs.display === "none") continue;
+    for (const prop of props) {
       const v = cs[prop];
       const m = v && v.match(/rgba?\((\d+), (\d+), (\d+)/);
       if (!m) continue;
-      const [r, g, bl] = [Number(m[1]), Number(m[2]), Number(m[3])];
-      if (bl > 120 && bl - r > 40 && bl - g > 25) {
-        hits.push(`${e.className || e.tagName} ${prop}=${v}`);
-        break;
+      if (!isBlue(Number(m[1]), Number(m[2]), Number(m[3]))) continue;
+      hits.push(`${e.className || e.tagName} ${prop}=${v}`);
+      break;
+    }
+    const sh = cs.boxShadow;
+    if (sh && sh !== "none") {
+      for (const m of sh.matchAll(/rgba?\((\d+), (\d+), (\d+)/g)) {
+        if (isBlue(Number(m[1]), Number(m[2]), Number(m[3]))) { hits.push(`${e.className || e.tagName} boxShadow=${sh}`); break; }
       }
     }
   }
   return [...new Set(hits)];
-});
+}, PROPS);
 console.log(`ROI blue elements: ${blues.length === 0 ? "PASS (none)" : "FAIL"} ${blues.slice(0, 8).join(" | ")}`);
 if (blues.length) fails++;
 

@@ -34,6 +34,12 @@ Evidence: the type ramp that produced this rule is rendered by `scripts/design/t
 - Accent `#f59e0b` amber — the one orange key on the Braun ET66. One job: attention.
 - `#a23a26` brick red is the PKSB operator's own livery red, sampled from the badge. It appears on the rider and fleet surfaces as brand, never as a second "accent" competing with amber.
 - Semantic only: `#16a574` gain/surplus, `#c0392b` loss/shortfall. Colour never substitutes for a label — every state is also a word.
+- **Every surface is now free of a saturated off-palette blue.** Measured 2026-10-20 with `scripts/design/colourcheck.mjs` (every route, every colour property including all four border sides, outlines, text-decoration, caret and box-shadow): `/roi` `/toolkit` `/capacity` `/study` `/research` `/governor` `/info` `/more` `/stops` `/pass` `/ride` `/compare` are 0. Three blues remain, and each is deliberate:
+  - **Leaflet's attribution control** (`#0078a8`) on the map routes. Third-party chrome, required by Leaflet's attribution terms. Not ours to repaint.
+  - **The operations map's landmark key** — airport amber, terminus teal `#2dd4bf`, town `#93c5fd`. A categorical key for three kinds of place, on the dark-command-centre surface, and each badge carries its own name. Repainting it would make the map harder to read.
+  - **The LIVE / SIMULATION telemetry dot** — green for live, `#92aae0` for simulated. A secondary cue to a label that already says which is which; the live half and the modelled half never share a label.
+- The toolkit is a separate published surface with its own editorial palette: paper `#f5f5f2`, ink `#111820`, red `#ef442f`, navy `#12304b`, yellow `#f2cc3d`. Its status chips use green (measured), navy (computed), amber (a milestone) and red (needs a decision), each also a word.
+- The fleet console declares its own law: **one accent** (`--ax-accent`). Its speed ramp runs neutral → `--ax-warn` → the accent at 55% → the accent full, so the four speed bands stay distinct without inventing a hue.
 
 ## Devices
 
