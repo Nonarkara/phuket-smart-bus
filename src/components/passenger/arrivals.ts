@@ -129,12 +129,18 @@ export function arrivalsAt(placed: BusOnLine[], ref: StopRef, pace: Pace, nowMs:
     if (away < -AT_STOP_M) continue; // already past the stop
     away = Math.max(0, away);
     const perKm = minPerKm(pace, line.routeId, p.dir, hour);
+    // Pace says nothing about a bus that is not moving. Multiplying road
+    // distance by the line's median pace for a bus sitting in traffic — or at
+    // a stop, or waiting to turn — produces a confident number we cannot
+    // back, and it is optimistic in exactly the case the rider most needs it to
+    // be right. Same rule as the missing-pace case: show distance, not minutes.
+    const st = stateOf(p.bus, nowMs);
     out[p.dir].push({
       plate: p.bus.plate,
       dir: p.dir,
       awayM: away,
-      etaMin: away <= AT_STOP_M ? 0 : perKm === null ? null : (away / 1000) * perKm,
-      state: stateOf(p.bus, nowMs),
+      etaMin: away <= AT_STOP_M ? 0 : perKm === null || st === "standing" ? null : (away / 1000) * perKm,
+      state: st,
       fixMs: Date.parse(p.bus.updatedAt),
     });
   }

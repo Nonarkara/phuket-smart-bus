@@ -62,7 +62,11 @@ function useNow(ms: number) {
 }
 
 const minutes = (a: Arrival) =>
-  a.etaMin === 0 ? "At the stop" : a.etaMin === null ? "—" : a.etaMin < 1 ? "Under 1 min" : `${Math.round(a.etaMin)} min`;
+  a.etaMin === 0 ? "At the stop"
+  // A null ETA on a stopped bus is not "unknown" in the vague sense — we know
+  // exactly why: it is not moving, so no pace can be applied to it.
+  : a.etaMin === null ? (a.state === "standing" ? "Stopped" : "—")
+  : a.etaMin < 1 ? "Under 1 min" : `${Math.round(a.etaMin)} min`;
 const kmText = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
 
 export function LiveArrivals({ timetableNext }: { timetableNext: string | null }) {

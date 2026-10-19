@@ -76,3 +76,37 @@ describe("rider arrivals", () => {
     expect(LINES.find((l) => l.routeId === s.routeId)!.stops[s.index]!.name).toBe("Phuket Airport");
   });
 });
+
+describe("a bus that is not moving gets no minutes", () => {
+  // Regression: pace was applied to a standing bus as though it were moving,
+  // so a bus sitting in traffic 36 km away showed a confident "97 min" that was
+  // optimistic precisely when the rider most needed the number to hold.
+  const stop = { routeId: "rawai-airport", index: 3 } as const;
+
+  it("shows distance only while the bus is standing short of the stop", () => {
+    const pace = buildPace(days);
+    const moving = busAt("p1", 5_000);
+    const still = busAt("p2", 5_000, { speedKph: 0 });
+    const placed = [
+      { bus: moving, line: airport, alongM: 5_000, dir: "fwd" as const },
+      { bus: still, line: airport, alongM: 5_000, dir: "fwd" as const },
+    ];
+    const out = arrivalsAt(placed, stop, pace, NOW);
+    const rows = out.fwd;
+    const stillRow = rows.find((r) => r.plate === "p2")!;
+    const movingRow = rows.find((r) => r.plate === "p1")!;
+
+    expect(stillRow.state).toBe("standing");
+    expect(stillRow.etaMin).toBeNull();          // no backed figure
+    expect(stillRow.awayM).toBeGreaterThan(0);   // distance still shown
+    expect(movingRow.etaMin).toBeGreaterThan(0); // a moving bus still gets one
+  });
+
+  it("still reports zero minutes for a standing bus that is AT the stop", () => {
+    const pace = buildPace(days);
+    const atStop = busAt("p3", 5_000, { speedKph: 0 });
+    const s = airport.stops[stop.index]!;
+    const placed = [{ bus: atStop, line: airport, alongM: s.alongM, dir: "fwd" as const }];
+    expect(arrivalsAt(placed, stop, pace, NOW).fwd[0]!.etaMin).toBe(0);
+  });
+});
