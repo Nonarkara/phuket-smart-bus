@@ -255,17 +255,10 @@
 .pb-operator dd { margin: 0; font-size: 14px; line-height: 1.45; }
 .pb-operator__notes { padding: 16px 24px; font-size: 14px; color: var(--tk-muted); border-top: 1px solid var(--tk-line); }
 
-/* The timetable scan. The <img> carries width="724" height="1024", and an
-   HTML height attribute becomes the used CSS height — so with the toolkit's
-   width:100% the 724x1024 portrait was rendered at 1216x1024, stretched
-   1.68x across the page. height:auto restores the ratio. The figure is the
-   evidence for the "20 departures" figure, so it has to be readable, not
-   distorted. */
-.pb-evidence { margin: 48px 0; }
-.pb-evidence img { width: 100%; height: auto; }
-.pb-evidence figcaption { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--tk-muted); max-width: 65ch; }
-.pb-evidence figcaption strong { color: var(--tk-ink); }
-.pb-evidence figcaption code { font-family: var(--font-code); font-size: 0.9em; }
+/* The timetable scan, the evidence for the "20 departures" figure. Its CSS
+   now lives in main (the block above), which carries the comment about the
+   stretched-height bug. Duplicating it here would be two rules for one
+   element. */
 
 .pb-competitors, .pb-regulatory, .pb-gap { margin-bottom: 60px; }
 .pb-competitor-table, .pb-regulatory-grid { border-top: 1px solid var(--tk-ink); }
