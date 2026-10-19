@@ -13,6 +13,18 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 - **No third family. There is no monospace UI face.** JetBrains Mono was removed 2026-10-19: it set "4 min" in a code-editor face at 44px on the rider's phone and read as a developer console, which is what it is. Figures that must line up use `font-variant-numeric: tabular-nums` in the body face. Do not reintroduce a monospace as a typographic voice — weight and colour do that job.
 - A monospace is allowed in exactly one place, via `--font-code` (the platform's face, never a download): `<pre>`/`<code>`, raw tracker JSON, ticket numbers. Braces and indentation have to line up there and nowhere else.
 
+### Where the display face may be used, and at what weight
+
+Josefin Sans is a high-contrast geometric with thin hairlines and closed counters. Set it heavy and below ~40px, the counters fill in and the letters fuse — it reads as a blob, not as a typeface. That blob is the "fat ugly font": it was the rider app's "Next real buses" heading at 25.6px in weight 700, on every route, and it was never a font-loading fault.
+
+- **< 18px — body face only.** Micro-labels, table cells, captions. Source Sans 3, weight 700 for emphasis.
+- **18–39px — display face, weight 400 or 500.** Never 600 or above. This is the band that covers section headings and mid-size figures: "Next real buses", the flight board's hour label, the study KPI.
+- **≥ 40px — display face, 600 and above allowed.** This is the editorial band: the toolkit's wall-of-type moments (54px and up), the `/ops` hero figure, the capacity screen's 56–72px numbers. The hero figure sits at **400–500**, which is the brand voice: thin, drawn-on, not a poster.
+- **All-caps tracked micro-labels are body face, always.** `letter-spacing` ≥ 0.06em on uppercase is template chrome; the label may stay, the shout and the deco face go.
+- The family is set on **`html`**, not `body`. A `body`-level declaration leaves `<html>` itself on the UA default — which is Times New Roman. A 16px Times is the "unstyled" signal that makes a product look unfinished.
+
+Evidence: `non-slop-shots/ramp.html` renders Josefin Sans at 400/500/600/700/800 from 11px to 120px, and `non-slop-shots/typeaudit.mjs` inventories the rendered type of every route. The rule came from the render, not from taste.
+
 ## Colour
 
 - Ground `#fafaf7` (warm paper, not flat `#fff`), ink `#131312` (near-black with a blue undertone).

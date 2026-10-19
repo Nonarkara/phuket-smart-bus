@@ -103,6 +103,17 @@ html.ops-mode {
   zoom: clamp(1, calc(100vw / 1920), 3);
 }
 
+/* The type family is set on the ROOT, not on body. A body-level
+   declaration leaves <html> itself on the UA default — which is Times New Roman,
+   and a 16px Times is exactly the "unstyled" signal that makes a product look
+   unfinished. Anything that inherits from the root (a portal-rendered node, a
+   ::before on html, a UA-injected element) now gets the product face. */
+html {
+  font-family: var(--font-body);
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -193,7 +204,7 @@ a { color: var(--amber-text); }
   justify-content: center;
   width: 28px;
   height: 28px;
-  font: 800 11px/1 var(--font-display);
+  font: 700 11px/1 var(--font-body);
   letter-spacing: 0.04em;
   color: #fff;
   background: var(--ink, #191712);
@@ -204,7 +215,7 @@ a { color: var(--amber-text); }
   line-height: 1.2;
 }
 .desktop-rider__brand-text strong {
-  font: 700 14px/1.1 var(--font-display);
+  font: 700 14px/1.1 var(--font-body);
   letter-spacing: -0.01em;
 }
 .desktop-rider__brand-text small {
@@ -228,7 +239,7 @@ a { color: var(--amber-text); }
 }
 .desktop-rider__nav a {
   padding: 10px 12px;
-  font: 700 11px/1 var(--font-display);
+  font: 700 11px/1 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
@@ -2796,7 +2807,7 @@ a { color: var(--amber-text); }
 
 .ops__brand h1 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--t-body);
   font-weight: 500;
   color: var(--ink);
@@ -5663,8 +5674,8 @@ a { color: var(--amber-text); }
   flex-shrink: 0;
 }
 .v2-header__brand { display: flex; flex-direction: column; gap: 2px; }
-.v2-header__eyebrow { font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); font-family: var(--font-display); }
-.v2-header h1 { font-size: var(--t-display); font-weight: 700; letter-spacing: -0.04em; margin: 0; color: #fff; font-family: var(--font-display); }
+.v2-header__eyebrow { font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); font-family: var(--font-body); }
+.v2-header h1 { font-size: var(--t-display); font-weight: 500; letter-spacing: -0.04em; margin: 0; color: #fff; font-family: var(--font-display); }
 .v2-header__sub { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.5); letter-spacing: 0.12em; text-transform: uppercase; }
 .v2-header__story {
   display: flex;
@@ -5843,7 +5854,7 @@ a { color: var(--amber-text); }
 .v2-panel.is-alert {
   border-color: var(--loss);
 }
-.v2-panel__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.36); margin: 0; font-family: var(--font-display); }
+.v2-panel__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.36); margin: 0; font-family: var(--font-body); }
 
 .v2-insight {
   display: flex;
@@ -5884,7 +5895,7 @@ a { color: var(--amber-text); }
 
 /* Region bar chart */
 .v2-regions { display: flex; flex-direction: column; gap: 4px; }
-.v2-regions__title { font-size: var(--t-micro); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.35); margin-bottom: 2px; font-family: var(--font-display); }
+.v2-regions__title { font-size: var(--t-micro); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.35); margin-bottom: 2px; font-family: var(--font-body); }
 .v2-region-bar { display: flex; align-items: center; gap: 6px; height: 22px; }
 .v2-region-bar__label { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.5); width: 70px; flex-shrink: 0; text-align: right; }
 .v2-region-bar__track { flex: 1; height: 12px; background: rgba(255, 255, 255, 0.04); border-radius: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
@@ -5893,7 +5904,7 @@ a { color: var(--amber-text); }
 
 /* Demand pulse + full-day schedule */
 .v2-hourly { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 0; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
-.v2-hourly__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.42); font-family: var(--font-display); }
+.v2-hourly__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.42); font-family: var(--font-body); }
 .v2-hourly__legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: var(--t-micro); color: rgba(255, 255, 255, 0.42); }
 .v2-hourly__legend-item { display: inline-flex; align-items: center; gap: 5px; }
 .v2-hourly__legend-item::before { content: ""; width: 10px; height: 4px; display: inline-block; border-radius: 0; }
@@ -5979,7 +5990,7 @@ a { color: var(--amber-text); }
 
 .v2-schedule { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 .v2-schedule__header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.v2-schedule__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.4); font-family: var(--font-display); }
+.v2-schedule__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.4); font-family: var(--font-body); }
 .v2-schedule__meta {  font-size: var(--t-micro); color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
 .v2-schedule__rail { display: flex; flex-direction: column; gap: 3px; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
 /* Columns: time | IN/OUT | flight+aircraft | city | pax+load | bus-demand.
@@ -6020,7 +6031,7 @@ a { color: var(--amber-text); }
   position: relative;
 }
 .v2-flights__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-.v2-flights__eyebrow { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ax-ink-3); font-family: var(--font-display); }
+.v2-flights__eyebrow { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ax-ink-3); font-family: var(--font-body); }
 .v2-flights__h { font-size: 18px; font-weight: 800; margin: 4px 0 4px; color: var(--ax-ink); letter-spacing: -0.01em; }
 .v2-flights__lede { font-size: var(--t-micro); color: var(--ax-ink-2); margin: 0; }
 .v2-flights__captureval {  font-weight: 700; color: var(--ax-accent); }
@@ -6136,7 +6147,7 @@ a { color: var(--amber-text); }
 
 /* What-if: extra buses → extra capture. The engine's re-run, not a guess. */
 .v2-whatif { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--amber); background: rgba(245, 158, 11, 0.06); }
-.v2-whatif__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); margin: 0; font-family: var(--font-display); }
+.v2-whatif__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); margin: 0; font-family: var(--font-body); }
 .v2-whatif__row { display: grid; grid-template-columns: 72px 1fr auto; gap: 8px; align-items: baseline;  font-size: var(--t-micro); padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
 .v2-whatif__row:last-of-type { border-bottom: none; }
 .v2-whatif__buses { color: #fff; font-weight: 600; }
@@ -6245,7 +6256,7 @@ a { color: var(--amber-text); }
 
 /* Impact section */
 .v2-impact { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 0; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
-.v2-impact__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.38); margin-bottom: 2px; font-family: var(--font-display); }
+.v2-impact__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.38); margin-bottom: 2px; font-family: var(--font-body); }
 .v2-impact__row { display: flex; justify-content: space-between; font-size: var(--t-micro); padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
 .v2-impact__row--highlight { border-bottom: 0; background: rgba(22, 165, 116, 0.1); margin: 4px -4px 0; padding: 10px 12px; border-radius: 0; border: 1px solid var(--gain); }
 .v2-impact__label { color: rgba(255, 255, 255, 0.56); }
@@ -6254,7 +6265,7 @@ a { color: var(--amber-text); }
 
 /* Destinations */
 .v2-destinations { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 0; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); }
-.v2-destinations__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.38); margin-bottom: 2px; font-family: var(--font-display); }
+.v2-destinations__title { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.38); margin-bottom: 2px; font-family: var(--font-body); }
 .v2-dest-card { display: grid; gap: 6px; }
 .v2-dest-card__meta { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-micro); }
 .v2-dest-card__track { width: 100%; height: 6px; border-radius: 0; background: rgba(255, 255, 255, 0.05); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
@@ -8805,7 +8816,7 @@ a { color: var(--amber-text); }
 }
 
 .capacity-gap__title {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--t-body);
   font-weight: 500;
   margin: 0;
@@ -8949,7 +8960,7 @@ a { color: var(--amber-text); }
 }
 
 .line-pnl__title {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
   margin: 0;
@@ -9310,7 +9321,7 @@ a { color: var(--amber-text); }
 .v2 .v2-header__live { color: var(--ax-accent); }
 .v2 .v2-header__day { color: var(--ax-ink-3); }
 .v2 .v2-header__time {
-  font: 700 26px/1 var(--font-display);
+  font: 500 26px/1 var(--font-display);
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
@@ -10256,7 +10267,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* OPS console landscape: tabs + INSIGHTS view = full-width body            */
 .v2-mode-toggle { display: inline-flex; border-radius: 0; overflow: hidden; }
 .v2-mode-btn {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 11px;
   letter-spacing: 0.18em;
   font-weight: 700;
@@ -11194,7 +11205,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--amber);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
 }
 .v2-fleet__title {
   display: flex;
@@ -11511,7 +11522,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--amber);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
 }
 .v2-insights__title {
   font-size: 20px;
@@ -14990,7 +15001,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 8px;
 }
 .study__kpi-value {
-  display: block; font: 700 32px/1.05 var(--font-display); color: var(--ax-ink);
+  display: block; font: 500 32px/1.05 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; margin-bottom: 8px;
   /* "1,561 · 1,368 h" wrapped onto a third line at the narrow tail of the
      grid when the rendered column was <310px. Keep the value together so
@@ -15117,7 +15128,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 6px;
 }
 .study__now-value {
-  display: block; font: 700 36px/1.05 var(--font-display); color: var(--ax-ink);
+  display: block; font: 500 36px/1.05 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; margin-bottom: 6px;
 }
 .study__now-tile--live .study__now-value { color: var(--ax-accent); }
@@ -15171,7 +15182,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   animation: v2-pulse 2s ease-in-out infinite;
 }
 .capacity__time {
-  font: 700 36px/1 var(--font-display); color: var(--ax-ink); letter-spacing: -0.025em;
+  font: 500 36px/1 var(--font-display); color: var(--ax-ink); letter-spacing: -0.025em;
 }
 .capacity__bkk { color: var(--ax-ink-3); font-weight: 500; font-size: 11px; letter-spacing: 0.12em; }
 .capacity__source { display: inline-flex; border: 1px solid var(--ax-line-2); }
@@ -15201,7 +15212,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: -0.02em; margin: 0; font-weight: 400;
   max-width: 1100px;
 }
-.capacity__story-text strong { font-weight: 700; color: var(--ax-accent); }
+/* 36px display-face prose. A <strong> inside it inherits the display face, so
+   weight 700 here is the blob again (Josefin 600+ below 40px). 500 against a
+   400 stem is a clear step at this size and stays inside the type rule. */
+.capacity__story-text strong { font-weight: 500; color: var(--ax-accent); }
 
 /* ── Big numbers row — 3 hero KPIs ─────────────────────────────────────── */
 .capacity__heroes {
@@ -15273,8 +15287,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-bottom: 1px solid var(--ax-line);
 }
 .capacity__section-head h2 {
-  margin: 0; font: 600 18px/1.2 var(--font-display); color: var(--ax-ink);
-  letter-spacing: -0.02em; font-weight: 600;
+  /* The shorthand already sets the weight. A trailing `font-weight: 600`
+     longhand silently overrode it — 600 at 18px is the blob. */
+  margin: 0; font: 500 18px/1.2 var(--font-display); color: var(--ax-ink);
+  letter-spacing: -0.02em;
 }
 .capacity__section-meta {
   font: 500 13px/1 var(--font-body); color: var(--ax-ink-2);
@@ -15368,14 +15384,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__action:last-child { border-bottom: 0; }
 .capacity__action-num {
-  font: 700 32px/1 var(--font-display); color: var(--ax-ink-3);
+  font: 500 32px/1 var(--font-display); color: var(--ax-ink-3);
   font-variant-numeric: tabular-nums;
 }
 .capacity__action--shortfall .capacity__action-num { color: var(--ax-neg); }
 .capacity__action--tight .capacity__action-num { color: var(--ax-warn); }
 .capacity__action--surplus .capacity__action-num { color: var(--ax-ink-3); }
 .capacity__action-hour {
-  font: 700 24px/1 var(--font-display); color: var(--ax-ink); font-variant-numeric: tabular-nums;
+  font: 500 24px/1 var(--font-display); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
 .capacity__action-text { font: 14px/1.5 var(--font-body); color: var(--ax-ink-2); }
 .capacity__action-text strong { color: var(--ax-ink); font-weight: 600; }
@@ -15748,7 +15764,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-bottom: 1px solid var(--ax-line-2);
 }
 .v2-headline__label { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-ink-2); }
-.v2-headline__value {  font-size: 52px; line-height: 1; letter-spacing: -0.02em; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
+.v2-headline__value { font-family: var(--font-display); font-weight: 500;  font-size: 52px; line-height: 1; letter-spacing: -0.02em; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
 .v2-headline__why { font-size: 14px; color: var(--ax-ink-2); }
 .v2-headline__sum { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 15px; color: var(--ax-ink-2); }
 .v2-headline__sum b {  font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }

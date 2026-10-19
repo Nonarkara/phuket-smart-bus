@@ -66,14 +66,14 @@ body.passenger-site-mode #root {
 .pa-header__logo {
   background: var(--pa-red);
   color: #fff;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.02em;
   font-size: 0.78rem;
   padding: 4px 8px;
 }
 .pa-header__name {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: -0.01em;
@@ -134,7 +134,7 @@ body.passenger-site-mode #root {
 /* LIVE BOARD — real buses, real minutes ----------------------- */
 .pa-live { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
 .pa-live__head { display: flex; flex-direction: column; gap: 4px; }
-.pa-live__head h2 { margin: 0; font-family: var(--font-display); font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
+.pa-live__head h2 { font-weight: 500; margin: 0; font-family: var(--font-display); font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
 .pa-live__feed { font-size: 0.8rem; color: var(--pa-muted); }
 .pa-live__feed.is-live::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--pa-green); vertical-align: 1px; }
 .pa-live__pick { display: grid; grid-template-columns: 1fr; gap: 8px; }
@@ -230,7 +230,7 @@ body.passenger-site-mode #root {
   font-weight: 700;
   letter-spacing: 0;
 }
-.pa-flights h2 {
+.pa-flights h2 { font-weight: 500;
   margin: 4px 0 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
@@ -325,7 +325,7 @@ body.passenger-site-mode #root {
   font-family: var(--font-display);
   font-size: 2.4rem;
   letter-spacing: -0.03em;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   margin-top: 4px;
 }
@@ -349,7 +349,7 @@ body.passenger-site-mode #root {
   border-top: 1px solid var(--pa-line);
 }
 .pa-promise h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -398,7 +398,7 @@ body.passenger-site-mode #root {
   text-align: left;
   width: fit-content;
 }
-.pa-form__title {
+.pa-form__title { font-weight: 500;
   font-family: var(--font-display);
   font-size: clamp(1.7rem, 5vw, 2.2rem);
   letter-spacing: -0.025em;
@@ -500,7 +500,7 @@ body.passenger-site-mode #root {
 }
 .pa-stripe__brand span {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.04em;
   font-size: 1.2rem;
   color: #635bff; /* Stripe purple */
@@ -549,7 +549,7 @@ body.passenger-site-mode #root {
   color: var(--pa-green);
   font-weight: 700;
 }
-.pa-ticket__title {
+.pa-ticket__title { font-weight: 500;
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 5vw, 2rem);
   letter-spacing: -0.025em;
@@ -718,7 +718,7 @@ body.passenger-site-mode #root {
   .pa-portal-header__name {
     font-size: 16px;
     font-weight: 700;
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     letter-spacing: -0.02em;
     color: #fff;
   }
