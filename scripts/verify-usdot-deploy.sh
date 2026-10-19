@@ -31,29 +31,13 @@ if [ -z "$JS_PATH" ] || [ -z "$CSS_PATH" ]; then
   exit 1
 fi
 
-probe_asset() {
-  local host="$1" path="$2" want got attempt streak=0
-  want="$(hash_file "dist/client${path}")"
-  for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-    got="$(hash_url "${host}${path}?probe=${attempt}-$(date +%s)" || true)"
-    if [ -n "$got" ] && [ "$got" = "$want" ]; then
-      streak=$((streak + 1))
-      if [ "$streak" -ge 3 ]; then
-        echo "ok: ${host}${path} matched 3 consecutive probes"
-        return 0
-      fi
-    else
-      streak=0
-      sleep 3
-    fi
-  done
-  echo "error: ${host}${path} did not converge" >&2
-  return 1
-}
-
-echo "→ static assets on ${CUSTOM}"
-probe_asset "$CUSTOM" "$JS_PATH"
-probe_asset "$CUSTOM" "$CSS_PATH"
+echo "→ the whole asset graph on ${CUSTOM}"
+# The entry chunk NAMES its lazy chunks without containing their bytes, so
+# comparing the entry alone cannot see a stale route. This crawls the graph
+# — entry, every lazy chunk, every lazy stylesheet and what they reference
+# — and compares all of it, byte for byte, with the content hashes
+# normalised away.
+BASE_URL="$CUSTOM" node scripts/verify-assets.mjs
 
 echo "→ deep links return the app, not a 404"
 for route in / /toolkit /ops /study; do
