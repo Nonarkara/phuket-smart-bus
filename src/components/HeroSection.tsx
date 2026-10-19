@@ -151,7 +151,11 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
           <span className="hero-pm25__pill" style={{ background: pm25.color }}>
             PM2.5 {pm25.value}
           </span>
-          <span className="hero-pm25__msg" style={{ color: pm25.color }}>
+          {/* The pill carries the AQI band colour; the sentence does not. Those
+              six colours are an international scale, tuned to be read as a
+              filled swatch — white on them is 2.6:1 and the tint is 2.8:1, so
+              as type they failed everywhere except the two dark bands. */}
+          <span className="hero-pm25__msg">
             {pm25.level} · Phuket Airport air quality
           </span>
         </div>

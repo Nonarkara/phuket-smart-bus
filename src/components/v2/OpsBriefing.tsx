@@ -71,8 +71,8 @@ export function OpsBriefing({
         <h2>{headline}</h2>
         <p>
           {hasQueue
-            ? `${waiting.toLocaleString()} people are waiting. At 25 seats each, ${standbyBuses} additional buses would clear this queue.`
-            : `${currentBusDemand.toLocaleString()} likely riders meet ${currentSupplySeats.toLocaleString()} scheduled seats this hour.`}
+            ? `${waiting.toLocaleString()} modelled arrivals are waiting. At 25 seats each, ${standbyBuses} additional buses would clear the queue.`
+            : `${currentBusDemand.toLocaleString()} modelled riders meet ${currentSupplySeats.toLocaleString()} scheduled seats this hour.`}
         </p>
         {nextDeparture !== null && <span className="v2-brief__next">Next scheduled departure in {nextDeparture} min</span>}
       </section>

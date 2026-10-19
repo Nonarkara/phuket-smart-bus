@@ -31,6 +31,9 @@
   /* The ONE amber — like the Braun ET66 = key. Use sparingly. */
   --amber: #f59e0b;
   --amber-mute: rgba(245, 158, 11, 0.10);
+  /* Amber as *type* on warm paper: #f59e0b is 2.15:1 there, which fails AA.
+     This is the same hue stepped down for text. Marks and fills stay amber. */
+  --amber-text: #9a5b00;
 
   /* Semantic colour — used only where colour carries meaning */
   --loss: #c0392b;                     /* loss / shortfall / "in the red" */
@@ -41,7 +44,10 @@
   --bg-elevated: var(--paper);
   --text-primary: var(--ink);
   --text-secondary: var(--ink-mute);
-  --text-tertiary: var(--ink-faint);
+  /* Was --ink-faint (38% ink): ~2.4:1 on warm paper, below AA at every size.
+     Three ink levels were three shades of unreadable. Two that pass is the
+     honest fix; --ink-faint survives for rules and dividers, not for type. */
+  --text-tertiary: var(--ink-mute);
   --tint: var(--amber);
   --green: var(--gain);
   --orange: var(--amber);
@@ -115,7 +121,7 @@ body {
    gets a monospace — the platform's, never a downloaded one. */
 pre, code { font-family: var(--font-code); }
 
-a { color: var(--tint); }
+a { color: var(--amber-text); }
 
 .route-loading {
   min-height: 100vh;
@@ -129,7 +135,7 @@ a { color: var(--tint); }
 }
 
 button, input, a { font: inherit; }
-a { color: var(--tint); }
+a { color: var(--amber-text); }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -427,8 +433,9 @@ a { color: var(--tint); }
 .desktop-shell__hint {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.82);
   font-style: italic;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* Phone frame */
@@ -1185,7 +1192,7 @@ a { color: var(--tint); }
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--amber-text);
   min-width: 1.6rem;
   padding: 0.2rem 0.3rem;
   font-size: 11px;
@@ -1197,7 +1204,7 @@ a { color: var(--tint); }
 
 .lang-toggle__button.is-active {
   background: var(--tint);
-  color: #fff;
+  color: var(--ink);
 }
 
 /* ===== Bottom Navigation — Frosted Glass 4-tab ===== */
@@ -1251,8 +1258,9 @@ a { color: var(--tint); }
 
 .bottom-nav__label {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0;
+  color: var(--amber-text);
 }
 
 /* ===== Map View ===== */
@@ -1415,7 +1423,8 @@ a { color: var(--tint); }
 
 .map-pill.is-active {
   background: var(--tint);
-  color: #fff;
+  /* Ink on amber, not white: white on #f59e0b is 2.15:1. */
+  color: var(--ink);
   border-color: transparent;
 }
 
@@ -1427,7 +1436,7 @@ a { color: var(--tint); }
   flex: 0 0 auto;
 }
 
-.map-pill.is-active .map-pill__dot { background: #fff; }
+.map-pill.is-active .map-pill__dot { background: var(--ink); }
 
 .map-pill__count {
   opacity: 0.5;
@@ -4651,21 +4660,26 @@ a { color: var(--tint); }
 
 /* Live-stat tile — flat, hairline-bordered, no glass.
    Reads as a printed metric card on a dark photographic background. */
+/* These sat on the satellite photo as 5%-white plates with white type. The
+   photo is light in some frames and dark in others, so 1.30:1 to 1.42:1 was
+   possible — and the word that mattered most, MODELLED, was the least legible.
+   A near-opaque warm plate with dark ink reads on any photograph and matches
+   the hero block beside it. */
 .live-stat {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(250, 250, 247, 0.94);
   border-radius: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--hairline);
 }
 
 .live-stat__val {
   
   font-size: 22px;
-  font-weight: 500;
-  color: #fff;
+  font-weight: 600;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   line-height: 1;
@@ -4674,11 +4688,11 @@ a { color: var(--tint); }
 .live-stat__label {
   font-family: var(--font-body);
   font-size: var(--t-micro);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ink-mute);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   margin-top: 6px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .live-stats__source {
@@ -5458,9 +5472,9 @@ a { color: var(--tint); }
 /* ── Landing live stats — premium glass ── */
 .live-stat {
   padding: 14px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: rgba(250, 250, 247, 0.94);
+  border: 1px solid var(--hairline);
 }
 .live-stat__val {
   font-size: 22px;
@@ -6290,8 +6304,6 @@ a { color: var(--tint); }
   z-index: 1100;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: saturate(180%) blur(10px);
-  -webkit-backdrop-filter: saturate(180%) blur(10px);
   border-bottom: 1px solid var(--separator-light);
   border-radius: 0;
   pointer-events: auto;
@@ -8554,7 +8566,9 @@ a { color: var(--tint); }
   overflow: hidden;
 }
 .hero-pm25__pill {
-  color: #fff;
+  /* Ink on the band swatch, not white: white on #00b053 is 2.6:1. Ink clears
+     AA on all six band colours, including the two dark ones. */
+  color: var(--ink);
   padding: 2px 6px;
   font-weight: 700;
   white-space: nowrap;
@@ -8562,6 +8576,7 @@ a { color: var(--tint); }
   border-radius: 2px;
 }
 .hero-pm25__msg {
+  color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -12933,7 +12948,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .desktop-shell__more { gap: 0; }
 .desktop-shell__more-label {
   margin-bottom: 5px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -13855,7 +13871,6 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   right: 12px;
   z-index: 400;
   background: rgba(255, 77, 79, 0.92);
-  backdrop-filter: blur(8px);
   color: #ffffff;
   padding: 8px 14px;
   border-radius: 4px;
@@ -14332,7 +14347,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-flights__callout { flex-shrink: 0; }
 .v2--operations .v2-flights__head { gap: 8px; }
 .v2--operations .v2-flights__h { margin: 2px 0; }
-.v2--operations .v2-flights__lede { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.v2--operations .v2-flights__lede { white-space: normal; overflow: visible; text-overflow: clip; max-width: 100%; line-height: 1.35; }
 .v2--operations .v2-body--operations .v2-flights__hours { height: 118px; }
 .v2--operations .v2-flights__col { padding-top: 16px; }
 /* Next-30-min callout: one row of three flights, the rest live in the rail */

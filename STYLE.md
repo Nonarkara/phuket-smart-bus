@@ -30,7 +30,7 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 - The map is the operating table. It takes the largest share of the first screen and nothing covers it on load. Everything else is an instrument docked at its edge, sized to its content.
 - **Empty space is a decision**, never a filler. If a block could be removed without losing meaning, it is removed.
 - No box, border, shadow, radius, pill or badge unless it groups things that belong together or it encodes a state.
-- Three sizes only on a page: display, body, micro. A fourth size is a decision to justify, not a default.
+- The intent is three sizes on a page: display, body, micro. It is not yet true — `PassengerApp.css` alone declares 23 distinct sizes, and `styles.css` 34. Treat a fourth size on a page as a decision to justify, and shrink the ramp before adding to it. This line records the intent, not the state; the state is the type-scale scanner hit.
 
 ## Voice
 
@@ -41,7 +41,9 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 
 - phrase "observed since": LIVE mode can only count what it saw; the words keep that honest
 - phrase "no counter": the passenger counters have never read above zero, so riders and fares stay null — never ฿0
-- phrase "as ran": the departures the real buses actually made, not the timetable
+<!-- "as ran" was here and is gone: it appears in ~30 sentences, and a
+     protected phrase suppresses the rule for every sentence containing it.
+     Protected voice is for a distinctive fragment, never a recurring word. -->
 
 ## Allow
 
@@ -60,14 +62,14 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 The following are deliberate, with the reason recorded so a reviewer can disagree with the reason rather than rediscover the fact:
 
 - rule dark-command-centre in src/styles.css, src/components/v2/**: `/ops` is an operations wall on a 50"+ display in a room that runs all day. It is near-black on purpose, to reduce eye strain at that size and viewing distance. The rider's phone app, which is the other half of this product, is warm paper. Two surfaces, two rooms, two treatments — neither is a default.
-- rule card-grid-3 in src/styles.css: the only remaining hit was the air-temperature / AQI / rain row on the desktop shell. Three parallel facts in a row is the correct presentation for three parallel values; the identical boxed version it replaced was the slop, and it is gone.
+- rule card-grid-3 in src/styles.css: the scanner matches `repeat(3, 1fr)` in source, so it never sees what renders. Two places: the desktop-shell environment row (air temperature, AQI, rain chance) — three parallel facts in a row, which is the correct presentation for three parallel values, and whose identical *boxed* version was removed — and the rider desktop's four stat cards, which render as a 2x2 grid. Those four are honest labelled figures (modelled riders, scheduled buses, modelled buses moving, modelled CO2), each carrying its own qualifier, so the box is doing real work; they are not three identical marketing cards.
 - rule modal-on-load in src/components/toolkit/ResearchPanel.tsx: a false positive. `defaultOpen` is a prop, and both call sites pass `false` — nothing is open on load. The research panels are closed `<details>`, not overlays.
 - rule img-alt in src/engine/feedSafety.test.ts: a false positive. The markup is a test fixture string asserting the guard, not shipped markup.
 - rule type-scale in src/components/toolkit/*.css: the toolkit is a separate published surface with its own editorial scale and its own house rules. It is not the bus app and does not share its type ramp.
 
 These read as hits but are not. Each is recorded so a reviewer can test the reason rather than trust it:
 
-- rule shadow-everything in src/styles.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and the rendered page measures **4** shadows on `/ops`. Declared is not applied.
+- rule shadow-everything in src/styles.css: the scanner counts `box-shadow` declarations in source; most resolve through `--shadow-*` vars set to `none` in `:root`. The rendered page is the check, and `/ops` renders **11** shadows (dot glows, an inset rule, map badges) — all functional, none of them fake depth. An earlier version of this line claimed 4; that was wrong and is corrected here.
 - rule shadow-everything in src/components/toolkit/toolkit-showcase.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and the rendered page measures **4** shadows on `/ops`. Declared is not applied.
 - rule shadow-everything in src/components/v2/fleetDetail.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and the rendered page measures **4** shadows on `/ops`. Declared is not applied.
 - rule hype-copy in src/engine/*.test.ts: "seamless playback" is a Vitest `describe()` string. No user ever sees it.
@@ -77,4 +79,4 @@ These read as hits but are not. Each is recorded so a reviewer can test the reas
 - rule lang-th in src/components/v2/OperatorFleetPanel.tsx: the Thai here is a URL path, a search alias, a plate regex or a lookup table — data, not rendered prose. Every Thai string that reaches the screen now carries `lang`. It is a plate-suffix regex.
 - rule lang-th in src/components/DecisionPanel.tsx: the Thai here is a URL path, a search alias, a plate regex or a lookup table — data, not rendered prose. Every Thai string that reaches the screen now carries `lang`. It is a lookup table; the chips that render it carry `lang`.
 - rule lang-th in src/components/StopSpotlight.tsx: the Thai here is a URL path, a search alias, a plate regex or a lookup table — data, not rendered prose. Every Thai string that reaches the screen now carries `lang`. It is a lookup table; the element that renders it carries `lang`.
-- rule glass in src/styles.css: the only blur left is on `.v2-map__stat` / `.v2-map__next`, two chips at 0.82 opacity floating over the live map on `/ops`. The map repaints behind them continuously, so the blur does real separation work instead of decorating an opaque panel, which is the case the rule is written for. Every blur on an opaque panel was removed, including the modal backdrop's, which was blurring a wall that repaints every second.
+- rule glass in src/styles.css: **no blur renders anywhere in this product.** Measured across all seven routes at 1440: zero elements with a computed `backdrop-filter`. The declarations this rule matches are on elements that render at 0x0 (`.v2-map__stat`, `.v2-map__next` — in the DOM, not on screen) or are explicitly `backdrop-filter: none`. Two blurs that did render were removed: `.v2-map__maritime-banner` (blur over a 92%-opaque red) and `.hero-section` on the rider desktop (`saturate(1.8) blur(10px)` over a 96%-opaque white).
