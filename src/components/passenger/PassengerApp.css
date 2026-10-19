@@ -40,8 +40,6 @@ body.passenger-site-mode #root {
   flex-direction: column;
 }
 
-.pa-console-invite { display: none; }
-
 .pa-app * { box-sizing: border-box; }
 .pa-app button {
   font-family: inherit;
@@ -244,8 +242,7 @@ body.passenger-site-mode #root {
   
   font-size: 0.62rem;
   font-weight: 700;
-  text-transform: uppercase;
-}
+  }
 .pa-flights__radar--live { color: #9a5d00; border-color: #e4b55a; background: #fff8e8; }
 .pa-flights__tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--pa-line); }
 .pa-flights__tabs button {
@@ -256,9 +253,7 @@ body.passenger-site-mode #root {
   color: var(--pa-muted);
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  letter-spacing: 0; }
 .pa-flights__tabs button:last-child { border-right: 0; }
 .pa-flights__tabs button.is-active { color: #fff; background: var(--pa-blue); }
 .pa-flights__board { padding: 0 18px; }
@@ -316,9 +311,7 @@ body.passenger-site-mode #root {
 .pa-card--featured .pa-card__cta { color: #fff; }
 .pa-card__kicker {
   font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pa-red);
+  letter-spacing: 0; color: var(--pa-red);
   font-weight: 700;
 }
 .pa-card__price {
@@ -420,9 +413,7 @@ body.passenger-site-mode #root {
 .pa-form__field span {
   font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pa-muted);
+  letter-spacing: 0; color: var(--pa-muted);
 }
 .pa-form__input {
   appearance: none;
@@ -458,9 +449,7 @@ body.passenger-site-mode #root {
 .pa-suggestions__label {
   font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pa-muted);
+  letter-spacing: 0; color: var(--pa-muted);
 }
 .pa-suggestions ul {
   list-style: none;
@@ -544,9 +533,7 @@ body.passenger-site-mode #root {
 .pa-ticket__head { display: flex; flex-direction: column; gap: 8px; }
 .pa-ticket__success {
   font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pa-green);
+  letter-spacing: 0; color: var(--pa-green);
   font-weight: 700;
 }
 .pa-ticket__title { font-weight: 500;
@@ -582,9 +569,7 @@ body.passenger-site-mode #root {
   width: 100%;
   font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pa-muted);
+  letter-spacing: 0; color: var(--pa-muted);
   padding-bottom: 12px;
   border-bottom: 1px solid var(--pa-line);
 }
@@ -627,9 +612,7 @@ body.passenger-site-mode #root {
 .pa-ticket__card dt {
   font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pa-muted);
+  letter-spacing: 0; color: var(--pa-muted);
 }
 .pa-ticket__card dd {
   margin: 0;
@@ -897,7 +880,6 @@ body.passenger-site-mode #root {
     font-size: 10px;
     font-weight: 700;
     
-    text-transform: uppercase;
     border-radius: 3px;
   }
 
@@ -915,9 +897,7 @@ body.passenger-site-mode #root {
     background: #111722;
     color: rgba(255, 255, 255, 0.62);
     font: 700 11px/1 var(--font-body); font-variant-numeric: tabular-nums;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
+    letter-spacing: 0; }
 
   .pa-stage__map-wrapper .v2-map__frame {
     height: 100% !important;

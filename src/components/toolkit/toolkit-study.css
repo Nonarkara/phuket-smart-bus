@@ -1,11 +1,8 @@
 /* Research extensions: pain hypotheses, what-if experiments and the lending case.
  * Graphics are direct-labelled and every financial number exposes its assumption. */
-
-.tk-hero__photo-stack { position: absolute; inset: 0; }
 .tk-hero__photo-stack img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transform: scale(1.025); transition: opacity 650ms ease, transform 5.2s linear; }
 .tk-hero__photo-stack img.is-active { opacity: 1; transform: scale(1); }
 .tk-hero__photo figcaption { z-index: 2; }
-.tk-hero__photo-controls { position: absolute; z-index: 4; top: 16px; right: 16px; display: flex; border: 1px solid rgba(255,255,255,0.62); background: rgba(17,24,32,0.72); }
 .tk-hero__photo-controls button { width: 38px; height: 38px; padding: 0; color: rgba(255,255,255,0.62); border: 0; border-right: 1px solid rgba(255,255,255,0.28); border-radius: 0; background: transparent; font: 700 10px/1 var(--font-body); cursor: pointer; }
 .tk-hero__photo-controls button:last-child { border-right: 0; }
 .tk-hero__photo-controls button[aria-pressed="true"] { color: var(--tk-ink); background: var(--tk-yellow); }
@@ -258,7 +255,6 @@
   .tk-machine__drawings p { margin: 58px 0 0; }
   .tk-machine__handoff { grid-template-columns: auto 1fr; padding: 28px 20px; }
   .tk-machine__handoff b { display: none; }
-  .tk-hero__photo-controls { top: 10px; right: 10px; }
   .tk-hero__photo-controls button { width: 34px; height: 34px; }
   .tk-pain-map__axis { grid-template-columns: 1fr 1fr; }
   .tk-pain-map__axis strong { grid-column: 1 / -1; grid-row: 1; }
