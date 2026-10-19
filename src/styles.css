@@ -14992,6 +14992,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__kpi-value {
   display: block; font: 700 32px/1.05 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; margin-bottom: 8px;
+  /* "1,561 · 1,368 h" wrapped onto a third line at the narrow tail of the
+     grid when the rendered column was <310px. Keep the value together so
+     "h" never orphans onto its own line. */
+  white-space: nowrap;
 }
 .study__kpi-detail { font: 13px/1.45 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
