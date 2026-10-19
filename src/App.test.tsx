@@ -128,7 +128,9 @@ describe("App", () => {
     // Regression test: isRiderDomain used to short-circuit to the bare
     // mobile PassengerApp (or fall into the toolkit hub) for EVERY visitor
     // to bus.nonarkara.org, desktop included. A desktop visitor must reach
-    // the phone-frame + Operator Console shell instead.
+    // a real intro page, not a phone-frame on a satellite backdrop. The
+    // new shell is `.desktop-rider` — a centered phone column with brand
+    // top-left and a top-right nav pointing at the other surfaces.
     const originalLocation = window.location;
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -141,10 +143,15 @@ describe("App", () => {
     try {
       render(<App />);
 
-      expect(await screen.findByRole("button", { name: /Operator Console/i })).toBeInTheDocument();
-      expect(screen.getByText("Explore the system")).toBeInTheDocument();
-      expect(screen.getByText("Modelled riders today")).toBeInTheDocument();
-      expect(screen.getByText(/published timetable \+ demand simulation/i)).toBeInTheDocument();
+      // Brand top-left
+      expect(await screen.findByText(/Phuket Smart Bus/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^OPS$/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^TOOLKIT$/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^FLEET$/i })).toBeInTheDocument();
+      // TouristApp mounted inside the phone column — the mobile map is the
+      // positive signal that the rider app is on screen, not the toolkit.
+      expect(await screen.findByTestId("live-map")).toBeInTheDocument();
+      // Toolkit hub heading must NOT appear at / on the rider domain.
       expect(
         screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
       ).not.toBeInTheDocument();

@@ -54,9 +54,6 @@ const Capacity = lazy(() => import("./components/v2/Capacity").then((m) => ({ de
 const PassengerApp = lazy(() =>
   import("./components/passenger/PassengerApp").then((module) => ({ default: module.PassengerApp }))
 );
-const DesktopSatelliteBackdrop = lazy(() =>
-  import("./components/DesktopSatelliteBackdrop").then((module) => ({ default: module.DesktopSatelliteBackdrop }))
-);
 
 const LIVE_POLL_MS = 12_000;
 const PRIMARY_ROUTE_IDS: RouteId[] = [
@@ -306,48 +303,35 @@ export default function App() {
     </>;
   }
 
-  // Desktop: smartphone frame + side panel + background carousel
+  // Desktop: real intro page — the actual mobile rider app, full-bleed,
+  // with a slim overlay header giving access to the rest of the product.
+  // The previous "smartphone frame on a satellite backdrop" was pure slop:
+  // a photo dictated legibility, the phone mockup was decoration, and the
+  // "Open in your phone for the best experience" copy asked visitors to
+  // leave. The mobile TouristApp is responsive — its map fills the
+  // viewport on any size, its hero stays anchored, and the route pills
+  // work at any width. So a desktop visitor lands ON the app, not on a
+  // brochure for it. The header offers the four corners (OPS / INSIGHTS /
+  // TOOLKIT / ROI) without crowding the surface.
   return (
-    <div className="desktop-shell">
-      <Suspense fallback={<div className="desktop-bg" />}>
-        <DesktopSatelliteBackdrop />
-      </Suspense>
-      <div className="desktop-shell__side desktop-shell__side--left" />
-      <div className="phone-frame">
-        <div className="phone-frame__notch" />
-        <div className="phone-frame__screen">
-          <TouristApp onToggle={goOps} />
-        </div>
-        <div className="phone-frame__home" />
-      </div>
-      <div className="desktop-shell__side desktop-shell__side--right">
-        <div className="desktop-shell__brand">
-          <h2 className="desktop-shell__title">Phuket Smart Bus</h2>
-          <p className="desktop-shell__subtitle">Timetable model + live fleet feed</p>
-        </div>
-        <LiveStatsWidget />
-        <button className="desktop-shell__ops-btn" type="button" onClick={goOps}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          Operator Console
-        </button>
-        <div className="desktop-shell__more">
-          <span className="desktop-shell__more-label">Explore the system</span>
-          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=insights`}>
-            <strong>Insights</strong><span>See demand become a dispatch decision</span>
-          </a>
-          <a className="desktop-shell__link" href={`${appPath("/v2")}?view=toolkit`}>
-            <strong>Toolkit</strong><span>Read the research, method and assumptions</span>
-          </a>
-          <a className="desktop-shell__link" href={appPath("/roi")}>
-            <strong>Financial model</strong><span>Test fleet size, capture and fare</span>
-          </a>
-          <a className="desktop-shell__link" href={appPath("/governor")}>
-            <strong>Public impact</strong><span>Safety, savings and CO₂ in one view</span>
-          </a>
-          <a className="desktop-shell__link desktop-shell__link--quiet" href={appPath("/driver/กข 1001 ภูเก็ต")}>Driver tablet →</a>
-          <a className="desktop-shell__link desktop-shell__link--quiet" href={`${appPath("/")}?demo=tuesday`}>Watch the day unfold →</a>
-        </div>
-        <p className="desktop-shell__hint">Open in your phone for the best experience</p>
+    <div className="desktop-rider">
+      <a className="desktop-rider__brand" href={appPath("/")} aria-label="Phuket Smart Bus, home">
+        <span className="desktop-rider__brand-mark">PSB</span>
+        <span className="desktop-rider__brand-text">
+          <strong>Phuket Smart Bus</strong>
+          <small>Better on phone · same app</small>
+        </span>
+      </a>
+      <nav className="desktop-rider__nav" aria-label="Other surfaces">
+        <a href={appPath("/ops")}>OPS</a>
+        <a href={`${appPath("/v2")}?view=insights`}>INSIGHTS</a>
+        <a href={`${appPath("/v2")}?view=toolkit`}>TOOLKIT</a>
+        <a href={appPath("/roi")}>ROI</a>
+        <a href={appPath("/governor")}>IMPACT</a>
+        <a href={appPath("/fleet")}>FLEET</a>
+      </nav>
+      <div className="desktop-rider__app">
+        <TouristApp onToggle={goOps} />
       </div>
       {DEMO_MODE && <DemoCaption />}
     </div>
@@ -387,27 +371,14 @@ function computeBadge(allV: VehiclePosition[]): string {
  *  is hidden — raf throttles to ~1 Hz (or stops entirely) under those
  *  conditions and the display gets visibly stuck. */
 function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) {
-  const [display, setDisplay] = useState(value);
-  useEffect(() => {
-    if (value === display) return;
-    const from = display;
-    const diff = value - from;
-    const duration = 1500;
-    const t0 = performance.now();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const step = () => {
-      const p = Math.min(1, (performance.now() - t0) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + diff * eased));
-      if (p < 1) timer = setTimeout(step, 33);
-    };
-    step();
-    return () => { if (timer) clearTimeout(timer); };
-    // We intentionally exclude `display` from deps — including it would
-    // restart the animation on every frame.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-  return <span>{display.toLocaleString()}{suffix ?? ""}</span>;
+  void value; void suffix;
+  // Previously animated counters for the desktop ad-board's stat tiles.
+  // The new desktop rider is a real intro page; the live counters are now
+  // rendered by the rAF loop in DashboardV2, where they belong. This is a
+  // 0-byte no-op kept as a stable export so any future surface can import
+  // it without surprising behavior. If unused in a tree-shaken bundle, the
+  // build will drop it.
+  return null;
 }
 
 /* ── Live stats for landing page (animated, dynamic, alive) ──
@@ -416,38 +387,11 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) 
  *  from the same struct so the bus count on the badge always equals
  *  the bus count on the right-bar widget. */
 function LiveStatsWidget() {
-  const [headline, setHeadline] = useState(() => getHeadlineMetrics());
-  useEffect(() => {
-    const id = setInterval(() => setHeadline(getHeadlineMetrics()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const riders = headline.today.paxDelivered;
-  const co2 = headline.today.co2SavedKg;
-  const co2Label = co2 >= 1000 ? `${(co2 / 1000).toFixed(1)}t` : `${Math.round(co2)} kg`;
-  const stats = { riders, buses: headline.fleet.totalBuses, co2, onTime: headline.onTimePct };
-
-  return (
-    <div className="live-stats">
-      <div className="live-stat">
-        <span className="live-stat__val"><AnimatedCounter value={stats.riders} /></span>
-        <span className="live-stat__label">Modelled riders today</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val"><span className="live-pulse" /><AnimatedCounter value={stats.buses} /></span>
-        <span className="live-stat__label">Scheduled buses active</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val"><AnimatedCounter value={stats.onTime} suffix="%" /></span>
-        <span className="live-stat__label">Modelled buses moving now</span>
-      </div>
-      <div className="live-stat">
-        <span className="live-stat__val">{co2Label}</span>
-        <span className="live-stat__label">Modelled CO₂ saving</span>
-      </div>
-      <p className="live-stats__source">Source: published timetable + demand simulation · not passenger counts</p>
-    </div>
-  );
+  // Used as a stat tile on /desktop pre-shell-pulse; no longer mounted on the
+  // new desktop rider. Kept available because V2Shared.test and other specs
+  // import the engine function `getHeadlineMetrics` via this path; deleting it
+  // here would break a couple of import-only references. Inline no-op.
+  return null;
 }
 
 function TouristApp({ onToggle }: { onToggle: () => void }) {
