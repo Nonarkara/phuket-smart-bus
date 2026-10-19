@@ -12,6 +12,7 @@
  *   5. Field notes — one chronological chronicle (journey, toolkit, system, people) + sources
  */
 
+import { VisitorPrivacyNotice } from "../VisitorPrivacyNotice";
 import { useEffect, useState, type ReactNode } from "react";
 import { LandingPage } from "./LandingPage";
 import { PhuketContext } from "./PhuketContext";
@@ -194,6 +195,7 @@ export default function ToolkitHub() {
             Research asks why. Building finds out.{" "}
             <a href={BUS_URL}>See what is already running <span>↗</span></a>
           </p>
+          <VisitorPrivacyNotice />
         </div>
       </footer>
     </div>

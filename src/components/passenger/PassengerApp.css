@@ -643,6 +643,24 @@ body.passenger-site-mode #root {
   color: var(--pa-red);
 }
 
+/* The visitor-tracker disclosure. It is a paragraph of prose, so it gets a
+   readable measure rather than the footer's centred run-on. */
+.pa-privacy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pa-muted);
+  max-width: 68ch;
+  text-align: left;
+}
+.pa-privacy strong { color: var(--pa-ink); }
+.pa-privacy--compact {
+  margin: 4px auto 0;
+  text-align: center;
+  max-width: 46ch;
+  font-size: 11px;
+}
+
 @media (max-width: 430px) {
   .pa-home { gap: 20px; }
   .pa-countdown { padding: 22px 0 18px; }

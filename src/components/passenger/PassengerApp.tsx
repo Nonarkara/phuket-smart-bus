@@ -19,6 +19,7 @@
  * should never require the rider to think about the operator.
  */
 
+import { VisitorPrivacyNotice } from "../VisitorPrivacyNotice";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPublishedAirportDepartures, getPublishedTravelMinutesFromAirport } from "../../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../../engine/time";
@@ -376,6 +377,7 @@ export function PassengerApp() {
         <a href="https://depa-usdot.nonarkara.org/" className="pa-footer__link">
           How this system was built
         </a>
+        <VisitorPrivacyNotice compact />
       </footer>
     </div>
   );
