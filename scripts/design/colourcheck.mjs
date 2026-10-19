@@ -1,8 +1,8 @@
 // Whole-site accent-family sweep: every route, every colour property,
 // every state the page can be in.
 //
-// Two lessons are baked into this file, both learned from a probe that gave
-// a FALSE PASS:
+// Three lessons are baked into this file, all learned from a probe that
+// gave a FALSE PASS:
 //
 //   1. CLICK INTO THE CONTROLS. A colour can live in a state the page is
 //      not in when it loads. The rider's /pass page opens on the "day"
@@ -13,10 +13,15 @@
 //      textDecorationColor, columnRuleColor and caretColor all inherit
 //      currentColor, so one blue on one element was counted ten times and
 //      the totals were unreadable.
+//   3. READ THE SVG. The toolkit's system map draws its four marine ferry
+//      routes as SVG strokes, so a probe that only read CSS properties
+//      called the toolkit clean while a marine blue sat on the page ten
+//      times over. A colour is a colour whether CSS or SVG painted it.
 //
-//   Also: an image's height attribute becomes the used CSS height, so
-//   width:100% distorts a portrait. Not this file's job, but the same
-//   habit of "the declaration looks right, the render does not" applies.
+// The summary is GLOBAL: one row per distinct blue across the whole site,
+// with the routes it appears on and how many elements carry it. A per-route
+// sum cannot answer "how many blues are left", which is the only question
+// the record in STYLE.md asks.
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE || "http://localhost:4399";
@@ -29,6 +34,8 @@ const PROPS = [
   "color", "backgroundColor",
   "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
   "outlineColor", "textDecorationColor", "columnRuleColor", "caretColor",
+  // SVG paint
+  "stroke", "fill",
 ];
 // Controls that change the page's state without navigating.
 const CONTROLS = [
@@ -42,16 +49,20 @@ const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWo
 const p = await c.newPage();
 
 const SCAN = (props) => {
-  const hits = new Map(); // "value -> [elements]"
+  const hits = new Map(); // "value -> Set(elements)"
   const isBlue = (r, g, b) => b > 120 && b - r > 40 && b - g > 25;
   const label = (e) =>
     e.tagName.toLowerCase() +
     (typeof e.className === "string" && e.className.trim()
       ? "." + e.className.trim().split(/\s+/).slice(0, 2).join(".")
-      : "");
+      : "") +
+    (e.getAttribute && e.getAttribute("stroke") ? " [stroke]" : "") +
+    (e.getAttribute && e.getAttribute("fill") ? " [fill]" : "");
   for (const e of document.querySelectorAll("*")) {
     const cs = getComputedStyle(e);
     if (cs.visibility === "hidden" || cs.display === "none") continue;
+    // An SVG element with neither a stroke nor a fill paints nothing.
+    if (e.namespaceURI === "http://www.w3.org/2000/svg" && cs.stroke === "none" && cs.fill === "none") continue;
     const lb = label(e);
     const txt = (e.textContent || "").trim().slice(0, 26).replace(/\s+/g, " ");
     const add = (prop, v) => {
@@ -77,7 +88,7 @@ const SCAN = (props) => {
   return [...hits.entries()].map(([val, els]) => ({ val, els: [...els] }));
 };
 
-let total = 0;
+const global = new Map(); // value -> { routes:Set, els:Set }
 for (const route of ROUTES) {
   await p.goto(BASE + route, { waitUntil: "load", timeout: 30000 });
   await p.waitForTimeout(3000);
@@ -90,7 +101,11 @@ for (const route of ROUTES) {
     return set.size;
   }, CONTROLS);
   for (let i = 0; i < n; i++) {
-    await p.evaluate((sel, idx) => {
+    // page.evaluate() takes ONE argument. Passing (sel, idx) silently drops
+    // idx, so the index was undefined and NO CONTROL WAS EVER CLICKED —
+    // the sweep measured the loaded state only, on every route, and called
+    // itself clean. The argument is one object for exactly that reason.
+    await p.evaluate(({ sel, idx }) => {
       const set = [];
       const seen = new Set();
       for (const s of sel) for (const e of document.querySelectorAll(s)) {
@@ -99,7 +114,7 @@ for (const route of ROUTES) {
         set.push(e);
       }
       set[idx]?.click();
-    }, CONTROLS, i).catch(() => {});
+    }, { sel: CONTROLS, idx: i }).catch(() => {});
     await p.waitForTimeout(900);
     states.push(await p.evaluate(SCAN, PROPS));
   }
@@ -109,14 +124,21 @@ for (const route of ROUTES) {
     if (!merged.has(h.val)) merged.set(h.val, new Set());
     for (const e of h.els) merged.get(h.val).add(e);
   }
-  if (!merged.size) { console.log(`${route.padEnd(13)} CLEAN (${n} controls exercised)`); continue; }
-  total += merged.size;
-  console.log(`\n${route} — ${merged.size} distinct blue value(s), ${n} controls exercised`);
+  const routes = [...merged.keys()].length;
   for (const [val, els] of merged) {
-    console.log(`   ${val}`);
-    for (const e of [...els].slice(0, 4)) console.log(`      ${e}`);
+    if (!global.has(val)) global.set(val, { routes: new Set(), els: new Set() });
+    global.get(val).routes.add(route);
+    for (const e of els) global.get(val).els.add(e);
   }
+  console.log(`${route.padEnd(13)} ${routes} blue value(s), ${n} controls exercised`);
 }
-console.log(`\n=== DISTINCT BLUE VALUES: ${total} ===`);
+
+console.log(`\n=== DISTINCT BLUE VALUES ACROSS ${ROUTES.length} ROUTES: ${global.size} ===`);
+for (const [val, info] of [...global.entries()].sort()) {
+  console.log(`\n  ${val}`);
+  console.log(`    routes : ${[...info.routes].join(" ")}`);
+  console.log(`    elements: ${info.els.size}`);
+  for (const e of [...info.els].slice(0, 6)) console.log(`      ${e}`);
+}
 await b.close();
-process.exit(total ? 1 : 0);
+process.exit(global.size ? 1 : 0);

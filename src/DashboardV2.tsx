@@ -568,7 +568,7 @@ export default function DashboardV2() {
             onOpenDayReport={() => setIsReportOpen(true)}
             supplyLabel={Object.keys(measured).length ? supplyLabel : null}
             supplyTitle={ranOn
-              ? `Airport line runs the ${ranOn.southbound.length} departures from the airport and ${ranOn.northbound.length} trips to it that the trackers recorded on ${ranOn.date} (complete trips only; published timetable: ~25 each way). Click for the timetable.`
+              ? `Airport line runs the ${ranOn.southbound.length} departures from the airport and ${ranOn.northbound.length} trips to it that the trackers recorded on ${ranOn.date} (complete trips only; the published timetable has 20 each way). Click for the timetable.`
               : "Airport line runs the published PKSB timetable. Click for the departures the real buses made."}
             onToggleSupply={() => setSupplyMode((m) => (m === "ran" ? "timetable" : "ran"))}
           />

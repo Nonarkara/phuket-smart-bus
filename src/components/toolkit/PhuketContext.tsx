@@ -115,12 +115,12 @@ const AIRPORT_CITATIONS: Citation[] = [
   },
   {
     text: "C9 Hotelworks — “Phuket Hotel & Tourism Update,”",
-    meta: "March 2026. 17.4M pax in 2025 (96.44% of 2019 pre-pandemic); 50,431 flight arrivals; airport operating at 39% above its 12.5M designed capacity (cap exceeded in 2015).",
+    meta: "March 2026. C9 reports 17.4M pax in 2025 and the airport at 39% above its 12.5M designed capacity (cap exceeded in 2015). AOT's own Air Traffic Report 2025 gives 17,474,051 and 40% over; this site uses AOT's figure.",
     href: "https://c9hotelworks.com/wp-content/uploads/2026/03/Phuket-Hotel-Tourism-Update.pdf"
   },
   {
     text: "The Thaiger — “Phuket Airport sees flight and passenger surge in 2025 recovery,”",
-    meta: "106,581 flights in 2025 (48,762 domestic + 57,819 international). 1.5% rise from 2024's 17.2M pax.",
+    meta: "106,581 flights in 2025 (48,762 domestic + 57,819 international), a 1.5% rise from 2024's 17.2M pax. AOT's own Air Traffic Report 2025 gives 106,585 (48,761 + 57,824) — the same rise, four movements apart.",
     href: "https://thethaiger.com/news/national/phuket-airport-sees-flight-and-passenger-surge-in-2025-recovery"
   },
   {
@@ -135,8 +135,8 @@ const AIRPORT_CITATIONS: Citation[] = [
  * ----------------------------------------------------------------------- */
 
 const HEADLINE_STATS: Stat[] = [
-  { value: "17.4M", label: "passengers through HKT in 2025", note: "96.4% of 2019 peak" },
-  { value: "+39%", label: "above HKT's designed capacity", note: "12.5M cap. exceeded in 2015" },
+  { value: "17.5M", label: "passengers through HKT in 2025", note: "96.4% of 2019 peak" },
+  { value: "+40%", label: "above HKT's designed capacity", note: "12.5M cap. exceeded in 2015" },
   { value: "547 km²", label: "Phuket province area", note: "786 people per km²" },
   { value: "2,200 mm", label: "annual rainfall", note: "70% in May–Oct monsoon" }
 ];
@@ -341,8 +341,8 @@ function LegacyPhuketMap() {
         {/* HKT airport */}
         <circle cx="335" cy="80" r="5" fill="var(--tk-red)" />
         <text x="343" y="78" fontSize="11" fontWeight="700" fill="var(--tk-red)">HKT · Airport</text>
-        <text x="343" y="91" fontSize="9" fill="#111820">17.4M pax / 2025</text>
-        <text x="343" y="102" fontSize="9" fill="#111820">+39% over designed capacity</text>
+        <text x="343" y="91" fontSize="9" fill="#111820">17.5M pax / 2025</text>
+        <text x="343" y="102" fontSize="9" fill="#111820">+40% over designed capacity</text>
 
         {/* Thalang town */}
         <circle cx="295" cy="115" r="3" fill="#111820" />
@@ -732,9 +732,9 @@ export function PhuketContext({ lang = "en" }: { lang?: Lang }) {
         citations={AIRPORT_CITATIONS}
       >
         <p>
-          17.4 million passengers in 2025 — 96.4% of the 2019 record, split <strong>10.0 million
-          international</strong> to <strong>6.6 million domestic</strong>, over 106,581 flights both
-          ways. Second-busiest airport in Thailand now, after Bangkok Don Mueang.
+          17.47 million passengers in 2025 — 96.4% of the 2019 record, split <strong>10.84 million
+          international</strong> to <strong>6.64 million domestic</strong>, over 106,585 aircraft
+          movements both ways. Second-busiest airport in Thailand now, after Bangkok Don Mueang.
         </p>
         <p>
           The nationalities (immigration data, 2025) are the basis for the
@@ -749,7 +749,7 @@ export function PhuketContext({ lang = "en" }: { lang?: Lang }) {
         <p>
           The runway constraint is the one that won't fix itself.
           <strong> 12.5 million designed capacity, last expanded in 2015.
-          </strong> The 17.4 M pax total is a 39% overshoot. A second
+          </strong> The 17.47 M pax total is a 40% overshoot. A second
           runway is mooted but unscheduled. So the same terminal keeps
           absorbing the same demand — and the curb at the front of it keeps
           asking what to do with the people who just walked out.

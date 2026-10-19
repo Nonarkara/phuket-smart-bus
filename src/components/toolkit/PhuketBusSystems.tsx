@@ -26,7 +26,8 @@ const BUS_CITATIONS: Citation[] = [
   },
   {
     text: "Phuket Smart Bus — official PKSB timetable (effective 18 Jan 2025),",
-    meta: "Rawai Beach ↔ Phuket Airport: ~25 departures/day each direction published; the model runs on the 20 in src/data/timetables/rawai-to-airport.json. First southbound 08:15, last 23:30. First northbound 05:30, last 19:30. ~95 min trip, ฿100 flat fare.",
+
+    meta: "Rawai Beach ↔ Phuket Airport: 20 departures a day each direction. From the airport 08:15 to 23:30; to it 05:30 to 19:30 — the first two northbound trips start at Kata Palm, not Rawai. ~95 min trip, ฿100 flat fare.",
     href: "https://bus.nonarkara.org/"
   },
   {
@@ -154,9 +155,10 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
         ))}
       </div>
 
-      {/* The timetable itself. The "20" above is the number the model runs on
-          and the published schedule says ~25 — a reader who distrusts either
-          number can check the document the operator publishes. */}
+
+      {/* The timetable itself. The "20" above is a published figure, and a
+          reader who distrusts it can check the document the operator
+          publishes. */}
       <figure className="pb-evidence">
         <img
           src={`${import.meta.env.BASE_URL}toolkit/evidence/pksb-timetable-2025-01-18.webp`}
@@ -171,11 +173,13 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
         <figcaption>
           <strong>PKSB official timetable, effective 18 January 2025.</strong>{" "}
           The scan the &ldquo;20 departures&rdquo; figure is read from. The
-          published schedule lists around 25 a day each way; the model runs on
-          the 20 in{" "}
-          <code>src/data/timetables/rawai-to-airport.json</code>. Both numbers
-          are on this page because they are different numbers, not because
-          one of them is wrong.
+
+          published schedule lists 20 departures a day from the airport
+          (08:15 to 23:30) and 20 a day to it (05:30 to 19:30) — the first
+          two of those start at Kata Palm, not Rawai. The model runs on exactly
+          these trips, transcribed into{" "}
+          <code>src/data/timetables/</code>. The figure is here so a reader can
+          check it.
         </figcaption>
       </figure>
 

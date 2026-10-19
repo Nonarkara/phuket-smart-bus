@@ -457,7 +457,7 @@ export const PB: Record<string, Entry> = {
   pbStat1Label: e("formal bus operators in Phuket", "ผู้ประกอบการรถบัสทางการในภูเก็ต", "普吉的正式巴士运营商", "푸껫의 공식 버스 운영사"),
   pbStat1Note: e("PKCD/PKSB \u00b7 Phuket Mahanakorn \u00b7 Orange Line", "PKCD/PKSB \u00b7 ภูเก็ตมหานคร \u00b7 สายส้ม", "PKCD/PKSB \u00b7 普吉马哈纳空 \u00b7 橙线", "PKCD/PKSB \u00b7 푸껫 마하나콘 \u00b7 오렌지 라인"),
   pbStat2Label: e("daily Airport Line departures (each direction)", "เที่ยวรถสายสนามบินต่อวัน (แต่ละทิศทาง)", "每日机场线出发班次（每个方向）", "일일 공항 노선 출발편 (각 방향)"),
-  pbStat2Note: e("in the model (the published schedule says ~25)", "ในโมเดล (ตารางเวลาที่ประกาศระบุ ~25)", "模型中（公布的时刻表为约25班）", "모델 기준(공식 시간표는 약 25편)"),
+  pbStat2Note: e("PKSB timetable, effective Jan 2025", "ตารางเวลา PKSB มีผล ม.ค. 2025", "PKSB时刻表，2025年1月生效", "PKSB 시간표, 2025년 1월 시행"),
   pbStat3Label: e("flat fare, Airport \u2194 Rawai (95 min)", "ค่าโดยสารราคาเดียว สนามบิน \u2194 ราไวย์ (95 นาที)", "统一票价，机场 ↔ 拉威（95分钟）", "균일 요금, 공항 ↔ 라와이 (95분)"),
   pbStat3Note: e("vs \u0e32600\u20131,200 Grab/taxi", "เทียบกับ \u0e32600\u20131,200 Grab/แท็กซี่", "对比฿600–1,200打车/出租车", "Grab/택시 ฿600–1,200 대비"),
   pbStat4Label: e("Dragon Line average boardings", "การขึ้นรถเฉลี่ยสายมังกร", "龙线平均上车人数", "드래곤 라인 평균 승차"),
@@ -564,10 +564,10 @@ export const PB: Record<string, Entry> = {
     "정부의 오렌지 라인(노선 8411)은 공항 → 푸껫 타운을 ฿85–100에 운행. 가장 저렴한 공식 옵션. 하지만 푸껫 타운 버스 터미널 1에 정차 — 파통, 카타, 카론, 라와이에는 않음, 관광객 60% 이상이 머무는 곳. HKT에 도착해 파통으로 가는 관광객은: ฿85 오렌지 라인으로 터미널 1, 그리고 ฿400+ 송태우 또는 Grab으로 파통. 합계: ~฿500 및 환승 2회."
   ),
   pbGapBody2: e(
-    "PKSB's Airport Line goes directly to Patong for \u0e32100. That is the structural advantage \u2014 and the structural question: can the direct service capture enough of the 17.4M annual HKT passengers to justify the fleet? The USASCP survey found the answer is yes, if the service is reliable, information is clear and the last-mile connection is solved. The engine models exactly that.",
-    "สายสนามบินของ PKSB ไปป่าตองโดยตรงในราคา \u0e32100 นั่นคือข้อได้เปรียบเชิงโครงสร้าง \u2014 และคำถามเชิงโครงสร้าง: บริการตรงดึงผู้โดยสาร HKT ปีละ 17.4M ได้พอ justify กองยานพาหนะไหม? การสำรวจ USASCP พบว่าคำตอบคือใช่ ถ้าบริการน่าเชื่อถือ ข้อมูลชัดเจน และการเชื่อมต่อไมล์สุดท้ายได้รับการแก้ เครื่องยนต์จำลองสิ่งนั้น",
-    "PKSB的机场线直达芭东，฿100。这是结构性优势——也是结构性问题：直达服务能否吸引足够的1740万年HKT旅客来证明车队的合理性？USASCP调查发现答案是可以，如果服务可靠、信息清晰且最后一英里连接得到解决。引擎正是模拟这一点。",
-    "PKSB의 공항 노선은 ฿100에 파통으로 직행. 그것이 구조적 이점 — 그리고 구조적 질문: 직행 서비스가 연간 1740만 HKT 승객 중 충분히 유치하여 차량 대열을 정당화할 수 있는가? USASCP 조사는 답이 '그렇다'고 밝혔습니다, 서비스가 신뢰할 수 있고, 정보가 명확하며, 라스트 마일 연결이 해결된다면. 엔진은 정확히 그것을 모델링합니다."
+    "PKSB's Airport Line goes directly to Patong for \u0e32100. That is the structural advantage \u2014 and the structural question: can the direct service capture enough of the 17.5M annual HKT passengers to justify the fleet? The USASCP survey found the answer is yes, if the service is reliable, information is clear and the last-mile connection is solved. The engine models exactly that.",
+    "สายสนามบินของ PKSB ไปป่าตองโดยตรงในราคา \u0e32100 นั่นคือข้อได้เปรียบเชิงโครงสร้าง \u2014 และคำถามเชิงโครงสร้าง: บริการตรงดึงผู้โดยสาร HKT ปีละ 17.5M ได้พอ justify กองยานพาหนะไหม? การสำรวจ USASCP พบว่าคำตอบคือใช่ ถ้าบริการน่าเชื่อถือ ข้อมูลชัดเจน และการเชื่อมต่อไมล์สุดท้ายได้รับการแก้ เครื่องยนต์จำลองสิ่งนั้น",
+    "PKSB的机场线直达芭东，฿100。这是结构性优势——也是结构性问题：直达服务能否吸引足够的1750万年HKT旅客来证明车队的合理性？USASCP调查发现答案是可以，如果服务可靠、信息清晰且最后一英里连接得到解决。引擎正是模拟这一点。",
+    "PKSB의 공항 노선은 ฿100에 파통으로 직행. 그것이 구조적 이점 — 그리고 구조적 질문: 직행 서비스가 연간 1750만 HKT 승객 중 충분히 유치하여 차량 대열을 정당화할 수 있는가? USASCP 조사는 답이 '그렇다'고 밝혔습니다, 서비스가 신뢰할 수 있고, 정보가 명확하며, 라스트 마일 연결이 해결된다면. 엔진은 정확히 그것을 모델링합니다."
   ),
   pbPksbLabel: e("PKSB Airport Line", "สายสนามบิน PKSB", "PKSB机场线", "PKSB 공항 노선"),
   pbPksbNote: e("HKT \u2192 Patong direct \u00b7 95 min \u00b7 0 transfers", "HKT \u2192 ป่าตองตรง \u00b7 95 นาที \u00b7 ต่อ 0 ครั้ง", "HKT → 芭东直达 · 95分钟 · 0次换乘", "HKT → 파통 직행 · 95분 · 환승 0회"),

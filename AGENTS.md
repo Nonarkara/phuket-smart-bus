@@ -130,7 +130,7 @@ INBOUND (arriving pax ride out):
         Middle East 3% (private vans)
         Other 4%
   → Fleet-wide weighted average ≈ 5% (operator's planning figure)
-  → Buses depart on PKSB timetable (~25 daily airport departures, capacity 25)
+  → Buses depart on PKSB timetable (20 daily airport departures, capacity 25)
   → Queue FIFO with 60-min patience; abandoned → Grab (counted as missed ฿100s)
   → Boarded pax delivered progressively along the route
   → Revenue = delivered × ฿100
@@ -180,9 +180,9 @@ Buses follow the **actual road polyline geometry** (3,944 points for the Airport
 
 ### Bus Timetable (Official PKSB, effective 18 Jan 2025)
 
-**Rawai Beach → Phuket Airport (northbound)**: ~25 departures/day, first 05:30, last 19:30, ~95 min trip. This is the corridor the return-leg engine uses — departing pax who must reach the airport 1h before takeoff bid onto these buses in reverse deadline order.
+**Rawai Beach → Phuket Airport (northbound)**: 20 departures/day, first 05:30, last 19:30, ~95 min trip. The first two of them start at Kata Palm, not Rawai Beach. This is the corridor the return-leg engine uses — departing pax who must reach the airport 1h before takeoff bid onto these buses in reverse deadline order.
 
-**Phuket Airport → Rawai Beach (southbound)**: ~25 departures/day, first 08:15, last 23:30, ~95 min trip. This is the corridor the inbound queue uses — arriving pax board FIFO from the curb.
+**Phuket Airport → Rawai Beach (southbound)**: 20 departures/day, first 08:15, last 23:30, ~95 min trip. This is the corridor the inbound queue uses — arriving pax board FIFO from the curb.
 
 The same 10 vehicles (กข 1001–1010) rotate through both directions; the duty cycle is ~210 min per bus (95 min trip + 95 min layover + 20 min buffer at the airport curb).
 

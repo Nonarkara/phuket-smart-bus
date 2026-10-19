@@ -230,6 +230,14 @@
 .fc-lessons li strong { font-size: 1.02rem; }
 .fc-lessons li p { color: var(--tk-muted); font-size: 0.88rem; line-height: 1.5; }
 
+/* The published timetable, scanned. It is the evidence for the "20
+   departures" figure, so it has to be readable, not distorted. */
+.pb-evidence { margin: 48px 0; }
+.pb-evidence img { width: 100%; height: auto; }
+.pb-evidence figcaption { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--tk-muted); max-width: 65ch; }
+.pb-evidence figcaption strong { color: var(--tk-ink); }
+.pb-evidence figcaption code { font-family: var(--font-code); font-size: 0.9em; }
+
 .pb-operators { margin-bottom: 60px; }
 .pb-operator { border: 1px solid var(--tk-ink); margin-bottom: 16px; }
 .pb-operator header { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--tk-line); }

@@ -107,7 +107,7 @@ were leaking; this pass closes the sharpest holes.
 - [x] /ops simulation runs the Airport line as it actually ran (latest same-weekday record); AS RAN ⇄ TIMETABLE switch; ±N re-runs compare against reality
 - [x] Reload once on a post-deploy chunk 404 (a stale tab went blank)
 - [x] Verified live: phone board + map at 375 px; /ops toggle changes collected 225 ⇄ 325 at 12:02 Sun with demand unchanged (1,937); 10 routes render with no errors; gates 403/200/403/403
-- Finding for PKSB: 13–20 complete trips/day each way vs ~25 published; median trip 120–137 min vs 95
+- Finding for PKSB: 13–20 complete trips/day each way vs 20 published; median trip 120–137 min vs 95
 
 ### Still open
 - Rider ETA ignores dwell and the turnaround leg (per-stop medians next)

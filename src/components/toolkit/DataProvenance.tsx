@@ -39,8 +39,8 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "HKT passenger movements 2025",
-    figure: "17.5M passenger movements · 106,585 aircraft movements (a secondary source, C9 Hotelworks, reports 17.4M — the two published figures differ by 0.1M and this page uses the AOT figure)",
-    source: "Airports of Thailand (AOT) — Annual Report 2025",
+    figure: "17,474,051 (10,837,291 international + 6,636,760 domestic) over 106,585 aircraft movements. A secondary source (C9 Hotelworks) reports 17.4M — the two published figures differ by 0.1M and this page uses AOT's.",
+    source: "Airports of Thailand (AOT) — Air Traffic Report 2025",
     sourceHref: "https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf",
     verified: "2026-07-15",
     freshness: "Annual"
@@ -95,7 +95,7 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "PKSB Airport Line timetable",
-    figure: "≈ 25 departures/day published (PKSB schedule, effective 18 Jan 2025) · first 05:30 · last 23:30 · 95 min trip. The model runs on the 20 departures in src/data/timetables/rawai-to-airport.json, and the recorded fleet ran 13–20 complete trips each way on 2–16 Oct.",
+    figure: "20 departures a day from the airport (08:15–23:30) · 20 a day to it (05:30–19:30) · ~95 min trip. The model runs on exactly these trips, transcribed into src/data/timetables/, and the recorded fleet ran 13–20 complete trips each way on 2–16 Oct.",
     source: "Phuket Smart Bus Co. (PKSB) · official schedule",
     sourceHref: "https://www.pkbsbus.com/",
     verified: "2026-07-15",

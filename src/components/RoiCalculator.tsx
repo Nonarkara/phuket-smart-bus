@@ -13,6 +13,20 @@ import { appPath } from "../lib/paths";
 
 type TabMode = "banker_bi" | "live_operations" | "pilot_proforma";
 
+/**
+ * Each tab states its own basis, and the header says which one is on
+ * screen. One page cannot wear one provenance label: the banker tab is a
+ * model, the tracker tab reads the operator's feed, and the pilot tab is a
+ * pro-forma. A figure that is modelled inside the tracker tab carries its
+ * own MODELLED label, so the observed half and the modelled half never
+ * share one.
+ */
+const TAB_BASIS: Record<TabMode, string> = {
+  banker_bi: "Modelled from the PKSB timetable and the engine's own cost model",
+  live_operations: "Observed from the PKSB live GPS trackers",
+  pilot_proforma: "Pro-forma model for a software-only pilot",
+};
+
 interface RealDaySummary {
   date: string;
   totalKmTracked: number | null;
@@ -94,9 +108,7 @@ export function RoiCalculator() {
     <div className="roi-page">
       {/* Header */}
       <header className="roi-header">
-        <div className="roi-header__eyebrow">
-          Modelled from the PKSB timetable and the engine's own cost model
-        </div>
+        <div className="roi-header__eyebrow">{TAB_BASIS[activeTab]}</div>
         <h1 className="roi-header__title">Phuket Smart Bus — Financial Intelligence</h1>
         <p className="roi-header__subtitle">
           Transparent unit economics, fuel expense analysis, corridor trip breakeven, and debt service coverage for PKSB
@@ -588,12 +600,12 @@ export function RoiCalculator() {
                 </div>
 
                 <div className="roi-real-card">
-                  <span className="roi-real-card__label">ESTIMATED DIESEL BURN</span>
+                  <span className="roi-real-card__label">MODELLED DIESEL BURN</span>
                   <strong className="roi-real-card__value text-warn">
                     {(((yesterdayRealDay?.totalKmTracked ?? 1464)) / fuelInputs.fuelEfficiencyKmPerLiter).toFixed(0)} Liters
                   </strong>
                   <small>
-                    ฿
+                    Tracked km ÷ your {fuelInputs.fuelEfficiencyKmPerLiter} km/L · ฿
                     {(
                       (((yesterdayRealDay?.totalKmTracked ?? 1464)) / fuelInputs.fuelEfficiencyKmPerLiter) *
                       fuelInputs.fuelPricePerLiterTHB
@@ -603,11 +615,13 @@ export function RoiCalculator() {
                 </div>
 
                 <div className="roi-real-card">
-                  <span className="roi-real-card__label">CORRIDOR REVENUE POTENTIAL</span>
+                  <span className="roi-real-card__label">MODELLED REVENUE POTENTIAL</span>
                   <strong className="roi-real-card__value text-gain">
                     ฿{((yesterdayRealDay?.totalRuns ?? 65) * commInputs.avgPaxPerTrip * commInputs.fareTHB).toLocaleString()}
                   </strong>
-                  <small>At calibrated {commInputs.avgPaxPerTrip} pax/run @ ฿100 fare</small>
+                  <small>
+                    Observed runs × your {commInputs.avgPaxPerTrip} pax/run @ ฿{commInputs.fareTHB} fare
+                  </small>
                 </div>
               </div>
             )}
@@ -788,8 +802,8 @@ export function RoiCalculator() {
       <footer className="roi-foot">
         <a href={appPath("/")} className="roi-back">← Back to live system</a>
         <span className="roi-foot__legal">
-          Phuket Smart Bus Financial Intelligence. Observed metrics derived from live GPS trackers. Pro-forma model
-          subject to fuel market rates and audited financial statements.
+          Phuket Smart Bus Financial Intelligence. Tracker figures are observed. The financial model is pro-forma,
+          subject to fuel market rates and to the assumptions shown.
         </span>
       </footer>
     </div>
