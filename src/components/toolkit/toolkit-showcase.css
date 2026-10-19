@@ -33,10 +33,19 @@ html.toolkit-site-mode #root {
 .toolkit-site * { box-sizing: border-box; }
 .toolkit-site a { color: inherit; }
 .toolkit-site p { margin: 0; }
+/* THE TYPE RULE (STYLE.md): display face under 40px must be 400 or 500.
+   600+ below 40px is the blob — the "fat ugly font" in the rider's hand.
+   So the base heading weight is 500, and a rule that overrides font-size
+   DOWNWARD MUST ALSO DECLARE ITS OWN font-weight, or it inherits 700
+   from the rule below. Every heading rule in this file and in
+   toolkit-hub.css that can fall under 40px declares font-weight: 500
+   explicitly. The rules that keep 700 are the ones whose clamp floor is
+   40px or more at every breakpoint. scripts/design/typeaudit2.mjs checks
+   all 18 routes at 1440 AND 390 — the 390 pass is what catches these. */
 .toolkit-site h1,
 .toolkit-site h2,
-.toolkit-site h3 { margin: 0; font-family: var(--font-display); font-weight: 700; line-height: 0.95; }
-.toolkit-site h2 { font-size: clamp(2.7rem, 5.6vw, 6rem); letter-spacing: -0.055em; text-wrap: balance; }
+.toolkit-site h3 { margin: 0; font-family: var(--font-display); font-weight: 500; line-height: 0.95; }
+.toolkit-site h2 { font-weight: 700; font-size: clamp(2.7rem, 5.6vw, 6rem); letter-spacing: -0.055em; text-wrap: balance; }
 .toolkit-site h3 { font-weight: 500; font-size: clamp(1.45rem, 2.1vw, 2rem); letter-spacing: -0.03em; }
 .toolkit-site img { display: block; width: 100%; }
 .toolkit-site ::selection { color: #fff; background: var(--tk-red); }
@@ -78,7 +87,7 @@ html.toolkit-site-mode #root {
   text-transform: uppercase;
 }
 
-.tk-hero h1 {
+.tk-hero h1 { font-weight: 700;
   max-width: 920px;
   margin: auto 0;
   font-size: clamp(4.8rem, 9vw, 10.2rem);
@@ -106,12 +115,12 @@ html.toolkit-site-mode #root {
 .tk-brief__evidence article { display: flex; min-height: 410px; flex-direction: column; padding: 24px; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); }
 .tk-brief__evidence article > span { color: var(--tk-red); font: 700 10px/1.2 var(--font-body); text-transform: uppercase; }
 .tk-brief__evidence article > strong { margin: 48px 0 18px; font: 500 clamp(2rem, 3.4vw, 3.7rem)/0.95 var(--font-display); letter-spacing: -0.05em; }
-.tk-brief__evidence article h3 { font-size: 1.25rem; line-height: 1.05; }
+.tk-brief__evidence article h3 { font-weight: 500; font-size: 1.25rem; line-height: 1.05; }
 .tk-brief__evidence article p { margin-top: 18px; color: var(--tk-muted); font-size: 14px; line-height: 1.55; }
 .tk-brief__evidence article a { margin-top: auto; padding-top: 24px; color: var(--tk-red); font-size: 13px; font-weight: 700; text-decoration: none; }
 .tk-brief__evidence article:hover { color: #fff; background: var(--tk-ink); }
 .tk-brief__evidence article:hover p { color: rgba(255,255,255,0.68); }
-.tk-brief__challenge h3 { max-width: 13ch; margin-top: 18px; font-size: clamp(1.8rem, 3vw, 3.2rem); }
+.tk-brief__challenge h3 { font-weight: 500; max-width: 13ch; margin-top: 18px; font-size: clamp(1.8rem, 3vw, 3.2rem); }
 .tk-brief__challenge ul { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 28px; margin: 0; padding: 0; list-style: none; counter-reset: challenge; }
 .tk-brief__challenge li { position: relative; min-height: 96px; padding: 17px 0 17px 42px; border-top: 1px solid var(--tk-line); color: var(--tk-muted); font-size: 15px; counter-increment: challenge; }
 .tk-brief__challenge li::before { position: absolute; left: 0; color: var(--tk-red); content: counter(challenge, decimal-leading-zero); font: 700 11px/1.5 var(--font-body); }
@@ -151,7 +160,7 @@ html.toolkit-site-mode #root {
 .tk-vegas img { flex: 1; min-height: 0; object-fit: cover; }
 .tk-vegas figcaption { padding: 10px 14px; color: rgba(255,255,255,0.6); font-size: 11px; background: var(--tk-ink); }
 .tk-vegas__body { padding: 28px; color: var(--tk-ink); background: var(--tk-yellow); }
-.tk-vegas__body h3 { margin-top: 10px; font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
+.tk-vegas__body h3 { font-weight: 500; margin-top: 10px; font-size: clamp(1.3rem, 2.4vw, 1.9rem); }
 .tk-vegas__body > p { max-width: 62ch; margin-top: 12px; color: rgba(17,24,32,0.72); font-size: 14px; }
 .tk-vegas__facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 28px; margin-top: 24px; padding-top: 22px; border-top: 1px solid rgba(17,24,32,0.28); }
 .tk-vegas__facts div { display: flex; flex-direction: column; gap: 4px; }
@@ -402,11 +411,11 @@ html.toolkit-site-mode #root {
 
 @media (max-width: 760px) {
   .toolkit-site { font-size: 16px; }
-  .toolkit-site h2 { font-size: clamp(2.7rem, 15vw, 4.8rem); }
+  .toolkit-site h2 { font-weight: 700; font-size: clamp(2.7rem, 15vw, 4.8rem); }
   .tk-nav__brand span { width: 32px; height: 32px; }
   .tk-nav__brand strong { font-size: 14px; }
   .tk-hero { display: flex; min-height: auto; flex-direction: column; }
-  .tk-hero h1 { margin: 50px 0; font-size: clamp(3.7rem, 16.5vw, 4.8rem); }
+  .tk-hero h1 { font-weight: 700; margin: 50px 0; font-size: clamp(3.7rem, 16.5vw, 4.8rem); }
   .tk-hero__actions a { width: 100%; min-width: 0; }
   .tk-hero__photo figcaption { align-items: start; flex-direction: column; }
   .tk-hero__photo figcaption span { text-align: left; }
@@ -505,7 +514,7 @@ html.toolkit-site-mode #root {
   margin: 0 auto;
   padding: clamp(60px, 9vw, 120px) var(--vc-pad) clamp(24px, 4vw, 56px);
 }
-.vc-section__head h2 {
+.vc-section__head h2 { font-weight: 500;
   max-width: 26ch;
   margin: 12px 0 24px;
   font-size: clamp(2.4rem, 5.4vw, 5.4rem);
@@ -526,7 +535,7 @@ html.toolkit-site-mode #root {
   border-top: 1px solid var(--tk-ink);
   padding-top: 48px;
 }
-.vc-section__divider h3 {
+.vc-section__divider h3 { font-weight: 500;
   font-size: clamp(1.8rem, 3.2vw, 2.8rem);
   letter-spacing: -0.025em;
   margin-top: 8px;
@@ -557,7 +566,7 @@ html.toolkit-site-mode #root {
   letter-spacing: 0.05em;
   color: var(--tk-muted);
 }
-.vc-problem__text h3 {
+.vc-problem__text h3 { font-weight: 500;
   font-size: clamp(1.8rem, 3vw, 2.6rem);
   letter-spacing: -0.02em;
   margin-bottom: 18px;
@@ -582,7 +591,7 @@ html.toolkit-site-mode #root {
   align-items: start;
 }
 .vc-spread .vc-callout { background: var(--tk-blue); color: #fff; padding: 32px; border: 1px solid var(--tk-ink); }
-.vc-callout h3 {
+.vc-callout h3 { font-weight: 500;
   font-size: clamp(1.5rem, 2.4vw, 2.2rem);
   line-height: 1.05;
   margin-bottom: 16px;
@@ -724,7 +733,7 @@ html.toolkit-site-mode #root {
   border-bottom: 1px solid var(--tk-ink);
 }
 .lp-hero__kicker { display: block; margin-bottom: 20px; }
-.lp-hero__title {
+.lp-hero__title { font-weight: 700;
   font-size: clamp(2.55rem, 5.35vw, 5.5rem);
   letter-spacing: -0.045em;
   line-height: 0.95;
@@ -803,7 +812,7 @@ html.toolkit-site-mode #root {
 .lp-btn span { font-variant-numeric: tabular-nums; }
 
 /* REHEARSAL SPINE ------------------------------------------------ */
-.lp-rehearsal__head h2 {
+.lp-rehearsal__head h2 { font-weight: 500;
   margin: 12px 0 0;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   line-height: 1.15;
@@ -831,7 +840,7 @@ html.toolkit-site-mode #root {
 }
 
 /* JAKARTA → JOHOR LOVE STORY ------------------------------------ */
-.lp-journey__copy h2 {
+.lp-journey__copy h2 { font-weight: 500;
   margin: 12px 0 20px;
   font-size: clamp(1.5rem, 2.6vw, 2rem);
   line-height: 1.15;
@@ -901,7 +910,7 @@ html.toolkit-site-mode #root {
   padding: clamp(40px, 7vw, 100px);
 }
 .lp-ton .tk-kicker { color: #f2cf57; }
-.lp-ton h2 {
+.lp-ton h2 { font-weight: 500;
   margin: 18px 0 28px;
   font-size: clamp(1.7rem, 3vw, 2.4rem);
   line-height: 1.12;
@@ -1090,7 +1099,7 @@ html.toolkit-site-mode #root {
   padding: clamp(40px, 5vw, 72px) var(--lp-pad);
 }
 .lp-handover__copy { max-width: 78ch; }
-.lp-handover__copy h2 {
+.lp-handover__copy h2 { font-weight: 500;
   font-size: clamp(2rem, 4.4vw, 4rem);
   letter-spacing: -0.04em;
   line-height: 1.0;
@@ -1182,7 +1191,7 @@ html.toolkit-site-mode #root {
 }
 @media (max-width: 560px) {
   .lp-hero { padding-top: 48px; }
-  .lp-hero__title { font-size: clamp(2.05rem, 10.5vw, 2.7rem); }
+  .lp-hero__title { font-weight: 700; font-size: clamp(2.5rem, 10.5vw, 2.7rem); }
   .lp-hero__status { flex-direction: column; gap: 6px; }
   .lp-card { padding: 24px 20px; }
   .lp-card__head { align-items: center; flex-wrap: wrap; }
@@ -1552,6 +1561,14 @@ html.toolkit-site-mode #root {
 }
 .lst__pill-missed { color: rgba(255, 255, 255, 0.55); }
 .lst__pill-missed.is-alert { color: #ff8b75; }
+/* The dot pulses green only while the tracker is actually answering. When it
+   is not, the dot is a flat grey — the badge must never look live when the
+   feed is down. */
+.lst__pulse.is-off {
+  background: #7c8896;
+  animation: none;
+  box-shadow: none;
+}
 
 /* Expanded detail — a popover above the pill, shown on hover/focus/tap.
    Absolutely positioned so it never affects layout or reserves space. */
@@ -1572,8 +1589,14 @@ html.toolkit-site-mode #root {
   transform: translateY(4px);
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
 }
+/* The panel is a disclosure, not a tooltip: hover previews it, a click PINS
+   it so the reader can move the mouse away and still read it, Escape or a
+   click outside closes it. The keyboard preview uses :focus-visible (not
+   :focus) so a mouse click does not re-open the panel the click just
+   closed. */
 .lst:hover .lst__detail,
-.lst.is-expanded .lst__detail {
+.lst.is-expanded .lst__detail,
+.lst__pill:focus-visible ~ .lst__detail {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);

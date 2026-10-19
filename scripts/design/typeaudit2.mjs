@@ -1,5 +1,24 @@
-// Rendered type inventory + a mechanical check of the new type rule.
-//   BASE=http://localhost:4399 node non-slop-shots/typeaudit2.mjs
+// Rendered type inventory + a mechanical check of the type rule.
+//
+//   BASE=http://localhost:4399 node scripts/design/typeaudit2.mjs
+//
+// Every route is measured at BOTH viewports. The 1440-only pass is how four
+// toolkit headings shipped at display-face 700 under 40px: at desktop they
+// clamp to 48-63px, where 700 is legal, and the phone is where the blob
+// shows up.
+//
+// SIZE-COUNT METHOD (the numbers in STYLE.md come from this file):
+//   - only elements that own a non-whitespace TEXT NODE count toward the
+//     type scale. An element that merely contains text inherits its
+//     parent's font-size and would double-count one physical size.
+//   - sizes are compared at 0.5px resolution (sub-pixel jitter from
+//     viewport rounding collapses), not integer px.
+//   - the count is the number of DISTINCT sizes, per route, per viewport.
+//
+// The rule under test (STYLE.md):
+//   display face  < 18px          -> illegal, body face only
+//   display face  18-39px, w>=600 -> illegal (the blob)
+//   any other face                 -> must be Source Sans 3 / IBM Plex Sans Thai
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE || "https://bus.nonarkara.org";
@@ -11,19 +30,33 @@ const ROUTES = [
   "/stops", "/pass", "/ride", "/compare",
 ];
 
+const VIEWPORTS = [
+  { label: "1440", width: 1440, height: 900 },
+  { label: "390", width: 390, height: 844 },
+];
+
 const INVENTORY = () => {
   const map = new Map();
   const offenders = [];
+  const sizes = new Set();
   for (const e of document.querySelectorAll("*")) {
     const cs = getComputedStyle(e);
     if (!e.textContent || !e.textContent.trim()) continue;
     if (cs.visibility === "hidden" || cs.display === "none" || parseFloat(cs.opacity) < 0.1) continue;
     const r = e.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
+
+    // Owns text? (not merely contains it)
+    const ownsText = [...e.childNodes].some(
+      (n) => n.nodeType === 3 && n.textContent.trim().length > 0
+    );
+
     const fam = cs.fontFamily.split(",")[0].replace(/["']/g, "");
     const w = parseInt(cs.fontWeight, 10) || 400;
-    const size = Math.round(parseFloat(cs.fontSize));
-    map.set(`${fam}|${w}|${size}px`, (map.get(`${fam}|${w}|${size}px`) || 0) + 1);
+    const size = parseFloat(cs.fontSize);
+    const sizeKey = `${Math.round(size * 2) / 2}px`;
+    map.set(`${fam}|${w}|${sizeKey}`, (map.get(`${fam}|${w}|${sizeKey}`) || 0) + 1);
+    if (ownsText) sizes.add(sizeKey);
 
     // THE RULE
     const isDisplay = /Josefin/.test(fam);
@@ -39,33 +72,40 @@ const INVENTORY = () => {
       offenders.push({ rule: "serif leaking", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
     }
   }
-  const sizes = new Set([...map.keys()].map((k) => k.split("|")[2]));
-  return { inv: [...map.entries()].sort((a, b) => b[1] - a[1]), offenders, sizeCount: sizes.size };
+  return {
+    inv: [...map.entries()].sort((a, b) => b[1] - a[1]),
+    offenders,
+    sizeCount: sizes.size,
+    sizes: [...sizes].map((s) => parseFloat(s)).sort((a, b) => a - b),
+  };
 };
 
 const b = await chromium.launch();
 const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 const p = await c.newPage();
 const report = {};
-for (const r of ROUTES) {
-  await p.goto(BASE + r, { waitUntil: "load", timeout: 30000 });
-  await p.waitForTimeout(3000);
-  report[r] = await p.evaluate(INVENTORY);
+let total = 0;
+
+for (const vp of VIEWPORTS) {
+  await p.setViewportSize({ width: vp.width, height: vp.height });
+  for (const r of ROUTES) {
+    await p.goto(BASE + r, { waitUntil: "load", timeout: 30000 });
+    await p.waitForTimeout(2500);
+    report[`${r} @${vp.label}`] = await p.evaluate(INVENTORY);
+  }
 }
-await p.setViewportSize({ width: 390, height: 844 });
-await p.goto(BASE + "/", { waitUntil: "load" });
-await p.waitForTimeout(3000);
-report["/ (390px)"] = await p.evaluate(INVENTORY);
 
 for (const [route, r] of Object.entries(report)) {
   const display = r.inv.filter(([k]) => /Josefin/.test(k));
-  console.log(`\n=== ${route} — ${r.sizeCount} font sizes, ${display.length} display-face entries ===`);
-  for (const [k, n] of display) console.log(`   ${k}  x${n}`);
-  if (r.offenders.length) {
-    console.log(`   OFFENDERS (${r.offenders.length}):`);
+  const bad = r.offenders.length;
+  total += bad;
+  console.log(`\n=== ${route} — ${r.sizeCount} sizes, ${display.length} display-face entries, ${bad} violations`);
+  console.log(`   sizes: ${r.sizes.join(" ")}`);
+  if (bad) {
     for (const o of r.offenders.slice(0, 25)) console.log(`     [${o.rule}] ${o.fam} ${o.w} ${o.size}px  ${o.el}  "${o.text}"`);
-  } else {
-    console.log("   no rule violations");
   }
 }
+
+console.log(`\n=== TOTAL VIOLATIONS: ${total} ===`);
 await b.close();
+process.exit(total > 0 ? 1 : 0);
