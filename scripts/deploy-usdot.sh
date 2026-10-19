@@ -10,6 +10,12 @@
 #
 # Usage:
 #   scripts/deploy-usdot.sh
+#
+# The branch worktree needs its own .env. It is gitignored, so a fresh
+# worktree does not have one, and a build without VITE_GISTDA_API_KEY is a
+# different product: the GISTDA incident layer is compiled out and the map's
+# "Incidents" control is not offered. Copy the main worktree's .env here
+# (cp <main>/.env .env) so this branch ships the same map production does.
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
