@@ -30,6 +30,14 @@ jobs:
         run: npm test
 
       - run: npm run build:client
+        env:
+          # The GISTDA tile key is a BUILD input. It has to be the same value
+          # the local build uses (.env), or the two builds of one commit are
+          # two different products — the GISTDA incident layer is compiled
+          # out when the key is absent — and scripts/verify-assets.mjs will
+          # report the difference. It is a public tile key, not a secret; it
+          # is visible in every tile URL the browser requests.
+          VITE_GISTDA_API_KEY: ${{ secrets.VITE_GISTDA_API_KEY }}
       - name: Include Pages Functions
         run: cp -R functions dist/client/functions
 

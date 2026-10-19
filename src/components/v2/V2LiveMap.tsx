@@ -67,6 +67,21 @@ const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
   incidents: false,
 };
 
+/**
+ * GISTDA's incident tiles need a key, and the key is a BUILD-TIME value. A
+ * build without one cannot render the layer at all, so the control that
+ * turns it on must not be offered either: a toggle that flips a flag and
+ * puts nothing on the map is a lie told with a button.
+ *
+ * The key is a public tile key — it is visible in every tile URL the
+ * browser requests — so it is a rate-limit token, not a secret. It is also
+ * a build input, which means it has to be the SAME in every build: the
+ * local one in .env and the CI one in the repository secret. When they
+ * differ, the two builds of the same commit are different products, and
+ * scripts/verify-assets.mjs will (correctly) report the difference.
+ */
+const GISTDA_KEY = import.meta.env.VITE_GISTDA_API_KEY ?? "";
+
 const FERRY_ROUTES = new Set(["rassada-phi-phi", "rassada-ao-nang", "bang-rong-koh-yao", "chalong-racha"]);
 const BUS_CAP = 25;
 
@@ -598,12 +613,10 @@ function RainOverlay({ enabled }: { enabled: boolean }) {
 }
 
 function IncidentOverlay({ enabled }: { enabled: boolean }) {
-  if (!enabled) return null;
-  const key = import.meta.env.VITE_GISTDA_API_KEY ?? "";
-  if (!key) return null;
+  if (!enabled || !GISTDA_KEY) return null;
   return (
     <TileLayer
-      url={`https://api-gateway.gistda.or.th/api/2.0/resources/tiles/basemap_incident/{z}/{x}/{y}?api_key=${key}`}
+      url={`https://api-gateway.gistda.or.th/api/2.0/resources/tiles/basemap_incident/{z}/{x}/{y}?api_key=${GISTDA_KEY}`}
       opacity={0.7}
       attribution="GISTDA"
     />
@@ -626,7 +639,8 @@ function LayerToggles({
     { id: "flights", label: "Flights" },
     { id: "piers", label: "Piers & Sea" },
     { id: "rain", label: "Rain" },
-    { id: "incidents", label: "Incidents" },
+    // Only offered when the build carries the key the layer needs.
+    ...(GISTDA_KEY ? [{ id: "incidents" as MapLayerId, label: "Incidents" }] : []),
   ];
   return (
     <div className="v2-map__layers" role="toolbar" aria-label="Map layers and frame">

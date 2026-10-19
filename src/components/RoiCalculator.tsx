@@ -609,7 +609,7 @@ export function RoiCalculator() {
                     {(
                       (((yesterdayRealDay?.totalKmTracked ?? 1464)) / fuelInputs.fuelEfficiencyKmPerLiter) *
                       fuelInputs.fuelPricePerLiterTHB
-                    ).toFixed(0)}{" "}
+                    ).toLocaleString()}{" "}
                     fuel spend @ ฿{fuelInputs.fuelPricePerLiterTHB}/L
                   </small>
                 </div>
