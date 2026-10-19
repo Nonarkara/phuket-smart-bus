@@ -9084,7 +9084,10 @@ a { color: var(--tint); }
 
   background: var(--ax-paper);
   color: var(--ax-ink);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Was "Helvetica Neue", Helvetica, Arial — a system face used as the design
+     font, which the type rules ban, and a third family the surface never
+     declared. Measured on /ops: 995 elements rendering in it. */
+  font-family: var(--font-body);
   font-size: var(--t-body);
   position: fixed;
   inset: 0;
@@ -9600,6 +9603,24 @@ a { color: var(--tint); }
   height: 100%;
   background: #eef0eb;
 }
+/* Leaflet ships its own typography: a "Helvetica Neue" stack on the container,
+   inherited by every control, tooltip and popup; and a Lucida Console
+   monospace on the zoom buttons. That is a default nobody chose — and the
+   monospace is the same developer-console face just removed from this
+   project. The map is part of the product, so it speaks the product's type.
+   Measured on /ops before this rule: 995 elements rendering in Helvetica.
+
+   The `html` prefix is load-bearing. leaflet.css is appended after this
+   stylesheet in the bundle and ties on specificity at 0,1,0, so it won.
+   0,1,1 settles it regardless of which file lands last. */
+html .leaflet-container,
+html .leaflet-container .leaflet-bar a,
+html .leaflet-container .leaflet-control,
+html .leaflet-container .leaflet-tooltip,
+html .leaflet-container .leaflet-popup-content,
+html .leaflet-container .leaflet-control-attribution { font-family: var(--font-body); }
+html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line-height: 1; }
+
 .v2 .v2-map__canvas .v2-basemap-tile {
   /* OSM is the keyless, durable fallback (CARTO's dark_all now requires an
      API key and served an "API KEY REQUIRED" watermark tile in production).
@@ -14620,6 +14641,11 @@ a { color: var(--tint); }
   min-width: 600px;
 }
 .v2 .v2-fleet__row--live > * { min-width: 0; }
+/* The route cell is 150px in a 530px panel holding eight columns. "→ Phuket
+   Airport" does not fit beside "Airport line" but "→ Rawai" does, so rows came
+   out at two different heights and the plate column stopped lining up. Stack
+   it every time: uniform rows, nothing truncated, no invented ellipsis. */
+.v2 .v2-fleet__row--live .v2-fleet__route { flex-direction: column; align-items: flex-start; gap: 1px; }
 .v2-fleet__row--live.is-silent { opacity: 0.45; }
 .v2-fleet__plate-live {  font-weight: 700; color: var(--ax-ink); }
 .v2-fleet__num { font-variant-numeric: tabular-nums; text-align: right; color: var(--ax-ink-2); }

@@ -58,7 +58,14 @@ export function RiderMap({ buses, onLine, line, stop, now }: {
       icon: L.divIcon({ className: "pa-map__stop", html: `<span></span>`, iconSize: [0, 0] }),
     }).bindTooltip(stop.name, { permanent: true, direction: "top", offset: [0, -12], className: "pa-map__tip" }).addTo(m);
     m.invalidateSize();
-    m.fitBounds(routes.current.get(line.routeId)!.getBounds().extend([stop.lat, stop.lng]), { padding: [24, 24] });
+    // The stop's name tooltip is anchored above the pin (-12px), so equal
+    // padding clipped it against the top edge — "Phuket Airport" rendered
+    // with its head cut off. The top needs room for the label, the sides
+    // and bottom do not.
+    m.fitBounds(routes.current.get(line.routeId)!.getBounds().extend([stop.lat, stop.lng]), {
+      paddingTopLeft: [30, 64],
+      paddingBottomRight: [30, 30],
+    });
   }, [line, stop]);
 
   useEffect(() => {
