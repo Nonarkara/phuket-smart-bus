@@ -14790,7 +14790,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font: 12px/1.4 var(--font-body); color: var(--ax-ink-2);
 }
 .study__footer strong { color: var(--ax-ink); font-weight: 700; }
-.study__footer-detail { font: 11px/1.4 var(--font-code); color: var(--ax-ink-3); }
+.study__footer-detail { font: 11px/1.4 var(--font-body); color: var(--ax-ink-3); }
 
 
 @media (max-width: 720px) {

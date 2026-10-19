@@ -616,7 +616,7 @@ export function Study() {
               {collectionIsLive ? " · live" : ` · last refresh ${bangkokTimeOf(new Date(fetchedAt).toISOString())}`}
             </span>
             <span className="study__footer-detail">
-              One click upstream: {appPath("/api/collect/week")}?from={data.from}&days={data.days.length}&detail=vehicles
+              One click upstream: <code>{appPath("/api/collect/week")}?from={data.from}&days={data.days.length}&detail=vehicles</code>
             </span>
           </footer>
         </>
