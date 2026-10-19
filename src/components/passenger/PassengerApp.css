@@ -161,6 +161,11 @@ body.passenger-site-mode #root {
 .pa-live__truth { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--pa-muted); }
 
 .pa-map { height: 58svh; min-height: 320px; border: 1px solid var(--pa-ink); background: #0f151d; }
+/* Leaflet's own stylesheet sets `.leaflet-container { background: #ddd }` and
+   loads after this file, so a bare `.pa-map` lost on source order. Two classes
+   puts the panel colour back — otherwise the map flashes light grey before the
+   first tiles arrive. */
+.pa-map.leaflet-container { background: #0f151d; }
 /* The rider map is its own Leaflet instance, not the wall's V2LiveMap, so it
    never inherited the dark cartographic treatment and rendered raw light OSM
    on the one screen a real rider actually looks at. Same class, same filter
