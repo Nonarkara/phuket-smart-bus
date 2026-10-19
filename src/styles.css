@@ -1416,7 +1416,7 @@ a { color: var(--amber-text); }
   transition: box-shadow 0.2s ease;
 }
 
-.stop-list__search:focus { box-shadow: var(--shadow-interactive), 0 0 0 2px rgba(0,122,255,0.2); }
+.stop-list__search:focus { box-shadow: var(--shadow-interactive), 0 0 0 2px rgba(245, 158, 11, 0.35); }
 .stop-list__search::placeholder { color: var(--text-tertiary); }
 
 .stop-list__items {
@@ -1450,7 +1450,9 @@ a { color: var(--amber-text); }
 }
 
 .stop-card.is-active {
-  background: rgba(0, 122, 255, 0.06);
+  /* Was rgba(0,122,255,0.06) — an iOS blue on the rider's warm paper.
+     The selected stop is the accent. */
+  background: var(--amber-mute);
 }
 
 .stop-card__body {
@@ -1953,9 +1955,15 @@ a { color: var(--amber-text); }
 
 .pass-switch__button:active { transform: scale(0.97); }
 
-.pass-switch__button.is-active { background: var(--tint); color: #fff; box-shadow: 0 2px 12px rgba(0,122,255,0.3); }
-.pass-switch__button.is-active.is-day { background: #16b8b0; box-shadow: 0 2px 12px rgba(22,184,176,0.3); }
-.pass-switch__button.is-active.is-week { background: #1e63b8; box-shadow: 0 2px 12px rgba(30,99,184,0.3); }
+/* The two pass variants are the accent and the ink, and the ticket below
+   already says so: .pass-ticket.is-day carries an amber top rule and
+   .is-week an ink one. The switch now says the same thing. The teal and
+   the iOS blue that were here were a second and a third colour family on
+   the rider's warm paper, and the base rule still carried an iOS-blue glow
+   on a button that can never be active without a variant class. */
+.pass-switch__button.is-active { background: var(--tint); color: #fff; box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3); }
+.pass-switch__button.is-active.is-day { background: var(--tint); box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3); }
+.pass-switch__button.is-active.is-week { background: var(--ink); box-shadow: 0 2px 12px rgba(19, 19, 18, 0.28); }
 
 .pass-ticket {
   display: grid;
@@ -1984,8 +1992,10 @@ a { color: var(--amber-text); }
   font-weight: 500;
 }
 
+/* "Active now" is the same state for a day pass and a week pass, so it is
+   the same colour. The blue here matched the old blue button and said
+   nothing extra. */
 .pass-ticket__status { color: var(--green); }
-.pass-ticket.is-week .pass-ticket__status { color: #1e63b8; }
 
 .pass-ticket__name { font-size: 22px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; }
 
@@ -2049,7 +2059,9 @@ a { color: var(--amber-text); }
 .compare-pill.is-active {
   background: var(--tint);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(0,122,255,0.3), 0 1px 3px rgba(0,122,255,0.2);
+  /* The glow was iOS blue under an amber button — two families in one
+     control. The glow is the button's own colour. */
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3), 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
 /* Layer 3: Comparison cards — elevated grouped section */
@@ -4838,7 +4850,10 @@ a { color: var(--amber-text); }
 }
 
 .roi-scenario-card--even {
-  border-left: 4px solid #007aff;
+  /* Was #007aff. The three scenario cards are gain / even / loss, and the
+     middle one is the neutral: green for gain, the page's amber for loss,
+     ink for no change. The card states its case in words as well. */
+  border-left: 4px solid var(--ink);
 }
 
 .roi-scenario-card--loss {
