@@ -68,6 +68,9 @@ Evidence: the type ramp that produced this rule is rendered by `scripts/design/t
 
 - rule cream-terracotta in src/styles.css: warm paper is the Braun/Vignelli ground; the brick red is PKSB's actual livery red, not a taste default
 - rule cream-terracotta in src/components/passenger/PassengerApp.css: warm paper is the Braun/Vignelli ground; the brick red is PKSB's actual livery red, not a taste default
+- rule cream-terracotta in src/components/toolkit/toolkit-showcase.css: the toolkit is the same PKSB house — paper #f5f5f2 against the PKSB livery red #a23a26, the same two colours the rider app uses. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it only names this file when the toolkit stylesheet is scanned alone.
+- rule cream-terracotta in src/components/toolkit/toolkit-hub.css: the toolkit is the same PKSB house — paper #f5f5f2 against the PKSB livery red #a23a26, the same two colours the rider app uses. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it only names this file when the toolkit stylesheet is scanned alone.
+- rule cream-terracotta in src/components/toolkit/toolkit-study.css: the toolkit is the same PKSB house — paper #f5f5f2 against the PKSB livery red #a23a26, the same two colours the rider app uses. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it only names this file when the toolkit stylesheet is scanned alone.
 - colour #fafaf7: warm paper ground, deliberately not #fff
 - colour #f59e0b: the one amber, modelled on the Braun ET66's orange key
 - font "Josefin Sans": display face, geometric, chosen
