@@ -80,7 +80,7 @@ const DEMO_MODE: boolean = (typeof window !== "undefined") && (() => {
 })();
 
 type AppView = "map" | "more";
-type MorePanel = "stops" | "pass" | null;
+type MorePanel = "stops" | "pass";
 type MapRouteFilter = RouteId | "all-core";
 
 const VIEW_PATHS: Record<AppView, string> = { map: appPath("/"), more: appPath("/more") };
@@ -94,6 +94,15 @@ function getInitialView(): AppView | "ops" | "fleet" | "study" | "capacity" {
   if (p.startsWith("/capacity")) return "capacity";
   if (p.startsWith("/info") || p.startsWith("/more") || p.startsWith("/stops") || p.startsWith("/pass") || p.startsWith("/ride") || p.startsWith("/compare")) return "more";
   return "map";
+}
+
+// Which of the two INFO panels the path asks for. Every deep link into the
+// INFO view (/more /info /stops /pass /ride /compare) used to land on a
+// blank column, because the panel started as null and neither panel
+// rendered. The path decides: /pass is the pass, everything else is stops.
+function getInitialMorePanel(): MorePanel {
+  if (typeof window === "undefined") return "stops";
+  return routePath(window.location.pathname).startsWith("/pass") ? "pass" : "stops";
 }
 
 function getStoredLang(): Lang {
@@ -403,7 +412,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
     const init = getInitialView();
     return init === "ops" || init === "fleet" || init === "study" || init === "capacity" ? "map" : init;
   });
-  const [morePanel, setMorePanel] = useState<MorePanel>(null);
+  const [morePanel, setMorePanel] = useState<MorePanel>(() => getInitialMorePanel());
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<RouteId | null>(null);
   const [mapRouteFilter, setMapRouteFilter] = useState<MapRouteFilter>("all-core");
@@ -557,6 +566,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
       // TouristApp only mounts on / or /more* paths, so ignore ops/fleet/study/capacity.
       if (init === "ops" || init === "fleet" || init === "study" || init === "capacity") return;
       setView(init);
+      setMorePanel(getInitialMorePanel());
     }
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -682,6 +692,16 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
     if (typeof window !== "undefined") {
       const nextPath = VIEW_PATHS[nextView];
       if (window.location.pathname !== nextPath) window.history.pushState({ view: nextView }, "", nextPath);
+    }
+  }
+
+  // Switching the INFO panel changes the page, so the URL changes with it.
+  // A shared link must open the panel it points at.
+  function pushMorePath(panel: MorePanel) {
+    if (typeof window === "undefined") return;
+    const nextPath = appPath(panel === "pass" ? "/pass" : "/stops");
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({ view: "more", panel }, "", nextPath);
     }
   }
 
@@ -820,12 +840,12 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
                 <button
                   className={morePanel === "stops" ? "more-tab is-active" : "more-tab"}
                   type="button"
-                  onClick={() => setMorePanel("stops")}
+                  onClick={() => { setMorePanel("stops"); pushMorePath("stops"); }}
                 >{pick(ui.navStops, lang)}</button>
                 <button
                   className={morePanel === "pass" ? "more-tab is-active" : "more-tab"}
                   type="button"
-                  onClick={() => setMorePanel("pass")}
+                  onClick={() => { setMorePanel("pass"); pushMorePath("pass"); }}
                 >{pick(ui.navPass, lang)}</button>
               </div>
               <LanguageToggle lang={lang} onChange={persistLang} />

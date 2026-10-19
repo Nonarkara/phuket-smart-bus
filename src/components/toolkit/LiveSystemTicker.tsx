@@ -18,9 +18,15 @@
  *
  * The live half says "unavailable" when the feed is down. It never shows a
  * zero it did not measure.
+ *
+ * The panel is a disclosure, not a tooltip. Hover previews it; a click PINS
+ * it so a reader can move the mouse away and still read it. Escape or a
+ * click outside closes it. (Before, `onFocus` set it open and `onClick` set
+ * it closed in the same gesture, and the panel was only ever visible while
+ * hovered — so the reader moved the mouse to read it and it vanished.)
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getHourlyCorridor } from "../../engine/demandSupplyEngine";
 import { getSimulatedMinutes } from "../../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../../engine/time";
@@ -66,7 +72,7 @@ export function LiveSystemTicker() {
   // Fixed-position badges sit on top of whatever page content happens to
   // scroll under that corner. Two mitigations: stay hidden over the hero
   // (nothing to hide from before that), and stay collapsed to a small pill
-  // the rest of the time — expand only on hover/focus/tap, so it covers a
+  // the rest of the time — expand only on hover/click, so it covers a
   // sentence at most, never a whole card.
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -75,7 +81,22 @@ export function LiveSystemTicker() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Pinned open by a click. Not a focus flag: focus and click fired in the
+  // same gesture and fought each other.
   const [expanded, setExpanded] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+
+  // A click outside dismisses. The pill's own click is inside the aside, so
+  // it never closes the panel it just opened.
+  useEffect(() => {
+    if (!expanded) return;
+    const onDown = (e: PointerEvent) => {
+      if (!asideRef.current?.contains(e.target as Node)) setExpanded(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [expanded]);
 
   // ── the real half ───────────────────────────────────────────────────────
   const feed = getLiveFeedState();
@@ -103,6 +124,7 @@ export function LiveSystemTicker() {
 
   return (
     <aside
+      ref={asideRef}
       className={`lst ${visible ? "is-visible" : ""} ${expanded ? "is-expanded" : ""}`}
       aria-hidden={!visible}
     >
@@ -112,8 +134,12 @@ export function LiveSystemTicker() {
         aria-expanded={expanded}
         aria-label="Live fleet status and the simulation model — expand for detail"
         onClick={() => setExpanded((v) => !v)}
-        onFocus={() => setExpanded(true)}
-        onBlur={() => setExpanded(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setExpanded(false);
+            e.currentTarget.blur();
+          }
+        }}
       >
         <span className={`lst__pulse ${liveOk ? "" : "is-off"}`} aria-hidden="true" />
         <strong>{formatClock(wallMin)}</strong>

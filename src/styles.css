@@ -4528,7 +4528,9 @@ a { color: var(--amber-text); }
 .roi-detail__title {
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0; margin: 0 0 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 18px;
 }
 
 .roi-table {
@@ -4577,7 +4579,8 @@ a { color: var(--amber-text); }
 
 .roi-footnote h3 {
   font-size: 11px;
-  letter-spacing: 0; font-weight: 700;
+  letter-spacing: 0.18em;
+  font-weight: 700;
   color: rgba(0, 0, 0, 0.6);
   font-variant-numeric: tabular-nums;
   margin: 0 0 12px;
@@ -4775,17 +4778,11 @@ a { color: var(--amber-text); }
   font-weight: 600;
 }
 
-.roi-color-chip {
-  width: 10px;
-  height: 10px;
-  border-radius: 0;
-  display: inline-block;
-}
-
-.roi-color-chip--fuel { background: #f5a623; }
-.roi-color-chip--driver { background: #3b82f6; }
-.roi-color-chip--maintenance { background: #0f766e; }
-.roi-color-chip--overhead { background: #64748b; }
+/* The four cost rows used to carry a 10px colour chip each — fuel, driver,
+   maintenance, overhead — in four Tailwind defaults (#3b82f6, #0f766e,
+   #64748b). No chart on the page used those colours; the chips were a
+   legend for nothing, and they carried a second accent family into a page
+   whose accent is the amber. The rows are labelled in words. Gone. */
 
 .roi-cost-row--total {
   background: rgba(0, 0, 0, 0.06);
@@ -4848,7 +4845,7 @@ a { color: var(--amber-text); }
 .roi-scenario-card__tag {
   font-variant-numeric: tabular-nums;
   font-size: 10px;
-  letter-spacing: 0; font-weight: 700;
+  letter-spacing: 0.1em; font-weight: 700;
   color: rgba(0, 0, 0, 0.5);
   }
 
@@ -4874,8 +4871,8 @@ a { color: var(--amber-text); }
 }
 
 .roi-solvency-banner {
-  background: #f0f7ff;
-  border: 1px solid #c2e0ff;
+  background: var(--amber-mute);
+  border: 1px solid rgba(245, 158, 11, 0.28);
   padding: 18px 20px;
   margin-bottom: 20px;
 }
@@ -4892,8 +4889,8 @@ a { color: var(--amber-text); }
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  background: #0068d6;
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   padding: 3px 8px;
   border-radius: 0;
 }
@@ -4906,7 +4903,7 @@ a { color: var(--amber-text); }
 .roi-solvency-desc {
   margin: 0;
   font-size: 13px;
-  color: #1e3a8a;
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 
@@ -4932,7 +4929,7 @@ a { color: var(--amber-text); }
   font-size: 11px;
   letter-spacing: 0.18em;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--amber);
   margin-bottom: 8px;
 }
 
@@ -5063,7 +5060,9 @@ a { color: var(--amber-text); }
 .roi-table__header-row th {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
-  letter-spacing: 0; color: rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
   padding-bottom: 12px;
   border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }

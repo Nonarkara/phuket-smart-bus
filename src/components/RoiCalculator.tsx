@@ -308,7 +308,6 @@ export function RoiCalculator() {
               <div className="roi-cost-stack">
                 <div className="roi-cost-row">
                   <span className="roi-cost-row__label">
-                    <span className="roi-color-chip roi-color-chip--fuel" />
                     Diesel Fuel Burn
                   </span>
                   <span className="roi-cost-row__calc">
@@ -319,7 +318,6 @@ export function RoiCalculator() {
 
                 <div className="roi-cost-row">
                   <span className="roi-cost-row__label">
-                    <span className="roi-color-chip roi-color-chip--driver" />
                     Driver Crew
                   </span>
                   <span className="roi-cost-row__calc">฿{fuelInputs.driverDailyWageTHB} ÷ 150 km</span>
@@ -328,7 +326,6 @@ export function RoiCalculator() {
 
                 <div className="roi-cost-row">
                   <span className="roi-cost-row__label">
-                    <span className="roi-color-chip roi-color-chip--maintenance" />
                     Maintenance, Tires &amp; Parts
                   </span>
                   <span className="roi-cost-row__calc">Standard transit maintenance</span>
@@ -337,7 +334,6 @@ export function RoiCalculator() {
 
                 <div className="roi-cost-row">
                   <span className="roi-cost-row__label">
-                    <span className="roi-color-chip roi-color-chip--overhead" />
                     Insurance, Depot &amp; Admin
                   </span>
                   <span className="roi-cost-row__calc">Commercial liability &amp; dispatch</span>

@@ -60,7 +60,7 @@
 .hub-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .hub-section--intro { background: var(--tk-white); }
 .hub-section__intro-pad { max-width: 72ch; margin-bottom: 48px; }
-.hub-section__intro-pad h2 { font-size: clamp(2rem, 4vw, 3.6rem); margin: 16px 0 20px; letter-spacing: -0.04em; }
+.hub-section__intro-pad h2 { font-weight: 500; font-size: clamp(2rem, 4vw, 3.6rem); margin: 16px 0 20px; letter-spacing: -0.04em; }
 .hub-section__intro-pad p { font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.5; color: var(--tk-muted); }
 
 .hub-tab-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
@@ -90,7 +90,7 @@
 
 .fc-section, .pb-section, .cr-section, .lf-section, .rt-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .fc-section__head, .pb-section__head, .cr-section__head, .lf-section__head, .rt-section__head { max-width: 900px; margin: 0 auto 48px; }
-.fc-section__head h2, .pb-section__head h2, .cr-section__head h2, .lf-section__head h2, .rt-section__head h2 { font-size: clamp(2rem, 4.5vw, 4rem); letter-spacing: -0.045em; line-height: 1; margin: 14px 0 20px; text-wrap: balance; }
+.fc-section__head h2, .pb-section__head h2, .cr-section__head h2, .lf-section__head h2, .rt-section__head h2 { font-weight: 500; font-size: clamp(2rem, 4.5vw, 4rem); letter-spacing: -0.045em; line-height: 1; margin: 14px 0 20px; text-wrap: balance; }
 .fc-section__standfirst, .pb-section__standfirst, .cr-section__standfirst, .lf-section__standfirst, .rt-section__standfirst { max-width: 72ch; font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.5; color: var(--tk-muted); }
 
 .fc-stats, .pb-stats, .cr-stats, .lf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); border: 1px solid var(--tk-ink); margin-bottom: 48px; }
@@ -158,7 +158,7 @@
 .fc-memorial figure { margin: 0; }
 .fc-memorial img { width: 100%; aspect-ratio: 4/3; object-fit: cover; filter: saturate(0.82) contrast(1.02); border: 1px solid var(--tk-ink); }
 .fc-memorial figcaption { padding-top: 8px; font: 700 11px/1.2 var(--font-body); color: var(--tk-muted); }
-.fc-memorial__copy h3 { font-size: clamp(1.5rem, 2.6vw, 2.3rem); line-height: 1.05; letter-spacing: -0.03em; margin: 10px 0 18px; }
+.fc-memorial__copy h3 { font-weight: 500; font-size: clamp(1.5rem, 2.6vw, 2.3rem); line-height: 1.05; letter-spacing: -0.03em; margin: 10px 0 18px; }
 .fc-memorial__lead { font-size: clamp(1.05rem, 1.5vw, 1.25rem); line-height: 1.5; margin-bottom: 14px; }
 .fc-memorial__copy > p:not(.fc-memorial__lead):not(.tk-kicker) { max-width: 60ch; color: var(--tk-muted); font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
 
@@ -199,7 +199,7 @@
 /* The people manifest. */
 .fc-people { margin-bottom: 64px; }
 .fc-people__intro { max-width: 700px; margin-bottom: 32px; }
-.fc-people__intro h3 { font-size: clamp(1.5rem, 2.5vw, 2rem); margin: 12px 0 16px; }
+.fc-people__intro h3 { font-weight: 500; font-size: clamp(1.5rem, 2.5vw, 2rem); margin: 12px 0 16px; }
 .fc-people__intro p { color: var(--tk-muted); }
 .fc-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); align-items: start; gap: 1px; background: var(--tk-line); border: 1px solid var(--tk-line); }
 .fc-team { display: flex; flex-direction: column; padding: 22px; background: var(--tk-paper); }
@@ -220,7 +220,7 @@
 /* Eight lessons, always visible — no tabs hiding them. */
 .fc-lessons { margin-bottom: 64px; }
 .fc-lessons__intro { max-width: 68ch; margin-bottom: 26px; }
-.fc-lessons__intro h3 { font-size: clamp(1.5rem, 2.5vw, 2rem); margin: 12px 0 14px; }
+.fc-lessons__intro h3 { font-weight: 500; font-size: clamp(1.5rem, 2.5vw, 2rem); margin: 12px 0 14px; }
 .fc-lessons__intro p { color: var(--tk-muted); font-size: 15px; }
 .fc-lessons__intro a { color: var(--tk-red); font-weight: 700; text-decoration: none; }
 .fc-lessons__intro a:hover { text-decoration: underline; }
@@ -246,6 +246,18 @@
 .pb-operator dt { font: 700 10px/1.2 var(--font-body); text-transform: uppercase; color: var(--tk-muted); }
 .pb-operator dd { margin: 0; font-size: 14px; line-height: 1.45; }
 .pb-operator__notes { padding: 16px 24px; font-size: 14px; color: var(--tk-muted); border-top: 1px solid var(--tk-line); }
+
+/* The timetable scan. The <img> carries width="724" height="1024", and an
+   HTML height attribute becomes the used CSS height — so with the toolkit's
+   width:100% the 724x1024 portrait was rendered at 1216x1024, stretched
+   1.68x across the page. height:auto restores the ratio. The figure is the
+   evidence for the "20 departures" figure, so it has to be readable, not
+   distorted. */
+.pb-evidence { margin: 48px 0; }
+.pb-evidence img { width: 100%; height: auto; }
+.pb-evidence figcaption { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--tk-muted); max-width: 65ch; }
+.pb-evidence figcaption strong { color: var(--tk-ink); }
+.pb-evidence figcaption code { font-family: var(--font-code); font-size: 0.9em; }
 
 .pb-competitors, .pb-regulatory, .pb-gap { margin-bottom: 60px; }
 .pb-competitor-table, .pb-regulatory-grid { border-top: 1px solid var(--tk-ink); }
@@ -353,7 +365,7 @@
   padding: clamp(64px, 8vw, 120px) var(--pc-pad) 48px;
 }
 
-.pc-section__head h2 {
+.pc-section__head h2 { font-weight: 700;
   max-width: 1100px;
   margin: 16px 0 28px;
   font-size: clamp(3rem, 7.5vw, 7.8rem);
@@ -441,7 +453,7 @@
   scroll-margin-top: 116px;
 }
 .pc-system-map__copy { display: flex; flex-direction: column; margin: 0; padding: clamp(28px, 4vw, 48px); color: #fff; }
-.pc-system-map__copy h3 { margin: 14px 0 20px; color: #fff; font-size: clamp(2rem, 4vw, 4rem); line-height: 0.94; letter-spacing: -0.05em; }
+.pc-system-map__copy h3 { font-weight: 500; margin: 14px 0 20px; color: #fff; font-size: clamp(2rem, 4vw, 4rem); line-height: 0.94; letter-spacing: -0.05em; }
 .pc-system-map__copy > p:not(.tk-kicker) { color: rgba(255,255,255,0.72); font-size: 0.98rem; line-height: 1.55; }
 .pc-system-map__copy > a { margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.35); color: #fff; font-weight: 700; text-decoration: none; }
 .pc-system-map__copy > a:hover { color: var(--tk-yellow); }
@@ -476,7 +488,7 @@
 .pc-timeline__list p { max-width: 72ch; margin-top: 8px; color: var(--tk-muted); line-height: 1.55; }
 .pc-spread--stack { grid-template-columns: 1.1fr 0.9fr; }
 .pc-callout { padding: clamp(28px, 4vw, 48px); color: #fff; background: var(--tk-blue); border: 1px solid var(--tk-ink); }
-.pc-callout h3 { color: #fff; font-size: clamp(2rem, 3.5vw, 3.4rem); }
+.pc-callout h3 { font-weight: 500; color: #fff; font-size: clamp(2rem, 3.5vw, 3.4rem); }
 .pc-callout ul { margin: 28px 0 0; padding: 0; list-style: none; }
 .pc-callout li { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.25); }
 .pc-callout li p { margin-top: 7px; color: rgba(255,255,255,0.72); font-size: 0.9rem; line-height: 1.5; }
@@ -507,7 +519,7 @@
 }
 
 @media (max-width: 680px) {
-  .pc-section__head h2 { font-size: clamp(2.8rem, 15vw, 4.6rem); }
+  .pc-section__head h2 { font-weight: 700; font-size: clamp(2.8rem, 15vw, 4.6rem); }
   .pc-hero { grid-template-columns: 1fr; min-height: 0; }
   .pc-hero__photo { min-height: 310px; }
   .pc-hero__stats { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; border-top: 1px solid var(--tk-ink); border-left: 0; }
@@ -590,7 +602,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   border-top: 1px solid var(--tk-ink);
 }
 .dp-section__head { max-width: 78ch; margin-bottom: 32px; }
-.dp-section__head h2 {
+.dp-section__head h2 { font-weight: 500;
   font-size: clamp(1.8rem, 3.6vw, 3rem);
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -711,7 +723,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   border-top: 1px solid var(--tk-ink);
 }
 .cr-section__head { max-width: 78ch; margin-bottom: 40px; }
-.cr-section__head h2 {
+.cr-section__head h2 { font-weight: 500;
   font-size: clamp(1.8rem, 3.6vw, 3rem);
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -895,7 +907,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   border-top: 1px solid var(--tk-ink);
 }
 .gl-section__head { max-width: 78ch; margin-bottom: 32px; }
-.gl-section__head h2 {
+.gl-section__head h2 { font-weight: 500;
   font-size: clamp(1.8rem, 3.6vw, 3rem);
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -998,7 +1010,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   border-top: 1px solid var(--tk-ink);
 }
 .ra-section__head { max-width: 78ch; margin-bottom: 40px; }
-.ra-section__head h2 {
+.ra-section__head h2 { font-weight: 500;
   font-size: clamp(1.8rem, 3.6vw, 3rem);
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -1035,7 +1047,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   color: var(--tk-red);
   min-width: 36px;
 }
-.ra-item h3 {
+.ra-item h3 { font-weight: 500;
   font-size: clamp(1.2rem, 2.2vw, 1.7rem);
   letter-spacing: -0.02em;
   line-height: 1.15;

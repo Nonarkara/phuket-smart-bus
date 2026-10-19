@@ -125,7 +125,7 @@ const BEATS: Beat[] = [
 
 const HEADLINE_STATS = [
   { value: "17.5m", label: "HKT passenger movements", note: "observed · AOT 2025" },
-  { value: "20", label: "airport departures in the timetable", note: "observed · current fixture" },
+  { value: "20", label: "airport departures in the model", note: "modelled · this build's fixture" },
   { value: "25", label: "seats per airport bus", note: "modelled capacity" },
   { value: "90 days", label: "instrumented pilot", note: "proposed decision" }
 ];
