@@ -428,7 +428,7 @@ export default function DashboardV2() {
           <span className="v2-alert-banner__icon">⚠</span>
           <div className="v2-alert-banner__content">
             <strong>{serviceGap.toLocaleString()} riders waiting at the airport curb now.</strong>
-            <span>The next departure takes 25. {standbyBusesNeeded} standby buses would clear the queue.</span>
+            <span>Each bus seats 25. {standbyBusesNeeded} standby buses would clear the queue.</span>
           </div>
         </div>
       )}
@@ -699,7 +699,7 @@ export default function DashboardV2() {
                 </div>
               </div>
             ) : (
-              <div className="v2-side-rail__story v2-headline" key="story-sim">
+              <div className="v2-side-rail__story v2-side-rail__story--hero v2-headline" key="story-sim">
                 <span className="v2-headline__label">Missed today · modelled</span>
                 <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
                 <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>

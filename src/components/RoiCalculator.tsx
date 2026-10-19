@@ -95,7 +95,7 @@ export function RoiCalculator() {
       {/* Header */}
       <header className="roi-header">
         <div className="roi-header__eyebrow">
-          PKSB OPERATIONS BI · BANKER &amp; CFO TERMINAL · LIVE DATA CRANKING ROOM
+          Modelled from the PKSB timetable and the engine's own cost model
         </div>
         <h1 className="roi-header__title">Phuket Smart Bus — Financial Intelligence</h1>
         <p className="roi-header__subtitle">
