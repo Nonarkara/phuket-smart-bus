@@ -14,7 +14,7 @@
 //      currentColor, so one blue on one element was counted ten times and
 //      the totals were unreadable.
 //
-//   Also: an <img> height attribute becomes the used CSS height, so
+//   Also: an image's height attribute becomes the used CSS height, so
 //   width:100% distorts a portrait. Not this file's job, but the same
 //   habit of "the declaration looks right, the render does not" applies.
 import { chromium } from "playwright";
