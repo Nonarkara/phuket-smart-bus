@@ -59,17 +59,31 @@ if (!pill) {
 }
 
 // --- 2. deep links must land on a panel, not a blank column ----------------
-for (const route of ["/more", "/info", "/stops", "/pass", "/ride", "/compare"]) {
+// The stops panel fills from /api/routes/<id>/stops, and the page fetches
+// health, environment, routes and compare first — give it room.
+for (const route of ["/more", "/info", "/stops", "/ride", "/compare"]) {
   await p.goto(BASE + route, { waitUntil: "load", timeout: 30000 });
-  await p.waitForTimeout(2500);
+  await p.waitForTimeout(8000);
   const r = await p.evaluate(() => {
     const main = document.querySelector("main.stops-view");
     if (!main) return { found: false };
     const panel = main.querySelector(".stops-layout, .pass-panel");
-    return { found: !!panel, panel: panel ? panel.className : null, chars: (panel?.textContent || "").trim().length };
+    const cards = document.querySelectorAll(".stop-card").length;
+    return { found: !!panel, panel: panel ? panel.className : null, cards, chars: (panel?.textContent || "").trim().length };
   });
-  const ok = r.found;
-  console.log(`${route.padEnd(9)} -> ${ok ? "PASS" : "FAIL"} (panel=${r.panel} chars=${r.chars})`);
+  const ok = r.found && r.cards > 0;
+  console.log(`${route.padEnd(9)} -> ${ok ? "PASS" : "FAIL"} (panel=${r.panel} stopCards=${r.cards} chars=${r.chars})`);
+  if (!ok) fails++;
+}
+{
+  await p.goto(BASE + "/pass", { waitUntil: "load", timeout: 30000 });
+  await p.waitForTimeout(4000);
+  const r = await p.evaluate(() => {
+    const panel = document.querySelector("main.stops-view .pass-panel");
+    return { found: !!panel, chars: (panel?.textContent || "").trim().length };
+  });
+  const ok = r.found && r.chars > 80;
+  console.log(`${"/pass".padEnd(9)} -> ${ok ? "PASS" : "FAIL"} (panel=pass-panel chars=${r.chars})`);
   if (!ok) fails++;
 }
 
