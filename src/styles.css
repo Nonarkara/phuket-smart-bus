@@ -6516,8 +6516,6 @@ a { color: var(--amber-text); }
    run-on — "MISSED TODAY · MODELLED ฿107,200 fares from riders who…". */
 .v2-side-rail__story--hero {
   grid-template-columns: minmax(0, 1fr);
-  background: var(--ax-panel);
-  padding: 12px 14px;
 }
 .v2-side-rail__story--hero .v2-headline__why { max-width: 46ch; }
 .v2-side-rail__story--hero .v2-headline__sum { margin-top: 6px; }
@@ -6541,12 +6539,18 @@ a { color: var(--amber-text); }
   color: var(--ax-ink-2);
 }
 .v2-side-rail__story-card--earned .v2-side-rail__story-value { color: var(--ax-accent); }
-/* The SIM headline (.v2-headline) — single tall block instead of 4 mini-cards */
+/* The SIM headline (.v2-headline) — one tall block instead of 4 mini-cards.
+   The children are inline elements (a label span, a strong, a why span, a
+   paragraph), so the container has to be a column or they run together into
+   "MISSED TODAY · MODELLED ฿115,000 fares from riders who wanted the bus…". */
 .v2-side-rail__story.v2-headline {
-  display: block;
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
   background: var(--ax-panel);
 }
+.v2-side-rail__story.v2-headline > * { min-width: 0; }
 .v2-side-rail .v2-decision-rail {
   border-top: 1px solid var(--ax-line);
   border-bottom: 1px solid var(--ax-line);
