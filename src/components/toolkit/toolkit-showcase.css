@@ -1034,7 +1034,12 @@ html.toolkit-site-mode #root {
   text-transform: uppercase;
 }
 .lp-card__status--observed { border-color: #19734f; color: #19734f; }
-.lp-card__status--modelled { border-color: #2a5ea8; color: #2a5ea8; }
+/* Was #2a5ea8 — a generic web blue that is not in the toolkit's palette and
+   reads as a fifth colour family next to the green, the amber and the red.
+   The toolkit already owns a navy: --tk-blue. Green = measured, navy =
+   computed, amber = a milestone, red = needs a decision. Each chip says
+   its state in words too. */
+.lp-card__status--modelled { border-color: var(--tk-blue); color: var(--tk-blue); }
 .lp-card__status--build-ready { border-color: #8a5b00; color: #8a5b00; }
 .lp-card__status--proposed,
 .lp-card__status--due-diligence { border-color: var(--tk-red); color: var(--tk-red); }

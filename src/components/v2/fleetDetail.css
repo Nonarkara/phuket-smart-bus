@@ -213,7 +213,12 @@
 .fd-speed-col__fill { width: 100%; transition: height 0.3s ease; }
 .fd-speed-col__fill.is-idle { background: #5a6673; }
 .fd-speed-col__fill.is-warn { background: var(--ax-warn); }
-.fd-speed-col__fill.is-good { background: #38bdf8; }
+/* Was #38bdf8 — a Tailwind sky blue. The console's law is "one accent",
+   and this is a speed ramp: stopped, crawl, urban, cruising. So the ramp
+   runs neutral -> warn -> the accent at 55% -> the accent full. Tinting
+   the console's own accent keeps the band distinct from "cruising"
+   without inventing a hue, and it follows the light and dark themes. */
+.fd-speed-col__fill.is-good { background: color-mix(in srgb, var(--ax-accent) 55%, var(--ax-panel)); }
 .fd-speed-col__fill.is-accent { background: var(--ax-accent); }
 .fd-speed-col__lbl { font-size: 0.65em; text-transform: uppercase; color: var(--ax-ink-3); letter-spacing: 0.06em; text-align: center; }
 
