@@ -433,7 +433,7 @@ export function PassengerApp() {
           </span>
           {env && (
             <span className={`pa-status-chip pa-status-chip--marine is-${env.maritimeFlag || "green"}`}>
-              <span>Sea {env.waveHeightM || 0.8}m · {env.smallBoatsAllowed ? "Small boats cleared" : "Boats barred (ห้ามเรือเล็ก)"}</span>
+              <span>Sea {env.waveHeightM || 0.8}m · {env.smallBoatsAllowed ? "Small boats cleared" : <>Boats barred <span lang="th">(ห้ามเรือเล็ก)</span></>}</span>
             </span>
           )}
         </div>

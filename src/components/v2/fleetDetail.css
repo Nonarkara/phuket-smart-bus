@@ -108,7 +108,7 @@
 }
 .fd-mapbus__label {
   position: absolute; left: 0; top: 0; translate: -50% -250%; white-space: nowrap;
-  font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-paper); background: var(--ax-accent);
+  font: 700 0.75em/1 var(--font-body); color: var(--ax-paper); background: var(--ax-accent); font-variant-numeric: tabular-nums;
   padding: 0.25em 0.45em; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
@@ -119,7 +119,7 @@
 }
 .fd-hud__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1em; }
 .fd-hud__tag { display: block; font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ax-ink-3); font-weight: 700; }
-.fd-hud__plate { margin: 0.1em 0 0; font-size: 1.6em; font-weight: 700; color: var(--ax-ink); font-family: var(--font-mono, monospace); }
+.fd-hud__plate { margin: 0.1em 0 0; font-size: 1.6em; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
 .fd-hud__close { min-height: 2em; padding: 0 0.5em; font-size: 0.9em; color: var(--ax-ink-3); }
 .fd-hud__close:hover { color: var(--ax-ink); }
 
@@ -162,7 +162,7 @@
 .fd-hud-placeholder p { margin: 0; font-size: 0.85em; color: var(--ax-ink-2); }
 .fd-hud-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5em; border-top: 1px solid var(--ax-line); padding-top: 0.8em; }
 .fd-hud-kpis div { display: flex; flex-direction: column; }
-.fd-hud-kpis strong { font: 700 1.4em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-hud-kpis strong { font: 700 1.4em/1 var(--font-body); color: var(--ax-ink); }
 .fd-hud-kpis span { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-3); margin-top: 0.2em; }
 
 /* ── Fleet Efficiency Analytics Section ───────────────────────────────────── */
@@ -202,13 +202,13 @@
 
 .fd-card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5em; margin-top: 0.2em; }
 .fd-card__stats div { display: flex; flex-direction: column; }
-.fd-card__stats strong { font: 700 1.25em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-card__stats strong { font: 700 1.25em/1 var(--font-body); color: var(--ax-ink); }
 .fd-card__stats span { font-size: 0.7em; color: var(--ax-ink-3); margin-top: 0.2em; white-space: nowrap; }
 
 /* Speed Histogram */
 .fd-speed-hist { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6em; height: 6.5em; align-items: end; padding: 0.5em 0; }
 .fd-speed-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 0.25em; }
-.fd-speed-col__val { font: 700 0.8em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-speed-col__val { font: 700 0.8em/1 var(--font-body); color: var(--ax-ink); }
 .fd-speed-col__track { width: 100%; max-width: 2.5em; flex: 1; background: var(--ax-paper); display: flex; align-items: flex-end; border: 1px solid var(--ax-line-2); }
 .fd-speed-col__fill { width: 100%; transition: height 0.3s ease; }
 .fd-speed-col__fill.is-idle { background: #5a6673; }
@@ -245,7 +245,7 @@
 .fd-corridor-bus {
   position: absolute; top: 50%; translate: -50% -50%; display: inline-flex; align-items: center; gap: 0.2em;
   padding: 0.15em 0.35em; background: var(--ax-paper); border: 1px solid var(--ax-line-2);
-  font: 700 0.65em/1 var(--font-mono, monospace); color: var(--ax-ink-2); cursor: pointer;
+  font: 700 0.65em/1 var(--font-body); color: var(--ax-ink-2); cursor: pointer; font-variant-numeric: tabular-nums;
 }
 .fd-corridor-bus.is-driving { color: var(--ax-accent); border-color: var(--ax-accent); }
 .fd-corridor-bus.is-late { color: var(--ax-warn); border-color: var(--ax-warn); }
@@ -259,10 +259,10 @@
   padding: 0.35em 0.5em; background: var(--ax-paper); border: 1px solid var(--ax-line);
 }
 .fd-mileage-row:hover { border-color: var(--ax-accent); }
-.fd-mileage-plate { font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-ink); }
+.fd-mileage-plate { font: 700 0.75em/1 var(--font-body); color: var(--ax-ink); }
 .fd-mileage-track { height: 4px; background: var(--ax-line-2); border-radius: 2px; overflow: hidden; }
 .fd-mileage-fill { height: 100%; background: var(--ax-accent); transition: width 0.3s ease; }
-.fd-mileage-km { font: 700 0.75em/1 var(--font-mono, monospace); color: var(--ax-ink-2); text-align: right; }
+.fd-mileage-km { font: 700 0.75em/1 var(--font-body); color: var(--ax-ink-2); text-align: right; }
 .fd-mileage-trips { font-size: 0.7em; color: var(--ax-ink-3); text-align: right; }
 
 /* ── Telemetry Ledger Table Section ───────────────────────────────────────── */
@@ -301,7 +301,7 @@
   text-transform: uppercase; color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap;
 }
 .fd-table td { padding: 0.4em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.6em; font-weight: 700; color: var(--ax-ink); font-family: var(--font-mono, monospace); }
+.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.6em; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
 .fd-caret { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3); font-weight: 400; }
 .fd-doing { color: var(--ax-ink) !important; }
 .fd-row--driving .fd-doing { color: var(--ax-accent) !important; }

@@ -80,9 +80,9 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
         </span>
       </div>
       <div className="decision-panel__chips" aria-label="Status summary">
-        <span className="decision-chip">{getLiveChipLabel(summary.liveVehicles, lang)}</span>
-        <span className="decision-chip">{getAlertChipLabel(alertCount, lang)}</span>
-        <span className="decision-chip">{getBasisLabel(summary, lang)}</span>
+        <span className="decision-chip" lang={lang}>{getLiveChipLabel(summary.liveVehicles, lang)}</span>
+        <span className="decision-chip" lang={lang}>{getAlertChipLabel(alertCount, lang)}</span>
+        <span className="decision-chip" lang={lang}>{getBasisLabel(summary, lang)}</span>
         {summary.seatAvailability && summary.seatAvailability.seatsLeft != null ? (
           <span className="decision-chip">
             {getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)}

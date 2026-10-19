@@ -732,7 +732,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
 
       {env.maritimeFlag === "red" && (
         <div className="v2-map__maritime-banner is-red" role="alert">
-          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore (ห้ามเรือเล็กออกจากฝั่ง)
+          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore <span lang="th">(ห้ามเรือเล็กออกจากฝั่ง)</span>
         </div>
       )}
 

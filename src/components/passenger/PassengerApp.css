@@ -102,27 +102,26 @@ body.passenger-site-mode #root {
   border-bottom: 1px solid var(--pa-line);
 }
 .pa-countdown__label {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--pa-muted);
-  font-weight: 700;
+  font-weight: 600;
 }
 .pa-countdown__time {
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: clamp(2.2rem, 9vw, 3rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.9;
   color: var(--pa-ink);
-  font-variant-numeric: tabular-nums;
 }
 .pa-countdown__sub {
   font-size: 0.95rem;
   color: var(--pa-muted);
 }
 .pa-countdown__sub strong {
-  font-family: var(--font-mono);
+  
   font-weight: 700;
   color: var(--pa-ink);
 }
@@ -149,11 +148,21 @@ body.passenger-site-mode #root {
 .pa-live__board { display: grid; grid-template-columns: 1fr; border: 1px solid var(--pa-ink); background: #fff; }
 .pa-live__dir { padding: 12px 14px; }
 .pa-live__dir + .pa-live__dir { border-top: 1px solid var(--pa-line); }
-.pa-live__dir h3 { margin: 0 0 6px; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pa-muted); }
+/* A real group heading, in sentence case. It was tracked all-caps microcopy —
+   template chrome. "Toward Rawai" is information, so it stays and reads as a
+   heading; what goes is the 0.08em tracking and the shout. */
+.pa-live__dir h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--pa-ink);
+}
 .pa-live__dir ol { margin: 0; padding: 0; list-style: none; }
 .pa-live__row { display: grid; grid-template-columns: 7.5em 1fr; align-items: baseline; gap: 10px; padding: 8px 0; }
 .pa-live__row + .pa-live__row { border-top: 1px solid var(--pa-line); }
-.pa-live__eta { font-family: var(--font-mono); font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--pa-ink); }
+.pa-live__eta {  font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--pa-ink); }
 .pa-live__row:first-child .pa-live__eta { color: var(--pa-red); }
 .pa-live__bus { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pa-live__bus small { font-size: 0.8rem; color: var(--pa-muted); }
@@ -207,13 +216,14 @@ body.passenger-site-mode #root {
   padding: 18px;
   border-bottom: 1px solid var(--pa-line);
 }
+/* A kicker is a label, not a shout. It was 0.7rem uppercase with 0.12em of
+   tracking — template chrome, and under the legibility floor on a phone. */
 .pa-flights__kicker {
   display: block;
   color: var(--pa-red);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 .pa-flights h2 {
   margin: 4px 0 0;
@@ -226,7 +236,7 @@ body.passenger-site-mode #root {
   padding: 5px 7px;
   border: 1px solid var(--pa-line);
   color: var(--pa-muted);
-  font-family: var(--font-mono);
+  
   font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -258,7 +268,7 @@ body.passenger-site-mode #root {
   font-size: 0.82rem;
 }
 .pa-flights__row time,
-.pa-flights__row strong { font-family: var(--font-mono); font-weight: 800; }
+.pa-flights__row strong {  font-weight: 800; }
 .pa-flights__row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pa-flights__row small { color: var(--pa-muted); font-size: 0.7rem; }
 .pa-flights__truth { margin: 14px 18px 8px; color: var(--pa-muted); font-size: 0.75rem; line-height: 1.45; }
@@ -423,7 +433,7 @@ body.passenger-site-mode #root {
   outline-offset: -2px;
 }
 .pa-form__input--mono {
-  font-family: var(--font-mono);
+  
   letter-spacing: 0.04em;
 }
 .pa-form__row {
@@ -489,7 +499,7 @@ body.passenger-site-mode #root {
   color: #635bff; /* Stripe purple */
 }
 .pa-stripe__brand small {
-  font-family: var(--font-mono);
+  
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--pa-muted);
@@ -545,7 +555,7 @@ body.passenger-site-mode #root {
   line-height: 1.5;
 }
 .pa-ticket__sub strong {
-  font-family: var(--font-mono);
+  
   color: var(--pa-ink);
 }
 .pa-ticket__card {
@@ -619,7 +629,7 @@ body.passenger-site-mode #root {
   font-weight: 700;
   text-align: right;
 }
-.pa-mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
+.pa-mono {  letter-spacing: 0.04em; }
 
 /* FOOTER ----------------------------------------------------- */
 .pa-footer {
@@ -700,7 +710,7 @@ body.passenger-site-mode #root {
 
   .pa-portal-header__sub {
     font-size: 11px;
-    font-family: var(--font-mono);
+    
     color: rgba(255, 255, 255, 0.6);
     letter-spacing: 0.04em;
   }
@@ -719,7 +729,7 @@ body.passenger-site-mode #root {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    font-family: var(--font-mono);
+    
     font-size: 11px;
     color: rgba(255, 255, 255, 0.85);
   }
@@ -835,7 +845,6 @@ body.passenger-site-mode #root {
     justify-content: space-between;
     padding: 10px 20px;
     background: rgba(13, 18, 27, 0.94);
-    backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
     z-index: 5;
@@ -856,7 +865,7 @@ body.passenger-site-mode #root {
   .pa-stage__banner-info span {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.65);
-    font-family: var(--font-mono);
+    
   }
 
   .pa-stage__banner-badges {
@@ -872,7 +881,7 @@ body.passenger-site-mode #root {
     color: #ff8a7a;
     font-size: 10px;
     font-weight: 700;
-    font-family: var(--font-mono);
+    
     text-transform: uppercase;
     border-radius: 3px;
   }
@@ -890,7 +899,7 @@ body.passenger-site-mode #root {
     place-items: center;
     background: #111722;
     color: rgba(255, 255, 255, 0.62);
-    font: 700 11px/1 var(--font-mono);
+    font: 700 11px/1 var(--font-body); font-variant-numeric: tabular-nums;
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
@@ -928,7 +937,7 @@ body.passenger-site-mode #root {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.7);
     font-size: 11.5px;
-    font-family: var(--font-mono);
+    
     z-index: 5;
   }
 
@@ -990,7 +999,6 @@ body.passenger-site-mode #root {
   justify-content: space-between;
   padding: 12px 24px;
   background: rgba(10, 14, 20, 0.9);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
 }

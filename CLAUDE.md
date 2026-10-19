@@ -313,9 +313,14 @@ Check every page you touch before shipping. A hit is a defect, not a preference.
 4. **No AI-slop fonts.** Banned as primary: Inter, Poppins, Montserrat, Roboto,
    Open Sans, Lato, DM Sans, Space Grotesk, Geist, Plus Jakarta Sans, Manrope,
    Nunito, system-ui-as-design-font. This project's canonical set is already
-   set: **Josefin Sans** (display) + **Source Sans 3** (body) + **JetBrains
-   Mono** (numerics) + **IBM Plex Sans Thai** (non-looped Thai). Max two
-   families per surface.
+   set: **Josefin Sans** (display) + **Source Sans 3** (body) + **IBM Plex
+   Sans Thai** (non-looped Thai). Max two families per surface.
+   **No monospace as a UI face — JetBrains Mono is banned outright** (removed
+   2026-10-19 after it set "4 min" in a code-editor face at 44px on the
+   rider's phone). Figures that must line up use
+   `font-variant-numeric: tabular-nums` in the body face. A monospace is
+   allowed only where it is genuinely code: `<pre>`/`<code>`, raw tracker JSON,
+   ticket numbers — via `--font-code`, the platform's face, never a download.
 5. **No lazy ornaments.** No decorative boxes, borders, cards, dividers or
    icon tiles added only to fill space or balance a page. Every container must
    group things that belong together; if removing it loses no meaning, remove
@@ -464,3 +469,12 @@ the conditions strip and hero details was fixed in ebd4525.)
 When something looks wrong — buses cutting through water, numbers frozen, bars not moving, text too small on a big screen — the instinct should be: **trace the chain**. Where does the number come from? What's it computed from? If the answer is "it's hardcoded," that's the bug.
 
 Every pixel earns its place. Every number tells the truth. The simulation works so well that plugging in real data is just swapping an import.
+
+<!-- non-slop:start -->
+## Design quality: Non-Slop
+@.non-slop/AGENTS.md
+@STYLE.md
+Before any UI, page, dashboard, deck or visual work, read `.non-slop/AGENTS.md` and follow it.
+`STYLE.md` lists this repo's deliberate choices: it wins over every generic rule, and nothing listed there is stripped.
+Check with `node .non-slop/bin/non-slop.mjs scan .` (and `render <url>` when Playwright is installed). A different agent or person reviews; never self-review.
+<!-- non-slop:end -->

@@ -505,7 +505,7 @@ export function TelemetryStatusModal({ isOpen, onClose }: TelemetryStatusModalPr
                           </span>
                         </td>
                         <td>
-                          <span className="v2-font-mono">
+                          <span>
                             {isGps ? `${km.toFixed(1)} km` : "—"}
                           </span>
                         </td>

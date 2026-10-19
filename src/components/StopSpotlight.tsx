@@ -104,7 +104,7 @@ export function StopSpotlight({
               ? nextBus.label
               : `${nextBus.minutesUntil} min`}
           </strong>
-          <small>{getBasisLabel(nextBus.basis, lang)}</small>
+          <small lang={lang}>{getBasisLabel(nextBus.basis, lang)}</small>
         </article>
         <article className="spotlight-stat">
           <span>{liveBusesLabel}</span>

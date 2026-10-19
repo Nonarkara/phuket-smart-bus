@@ -241,7 +241,7 @@ export default function DashboardV2() {
   // Queue timeline snapshots
   const queueTimeline = getQueueTimeline();
 
-  // Wall-screen scaling: zoom the .v2 element itself. `zoom` on the <html>
+  // Wall-screen scaling: zoom the .v2 element itself. `zoom` on the document
   // root is unreliable in current Chrome (standardized zoom ignores it),
   // which is why /ops rendered microscopic on large displays. A JS-computed
   // factor on a normal element is honored everywhere. All fonts inside the

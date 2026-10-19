@@ -90,7 +90,7 @@ function BarcodeGraphic({ code }: { code: string }) {
       {bars.map((b, i) => (
         <rect key={i} x={b.x} y="0" width={b.w} height="35" fill="#000" />
       ))}
-      <text x={totalW / 2} y="39" textAnchor="middle" fontSize="4" fontFamily="monospace" fill="#333">
+      <text x={totalW / 2} y="39" textAnchor="middle" fontSize="4" fontFamily="var(--font-code)" fill="#333">
         {code}
       </text>
     </svg>

@@ -132,7 +132,7 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
                 fontSize="9"
                 fill="var(--ax-warn, #e0a243)"
                 textAnchor="end"
-                fontFamily="var(--font-mono)"
+                fontFamily="var(--font-body)"
               >
                 75 seats / hr standard capacity
               </text>
@@ -162,7 +162,7 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
                 fontWeight="700"
                 fill="var(--ax-ink, #f3f6f8)"
                 textAnchor={peak.min > 720 ? "end" : "start"}
-                fontFamily="var(--font-mono)"
+                fontFamily="var(--font-body)"
               >
                 Peak: {peak.waiting} pax waiting @ {String(Math.floor(peak.min / 60)).padStart(2, "0")}:{String(peak.min % 60).padStart(2, "0")}
               </text>
@@ -183,10 +183,10 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
           </g>
 
           {/* Y Axis Labels */}
-          <text x={PAD_X - 6} y={PAD_TOP + 4} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-mono)">
+          <text x={PAD_X - 6} y={PAD_TOP + 4} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-body)">
             {view.maxWaiting}p
           </text>
-          <text x={PAD_X - 6} y={H_QUEUE - PAD_BOTTOM} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-mono)">
+          <text x={PAD_X - 6} y={H_QUEUE - PAD_BOTTOM} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-body)">
             0p
           </text>
         </svg>
@@ -223,7 +223,7 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
                 fontSize="9"
                 fill="var(--ax-ink-3, #929eaa)"
                 textAnchor="middle"
-                fontFamily="var(--font-mono)"
+                fontFamily="var(--font-body)"
               >
                 {String(h).padStart(2, "0")}:00
               </text>
@@ -249,10 +249,10 @@ export function InsightsTimeline({ points, simMinutes }: InsightsTimelineProps) 
           />
 
           {/* Y Axis Labels */}
-          <text x={PAD_X - 6} y={PAD_TOP + 4} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-mono)">
+          <text x={PAD_X - 6} y={PAD_TOP + 4} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-body)">
             {view.maxCum.toLocaleString()}
           </text>
-          <text x={PAD_X - 6} y={H_CUM - PAD_BOTTOM} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-mono)">
+          <text x={PAD_X - 6} y={H_CUM - PAD_BOTTOM} fontSize="9" fill="var(--ax-ink-3, #929eaa)" textAnchor="end" fontFamily="var(--font-body)">
             0
           </text>
         </svg>

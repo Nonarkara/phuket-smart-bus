@@ -29,3 +29,6 @@ data/*.sqlite3-wal
 # Local Wrangler secrets (never commit: these are the Pages/Worker secrets)
 .dev.vars
 .dev.vars.*
+
+# non-slop render screenshots
+non-slop-shots/

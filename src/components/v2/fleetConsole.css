@@ -25,7 +25,7 @@
 .fc-head { min-height: 4.5em; display: flex; flex-direction: column; gap: 0.8em; justify-content: space-between; padding: 0.75em 0; border-bottom: 2px solid var(--ax-line-2); }
 .fc-identity { display: flex; align-items: baseline; gap: 1em; }
 .fc-eyebrow { margin: 0; font-size: 0.8em; font-weight: 700; letter-spacing: 0.08em; color: var(--ax-ink); }
-.fc-system-id { font: 700 0.65em/1 var(--font-mono); letter-spacing: 0.08em; color: var(--ax-accent); }
+.fc-system-id { font: 700 0.65em/1 var(--font-body); letter-spacing: 0.08em; color: var(--ax-accent); }
 .fc-title { margin: 0.16em 0 0.24em; max-width: 18ch; font-size: 2.45em; line-height: 1.02; font-weight: 500; letter-spacing: -0.045em; color: var(--ax-ink); text-wrap: balance; }
 .fc-sub { margin: 0; font-size: 1em; color: var(--ax-ink-2); max-width: 48em; }
 .fc-sub.is-dead { color: var(--ax-neg); font-weight: 700; }
@@ -103,7 +103,7 @@
 .fc-posture dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 1em 0 0; border-top: 1px solid var(--ax-line); }
 .fc-posture dl div { padding-top: 0.7em; }
 .fc-posture dt { font-size: 0.7em; color: var(--ax-ink-3); }
-.fc-posture dd { margin: 0.15em 0 0; font: 700 1.25em/1 var(--font-mono); color: var(--ax-ink); }
+.fc-posture dd { margin: 0.15em 0 0; font: 700 1.25em/1 var(--font-body); color: var(--ax-ink); }
 .fc-record { background: var(--ax-panel); padding: 0.9em 1em; border-left: 3px solid var(--ax-accent); }
 .fc-record h2 { margin: 0 0 0.5em; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
 .fc-record ul { margin: 0 0 0.6em; padding: 0; list-style: none; display: grid; gap: 0.45em; font-size: 0.9em; color: var(--ax-ink); }

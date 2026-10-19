@@ -328,3 +328,10 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 When something looks wrong — buses cutting through water, numbers frozen, bars not moving, text too small on a big screen — the instinct should be: **trace the chain**. Where does the number come from? What's it computed from? If the answer is "it's hardcoded," that's the bug.
 
 Every pixel earns its place. Every number tells the truth. The simulation works so well that plugging in real data is just swapping an import.
+
+<!-- non-slop:start -->
+## Design quality: Non-Slop
+Before any UI, page, dashboard, deck or visual work, read `.non-slop/AGENTS.md` and follow it.
+`STYLE.md` lists this repo's deliberate choices: it wins over every generic rule, and nothing listed there is stripped.
+Check with `node .non-slop/bin/non-slop.mjs scan .` (and `render <url>` when Playwright is installed). A different agent or person reviews; never self-review.
+<!-- non-slop:end -->

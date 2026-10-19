@@ -179,7 +179,7 @@ function ActiveTile({ layer }: { layer: LayerDef }) {
   );
 }
 
-/** MoMA-ruled layer switcher: flat chips, hairline dividers, monospace caps,
+/** MoMA-ruled layer switcher: flat chips, hairline dividers, tabular caps,
  *  no shadow/gradient/radius — the same Axiom language the /ops console
  *  uses, adapted for a light-on-photo overlay so it reads over any layer. */
 function LayerBar({
