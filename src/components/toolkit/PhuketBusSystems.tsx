@@ -163,7 +163,9 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
           alt="Phuket Smart Bus official timetable, effective 18 January 2025: Rawai Beach to Phuket Airport and Phuket Airport to Rawai Beach, ten vehicles, ฿100 flat fare"
           width={724}
           height={1024}
-          loading="lazy"
+          /* Not lazy. The tab is click-to-open, so the fetch only happens when
+             a reader asks for this tab, and lazy-loading it meant the browser
+             never started the request — the figure rendered as an empty box. */
           decoding="async"
         />
         <figcaption>
