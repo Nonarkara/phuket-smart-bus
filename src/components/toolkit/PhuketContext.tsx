@@ -148,9 +148,9 @@ const FLOOD_STATS: Stat[] = [
 ];
 
 const DEMAND_STATS: Stat[] = [
-  { value: "106,581", label: "aircraft movements, 2025", note: "≈ 292 / day, both directions" },
-  { value: "11.0M", label: "international arrivals, 2025", note: "Russia, India, China, Australia top 4" },
-  { value: "6.6M", label: "domestic arrivals, 2025", note: "Thai tourism, Bangkok, Chiang Mai" }
+  { value: "106,585", label: "aircraft movements, 2025", note: "≈ 292 / day, both directions" },
+  { value: "10.8M", label: "international passengers, 2025", note: "Russia, India, China, Australia top 4" },
+  { value: "6.6M", label: "domestic passengers, 2025", note: "Thai tourism, Bangkok, Chiang Mai" }
 ];
 
 const ROAD_STATS: Stat[] = [
@@ -437,30 +437,54 @@ function AccidentChart() {
 }
 
 function AirportStat() {
-  // 10-year passenger history, 2015–2025, both international and domestic.
-  // Sources: Phuket Airport 2010–2024 statistics + 2025 partial from C9 / Thaiger.
+  // Passenger history, 2015–2025, international and domestic.
+  // Source: AOT's own Air Traffic Reports (via the AOT Air Traffic Report
+  // 2025, which carries the whole series). Every row here is that table:
+  //   2015  5,909,356 dom +  6,950,000 intl = 12,859,356
+  //   2016  6,997,879 dom +  8,109,306 intl = 15,107,185
+  //   2017  7,655,579 dom +  9,200,058 intl = 16,855,637
+  //   2018  7,817,894 dom + 10,403,631 intl = 18,221,525
+  //   2019  7,452,262 dom + 10,666,178 intl = 18,118,440  (pre-pandemic peak)
+  //   2020  2,332,349 dom +  3,155,264 intl =  5,429,708
+  //   2021  1,502,356 dom +    287,481 intl =  1,789,837
+  //   2022  4,659,672 dom +  3,155,264 intl =  7,814,936
+  //   2023  6,262,326 dom +  7,716,858 intl = 13,979,184
+  //   2024  6,641,912 dom + 10,573,403 intl = 17,215,315
+  //   2025  6,636,760 dom + 10,837,291 intl = 17,474,051
+  // The earlier version of this chart carried a different series: 2018 at
+  // 16.3M, 2020 at 6.7M, 2021 at 2.6M and 2022 at 11.3M, and a 2025 split
+  // of 10.0/7.4 international/domestic that does not add up. Domestic and
+  // international were swapped in the earlier years, which is what made the
+  // 2022 rebound look bigger than it was. It also skipped 2016 and 2017, the
+  // run-up to the peak, which made the recovery read as a cliff.
   const data = [
     { y: "2015", total: 12.9, intl: 6.95 },
-    { y: "2018", total: 16.3, intl: 9.4 },
-    { y: "2019", total: 18.3, intl: 10.5 }, // pre-pandemic peak
-    { y: "2020", total: 6.7, intl: 1.6 },
-    { y: "2021", total: 2.6, intl: 0.3 },
-    { y: "2022", total: 11.3, intl: 5.7 },
-    { y: "2023", total: 14.0, intl: 7.7 },
-    { y: "2024", total: 17.2, intl: 10.6 },
-    { y: "2025", total: 17.4, intl: 10.0 }
+    { y: "2016", total: 15.1, intl: 8.11 },
+    { y: "2017", total: 16.9, intl: 9.2 },
+    { y: "2018", total: 18.2, intl: 10.4 },
+    { y: "2019", total: 18.1, intl: 10.67 }, // pre-pandemic peak
+    { y: "2020", total: 5.4, intl: 3.16 },
+    { y: "2021", total: 1.8, intl: 0.29 },
+    { y: "2022", total: 7.8, intl: 3.16 },
+    { y: "2023", total: 14.0, intl: 7.72 },
+    { y: "2024", total: 17.2, intl: 10.57 },
+    { y: "2025", total: 17.5, intl: 10.84 }
   ];
   const max = 20;
+  // The pre-pandemic peak, the trough and the current year. On a phone the
+  // chart shows these three and the years; the rest of the series is in
+  // AOT's table.
+  const KEY_YEARS = new Set(["2019", "2021", "2025"]);
   return (
     <figure className="pc-figure" aria-label="HKT passenger traffic, 2015–2025, millions">
       <figcaption>
         <span className="tk-kicker">The demand side of the bus argument</span>
-        <strong>17.4 million passengers through HKT in 2025.</strong>
+        <strong>17.5 million passengers through HKT in 2025.</strong>
         <p>
           The trough is 2020–2021; the rebound is full — 96.4% of the 2019 peak.
           The runway, designed for 12.5 million a year, has been over capacity
-          since 2015. International (red) drives the recovery; domestic (blue)
-          was already back to 2019 by 2024.
+          since 2015. International (red) drives the recovery and is now above
+          its 2019 level; domestic (blue) is still short of it, at 89%.
         </p>
       </figcaption>
       <div className="pc-stack">
@@ -474,7 +498,11 @@ function AirportStat() {
                 <span className="pc-stack__intl" style={{ height: `${intlH}%` }} />
                 <span className="pc-stack__dom" style={{ height: `${domH}%` }} />
               </span>
-              <span className="pc-stack__val">{d.total}M</span>
+              {/* The three numbers the argument turns on — peak, trough, now —
+                  are the ones that survive the phone layout. */}
+              <span className={`pc-stack__val${KEY_YEARS.has(d.y) ? " pc-stack__val--key" : ""}`}>
+                {d.total.toFixed(1)}M
+              </span>
             </div>
           );
         })}

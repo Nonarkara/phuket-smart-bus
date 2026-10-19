@@ -493,9 +493,9 @@
 .pc-bar__label, .pc-bar__val { font: 700 10px/1 var(--font-body); }
 .pc-bar__track { height: 18px; background: rgba(17,24,32,0.08); }
 .pc-bar__fill { display: block; height: 100%; }
-.pc-stack { display: grid; grid-template-columns: repeat(9, 1fr); gap: 10px; min-height: 320px; align-items: end; }
-.pc-stack__row { display: grid; grid-template-rows: 18px 250px 18px; justify-items: center; gap: 5px; height: 100%; }
-.pc-stack__track { display: flex; flex-direction: column-reverse; width: 70%; height: 250px; background: rgba(17,24,32,0.05); }
+.pc-stack { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 10px; min-height: 320px; align-items: end; }
+.pc-stack__row { display: grid; grid-template-rows: 18px 250px 18px; justify-items: center; gap: 5px; height: 100%; min-width: 0; }
+.pc-stack__track { display: flex; flex-direction: column-reverse; width: 70%; max-width: 88px; height: 250px; background: rgba(17,24,32,0.05); }
 .pc-stack__intl, .pc-stack__dom { display: block; width: 100%; }
 .pc-stack__intl { background: var(--tk-red); }
 .pc-stack__dom { background: var(--tk-blue); }
@@ -503,6 +503,16 @@
 .pc-stack__legend { display: flex; gap: 18px; margin-top: 18px; font: 700 10px/1 var(--font-body); text-transform: uppercase; }
 .pc-stack__legend span { display: flex; align-items: center; gap: 6px; }
 .pc-stack__legend i { width: 10px; height: 10px; }
+
+@media (max-width: 700px) {
+  /* Eleven columns of a value label do not fit a phone. The shape is the
+     message at this width — the run-up, the peak, the collapse, the
+     recovery — and the three numbers the argument turns on survive; the
+     years stay on the axis. */
+  .pc-stack { gap: 4px; }
+  .pc-stack__val { display: none; }
+  .pc-stack__val--key { display: block; }
+}
 .pc-next { padding-block: 30px; border-block: 1px solid var(--tk-ink); font-size: clamp(1.2rem, 2.2vw, 1.8rem); }
 .pc-next .tk-kicker { margin-bottom: 10px; }
 
@@ -525,8 +535,6 @@
   .pc-system-map__readout { left: 12px; right: auto; align-items: start; }
   .pc-system-map__legend { right: 12px; bottom: 12px; left: 12px; gap: 8px 12px; }
   .pc-timeline__list li { grid-template-columns: 86px 1fr; gap: 16px; }
-  .pc-stack { gap: 4px; overflow-x: auto; }
-  .pc-stack__row { min-width: 34px; }
 }
 
 /* ===========================================================================
