@@ -26,7 +26,13 @@ export function RiderMap({ buses, onLine, line, stop, now }: {
   useEffect(() => {
     if (!el.current || map.current) return;
     const m = L.map(el.current, { center: [7.93, 98.33], zoom: 11, minZoom: 9, maxZoom: 18, zoomSnap: 0.25, worldCopyJump: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 }).addTo(m);
+    // Same tile layer as the operations wall, and the same `v2-basemap-tile`
+    // class — without it the phone rendered raw light OpenStreetMap while
+    // /ops rendered the dark treatment. The rider looked like a different
+    // product on the screen where the product is actually used.
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors", maxZoom: 19, className: "v2-basemap-tile",
+    }).addTo(m);
     for (const l of LINES) {
       routes.current.set(l.routeId, L.polyline(l.poly.map((p) => [p[0]!, p[1]!] as [number, number]), { color: "#8a9198", weight: 3, opacity: 0.55, interactive: false }).addTo(m));
     }

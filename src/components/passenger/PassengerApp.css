@@ -160,7 +160,19 @@ body.passenger-site-mode #root {
 .pa-live__none { margin: 0; color: var(--pa-muted); }
 .pa-live__truth { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--pa-muted); }
 
-.pa-map { height: 58svh; min-height: 320px; border: 1px solid var(--pa-ink); background: #e9ece8; }
+.pa-map { height: 58svh; min-height: 320px; border: 1px solid var(--pa-ink); background: #0f151d; }
+/* The rider map is its own Leaflet instance, not the wall's V2LiveMap, so it
+   never inherited the dark cartographic treatment and rendered raw light OSM
+   on the one screen a real rider actually looks at. Same class, same filter
+   the operations wall uses. */
+.pa-map .v2-basemap-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.92);
+}
+.pa-map .leaflet-control-attribution {
+  background: rgba(10, 14, 20, 0.78);
+  color: rgba(255, 255, 255, 0.66);
+}
+.pa-map .leaflet-control-attribution a { color: #e6edf3; }
 .pa-map--loading { display: flex; align-items: center; justify-content: center; color: var(--pa-muted); font-size: 0.8rem; }
 .pa-map__bus, .pa-map__stop { position: relative; }
 .pa-map__dot, .pa-map__arrow, .pa-map__stop span { position: absolute; left: 0; top: 0; }
