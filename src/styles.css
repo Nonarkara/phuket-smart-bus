@@ -9294,29 +9294,37 @@ a { color: var(--amber-text); }
   overflow: hidden;
 }
 
-/* Operations: flights + demand/supply share one evidence rail; the map owns
-   the complete second column. Explicit areas prevent a newly inserted panel
-   from auto-flowing the map into a second row and leaving a blank quadrant. */
+/* Operations body — map is the hero.
+   Row 1 is the 24-hour flight rail full-width (genuinely horizontal).
+   Row 2 is two columns: the map takes ≥60% width on the left and runs the
+   full body height; the side rail carries the story + equation + conditions
+   + fleet table on the right. The previous 5-row-stacked (then
+   2-col-on-2-col) layout letterboxed the canvas into a thin strip below the
+   dashboards. The map is the wall's first read — it owns the column. */
 .v2 .v2-body--operations {
-  grid-template-columns: minmax(400px, 32fr) minmax(0, 68fr);
-  grid-template-rows: minmax(250px, 0.78fr) minmax(0, 1.22fr);
-  grid-template-areas:
-    "flights map"
-    "decision map";
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 1px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ax-line);
 }
 .v2 .v2-body--operations > .v2-flights {
-  grid-area: flights;
+  grid-row: 1;
+  grid-column: 1 / -1;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   border: 0;
 }
-.v2 .v2-body--operations .v2-flights__hours { height: 124px; }
-.v2 .v2-body--operations .v2-flights__callout {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 10px;
-}
+.v2 .v2-body--operations .v2-flights__hours { height: 88px; }
+/* Hide the in-rail callout on the wall — the map already shows what's
+   landing next, and the rail itself gets the room to keep its slim height
+   (≤200px) so the map column below reaches ≥60% of the first screen. */
+.v2 .v2-body--operations .v2-flights__callout { display: none; }
+.v2--operations .v2-body--operations .v2-flights__hours { height: 88px; }
 .v2 .v2-body--operations .v2-flights__callout-time {
   min-width: 0;
   padding-right: 10px;
@@ -9344,8 +9352,126 @@ a { color: var(--amber-text); }
   grid-column: 4 / 6;
   text-align: right;
 }
-.v2 .v2-body--operations > .v2-decision-rail { grid-area: decision; }
-.v2 .v2-body--operations > .v2-map { grid-area: map; }
+.v2 .v2-body--operations > .v2-decision-rail { display: contents; }
+/* Row 2 — the main body. The map owns the left column (≥60% width, full body
+   height); the side rail carries the story + equation + conditions + fleet.
+   `display: contents` on the old `v2-decision-rail` lets its children
+   participate in the body's grid as direct siblings. */
+.v2 .v2-body--operations > .v2-map {
+  grid-row: 2;
+  grid-column: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  /* Flex column so .v2-map__stage (flex:1) fills the body-height column,
+     and the .v2-map__overlay sits docked at the bottom of the same column. */
+  display: flex;
+  flex-direction: column;
+  background: #0a0e14;
+}
+.v2 .v2-body--operations > .v2-side-rail {
+  grid-row: 2;
+  grid-column: 2;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--ax-panel);
+  border-left: 1px solid var(--ax-line);
+}
+/* ── Side rail: story on top, then equation, conditions, fleet ──────────── */
+.v2-side-rail__story {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--ax-line);
+  flex-shrink: 0;
+}
+.v2-side-rail__story-card {
+  background: var(--ax-panel);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.v2-side-rail__story-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+}
+.v2-side-rail__story-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ax-ink);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.v2-side-rail__story-detail {
+  font-size: 11px;
+  color: var(--ax-ink-2);
+}
+.v2-side-rail__story-card--earned .v2-side-rail__story-value { color: var(--ax-accent); }
+/* The SIM headline (.v2-headline) — single tall block instead of 4 mini-cards */
+.v2-side-rail__story.v2-headline {
+  display: block;
+  padding: 18px;
+  background: var(--ax-panel);
+}
+.v2-side-rail .v2-decision-rail {
+  border-top: 1px solid var(--ax-line);
+  border-bottom: 1px solid var(--ax-line);
+  /* The side rail is a scrollable flex column. The decision rail (equation +
+     hour plan) must keep its natural height so all three terms stay visible
+     above the fold — without this it gets squeezed to 2px by the conditions
+     strip below it and any flex weight above. */
+  flex-shrink: 0;
+}
+.v2-side-rail > .v2-conditions {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--ax-line);
+  border-bottom: 1px solid var(--ax-line);
+  background: var(--ax-panel);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  /* The conditions strip's natural width is ~360px (one row of four tiles
+     fits at the rail's 380px column). At 1440+ it must be CAP'd at the
+     smaller of those — never balloon to fill the rail — so the table below
+     isn't pushed off the screen by an expanding condition row. */
+  max-height: 110px;
+  overflow: hidden;
+}
+.v2-side-rail > .v2-fleet-panel,
+.v2-side-rail > [class*="LiveFleetPanel"],
+.v2-side-rail > [class*="OperatorFleetPanel"] {
+  flex-shrink: 0;
+  border-top: 1px solid var(--ax-line);
+}
+@media (max-width: 1199px) {
+  .v2 .v2-body--operations {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .v2 .v2-body--operations > .v2-map {
+    grid-row: 3;
+    grid-column: 1;
+    min-height: 420px;
+  }
+  .v2 .v2-body--operations > .v2-side-rail {
+    grid-row: 2;
+    grid-column: 1;
+    border-left: 0;
+    border-top: 1px solid var(--ax-line);
+    max-height: 50vh;
+  }
+}
 .v2-decision-rail {
   min-height: 0;
   overflow-y: auto;
@@ -14335,11 +14461,16 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-header__story-detail { white-space: nowrap; }
 .v2--operations .v2-header__story-value { font-size: 19px; }
 
-/* Left column: flight board takes its natural height; the decision rail
-   gets the remainder and scrolls. */
+/* The .v2-body--operations grid was overridden here with a 33fr/67fr +
+   2-row stacked layout (flights row + decisions row) on the left and the
+   map on the right. That budget kept the dashboards on top of the canvas
+   and the map squeezed into a strip; the previous prior rules have been
+   replaced with a map-first 2-row, 2-col layout below. The only thing left
+   to do here is to scope the wall-size rules to the same skeleton — the
+   column count + row count stay; the column widths shift to 1fr + 380. */
 .v2--operations .v2-body--operations {
-  grid-template-columns: minmax(420px, 33fr) minmax(0, 67fr);
-  grid-template-rows: minmax(200px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 .v2--operations .v2-body--operations > .v2-flights { overflow: hidden; gap: 6px; padding: 12px 18px 8px; }
 .v2--operations .v2-flights__head,

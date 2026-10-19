@@ -629,63 +629,16 @@ export default function DashboardV2() {
       ) : (
         // OPERATIONS view — one decision rail, one geographic truth
         <main className="v2-body v2-body--operations">
+          {/* Top strip — the 24-hour rail is genuinely a horizontal timeline
+              and stays full-width. Below it, the body is two columns: the map
+              is the hero on the left (≥60% of the first screen), and the side
+              rail carries the story + equation + conditions + fleet on the
+              right. Anything that used to live INSIDE .v2-map (hero, fleet,
+              conditions) now lives in the side rail — so the canvas is full
+              bleed and the bus markers are never letterboxed. */}
           <FlightTimeline flights={dailyFlights} simMinutes={state.simMinutes} />
-          <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
 
           <section className="v2-map">
-            <PhuketConditionsStrip />
-            {/* Distinct keys: the SIMULATION cells are ref-written per frame, so
-                React must never reuse those DOM nodes for LIVE (it would update
-                text nodes the rAF loop already replaced and freeze stale ฿). */}
-            {source === "live" ? (
-            <div className="v2-map__hero" key="hero-live">
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Buses reporting</span>
-                <strong className="v2-map__hero-value">{liveSummary.busesReporting.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">
-                  {liveSummary.busesOnLine} on a line · {liveSummary.busesMoving} moving
-                  {liveSummary.paxOnBoardNow !== null ? ` · ${liveSummary.paxOnBoardNow} on board now` : ""}
-                </span>
-              </div>
-              <div className="v2-map__hero-card">
-                <span className="v2-map__hero-label">Trips completed</span>
-                <strong className="v2-map__hero-value">{liveSummary.tripsCompleted.toLocaleString()}</strong>
-                <span className="v2-map__hero-detail">
-                  {liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · {liveSummary.kmDriven.toLocaleString()} km
-                </span>
-              </div>
-              <div className="v2-map__hero-card v2-map__hero-card--earned">
-                <span className="v2-map__hero-label">Riders today</span>
-                {/* Nothing counted and nothing estimated yet is unknown, not zero riders. */}
-                <strong className="v2-map__hero-value">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</strong>
-                <span className="v2-map__hero-detail">
-                  {liveSummary.riders > 0
-                    ? `${liveSummary.ridersCounted.toLocaleString()} counted on board · ${(liveSummary.riders - liveSummary.ridersCounted).toLocaleString()} modelled`
-                    : "not measured — passenger counters read 0"}
-                </span>
-              </div>
-              <div className="v2-map__hero-card v2-map__hero-card--earned">
-                <span className="v2-map__hero-label">Fares today</span>
-                <strong className="v2-map__hero-value">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</strong>
-                <span className="v2-map__hero-detail">{liveSummary.riders > 0 ? "riders × fare · no fare-box feed yet" : "unknown until riders are — no fare-box feed"}</span>
-              </div>
-            </div>
-            ) : (
-            <div className="v2-map__hero v2-headline" key="hero-sim">
-              {/* The one number the wall leads with. Every term of the sum
-                  below comes from the same atMinute() frame, so
-                  wanted = collected + took a Grab + waiting holds per frame. */}
-              <span className="v2-headline__label">Missed today · modelled</span>
-              <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
-              <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>
-              <p className="v2-headline__sum">
-                <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted a bus</span>
-                <span>= <b ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</b> collected</span>
-                <span>+ <b ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</b> took a Grab</span>
-                <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting at the airport</span>
-              </p>
-            </div>
-            )}
             <div className="v2-map__stage">
               <V2LiveMap
                 ref={mapRef}
@@ -707,12 +660,66 @@ export default function DashboardV2() {
                 <span className="v2-map__next">Next departure: {state.nextDeparture} min</span>
               )}
             </div>
-            {/* The operator fleet table — sits under the map so operators
-                see WHERE every bus is while reading the table below. */}
+          </section>
+
+          <aside className="v2-side-rail">
+            {/* Distinct keys: the SIMULATION cells are ref-written per frame, so
+                React must never reuse those DOM nodes for LIVE (it would update
+                text nodes the rAF loop already replaced and freeze stale ฿). */}
+            {source === "live" ? (
+              <div className="v2-side-rail__story" key="story-live">
+                <div className="v2-side-rail__story-card">
+                  <span className="v2-side-rail__story-label">Buses reporting</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.busesReporting.toLocaleString()}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.busesOnLine} on a line · {liveSummary.busesMoving} moving
+                    {liveSummary.paxOnBoardNow !== null ? ` · ${liveSummary.paxOnBoardNow} on board now` : ""}
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card">
+                  <span className="v2-side-rail__story-label">Trips completed</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.tripsCompleted.toLocaleString()}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · {liveSummary.kmDriven.toLocaleString()} km
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card v2-side-rail__story-card--earned">
+                  <span className="v2-side-rail__story-label">Riders today</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</strong>
+                  <span className="v2-side-rail__story-detail">
+                    {liveSummary.riders > 0
+                      ? `${liveSummary.ridersCounted.toLocaleString()} counted · ${(liveSummary.riders - liveSummary.ridersCounted).toLocaleString()} modelled`
+                      : "not measured — passenger counters read 0"}
+                  </span>
+                </div>
+                <div className="v2-side-rail__story-card v2-side-rail__story-card--earned">
+                  <span className="v2-side-rail__story-label">Fares today</span>
+                  <strong className="v2-side-rail__story-value">{liveSummary.riders > 0 ? `฿${liveSummary.fareThb.toLocaleString()}` : "—"}</strong>
+                  <span className="v2-side-rail__story-detail">{liveSummary.riders > 0 ? "riders × fare" : "unknown until counters report"}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="v2-side-rail__story v2-headline" key="story-sim">
+                <span className="v2-headline__label">Missed today · modelled</span>
+                <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
+                <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>
+                <p className="v2-headline__sum">
+                  <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted a bus</span>
+                  <span>= <b ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</b> collected</span>
+                  <span>+ <b ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</b> took a Grab</span>
+                  <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting at the airport</span>
+                </p>
+              </div>
+            )}
+
+            <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+            <PhuketConditionsStrip />
+            {/* The operator fleet table — now lives in the side rail below
+                conditions, where its wide rows can sit next to the map. */}
             {source === "live"
               ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
               : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
-          </section>
+          </aside>
 
         </main>
       )}
