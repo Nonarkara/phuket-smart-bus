@@ -26,7 +26,7 @@ const BUS_CITATIONS: Citation[] = [
   },
   {
     text: "Phuket Smart Bus — official PKSB timetable (effective 18 Jan 2025),",
-    meta: "Rawai Beach ↔ Phuket Airport: ~25 departures/day each direction. First southbound 08:15, last 23:30. First northbound 05:30, last 19:30. ~95 min trip, ฿100 flat fare.",
+    meta: "Rawai Beach ↔ Phuket Airport: 20 departures a day each direction. From the airport 08:15 to 23:30; to it 05:30 to 19:30 — the first two northbound trips start at Kata Palm, not Rawai. ~95 min trip, ฿100 flat fare.",
     href: "https://bus.nonarkara.org/"
   },
   {
@@ -74,7 +74,7 @@ type Operator = {
 export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
   const operatorStats: Stat[] = [
     { value: "3", label: tr("pbStat1Label", lang), note: tr("pbStat1Note", lang) },
-    { value: "~25", label: tr("pbStat2Label", lang), note: tr("pbStat2Note", lang) },
+    { value: "20", label: tr("pbStat2Label", lang), note: tr("pbStat2Note", lang) },
     { value: "฿100", label: tr("pbStat3Label", lang), note: tr("pbStat3Note", lang) },
     { value: "~230/day", label: tr("pbStat4Label", lang), note: tr("pbStat4Note", lang) }
   ];
@@ -153,6 +153,32 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
           </div>
         ))}
       </div>
+
+      {/* The timetable itself. The "20" above is a published figure, and a
+          reader who distrusts it can check the document the operator
+          publishes. */}
+      <figure className="pb-evidence">
+        <img
+          src={`${import.meta.env.BASE_URL}toolkit/evidence/pksb-timetable-2025-01-18.webp`}
+          alt="Phuket Smart Bus official timetable, effective 18 January 2025: Rawai Beach to Phuket Airport and Phuket Airport to Rawai Beach, ten vehicles, ฿100 flat fare"
+          width={724}
+          height={1024}
+          /* Not lazy. The tab is click-to-open, so the fetch only happens when
+             a reader asks for this tab, and lazy-loading it meant the browser
+             never started the request — the figure rendered as an empty box. */
+          decoding="async"
+        />
+        <figcaption>
+          <strong>PKSB official timetable, effective 18 January 2025.</strong>{" "}
+          The scan the &ldquo;20 departures&rdquo; figure is read from. The
+          published schedule lists 20 departures a day from the airport
+          (08:15 to 23:30) and 20 a day to it (05:30 to 19:30) — the first
+          two of those start at Kata Palm, not Rawai. The model runs on exactly
+          these trips, transcribed into{" "}
+          <code>src/data/timetables/</code>. The figure is here so a reader can
+          check it.
+        </figcaption>
+      </figure>
 
       {/* Operator cards */}
       <div className="pb-operators">

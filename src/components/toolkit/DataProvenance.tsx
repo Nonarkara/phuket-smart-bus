@@ -31,9 +31,9 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "HKT passenger movements 2025",
-    figure: "17.4M (10M international + 6.6M domestic · 106,581 flights)",
-    source: "The Thaiger / C9 Hotelworks (citing AOT 2025 monthly series)",
-    sourceHref: "https://thethaiger.com/news/national/phuket-airport-sees-flight-and-passenger-surge-in-2025-recovery",
+    figure: "17,474,051 (10,837,291 international + 6,636,760 domestic) over 106,585 aircraft movements",
+    source: "Airports of Thailand (AOT) — Air Traffic Report 2025",
+    sourceHref: "https://www.airportthai.co.th/wp-content/uploads/2026/06/ANNUAL-REPORT-2025.pdf",
     verified: "2026-07-15",
     freshness: "Annual"
   },
@@ -87,7 +87,7 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "PKSB Airport Line timetable",
-    figure: "≈ 25 departures/day · first 05:30 · last 23:30 · 95 min trip",
+    figure: "20 departures a day from the airport (08:15–23:30) · 20 a day to it (05:30–19:30) · ~95 min trip",
     source: "Phuket Smart Bus Co. (PKSB) · official schedule",
     sourceHref: "https://www.pkbsbus.com/",
     verified: "2026-07-15",

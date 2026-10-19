@@ -17,7 +17,7 @@
  *      trajectory 2005 → 2019.
  *   5. What killed the profit (ride-hailing from September 2015; 3.3M
  *      lost Strip trips, 90% → 60% seat fill).
- *   6. The Phuket transfer — engine's region-capture × HKT's 17.4M pax.
+ *   6. The Phuket transfer — engine's region-capture × HKT's 17.5M pax.
  *
  * All numbers are sourced. The Deuce's $6M annual profit (2008–2015) is
  * RTC's own reporting. The 4.2/100k pedestrian death rate (1996) and the
@@ -113,7 +113,7 @@ const PHUKET_TRANSFER_CITATIONS: Citation[] = [
   },
   {
     text: "C9 Hotelworks — “Phuket Hotel & Tourism Update,”",
-    meta: "C9 Hotelworks Market Research, March 2026. HKT handled 17.4M pax in 2025; airport operating at 39% above its 12.5M designed capacity (cap exceeded in 2015).",
+    meta: "C9 Hotelworks Market Research, March 2026. C9 reports HKT at 17.4M pax in 2025 and the airport at 39% above its 12.5M designed capacity (cap exceeded in 2015); AOT's own Air Traffic Report 2025 gives 17,474,051 and 40% over, and this site uses AOT's figure.",
     href: "https://c9hotelworks.com/wp-content/uploads/2026/03/Phuket-Hotel-Tourism-Update.pdf"
   },
   {
@@ -152,7 +152,7 @@ const PROFIT_STATS: Stat[] = [
 ];
 
 const PHUKET_STATS: Stat[] = [
-  { value: "17.4M", label: "HKT pax in 2025", note: "96.4% of 2019 peak" },
+  { value: "17.5M", label: "HKT pax in 2025", note: "96.4% of 2019 peak" },
   { value: "32 km", label: "HKT → Patong corridor", note: "≈ the length of the Las Vegas Strip" },
   { value: "5%", label: "weighted bus-capture (engine heuristic)", note: "SE Asia 7% / Europe 3% / etc." }
 ];
@@ -396,11 +396,11 @@ function MonorailVsDeuce() {
 function PhuketTransferChart() {
   // The Vegas-vs-Phuket comparison the operator needs.
   // Vegas: 38M visitors (2019) × ~3-5% transit share of Strip corridor ≈ 13.5M boardings
-  // Phuket: 17.4M HKT pax × 5% engine heuristic ≈ 870K boardings
+  // Phuket: 17.5M HKT pax × 5% engine heuristic ≈ 870K boardings
   // But also: Phuket is currently served by zero public airport bus
   // so the question isn't "what share" — it's "where to start".
   const data = [
-    { label: "HKT pax 2025", value: 17.4, kind: "demand" },
+    { label: "HKT pax 2025", value: 17.5, kind: "demand" },
     { label: "× engine capture (5%)", value: 0.87, kind: "demand" },
     { label: "= potential daily boardings (annual / 365)", value: 2.4, kind: "result" },
     { label: "vs Deuce peak (37,000/day)", value: 6.5, kind: "vegas" },
@@ -411,7 +411,7 @@ function PhuketTransferChart() {
     <figure className="vc-figure" aria-label="Phuket to Las Vegas: the transfer math, million boardings">
       <figcaption>
         <span className="tk-kicker">The Phuket transfer</span>
-        <strong>The Deuce carried 13.5M boardings a year at the Strip. Phuket has 17.4M arrivals and zero public airport bus.</strong>
+        <strong>The Deuce carried 13.5M boardings a year at the Strip. Phuket has 17.5M arrivals and zero public airport bus.</strong>
         <p>
           The engine's region-capture heuristic (5% fleet-wide weighted) applied to
           HKT's 2025 pax gives ≈ 870,000 first-year boardings. The Deuce at peak
@@ -585,7 +585,7 @@ export function VegasDemandCase({ lang = "en" }: { lang?: Lang }) {
       </div>
 
       <ResearchPanel
-        title="The Phuket transfer — 17.4M HKT pax, 5% engine capture, 32 km corridor"
+        title="The Phuket transfer — 17.5M HKT pax, 5% engine capture, 32 km corridor"
         stats={PHUKET_STATS}
         citations={PHUKET_TRANSFER_CITATIONS}
       />

@@ -39,7 +39,7 @@ const LIMITATIONS: Limitation[] = [
   {
     number: "03",
     what: "The Vegas comparison is structurally right but numerically stale.",
-    why: "Vegas in 2005 had 38M visitors, a 4-mile Strip, zero ride-hailing, and a $6M/yr profitable corridor by year 3. Phuket in 2025 has 17.4M arrivals, a 32-km airport corridor, an entrenched Grab monopoly, and no public airport bus. The transfer is real but the coefficients are not 1:1 — Phuket is colder than Vegas was at launch, and the policy environment is different.",
+    why: "Vegas in 2005 had 38M visitors, a 4-mile Strip, zero ride-hailing, and a $6M/yr profitable corridor by year 3. Phuket in 2025 has 17.5M arrivals (AOT Annual Report 2025), a 32-km airport corridor, an entrenched Grab monopoly, and no public airport bus. The transfer is real but the coefficients are not 1:1 — Phuket is colder than Vegas was at launch, and the policy environment is different.",
     what_changes_it: "A Phuket-specific Origin & Destination survey of 2,000+ arriving passengers, weighted by hour and nationality."
   },
   {
@@ -70,7 +70,7 @@ const COUNTER_ARGUMENTS: { argument: string; response: string }[] = [
     response: "Las Vegas built a US$650M monorail for 3.9 miles of Strip. It went bankrupt twice and sold for US$24.3M in 2020. The same corridor, same year, was served by a 100-seat double-decker bus on the existing road that paid for itself for a decade. The vehicle that fits the corridor wins, not the one that wins design awards."
   },
   {
-    argument: "17.4M passengers per year sounds like a lot, but the airport bus only serves one corridor.",
+    argument: "17.5M passengers per year sounds like a lot, but the airport bus only serves one corridor.",
     response: "The airport corridor is the spine. Once it runs, the same vehicles can serve Rawai, Patong, the old town and the convention centre at off-peak hours. Capex for the bus is a sunk cost; the marginal revenue of a second corridor is high."
   },
   {
