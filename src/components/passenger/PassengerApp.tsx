@@ -523,46 +523,50 @@ function HomeStep({
   return (
     <main className="pa-home">
       <h1 className="sr-only">Phuket Smart Bus — where the buses are and when the next one reaches your stop</h1>
-      <LiveArrivals timetableNext={formatClock(countdown.depMin)} />
-      <section className="pa-countdown">
-        <span className="pa-countdown__label">Next scheduled bus leaves in</span>
-        <strong className="pa-countdown__time">
-          {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
-        </strong>
-        <span className="pa-countdown__sub">
-          From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong>
-          {countdown.patongMin != null
-            ? ` · ${countdown.patongMin} min to Patong on the published timetable`
-            : " · published PKSB airport timetable"}
-        </span>
-      </section>
+      <LiveArrivals timetableNext={formatClock(countdown.depMin)}>
+        <section className="pa-cards" aria-label="Ticket options">
+          <button className="pa-card" type="button" onClick={onPickSingle}>
+            <span className="pa-card__kicker">Single ride</span>
+            <strong className="pa-card__price">฿100</strong>
+            <p className="pa-card__copy">
+              Name your hotel or area. The driver gets the request and confirms
+              a safe pull-over on the airport corridor.
+            </p>
+            <span className="pa-card__cta">
+              Buy single ride <span aria-hidden="true">→</span>
+            </span>
+          </button>
 
-      <FlightWatch simMinutes={simMinutes} />
+          <button className="pa-card pa-card--featured" type="button" onClick={onPickThreeDay}>
+            <span className="pa-card__kicker">3-day pass</span>
+            <strong className="pa-card__price">฿250</strong>
+            <p className="pa-card__copy">
+              A mock 72-hour pass and reusable boarding token. Stripe Checkout
+              is shown as the production payment path.
+            </p>
+            <span className="pa-card__cta">
+              Buy 3-day pass <span aria-hidden="true">→</span>
+            </span>
+          </button>
+        </section>
+      </LiveArrivals>
 
-      <section className="pa-cards" aria-label="Ticket options">
-        <button className="pa-card" type="button" onClick={onPickSingle}>
-          <span className="pa-card__kicker">Single ride</span>
-          <strong className="pa-card__price">฿100</strong>
-          <p className="pa-card__copy">
-            Name your hotel or area. The driver gets the request and confirms
-            a safe pull-over on the airport corridor.
-          </p>
-          <span className="pa-card__cta">
-            Buy single ride <span aria-hidden="true">→</span>
+      {/* Airport Terminal & Flight Context (Intentionally grouped, not orphaned) */}
+      <section className="pa-airport-context" aria-label="Airport connections">
+        <section className="pa-countdown">
+          <span className="pa-countdown__label">Next scheduled bus leaves in</span>
+          <strong className="pa-countdown__time">
+            {String(countdown.mm).padStart(2, "0")}:{String(countdown.ss).padStart(2, "0")}
+          </strong>
+          <span className="pa-countdown__sub">
+            From HKT Terminal 2 at <strong>{formatClock(countdown.depMin)}</strong>
+            {countdown.patongMin != null
+              ? ` · ${countdown.patongMin} min to Patong on the published timetable`
+              : " · published PKSB airport timetable"}
           </span>
-        </button>
+        </section>
 
-        <button className="pa-card pa-card--featured" type="button" onClick={onPickThreeDay}>
-          <span className="pa-card__kicker">3-day pass</span>
-          <strong className="pa-card__price">฿250</strong>
-          <p className="pa-card__copy">
-            A mock 72-hour pass and reusable boarding token. Stripe Checkout
-            is shown as the production payment path.
-          </p>
-          <span className="pa-card__cta">
-            Buy 3-day pass <span aria-hidden="true">→</span>
-          </span>
-        </button>
+        <FlightWatch simMinutes={simMinutes} />
       </section>
 
       <section className="pa-promise">

@@ -844,6 +844,13 @@ body.passenger-site-mode #root {
     width: 100%;
   }
 
+  /* On desktop portal, the full-height interactive map stage is already
+     active on the right. Hiding the duplicate 58svh map inside the 440px
+     sidebar eliminates spatial hallucination and prevents unnecessary scrolling. */
+  .pa-portal-layout .pa-app-column .pa-map {
+    display: none;
+  }
+
   /* Right: Live Interactive Transit Stage */
   .pa-stage {
     flex: 1;
@@ -1087,3 +1094,212 @@ body.passenger-site-mode #root {
   transform: translateX(-50%);
   z-index: 50;
 }
+
+/* RIDER DECISION & SIMULATION BRIDGE ----------------------- */
+.pa-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--pa-line);
+}
+.pa-decision__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pa-decision__kicker {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--pa-red);
+}
+.pa-decision__head h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pa-decision__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pa-decision__option {
+  border: 1px solid var(--pa-ink);
+  background: #fff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pa-decision__option--bus {
+  border: 2px solid var(--pa-green);
+}
+.pa-decision__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--pa-green);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pa-decision__badge--muted {
+  color: var(--pa-muted);
+}
+.pa-decision__cost {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.pa-decision__amount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--pa-ink);
+}
+.pa-decision__unit {
+  font-size: 0.75rem;
+  color: var(--pa-muted);
+}
+.pa-decision__wait {
+  display: flex;
+  flex-direction: column;
+}
+.pa-decision__metric {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pa-ink);
+}
+.pa-decision__caption {
+  font-size: 0.75rem;
+  color: var(--pa-muted);
+}
+.pa-decision__perks {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 0.78rem;
+  color: var(--pa-muted);
+  line-height: 1.4;
+}
+
+.pa-decision__verdict {
+  padding: 14px 16px;
+  border-left: 4px solid var(--pa-ink);
+  background: #fff;
+  border: 1px solid var(--pa-line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pa-decision__verdict.is-recommended {
+  border-left: 4px solid var(--pa-green);
+  background: #f0faf5;
+}
+.pa-decision__verdict.is-neutral {
+  border-left: 4px solid var(--pa-blue);
+  background: #f4f7fb;
+}
+.pa-decision__verdict.is-warning {
+  border-left: 4px solid var(--pa-red);
+  background: #fef5f4;
+}
+.pa-decision__verdict-title {
+  font-size: 0.95rem;
+  color: var(--pa-ink);
+}
+.pa-decision__verdict-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--pa-ink);
+}
+
+/* Simulation Bridge */
+.pa-sim-bridge {
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid var(--pa-line);
+  background: #fcfcf9;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pa-sim-bridge__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pa-sim-bridge__tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--pa-blue);
+  display: block;
+}
+.pa-sim-bridge__title {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--pa-ink);
+}
+.pa-sim-bridge__cta {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--pa-red);
+  white-space: nowrap;
+}
+.pa-sim-bridge__copy {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--pa-muted);
+}
+.pa-sim-bridge__controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.pa-sim-bridge__btn {
+  padding: 8px 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid var(--pa-line);
+  color: var(--pa-ink);
+  cursor: pointer;
+  text-align: center;
+}
+.pa-sim-bridge__btn.is-active {
+  background: var(--pa-blue);
+  color: #fff;
+  border-color: var(--pa-blue);
+}
+.pa-sim-bridge__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--pa-line);
+}
+.pa-sim-bridge__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pa-sim-bridge__stat-label {
+  font-size: 0.7rem;
+  color: var(--pa-muted);
+}
+.pa-sim-bridge__stat-value {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--pa-ink);
+}
+.pa-sim-bridge__stat-value.is-improved {
+  color: var(--pa-green);
+}
+

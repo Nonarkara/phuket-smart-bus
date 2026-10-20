@@ -20,15 +20,14 @@ function directionLabel(row: HourlyBalance) {
   return "timetable covers demand";
 }
 
-/** The operator's first read: one equation, then the hours it applies to. */
-export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
+/** The numbers the equation and the hour list both read from. */
+function derive(rows: HourlyBalance[], simMinutes: number, flights: OpsFlight[]) {
   const hour = Math.floor(simMinutes / 60) % 24;
   const now = rows.find((row) => row.hour === hour) ?? rows[0];
   if (!now) return null;
-
   const demand = now.busEligiblePax + now.outEligiblePax;
   const seats = now.busSeats + now.outSeats;
-  const scheduledBuses = Math.round(seats / 25);
+  const arrivals = flights.filter((flight) => flight.type === "arr").length;
   // Every hour left in the day, not a fixed slice of 7 — a fixed count left a
   // dead gap under the footer at midday, when a dozen hours remain, and would
   // have overflowed near midnight when only one or two do. The list's own
@@ -36,27 +35,40 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
   // itself flex-grows to fill the rail, so the footer always sits flush with
   // the bottom instead of floating above blank space.
   const windowRows = rows.filter((row) => row.hour >= hour);
-  const windowLabel = windowRows.length === 1 ? "Next hour" : `Next ${windowRows.length} hours`;
-  const arrivals = flights.filter((flight) => flight.type === "arr").length;
-  const departures = flights.length - arrivals;
+  return { hour, now, demand, seats, arrivals, departures: flights.length - arrivals, windowRows };
+}
+
+/**
+ * THE OPERATOR'S FIRST READ — the equation, and nothing else.
+ *
+ * The side rail is 527px tall and it has to answer three questions on the
+ * first screen: how much did we lose today, what do I do about it right now,
+ * and which bus is it. This is the second of the three.
+ *
+ * It used to be one block with the hour-by-hour analysis — a chart, a
+ * twelve-row scrub list and the investor read — and all of it sat BETWEEN
+ * the headline and the fleet table. The rail therefore held 1,652px of
+ * content in 527px, and the fleet table, the thing the rail exists for,
+ * finished 1,482px below the fold. Nothing on the surface said it was down
+ * there.
+ */
+export function OperatingEquation({ rows, simMinutes, flights }: Props) {
+  const d = derive(rows, simMinutes, flights);
+  if (!d) return null;
+  const { hour, now, demand, seats, arrivals, departures } = d;
+  const scheduledBuses = Math.round(seats / 25);
 
   return (
-    <aside className="v2-decision-rail" aria-label="Demand, supply and bus gap">
+    <section className="v2-equation-block" aria-label={`${demand} riders minus ${seats} seats equals ${now.busesToAdd} buses to add`}>
       <header className="v2-decision-rail__head">
         <span>Operating equation · {hourLabel(hour)}</span>
-        <h2>What arrives. What leaves. What is missing.</h2>
-        <p>
-          Flights create likely riders. The timetable creates seats. The gap is the
-          number of whole buses that would have carried the people left behind.
-        </p>
       </header>
-
-      <div className="v2-equation" aria-label={`${demand} riders minus ${seats} seats equals ${now.busesToAdd} buses to add`}>
+      <div className="v2-equation">
         <section className="v2-equation__term v2-equation__term--demand">
           <span className="v2-equation__step">01 · Demand</span>
           <strong>{demand}</strong>
           <p>{now.busEligiblePax} from arrivals<br />{now.outEligiblePax} going to flights</p>
-          <small>{arrivals} arrivals · {departures} departures today</small>
+          <small>{arrivals} arr · {departures} dep today</small>
         </section>
         <span className="v2-equation__operator" aria-hidden="true">−</span>
         <section className="v2-equation__term v2-equation__term--supply">
@@ -73,7 +85,25 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
           <small>{directionLabel(now)}</small>
         </section>
       </div>
+    </section>
+  );
+}
 
+/**
+ * THE SHAPE OF THE DAY — the analysis, one scroll below the first read.
+ *
+ * The hour-by-hour balance chart, a scrub list of the hours still to come,
+ * and the investor read that says what is modelled and what is not. It is
+ * here because it is worth a scroll, not because it is worth a screen.
+ */
+export function HourAnalysis({ rows, simMinutes }: Props) {
+  const d = derive(rows, simMinutes, []);
+  if (!d) return null;
+  const { hour, now, windowRows } = d;
+  const windowLabel = windowRows.length === 1 ? "Next hour" : `Next ${windowRows.length} hours`;
+
+  return (
+    <aside className="v2-decision-rail" aria-label="Demand, supply and bus gap by hour">
       <DemandSupplyBalanceChart rows={rows} simMinutes={simMinutes} variant="rail" />
 
       <section className="v2-hour-plan">
@@ -112,6 +142,9 @@ export function DemandSupplyGapRail({ rows, simMinutes, flights }: Props) {
           Add buses only where the gap is. Each boarded rider is one fewer single-occupancy trip;
           CO₂ here is modelled avoided emissions — a carbon-credit claim still needs a registry pathway.
           Bus times are the published PKSB timetable. Flight demand is a labelled research model.
+        </p>
+        <p className="v2-decision-rail__now">
+          Right now the gap is {now.busesToAdd} {now.busesToAdd === 1 ? "bus" : "buses"} · {directionLabel(now)}.
         </p>
       </footer>
     </aside>

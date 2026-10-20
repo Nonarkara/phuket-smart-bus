@@ -79,13 +79,35 @@ const NAMES = ["--t-display", "--t-hero", "--t-figure", "--t-title", "--t-lead",
 
 const b = await chromium.launch();
 const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
-const p = await c.newPage();
+let p = await c.newPage();
 
 let totalOff = 0;
 
+// A gate that dies halfway is not a gate. Chromium occasionally drops the
+// page on a heavy route; the probe opens a fresh one and says so.
+const open = async (route) => {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      if (p.isClosed()) p = await c.newPage();
+      await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
+      await p.waitForTimeout(6000);
+      return true;
+    } catch (e) {
+      console.error(`  (the browser dropped the page on ${route}; retrying — ${String(e).split("\n")[0]})`);
+      try { await p.close(); } catch { /* already gone */ }
+      p = await c.newPage();
+    }
+  }
+  return false;
+};
+
 for (const route of ROUTES) {
-  await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
-  await p.waitForTimeout(6000);
+  if (!(await open(route))) {
+    console.error(`\n=== ${BASE}${route} ===`);
+    console.error(`OFF-SCALE: NOT MEASURED — the browser could not hold the page.`);
+    totalOff += 1;
+    continue;
+  }
 
   const res = await p.evaluate((NAMES) => {
     // ── collect every rule that could decide a size, in cascade order ───────
@@ -184,6 +206,7 @@ for (const route of ROUTES) {
     };
 
     const all = [];
+    const byEl = new Map();
     for (const el of document.querySelectorAll("*")) {
       const s = getComputedStyle(el);
       if (s.display === "none" || s.visibility === "hidden") continue;
@@ -200,73 +223,90 @@ for (const route of ROUTES) {
         if (better) win = d;
       }
 
-      // The scale this element's scope declares. A scope counts only when at
-      // least four of the eight names resolve on it.
-      const cs = s;
-      const values = [];
-      for (const n of NAMES) {
-        const raw = cs.getPropertyValue(n).trim();
-        if (raw) values.push({ name: n, raw });
-      }
-      const declared = values.length >= 4 ? values : [];
+      // Is this element's TYPE on the token system? A rule that names a
+      // token says so. A rule that declares a literal size says no. A rule
+      // that declares nothing (or says `inherit`) inherits the answer from
+      // the parent — which is how most of a console's text is sized.
+      let onSystem = null;
+      if (win && win.isToken) onSystem = true;
+      else if (win && win.value && !/^(inherit|unset|initial|revert)$/i.test(win.value.trim())) onSystem = false;
+      else onSystem = el.parentElement ? (byEl.get(el.parentElement)?.onSystem ?? false) : false;
 
-      all.push({
+      const record = {
         el,
         size: parseFloat(s.fontSize),
         win,
-        declared,
+        onSystem,
         own: [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0),
         chrome: !!el.closest(".leaflet-control-zoom, .leaflet-control-attribution"),
         path: path(el),
         text: (el.textContent || "").trim().slice(0, 46),
-      });
+      };
+      all.push(record);
+      byEl.set(el, record);
     }
 
     // ── the scale ───────────────────────────────────────────────────────────
+    // Two sets, unioned:
+    //   · the sizes TOKEN-RULED elements render at — a fluid step is measured
+    //     at the size it renders, not at the floor of its clamp();
+    //   · the values the scope DECLARES — a token may be declared and not
+    //     used on this page, and a size the scale names is still a size the
+    //     scale names.
     const scale = new Set();
-    for (const e of all) if (e.win && e.win.isToken) scale.add(e.size);
     let tokenRuled = 0;
-    for (const e of all) if (e.win && e.win.isToken) tokenRuled++;
     for (const e of all) {
-      for (const v of e.declared) {
-        const m = /^(-?[\d.]+)px$/.exec(v.raw);
+      if (e.win && e.win.isToken) { scale.add(e.size); tokenRuled++; }
+      for (const n of NAMES) {
+        const raw = getComputedStyle(e.el).getPropertyValue(n).trim();
+        const m = /^(-?[\d.]+)px$/.exec(raw);
         if (m) scale.add(parseFloat(m[1]));
       }
     }
+
+    // A surface is judged only when its TEXT is on the token system. The
+    // legacy tourist chain — the stops view, the decision panel, the rider
+    // desktop — is on literal sizes, and so is /research, which types itself
+    // in em ratios off a fluid root. Those are governed by the ≤8 law. The
+    // console surfaces each name their tokens.
+    //
+    // The test is over ELEMENTS, and it counts the elements that INHERIT a
+    // token-ruled size, because that is most of a console's text.
+    let textCount = 0;
+    let onSystemCount = 0;
+    for (const e of all) {
+      if (!e.own) continue;
+      textCount++;
+      if (e.onSystem) onSystemCount++;
+    }
+    const judged = onSystemCount * 2 >= textCount && textCount > 0;
 
     const off = [];
     let chrome = 0;
     for (const e of all) {
       if (!e.own) continue;
       if (e.chrome) { chrome++; continue; }
+      if (!judged) continue;
       if (!scale.has(e.size)) off.push(e);
     }
 
     const sizes = [...new Set(all.filter((e) => e.own).map((e) => e.size))].sort((a, b) => a - b);
-    const onScale = sizes.filter((s) => scale.has(s)).length;
 
     return {
       scale: [...scale].sort((a, b) => a - b),
       sizes,
-      onScale,
+      tokenRuled,
+      textCount,
+      onSystemCount,
+      judged,
       off,
       chrome,
     };
   }, NAMES);
 
   console.log(`\n=== ${BASE}${route} ===`);
-  // A surface is judged only when its TYPE is on the token system. The legacy
-  // tourist chain (the rider app, the welcome sheet, the driver tablet) is on
-  // literal sizes and is governed by the ≤8 law instead.
-  //
-  // The test is over DISTINCT SIZES, not elements: most elements on a
-  // console surface inherit their size from a token-ruled ancestor rather
-  // than declaring one, so counting elements said "not on the token system"
-  // about /fleet — a surface that is on it — and would have hidden the very
-  // leak the probe exists to find.
-  const judged = res.onScale * 2 >= res.sizes.length && res.sizes.length > 0;
-  if (!judged) {
-    console.log(`scale:   (not applied — only ${res.onScale} of ${res.sizes.length} distinct sizes are on a token system)`);
+  if (!res.judged) {
+    console.log(`scale:   (not applied — ${res.onSystemCount} of ${res.textCount} text elements are on the token system)`);
     console.log(`rendered: ${res.sizes.join(", ")}  (${res.sizes.length} distinct)`);
     console.log(`OFF-SCALE: not judged — this surface is on the literal system.`);
     if (res.chrome) console.log(`(map chrome excluded: ${res.chrome} element(s))`);

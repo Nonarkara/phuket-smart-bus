@@ -49,7 +49,7 @@ import { getHourlyBalance, getOperatorFleet, getQueueTimeline, getHourPeaks } fr
 import { Counter } from "./components/v2/V2Shared";
 import { V2LiveMap, type V2MapHandle } from "./components/v2/V2LiveMap";
 import { SimulationControls } from "./components/v2/SimulationControls";
-import { DemandSupplyGapRail } from "./components/v2/DemandSupplyGapRail";
+import { OperatingEquation, HourAnalysis } from "./components/v2/DemandSupplyGapRail";
 import { FlightTimeline } from "./components/v2/FlightTimeline";
 import { HourlyBalanceChart } from "./components/v2/HourlyBalanceChart";
 import { OperatorFleetPanel } from "./components/v2/OperatorFleetPanel";
@@ -666,6 +666,7 @@ export default function DashboardV2() {
             {/* Distinct keys: the SIMULATION cells are ref-written per frame, so
                 React must never reuse those DOM nodes for LIVE (it would update
                 text nodes the rAF loop already replaced and freeze stale ฿). */}
+            <div className="v2-side-rail__first">
             {source === "live" ? (
               <div className="v2-side-rail__story" key="story-live">
                 <div className="v2-side-rail__story-card">
@@ -702,23 +703,32 @@ export default function DashboardV2() {
               <div className="v2-side-rail__story v2-side-rail__story--hero v2-headline" key="story-sim">
                 <span className="v2-headline__label">Missed today · modelled</span>
                 <strong className="v2-headline__value" ref={missedRef}>฿{initFrame.tot.lostRevenueThb.toLocaleString()}</strong>
-                <span className="v2-headline__why">fares from riders who wanted the bus and took a Grab instead, ฿100 each</span>
+                <span className="v2-headline__why">fares from riders who took a Grab · ฿100 each</span>
                 <p className="v2-headline__sum">
-                  <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted a bus</span>
+                  <span><b ref={couldHaveRef}>{initFrame.tot.paxWantBus.toLocaleString()}</b> wanted</span>
                   <span>= <b ref={collectedRef}>{initFrame.tot.paxBoarded.toLocaleString()}</b> collected</span>
                   <span>+ <b ref={walkedRef}>{initFrame.tot.paxAbandoned.toLocaleString()}</b> took a Grab</span>
-                  <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting at the airport</span>
+                  <span>+ <b ref={demandQueueRef}>{initFrame.tot.waiting.toLocaleString()}</b> waiting</span>
                 </p>
               </div>
             )}
 
-            <DemandSupplyGapRail rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
-            <PhuketConditionsStrip />
-            {/* The operator fleet table — now lives in the side rail below
-                conditions, where its wide rows can sit next to the map. */}
-            {source === "live"
-              ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
-              : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
+            {/* The first screen of the rail: three answers — how much did we
+                lose, what do we do now, which bus is it — and the fleet table
+                takes whatever height is left so it always reaches the fold.
+                Everything after it scrolls in its own region.
+                The hour-by-hour analysis used to sit BETWEEN the headline and
+                the fleet table, which put 1,652px of content in a 527px rail
+                and the fleet table 1,482px below the fold. */}
+              <OperatingEquation rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+              {source === "live"
+                ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
+                : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
+            </div>
+            <div className="v2-side-rail__rest">
+              <PhuketConditionsStrip />
+              <HourAnalysis rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+            </div>
           </aside>
 
         </main>

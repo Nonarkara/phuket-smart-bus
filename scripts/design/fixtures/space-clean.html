@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>clean control</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  header { padding: 20px 24px; border-bottom: 1px solid #d9d2c4; display: flex; gap: 20px; align-items: baseline; }
+  header h1 { font-size: 22px; margin: 0; flex: 1 1 auto; }
+  header nav { display: flex; gap: 16px; }
+  header nav a { font-size: 14px; color: #0f7a47; }
+  main { padding: 24px; }
+  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start; }
+  .panel { background: #fff; border: 1px solid #d9d2c4; padding: 16px; }
+  .panel h2 { font-size: 18px; margin: 0 0 10px; }
+  .panel p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+  .hero { font-size: 44px; font-weight: 600; margin: 0 0 8px; }
+  .actions { display: flex; gap: 10px; margin-top: 14px; }
+  .actions button { font-size: 14px; padding: 9px 16px; background: #0f7a47; color: #fff; border: 0; }
+  .actions button.ghost { background: transparent; color: #0f7a47; border: 1px solid #0f7a47; }
+  footer { padding: 16px 24px; border-top: 1px solid #d9d2c4; font-size: 13px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Operations — Tuesday</h1>
+    <nav><a href="#">Flights</a><a href="#">Fleet</a><a href="#">Revenue</a></nav>
+  </header>
+  <main>
+    <div class="row">
+      <div class="panel">
+        <p class="hero">฿ 184,200</p>
+        <p>Farebox collected on the airport corridor so far today, measured on the trips that actually ran.</p>
+        <p>Two departures short of the published timetable, both in the afternoon peak.</p>
+      </div>
+      <div class="panel">
+        <h2>Buses reporting</h2>
+        <p>14 of 16 devices reporting. Two are offline at Rawai.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button>Add a bus</button>
+      <button class="ghost">Open the day report</button>
+    </div>
+  </main>
+  <footer>Phuket Smart Bus · live tracker relay</footer>
+</body>
+</html>

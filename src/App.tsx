@@ -328,7 +328,7 @@ export default function App() {
         <span className="desktop-rider__brand-mark">PSB</span>
         <span className="desktop-rider__brand-text">
           <strong>Phuket Smart Bus</strong>
-          <small>Better on phone · same app</small>
+          <small>Live Island Transit & Decision Engine</small>
         </span>
       </a>
       <nav className="desktop-rider__nav" aria-label="Other surfaces">
