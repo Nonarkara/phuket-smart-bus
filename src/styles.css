@@ -3120,7 +3120,7 @@ a { color: var(--amber-text); }
   background: rgba(255, 255, 255, 0.03); color: rgba(255, 255, 255, 0.78);
   font-variant-numeric: tabular-nums; letter-spacing: 0.08em;
 }
-.v2-header__live { color: var(--gain); font-size: 9px; animation: live-breathe 2s ease-in-out infinite; margin-right: 2px; }
+.v2-header__live { color: var(--gain); font-size: var(--t-micro); animation: live-breathe 2s ease-in-out infinite; margin-right: 2px; }
 .v2-header__day { color: rgba(255, 255, 255, 0.55); }
 .v2-header__time { color: #fff; font-weight: 600; }
 .v2-header__speed { color: rgba(255, 255, 255, 0.78); }
@@ -3290,7 +3290,7 @@ a { color: var(--amber-text); }
 .v2-insight--demand { border-left: 3px solid var(--amber); }
 .v2-insight--supply { border-left: 3px solid var(--gain); }
 .v2-insight__eyebrow { font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.36); }
-.v2-insight__headline { font-size: 20px; line-height: 1.04; letter-spacing: -0.04em; color: #fff; font-weight: 700; }
+.v2-insight__headline { font-size: var(--t-title); line-height: 1.04; letter-spacing: -0.04em; color: #fff; font-weight: 700; }
 .v2-insight__detail { margin: 0; font-size: var(--t-micro); line-height: 1.5; color: rgba(255, 255, 255, 0.62); }
 
 /* KPI row (horizontal) */
@@ -3305,7 +3305,7 @@ a { color: var(--amber-text); }
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.v2-kpi__val {  font-size: 20px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.v2-kpi__val {  font-size: var(--t-title); font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .v2-kpi__label { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.48); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; line-height: 1.35; }
 .v2-kpi--accent .v2-kpi__val { color: var(--amber); }
 .v2-kpi--green .v2-kpi__val { color: var(--gain); }
@@ -3313,7 +3313,7 @@ a { color: var(--amber-text); }
 .v2-kpi--alert .v2-kpi__val { color: var(--loss); }
 .v2-kpi--warn { border-color: var(--amber); background: rgba(245, 158, 11, 0.05); }
 .v2-kpi--warn .v2-kpi__val { color: var(--amber); }
-.v2-kpi__sub { font-size: 12px; font-weight: 500; color: rgba(255, 255, 255, 0.45); margin-left: 2px; }
+.v2-kpi__sub { font-size: var(--t-micro); font-weight: 500; color: rgba(255, 255, 255, 0.45); margin-left: 2px; }
 
 /* Region bar chart */
 .v2-regions { display: flex; flex-direction: column; gap: 4px; }
@@ -3376,7 +3376,7 @@ a { color: var(--amber-text); }
   right: 6px;
   top: -1px;
   
-  font-size: 9px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
   pointer-events: none;
   font-variant-numeric: tabular-nums;
@@ -3397,7 +3397,7 @@ a { color: var(--amber-text); }
   border-radius: 0;
   text-align: center;
 }
-.v2-hourly__status-num { font-size: 9px; font-weight: 500; opacity: 0.85; letter-spacing: 0.04em; }
+.v2-hourly__status-num { font-size: var(--t-micro); font-weight: 500; opacity: 0.85; letter-spacing: 0.04em; }
 .v2-hourly__footer {
   display: flex;
   flex-wrap: wrap;
@@ -3430,11 +3430,11 @@ a { color: var(--amber-text); }
 .v2-schedule__type--dep { background: rgba(22, 165, 116, 0.15); color: var(--gain); border-color: var(--gain); }
 .v2-schedule__flight { font-size: var(--t-micro); font-weight: 600; color: #fff; }
 .v2-schedule__main { display: flex; flex-direction: column; gap: 0; min-width: 0; }
-.v2-schedule__craft {  font-size: 9px; color: rgba(255, 255, 255, 0.42); letter-spacing: 0.02em; white-space: nowrap; }
+.v2-schedule__craft {  font-size: var(--t-micro); color: rgba(255, 255, 255, 0.42); letter-spacing: 0.02em; white-space: nowrap; }
 .v2-schedule__city { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.62); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .v2-schedule__paxcol { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
 .v2-schedule__pax { font-size: var(--t-micro); color: rgba(255, 255, 255, 0.78); text-align: right; }
-.v2-schedule__load {  font-size: 9px; color: rgba(255, 255, 255, 0.38); }
+.v2-schedule__load {  font-size: var(--t-micro); color: rgba(255, 255, 255, 0.38); }
 /* This flight's contribution to the bus queue — the demand trace. */
 .v2-schedule__busdemand {  font-size: var(--t-micro); font-weight: 500; color: var(--amber); text-align: right; }
 
@@ -3454,7 +3454,7 @@ a { color: var(--amber-text); }
 }
 .v2-flights__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .v2-flights__eyebrow { font-size: var(--t-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ax-ink-3); font-family: var(--font-body); }
-.v2-flights__h { font-size: 18px; font-weight: 800; margin: 4px 0 4px; color: var(--ax-ink); letter-spacing: -0.01em; }
+.v2-flights__h { font-size: var(--t-lead); font-weight: 800; margin: 4px 0 4px; color: var(--ax-ink); letter-spacing: -0.01em; }
 .v2-flights__lede { font-size: var(--t-micro); color: var(--ax-ink-2); margin: 0; }
 .v2-flights__captureval {  font-weight: 700; color: var(--ax-accent); }
 .v2-flights__legend { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
@@ -3478,16 +3478,16 @@ a { color: var(--amber-text); }
 .v2-flights__col:last-child { border-right: 1px solid var(--ax-line-2); }
 .v2-flights__col.is-current { background: var(--ax-paper); }
 .v2-flights__col.is-current .v2-flights__hourlabel { color: var(--ax-accent); font-weight: 800; }
-.v2-flights__col.is-peak .v2-flights__hourlabel::after { content: "★"; color: var(--amber); margin-left: 2px; font-size: 9px; }
-.v2-flights__hourlabel {  font-size: 10px; color: var(--ax-ink-3); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.v2-flights__col.is-peak .v2-flights__hourlabel::after { content: "★"; color: var(--amber); margin-left: 2px; font-size: var(--t-micro); }
+.v2-flights__hourlabel {  font-size: var(--t-micro); color: var(--ax-ink-3); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
 .v2-flights__bars { position: relative; flex: 1; width: 22px; display: flex; flex-direction: column-reverse; gap: 1px; }
 .v2-flights__bar { width: 100%; min-height: 2px; transition: height 0.3s ease; }
 .v2-flights__bar--arr { background: var(--amber); opacity: 0.85; }
 .v2-flights__bar--dep { background: var(--ax-ink-3); opacity: 0.6; }
 .v2-flights__bar--capture { background: var(--ax-accent); }
-.v2-flights__pax {  font-size: 9px; color: var(--ax-ink); font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1; font-weight: 600; }
-.v2-flights__flights {  font-size: 8px; color: var(--ax-ink-3); font-variant-numeric: tabular-nums; line-height: 1; margin-top: 2px; }
-.v2-flights__capture {  font-size: 9px; color: var(--ax-accent); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.v2-flights__pax {  font-size: var(--t-micro); color: var(--ax-ink); font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1; font-weight: 600; }
+.v2-flights__flights {  font-size: var(--t-micro); color: var(--ax-ink-3); font-variant-numeric: tabular-nums; line-height: 1; margin-top: 2px; }
+.v2-flights__capture {  font-size: var(--t-micro); color: var(--ax-accent); font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
 .v2-flights__cursor {
   position: absolute;
   top: 0;
@@ -3504,7 +3504,7 @@ a { color: var(--amber-text); }
   left: 50%;
   transform: translateX(-50%);
   
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-accent);
   background: var(--ax-panel);
@@ -3529,8 +3529,8 @@ a { color: var(--amber-text); }
   border-right: 1px solid var(--ax-line);
   padding-right: 12px;
 }
-.v2-flights__callout-clock {  font-size: 18px; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
-.v2-flights__callout-hr { font-size: 9px; color: var(--ax-ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
+.v2-flights__callout-clock {  font-size: var(--t-lead); font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+.v2-flights__callout-hr { font-size: var(--t-micro); color: var(--ax-ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
 .v2-flights__callout-list {
   display: flex;
   flex-wrap: wrap;
@@ -3550,20 +3550,20 @@ a { color: var(--amber-text); }
   border: 1px solid var(--ax-line);
   background: var(--ax-paper);
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   white-space: nowrap;
 }
 .v2-flights__callout-item--arr { border-left: 3px solid var(--amber); }
 .v2-flights__callout-item--dep { border-left: 3px solid var(--ax-ink-3); }
 .v2-flights__callout-fno { font-weight: 700; color: var(--ax-ink); }
-.v2-flights__callout-type { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; padding: 1px 4px; }
+.v2-flights__callout-type { font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.06em; padding: 1px 4px; }
 .v2-flights__callout-item--arr .v2-flights__callout-type { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
 .v2-flights__callout-item--dep .v2-flights__callout-type { background: rgba(31, 110, 67, 0.15); color: var(--ax-accent); }
-.v2-flights__callout-time-rel { color: var(--ax-ink-3); font-size: 10px; }
+.v2-flights__callout-time-rel { color: var(--ax-ink-3); font-size: var(--t-micro); }
 .v2-flights__callout-route { color: var(--ax-ink-2); }
-.v2-flights__callout-aircraft { color: var(--ax-ink-3); font-size: 10px; }
+.v2-flights__callout-aircraft { color: var(--ax-ink-3); font-size: var(--t-micro); }
 .v2-flights__callout-pax { color: var(--ax-ink); font-weight: 600; }
-.v2-flights__callout-load { color: var(--ax-ink-3); font-weight: 400; font-size: 9px; margin-left: 2px; }
+.v2-flights__callout-load { color: var(--ax-ink-3); font-weight: 400; font-size: var(--t-micro); margin-left: 2px; }
 .v2-flights__callout-capture { color: var(--ax-accent); font-weight: 700; }
 .v2-flights__callout-empty { color: var(--ax-ink-3); font-style: italic; padding: 6px 0; }
 
@@ -3574,7 +3574,7 @@ a { color: var(--amber-text); }
 .v2-whatif__row:last-of-type { border-bottom: none; }
 .v2-whatif__buses { color: #fff; font-weight: 600; }
 .v2-whatif__rev { color: var(--gain); font-weight: 600; }
-.v2-whatif__note { margin: 2px 0 0; font-size: 9px; line-height: 1.5; color: rgba(255, 255, 255, 0.38); }
+.v2-whatif__note { margin: 2px 0 0; font-size: var(--t-micro); line-height: 1.5; color: rgba(255, 255, 255, 0.38); }
 
 /* Clickable hour rows/columns — affordance without decoration */
 .v2-hourly__row { cursor: pointer; }
@@ -4368,6 +4368,17 @@ a { color: var(--amber-text); }
  * ========================================================================== */
 
 .roi-page {
+  /* Type scale — the eight names, this surface's values. Every font-size in
+     the roi-* rules is one of these. See STYLE.md, "The type scale". */
+  --t-display:   36px;
+  --t-hero:      26px;
+  --t-figure:    24px;
+  --t-lead:      22px;
+  --t-title:     18px;
+  --t-body:      16px;
+  --t-label:     14px;
+  --t-micro:     11px;
+
   min-height: 100vh;
   background: #f7f8fa;
   color: #1a1f2e;
@@ -4384,7 +4395,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-header__eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.5);
@@ -4393,14 +4404,14 @@ a { color: var(--amber-text); }
 }
 
 .roi-header__title {
-  font-size: 36px;
+  font-size: var(--t-display);
   font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0 0 12px;
 }
 
 .roi-header__subtitle {
-  font-size: 14px;
+  font-size: var(--t-label);
   color: rgba(0, 0, 0, 0.6);
   margin: 0;
   max-width: 600px;
@@ -4435,12 +4446,12 @@ a { color: var(--amber-text); }
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 .roi-input__value {
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 600;
 }
 
@@ -4485,7 +4496,7 @@ a { color: var(--amber-text); }
 .roi-input__scale {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(0, 0, 0, 0.5);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -4514,7 +4525,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-headline__label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 700;
@@ -4522,14 +4533,14 @@ a { color: var(--amber-text); }
 }
 
 .roi-headline__value {
-  font-size: 36px;
+  font-size: var(--t-display);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
 .roi-headline__sub {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -4538,7 +4549,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-detail__title {
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4560,7 +4571,7 @@ a { color: var(--amber-text); }
 
 .roi-table td {
   padding: 14px 0;
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 .roi-table__num {
@@ -4574,7 +4585,7 @@ a { color: var(--amber-text); }
   width: 60px;
   padding-left: 16px;
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.12em;
   color: rgba(0, 0, 0, 0.4);
   cursor: help;
@@ -4590,7 +4601,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-footnote h3 {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.6);
@@ -4601,7 +4612,7 @@ a { color: var(--amber-text); }
 .roi-footnote ul {
   margin: 0;
   padding-left: 20px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   line-height: 1.8;
   color: rgba(0, 0, 0, 0.7);
 }
@@ -4612,7 +4623,7 @@ a { color: var(--amber-text); }
   align-items: baseline;
   padding-top: 24px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 .roi-back {
@@ -4645,7 +4656,7 @@ a { color: var(--amber-text); }
   border-bottom: 3px solid transparent;
   padding: 10px 18px;
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--t-label);
   font-weight: 600;
   color: rgba(0, 0, 0, 0.55);
   cursor: pointer;
@@ -4714,7 +4725,7 @@ a { color: var(--amber-text); }
 
 .roi-kpi-card__label {
   font-variant-numeric: tabular-nums;
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.16em;
   color: rgba(0, 0, 0, 0.5);
   font-weight: 700;
@@ -4722,13 +4733,13 @@ a { color: var(--amber-text); }
 
 .roi-kpi-card__value {
   font-variant-numeric: tabular-nums;
-  font-size: 26px;
+  font-size: var(--t-hero);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .roi-kpi-card__sub {
-  font-size: 12px;
+  font-size: var(--t-label);
   color: rgba(0, 0, 0, 0.6);
   line-height: 1.4;
 }
@@ -4744,14 +4755,14 @@ a { color: var(--amber-text); }
 }
 
 .roi-card-title {
-  font-size: 18px;
+  font-size: var(--t-title);
   font-weight: 700;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
 }
 
 .roi-card-desc {
-  font-size: 13px;
+  font-size: var(--t-label);
   color: rgba(0, 0, 0, 0.65);
   margin: 0 0 24px;
   line-height: 1.5;
@@ -4770,7 +4781,7 @@ a { color: var(--amber-text); }
   padding: 10px 14px;
   background: rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  font-size: 13px;
+  font-size: var(--t-label);
 }
 
 .roi-cost-row__label {
@@ -4783,7 +4794,7 @@ a { color: var(--amber-text); }
 
 .roi-cost-row__calc {
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(0, 0, 0, 0.45);
   margin-right: 16px;
 }
@@ -4802,7 +4813,7 @@ a { color: var(--amber-text); }
 .roi-cost-row--total {
   background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.15);
-  font-size: 14px;
+  font-size: var(--t-label);
   margin-top: 8px;
 }
 
@@ -4814,7 +4825,7 @@ a { color: var(--amber-text); }
 .roi-cost-row--net {
   background: rgba(22, 165, 116, 0.15);
   border-color: rgba(22, 165, 116, 0.35);
-  font-size: 15px;
+  font-size: var(--t-body);
 }
 
 .roi-scenarios-grid {
@@ -4842,7 +4853,7 @@ a { color: var(--amber-text); }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--t-label);
 }
 
 .roi-scenario-card--gain {
@@ -4862,13 +4873,13 @@ a { color: var(--amber-text); }
 
 .roi-scenario-card__tag {
   font-variant-numeric: tabular-nums;
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.1em; font-weight: 700;
   color: rgba(0, 0, 0, 0.5);
   }
 
 .roi-scenario-card__pax {
-  font-size: 16px;
+  font-size: var(--t-body);
   font-weight: 700;
   color: #1a1f2e;
 }
@@ -4904,7 +4915,7 @@ a { color: var(--amber-text); }
 
 .roi-solvency-pill {
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.1em;
   background: var(--ink);
@@ -4915,12 +4926,12 @@ a { color: var(--amber-text); }
 
 .roi-solvency-dscr {
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 .roi-solvency-desc {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
   line-height: 1.45;
 }
@@ -4944,7 +4955,7 @@ a { color: var(--amber-text); }
 
 .roi-bridge-eyebrow {
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: var(--amber);
@@ -4952,14 +4963,14 @@ a { color: var(--amber-text); }
 }
 
 .roi-bridge-title {
-  font-size: 24px;
+  font-size: var(--t-figure);
   font-weight: 700;
   margin: 0 0 12px;
   line-height: 1.3;
 }
 
 .roi-bridge-desc {
-  font-size: 14px;
+  font-size: var(--t-label);
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
   margin: 0 0 20px;
@@ -4969,7 +4980,7 @@ a { color: var(--amber-text); }
   display: flex;
   gap: 24px;
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--t-label);
 }
 
 .roi-bridge-stats div {
@@ -4979,7 +4990,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-bridge-stats span {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -4994,7 +5005,7 @@ a { color: var(--amber-text); }
 .roi-bridge-btn {
   width: 100%;
   padding: 16px 20px;
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 700;
   text-decoration: none;
   display: inline-block;
@@ -5002,7 +5013,7 @@ a { color: var(--amber-text); }
 }
 
 .roi-bridge-cta small {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.4;
 }
@@ -5019,7 +5030,7 @@ a { color: var(--amber-text); }
   align-items: center;
   gap: 8px;
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.1em;
   color: #16a574;
@@ -5050,7 +5061,7 @@ a { color: var(--amber-text); }
 
 .roi-real-card__label {
   font-variant-numeric: tabular-nums;
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.14em;
   color: rgba(0, 0, 0, 0.5);
   font-weight: 700;
@@ -5058,18 +5069,18 @@ a { color: var(--amber-text); }
 
 .roi-real-card__value {
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: var(--t-lead);
   font-weight: 700;
 }
 
 .roi-real-card small {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(0, 0, 0, 0.55);
 }
 
 .roi-loading {
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: rgba(0, 0, 0, 0.5);
   padding: 30px;
   text-align: center;
@@ -5077,7 +5088,7 @@ a { color: var(--amber-text); }
 
 .roi-table__header-row th {
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.5);
@@ -5324,6 +5335,17 @@ a { color: var(--amber-text); }
  * ========================================================================== */
 
 .governor {
+  /* Type scale — the eight names, this surface's values. Every font-size in
+     the governor-* rules is one of these. See STYLE.md, "The type scale". */
+  --t-display:   52px;
+  --t-hero:      28px;
+  --t-figure:    26px;
+  --t-title:     22px;
+  --t-lead:      20px;
+  --t-body:      14px;
+  --t-label:     12px;
+  --t-micro:     11px;
+
   min-height: 100vh;
   background: #0a0e14;            /* near-black with blue undertone (Visual DNA §14 rule 6) */
   color: #e6edf3;
@@ -5342,7 +5364,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__eyebrow {
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.2em;
   font-weight: 700;
   color: rgba(255,255,255,0.45);
@@ -5351,14 +5373,14 @@ a { color: var(--amber-text); }
 }
 
 .governor__title {
-  font-size: 22px;
+  font-size: var(--t-title);
   font-weight: 600;
   margin: 0 0 4px;
   letter-spacing: -0.01em;
 }
 
 .governor__subtitle {
-  font-size: 12px;
+  font-size: var(--t-label);
   color: rgba(255,255,255,0.55);
 }
 
@@ -5373,7 +5395,7 @@ a { color: var(--amber-text); }
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
   color: #34c759;
@@ -5389,7 +5411,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__fleet-badge {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.55);
   font-variant-numeric: tabular-nums;
 }
@@ -5412,7 +5434,7 @@ a { color: var(--amber-text); }
 .governor__kpi:last-child { border-right: 0; }
 
 .governor__kpi-label {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.2em;
   font-weight: 700;
   color: rgba(255,255,255,0.42);
@@ -5420,7 +5442,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__kpi-value {
-  font-size: 28px;
+  font-size: var(--t-hero);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -5428,7 +5450,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__kpi-sub {
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.5);
 }
 
@@ -5463,7 +5485,7 @@ a { color: var(--amber-text); }
 .governor__panel--dark { background: rgba(255,255,255,0.02); }
 
 .governor__panel-title {
-  font-size: 12px;
+  font-size: var(--t-label);
   letter-spacing: 0; font-weight: 700;
   color: rgba(255,255,255,0.65);
   margin: 0 0 14px;
@@ -5473,7 +5495,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__panel-source {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.05em;
   color: rgba(255,255,255,0.3);
   font-weight: 500;
@@ -5495,7 +5517,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__safety-num {
-  font-size: 26px;
+  font-size: var(--t-figure);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: rgba(255,255,255,0.9);
@@ -5504,7 +5526,7 @@ a { color: var(--amber-text); }
 .governor__safety-stat--warn .governor__safety-num { color: #ff9500; }
 
 .governor__safety-label {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.12em;
   font-weight: 700;
   color: rgba(255,255,255,0.38);
@@ -5513,7 +5535,7 @@ a { color: var(--amber-text); }
 
 /* Section title (inside panel) */
 .governor__section-title {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255,255,255,0.38);
@@ -5526,11 +5548,11 @@ a { color: var(--amber-text); }
 .governor__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--t-label);
 }
 
 .governor__table th {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0; color: rgba(255,255,255,0.38);
   font-weight: 700;
   padding: 4px 0;
@@ -5557,13 +5579,13 @@ a { color: var(--amber-text); }
   gap: 8px;
 }
 
-.governor__nation-name { font-size: 11px; color: rgba(255,255,255,0.7); }
+.governor__nation-name { font-size: var(--t-micro); color: rgba(255,255,255,0.7); }
 
 .governor__nation-bar-wrap { height: 6px; background: rgba(255,255,255,0.06); }
 
 .governor__nation-bar { height: 100%; background: #ff9500; transition: width 0.8s ease; }
 
-.governor__nation-count { font-size: 10px; color: rgba(255,255,255,0.5); text-align: right; font-variant-numeric: tabular-nums; }
+.governor__nation-count { font-size: var(--t-micro); color: rgba(255,255,255,0.5); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Impact panel (dark) */
 .governor__impact-hero {
@@ -5574,7 +5596,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__impact-value {
-  font-size: 52px;
+  font-size: var(--t-display);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: #34c759;
@@ -5583,7 +5605,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__impact-label {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.2em;
   font-weight: 700;
   color: rgba(255,255,255,0.38);
@@ -5591,7 +5613,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__impact-sub {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.5);
   margin-top: 6px;
 }
@@ -5614,7 +5636,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__impact-cell-val {
-  font-size: 20px;
+  font-size: var(--t-lead);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -5623,7 +5645,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__impact-cell-lbl {
-  font-size: 9px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.45);
   letter-spacing: 0.06em;
   line-height: 1.3;
@@ -5636,7 +5658,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__footnote {
-  font-size: 9px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.3);
   line-height: 1.5;
   margin-top: 10px;
@@ -5649,7 +5671,7 @@ a { color: var(--amber-text); }
   align-items: baseline;
   padding: 7px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 12px;
+  font-size: var(--t-label);
   color: rgba(255,255,255,0.65);
 }
 
@@ -5674,7 +5696,7 @@ a { color: var(--amber-text); }
 }
 
 .governor__cta-label {
-  font-size: 9px;
+  font-size: var(--t-micro);
   letter-spacing: 0.2em;
   font-weight: 700;
   color: #34c759;
@@ -5683,14 +5705,14 @@ a { color: var(--amber-text); }
 }
 
 .governor__cta-body {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.7);
   line-height: 1.5;
   margin-bottom: 8px;
 }
 
 .governor__cta-link {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: #34c759;
   text-decoration: none;
   font-variant-numeric: tabular-nums;
@@ -5705,14 +5727,14 @@ a { color: var(--amber-text); }
 .governor__powerbi-header { margin-bottom: 12px; }
 
 .governor__powerbi-title {
-  font-size: 13px;
+  font-size: var(--t-body);
   font-weight: 600;
   margin: 0 0 4px;
   color: rgba(255,255,255,0.85);
 }
 
 .governor__powerbi-sub {
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.4);
 }
 
@@ -5738,7 +5760,7 @@ a { color: var(--amber-text); }
   gap: 12px;
   padding: 12px 28px;
   border-top: 1px solid rgba(255,255,255,0.06);
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: rgba(255,255,255,0.3);
   font-variant-numeric: tabular-nums;
   flex-wrap: wrap;
@@ -6252,7 +6274,7 @@ a { color: var(--amber-text); }
   flex-shrink: 0;
   backdrop-filter: none !important;
 }
-.v2 .v2-alert-banner__icon { color: var(--ax-warn) !important; font-size: 16px; }
+.v2 .v2-alert-banner__icon { color: var(--ax-warn) !important; font-size: var(--t-lead); }
 .v2 .v2-alert-banner strong { color: #5a3d00 !important; font-weight: 700; }
 .v2 .v2-alert-banner span { color: #7a5700 !important; }
 .v2 .v2-coordination-banner { display: none; } /* redundant with alert strip */
@@ -6299,17 +6321,17 @@ a { color: var(--amber-text); }
   justify-content: center;
 }
 .v2 .v2-header__story-label {
-  font: 600 10px/1 var(--font-body);
+  font: 600 var(--t-micro)/1 var(--font-body);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
 }
 .v2 .v2-header__story-value {
-  font: 400 30px/1.05 var(--font-display);
+  font: 400 var(--t-hero)/1.05 var(--font-display);
   color: var(--ax-ink);
   letter-spacing: -0.03em;
 }
-.v2 .v2-header__story-detail { font: 13px/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.v2 .v2-header__story-detail { font: var(--t-micro)/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
 .v2 .v2-header__clock {
   background: transparent;
@@ -6322,12 +6344,12 @@ a { color: var(--amber-text); }
 .v2 .v2-header__live { color: var(--ax-accent); }
 .v2 .v2-header__day { color: var(--ax-ink-3); }
 .v2 .v2-header__time {
-  font: 500 26px/1 var(--font-display);
+  font: 500 var(--t-hero)/1 var(--font-display);
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
 }
-.v2 .v2-header__speed { color: var(--ax-ink-2); font-size: 11px; letter-spacing: 0.12em; }
+.v2 .v2-header__speed { color: var(--ax-ink-2); font-size: var(--t-micro); letter-spacing: 0.12em; }
 
 .v2 .v2-mode-toggle { display: flex; border: 1px solid var(--ax-line-2); }
 .v2 .v2-mode-btn {
@@ -6335,7 +6357,7 @@ a { color: var(--amber-text); }
   color: var(--ax-ink-2);
   border: none;
   padding: 6px 14px;
-  font: 600 12px/1 var(--font-body);
+  font: 600 var(--t-micro)/1 var(--font-body);
   letter-spacing: 0.1em;
   cursor: pointer;
   font-family: inherit;
@@ -6363,7 +6385,7 @@ a { color: var(--amber-text); }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--t-micro);
   flex-shrink: 0;
 }
 .v2 .v2-timebar__play:hover { background: var(--ax-ink); color: var(--ax-paper); }
@@ -6537,14 +6559,14 @@ a { color: var(--amber-text); }
 .v2-side-rail__story--hero .v2-headline__why { max-width: 46ch; }
 .v2-side-rail__story--hero .v2-headline__sum { margin-top: 6px; }
 .v2-side-rail__story-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
 }
 .v2-side-rail__story-value {
-  font-size: 24px;
+  font-size: var(--t-figure);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -6552,7 +6574,7 @@ a { color: var(--amber-text); }
   line-height: 1;
 }
 .v2-side-rail__story-detail {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2-side-rail__story-card--earned .v2-side-rail__story-value { color: var(--ax-accent); }
@@ -6639,26 +6661,26 @@ a { color: var(--amber-text); }
 .v2-decision-rail__source > strong,
 .v2-hour-plan > header span {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
 }
-.v2-decision-rail__head h2 { margin: 8px 0; font-size: 22px; line-height: 1.05; letter-spacing: -.035em; }
+.v2-decision-rail__head h2 { margin: 8px 0; font-size: var(--t-figure); line-height: 1.05; letter-spacing: -.035em; }
 .v2-decision-rail__head p,
-.v2-decision-rail__source p { margin: 0; color: var(--ax-ink-2); font-size: 12px; line-height: 1.5; }
+.v2-decision-rail__source p { margin: 0; color: var(--ax-ink-2); font-size: var(--t-micro); line-height: 1.5; }
 .v2-equation { border-bottom: 1px solid var(--ax-line); }
 .v2-equation__term { padding: 14px 18px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
 .v2-equation__term--demand { border-left: 4px solid #d97706; }
 .v2-equation__term--supply { border-left: 4px solid #168aad; }
 .v2-equation__term--gap { border-left: 4px solid var(--ax-accent); }
 .v2-equation__term--gap.is-short { border-left-color: var(--ax-neg); background: rgba(190, 48, 35, .055); }
-.v2-equation__step { grid-column: 1; font: 800 10px/1.2 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--ax-ink-3); }
-.v2-equation__term strong { grid-column: 2; grid-row: 1 / span 2; font-size: 38px; line-height: .9; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
-.v2-equation__term p { margin: 2px 0 0; font-size: 13px; line-height: 1.35; font-weight: 700; }
-.v2-equation__term small { grid-column: 1 / -1; color: var(--ax-ink-3); font-size: 10px; }
-.v2-equation__operator { display: block; height: 0; position: relative; z-index: 1; left: 18px; top: -5px; font: 800 16px/1 var(--font-body); color: var(--ax-ink-3); }
+.v2-equation__step { grid-column: 1; font: 800 var(--t-micro)/1.2 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--ax-ink-3); }
+.v2-equation__term strong { grid-column: 2; grid-row: 1 / span 2; font-size: var(--t-display); line-height: .9; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.v2-equation__term p { margin: 2px 0 0; font-size: var(--t-micro); line-height: 1.35; font-weight: 700; }
+.v2-equation__term small { grid-column: 1 / -1; color: var(--ax-ink-3); font-size: var(--t-micro); }
+.v2-equation__operator { display: block; height: 0; position: relative; z-index: 1; left: 18px; top: -5px; font: 800 var(--t-lead)/1 var(--font-body); color: var(--ax-ink-3); }
 .v2-hour-plan {
   border-bottom: 1px solid var(--ax-line);
   /* Grows to fill whatever the equation/chart/footer leave behind (see
@@ -6677,16 +6699,16 @@ a { color: var(--amber-text); }
 .v2-hour-plan__legend { flex-shrink: 0; }
 .v2-hour-plan__rows { flex: 1; overflow-y: auto; min-height: 0; }
 .v2-hour-plan > header { padding: 14px 18px 10px; display: flex; align-items: baseline; justify-content: space-between; }
-.v2-hour-plan > header small { color: var(--ax-ink-3); font-size: 9px; }
+.v2-hour-plan > header small { color: var(--ax-ink-3); font-size: var(--t-micro); }
 .v2-hour-plan__legend,
 .v2-hour-plan button { display: grid; grid-template-columns: 1fr .8fr .7fr .65fr; align-items: center; text-align: right; }
-.v2-hour-plan__legend { padding: 0 18px 6px; color: var(--ax-ink-3); font: 700 9px/1 var(--font-body); text-transform: uppercase; }
+.v2-hour-plan__legend { padding: 0 18px 6px; color: var(--ax-ink-3); font: 700 var(--t-micro)/1 var(--font-body); text-transform: uppercase; }
 .v2-hour-plan__legend span:first-child,
 .v2-hour-plan button strong { text-align: left; }
-.v2-hour-plan button { width: 100%; min-height: 40px; padding: 0 18px; border: 0; border-top: 1px solid var(--ax-line); background: transparent; color: var(--ax-ink-2);  font-size: 11px; cursor: pointer; }
+.v2-hour-plan button { width: 100%; min-height: 40px; padding: 0 18px; border: 0; border-top: 1px solid var(--ax-line); background: transparent; color: var(--ax-ink-2);  font-size: var(--t-micro); cursor: pointer; }
 .v2-hour-plan button:hover,
 .v2-hour-plan button.is-now { background: var(--ax-paper); color: var(--ax-ink); }
-.v2-hour-plan button.is-now strong::after { content: " NOW"; color: var(--ax-accent); font-size: 8px; }
+.v2-hour-plan button.is-now strong::after { content: " NOW"; color: var(--ax-accent); font-size: var(--t-micro); }
 .v2-hour-plan button b { color: var(--ax-accent); }
 .v2-hour-plan button.is-short b { color: var(--ax-neg); }
 
@@ -6731,7 +6753,7 @@ a { color: var(--amber-text); }
   gap: 3px;
 }
 .v2 .v2-kpi__val {
-  font-size: 24px;
+  font-size: var(--t-figure);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -6768,7 +6790,7 @@ a { color: var(--amber-text); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-insight__headline {
-  font-size: 17px;
+  font-size: var(--t-lead);
   font-weight: 600;
   color: var(--ax-ink);
   line-height: 1.2;
@@ -6796,7 +6818,7 @@ a { color: var(--amber-text); }
   background: none;
   border: 1px solid var(--ax-line-2);
   color: var(--ax-ink-2);
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 2px 6px;
@@ -6870,7 +6892,7 @@ a { color: var(--amber-text); }
   color: var(--ax-ink-3);
 }
 .v2 .v2-map__hero-value {
-  font-size: 30px;
+  font-size: var(--t-hero);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -6905,6 +6927,10 @@ html .leaflet-container .leaflet-control,
 html .leaflet-container .leaflet-tooltip,
 html .leaflet-container .leaflet-popup-content,
 html .leaflet-container .leaflet-control-attribution { font-family: var(--font-body); }
+/* Leaflet ships its attribution at 12px, which is below the ops wall's 13px
+   floor and gave the wall a ninth size. It is set to the wall's micro step so
+   it belongs to the scale instead of sitting under it. */
+.v2--operations .leaflet-control-attribution { font-size: var(--t-micro); }
 html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line-height: 1; }
 
 .v2 .v2-map__canvas .v2-basemap-tile {
@@ -7013,7 +7039,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-accum__item--accent .v2-accum__val { color: var(--ax-accent); }
 .v2 .v2-accum__item--green  .v2-accum__val { color: var(--ax-accent); }
 .v2 .v2-accum__val {
-  font-size: 19px;
+  font-size: var(--t-title);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-ink);
@@ -7039,7 +7065,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   flex-wrap: wrap;
 }
 .v2 .v2-accum__earned {
-  font-size: 24px;
+  font-size: var(--t-figure);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
@@ -7123,7 +7149,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-hourly__row--balanced .v2-hourly__status { background: #eef6f0; color: var(--ax-accent); border-color: #bcd8c6; }
 .v2 .v2-hourly__row--surplus .v2-hourly__status { background: #f1f1ee; color: var(--ax-ink-2); border-color: var(--ax-line-2); }
 .v2 .v2-hourly__missed {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: #9a6a00; /* dark amber text on light surface (§11.10) */
@@ -7244,7 +7270,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: var(--ax-ink-3);
 }
 .v2 .v2-week__total-val {
-  font-size: 24px;
+  font-size: var(--t-figure);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ax-accent);
@@ -7284,7 +7310,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-mode-toggle { display: inline-flex; border-radius: 0; overflow: hidden; }
 .v2-mode-btn {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   padding: 5px 12px;
@@ -7303,7 +7329,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* Header story status — small pill echoing the per-hour shortage / surplus */
 .v2-header__story-status {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 2px 6px;
@@ -7361,7 +7387,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-insights-rail__eyebrow {
   display: block;
   color: var(--ax-accent);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -7370,14 +7396,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-insights-rail__head h2 {
   margin: 0 0 4px;
   color: var(--ax-ink);
-  font-size: 17px;
+  font-size: var(--t-lead);
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 .v2 .v2-insights-rail__head p {
   margin: 0;
   color: var(--ax-ink-2);
-  font-size: 11px;
+  font-size: var(--t-micro);
   line-height: 1.4;
 }
 
@@ -7403,14 +7429,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   align-items: center;
 }
 .v2 .v2-insights-card__tag {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ax-warn, #e0a243);
 }
 .v2 .v2-insights-card__time {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-ink);
 }
@@ -7421,14 +7447,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 8px;
 }
 .v2 .v2-insights-card__impact strong {
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-weight: 700;
   color: var(--ax-neg, #ff8a7a);
   
   line-height: 1.1;
 }
 .v2 .v2-insights-card__impact small {
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 
@@ -7443,14 +7469,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-card__metrics span {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ax-ink-3);
 }
 .v2 .v2-insights-card__metrics strong {
   display: block;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink);
   
   line-height: 1.2;
@@ -7471,7 +7497,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-card__action p {
   margin: 0;
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   line-height: 1.35;
   color: var(--ax-ink-2);
 }
@@ -7481,7 +7507,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 /* Curb Queue Live Card */
 .v2 .v2-curb-status {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -7507,7 +7533,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 12px;
 }
 .v2 .v2-insights-curb-num {
-  font-size: 36px;
+  font-size: var(--t-display);
   font-weight: 800;
   line-height: 1;
   color: var(--ax-ink);
@@ -7516,20 +7542,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-curb-desc span {
   display: block;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-ink);
 }
 .v2 .v2-insights-curb-desc small {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
   margin-top: 2px;
 }
 
 /* Conversion Bar & Ledger */
 .v2 .v2-insights-card__pct {
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-accent);
 }
@@ -7561,20 +7587,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-radius: 0;
 }
 .v2 .v2-ledger-item span {
-  font-size: 8.5px;
+  font-size: var(--t-micro);
   text-transform: uppercase;
   color: var(--ax-ink-3);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 .v2 .v2-ledger-item strong {
-  font-size: 12.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink);
   
   line-height: 1.2;
 }
 .v2 .v2-ledger-item small {
-  font-size: 8.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2 .v2-ledger-item--boarded strong { color: var(--gain, #16a574); }
@@ -7590,7 +7616,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-doctrine__eyebrow {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -7599,7 +7625,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-doctrine p {
   margin: 0;
-  font-size: 10px;
+  font-size: var(--t-micro);
   line-height: 1.4;
   color: var(--ax-ink-2);
 }
@@ -7641,7 +7667,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights__eyebrow {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -7650,7 +7676,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights__title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--t-lead);
   font-weight: 700;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
@@ -7665,7 +7691,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
   font-weight: 600;
 }
@@ -7687,13 +7713,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 10.5px;
+  font-size: var(--t-micro);
 }
 .v2 .v2-insights-tier__label span {
   color: var(--ax-ink-3);
   text-transform: uppercase;
   font-weight: 700;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   letter-spacing: 0.04em;
 }
 .v2 .v2-insights-tier__label strong {
@@ -7701,7 +7727,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-insights-tier__label small {
   color: var(--ax-ink-3);
-  font-size: 9.5px;
+  font-size: var(--t-micro);
 }
 
 .v2 .v2-insights__svg {
@@ -7729,20 +7755,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 1px;
 }
 .v2 .v2-insights__kpi-val {
-  font-size: 17px;
+  font-size: var(--t-lead);
   font-weight: 800;
   color: var(--ax-ink);
   
   line-height: 1.1;
 }
 .v2 .v2-insights__kpi-label {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-ink-2);
   letter-spacing: 0.02em;
 }
 .v2 .v2-insights__kpi-sub {
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
   line-height: 1.2;
 }
@@ -7771,7 +7797,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .v2-priority-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--t-body);
   font-weight: 700;
   color: var(--ax-ink);
 }
@@ -7779,12 +7805,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2 .v2-priority-summary-badge strong {
   color: var(--ax-accent);
-  font-size: 15px;
+  font-size: var(--t-body);
   
 }
 
@@ -7826,17 +7852,17 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 8px;
 }
 .v2 .v2-priority-rank__num {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-warn);
 }
 .v2 .v2-priority-rank__time {
-  font-size: 14px;
+  font-size: var(--t-label);
   color: var(--ax-ink);
   
 }
 .v2 .v2-current-tag {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   background: var(--ax-warn);
   color: #000;
@@ -7850,13 +7876,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 8px;
 }
 .v2 .v2-priority-gap {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-neg, #ff8a7a);
   
 }
 .v2 .v2-priority-cash {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-ink);
   
@@ -7870,7 +7896,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-priority-bar-label {
   display: flex;
   justify-content: space-between;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
 }
 .v2 .v2-priority-track {
@@ -7894,7 +7920,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
   margin-top: 1px;
   line-height: 1.2;
@@ -7948,7 +7974,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -7974,7 +8000,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid rgba(245, 158, 11, 0.45);
   color: var(--amber);
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -7997,7 +8023,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 7px 9px;
   background: rgba(10, 14, 20, .86);
   color: rgba(255,255,255,.76);
-  font: 700 9px/1 var(--font-body); font-variant-numeric: tabular-nums;
+  font: 700 var(--t-micro)/1 var(--font-body); font-variant-numeric: tabular-nums;
   text-transform: uppercase;
 }
 .v2-map__legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -8068,7 +8094,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-bus.is-focused.is-boarding .v2-bus__hull { outline-color: var(--amber); }
 .v2-bus-tip.leaflet-tooltip {
   background: rgba(10, 14, 20, 0.94); color: #e6edf3; border: 1px solid #303a45; border-radius: 0;
-  box-shadow: none; font: 700 10px/1 var(--font-body); letter-spacing: 0.06em; padding: 5px 8px; font-variant-numeric: tabular-nums;
+  box-shadow: none; font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.06em; padding: 5px 8px; font-variant-numeric: tabular-nums;
 }
 .v2-bus-tip.leaflet-tooltip-top::before { border-top-color: #303a45; }
 
@@ -8100,18 +8126,18 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-plan.is-pinned { pointer-events: auto; border-color: rgba(230,237,243,0.42); }
 .v2-plan__head { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 10px; align-items: start; margin-bottom: 12px; }
-.v2-plan__kicker { display: block; font: 700 10px/1.3 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
-.v2-plan__plate { display: block; margin-top: 3px; font: 700 18px/1 var(--font-body); letter-spacing: -0.01em; }
-.v2-plan__status { align-self: center; padding: 3px 7px; border: 1px solid #303a45; font: 700 10px/1 var(--font-body); letter-spacing: 0.06em; color: #aeb7c0; }
+.v2-plan__kicker { display: block; font: 700 var(--t-micro)/1.3 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__plate { display: block; margin-top: 3px; font: 700 var(--t-lead)/1 var(--font-body); letter-spacing: -0.01em; }
+.v2-plan__status { align-self: center; padding: 3px 7px; border: 1px solid #303a45; font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.06em; color: #aeb7c0; }
 .v2-plan__status--moving { color: #e6edf3; border-color: #4a5664; }
 .v2-plan__status--pre_trip { color: var(--amber); border-color: rgba(245,158,11,0.55); }
-.v2-plan__close { align-self: center; width: 24px; height: 24px; border: 1px solid #303a45; background: transparent; color: #aeb7c0; font: 700 14px/1 var(--font-body); cursor: pointer; }
+.v2-plan__close { align-self: center; width: 24px; height: 24px; border: 1px solid #303a45; background: transparent; color: #aeb7c0; font: 700 var(--t-label)/1 var(--font-body); cursor: pointer; }
 .v2-plan__close:hover { color: #fff; border-color: #fff; }
-.v2-plan__label { display: block; font: 700 10px/1.3 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__label { display: block; font: 700 var(--t-micro)/1.3 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: #8b97a4; }
 .v2-plan__load { margin-bottom: 12px; }
 .v2-plan__load-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.v2-plan__num { font: 700 22px/1 var(--font-body); font-variant-numeric: tabular-nums; }
-.v2-plan__num small { font-size: 11px; color: #8b97a4; }
+.v2-plan__num { font: 700 var(--t-figure)/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.v2-plan__num small { font-size: var(--t-micro); color: #8b97a4; }
 .v2-plan__seats { display: grid; grid-template-columns: repeat(25, 1fr); gap: 2px; }
 .v2-plan__seats i { display: block; height: 10px; border: 1px solid #4a5664; background: transparent; }
 .v2-plan__seats i.is-taken { background: #e6edf3; border-color: #e6edf3; }
@@ -8119,17 +8145,17 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-plan__facts > div { padding: 8px 8px 8px 0; border-right: 1px solid #303a45; }
 .v2-plan__facts > div:last-child { border-right: 0; }
 .v2-plan__facts > div + div { padding-left: 8px; }
-.v2-plan__facts dt { font: 700 9px/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
-.v2-plan__facts dd { margin: 3px 0 0; font: 700 14px/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.v2-plan__facts dt { font: 700 var(--t-micro)/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__facts dd { margin: 3px 0 0; font: 700 var(--t-label)/1 var(--font-body); font-variant-numeric: tabular-nums; }
 .v2-plan__ahead { margin-bottom: 8px; }
 .v2-plan__ruler { position: relative; height: 14px; margin-top: 6px; }
 .v2-plan__ruler-track { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #4a5664; }
 .v2-plan__ruler i { position: absolute; top: 3px; width: 1px; height: 7px; margin-left: -0.5px; background: #8b97a4; }
 .v2-plan__ruler i.is-now { width: 3px; height: 11px; top: 1px; margin-left: -1.5px; background: #e6edf3; }
 .v2-plan__ruler i.is-end { background: #e6edf3; height: 11px; top: 1px; }
-.v2-plan__ruler-ends { display: flex; justify-content: space-between; margin-top: 2px; font: 700 9px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
-.v2-plan__flag { margin: 8px 0 0; padding: 6px 8px; border-left: 2px solid var(--amber); color: #f0bd68; font-size: 12px; line-height: 1.35; }
-.v2-plan__hint { margin: 8px 0 0; font: 700 9px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #5f6b78; }
+.v2-plan__ruler-ends { display: flex; justify-content: space-between; margin-top: 2px; font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #8b97a4; }
+.v2-plan__flag { margin: 8px 0 0; padding: 6px 8px; border-left: 2px solid var(--amber); color: #f0bd68; font-size: var(--t-micro); line-height: 1.35; }
+.v2-plan__hint { margin: 8px 0 0; font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: #5f6b78; }
 @media (max-width: 1180px) {
   .v2-plan { position: static; width: auto; margin-top: 8px; pointer-events: auto; }
 }
@@ -8155,20 +8181,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-conditions__label {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
 }
 .v2-conditions__value {
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.02em;
 }
 .v2-conditions__detail {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
 }
 .v2-conditions__link {
@@ -8187,7 +8213,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 8px 12px;
   background: rgba(245, 158, 11, 0.12);
   color: var(--amber);
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 600;
 }
 @media (max-width: 720px) {
@@ -8216,7 +8242,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 12px;
 }
 .v2-fleet__eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -8227,7 +8253,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-weight: 700;
   letter-spacing: -0.04em;
   color: #fff;
@@ -8236,7 +8262,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-fleet__problem-flag {
   display: inline-block;
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 2px 6px;
@@ -8246,14 +8272,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-fleet__sub {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.04em;
 }
 .v2-fleet__chips { display: inline-flex; border-radius: 0; overflow: hidden; }
 .v2-fleet__chip {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.06em;
   padding: 5px 10px;
@@ -8275,7 +8301,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-fleet__problems { display: flex; flex-wrap: wrap; gap: 6px; }
 .v2-fleet__problem-pill {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 3px 7px;
@@ -8309,7 +8335,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 10px;
   padding: 7px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  font-size: 12px;
+  font-size: var(--t-micro);
   transition: background 120ms ease, opacity 120ms ease;
 }
 .v2-fleet__row--clickable {
@@ -8351,7 +8377,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 1px;
 }
 .v2-fleet__driver-name {
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -8360,7 +8386,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-fleet__row--header {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.45);
@@ -8379,7 +8405,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 18px 12px;
   text-align: center;
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -8387,14 +8413,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   
   font-weight: 700;
   color: rgba(255, 255, 255, 0.55);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
 }
 .v2-fleet__route { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .v2-fleet__route-tag {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 2px 5px;
@@ -8407,7 +8433,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   flex: 0 0 auto;
 }
 .v2-fleet__route-dir {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.62);
   white-space: nowrap;
   overflow: hidden;
@@ -8455,7 +8481,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: inline-block;
   margin-left: 4px;
   
-  font-size: 8px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 1px 4px;
@@ -8468,7 +8494,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-fleet__bar--empty .v2-fleet__bar-fill { width: 0 !important; }
 .v2-fleet__load-num {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.78);
   font-variant-numeric: tabular-nums;
@@ -8477,7 +8503,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-fleet__status {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 3px 6px;
@@ -8489,7 +8515,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-fleet__status--layover, .v2-fleet__status--pre_trip { color: rgba(255, 255, 255, 0.48); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16); }
 .v2-fleet__eta {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.68);
   font-variant-numeric: tabular-nums;
@@ -8501,7 +8527,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   align-items: center;
   gap: 8px;
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   padding: 4px 6px;
@@ -8533,7 +8559,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-insights__head { display: flex; flex-direction: column; gap: 4px; }
 .v2-insights__eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -8541,7 +8567,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font-family: var(--font-body);
 }
 .v2-insights__title {
-  font-size: 20px;
+  font-size: var(--t-title);
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.03em;
@@ -8553,7 +8579,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 14px;
   padding-top: 8px;
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
 }
 .v2-insights__kpis {
@@ -8575,21 +8601,21 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-insights__kpi--alert { border-color: var(--amber); background: rgba(245, 158, 11, 0.06); }
 .v2-insights__kpi-val {
   
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .v2-insights__kpi-label {
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 1280px) {
-  .v2-fleet__row { grid-template-columns: 132px 1fr 86px 72px 44px; gap: 8px; font-size: 11px; }
+  .v2-fleet__row { grid-template-columns: 132px 1fr 86px 72px 44px; gap: 8px; font-size: var(--t-micro); }
 }
 @media (max-width: 720px) {
   .v2-fleet__row { grid-template-columns: 120px 1fr 72px 64px 40px; gap: 6px; padding: 6px 4px; }
@@ -8634,7 +8660,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-driver__eyebrow {
   display: block;
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--amber);
@@ -8642,14 +8668,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-driver__name {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.03em;
 }
 .v2-driver__name-en {
   display: block;
-  font-size: 13px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
   margin-top: 2px;
 }
@@ -8657,7 +8683,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: block;
   margin-top: 8px;
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
 }
 .v2-driver__close {
@@ -8667,13 +8693,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: transparent;
   color: #fff;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--t-lead);
 }
 .v2-driver__close:hover { background: rgba(255, 255, 255, 0.06); }
 .v2-driver__close:focus-visible { outline: 1px solid var(--amber); }
 .v2-driver__trace {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-micro);
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.58);
   border-left: 2px solid var(--amber);
@@ -8697,13 +8723,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-driver__stat-val {
   
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .v2-driver__stat-label {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -8712,7 +8738,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-driver__section-title {
   margin: 0 0 8px;
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--amber);
@@ -8730,13 +8756,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 10px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.8);
 }
 .v2-driver__shift-list li:last-child { border-bottom: 0; }
 .v2-driver__empty {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -8753,7 +8779,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: var(--ax-panel);
   border: 1px solid var(--ax-line-2);
   color: var(--ax-ink);
-  font-size: 17px;
+  font-size: var(--t-lead);
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
@@ -8815,7 +8841,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-subnav__brand {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -8831,7 +8857,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-subnav__link {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   color: var(--ax-ink-2);
   text-decoration: none;
@@ -8894,7 +8920,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 4px 8px;
   border: 1px solid var(--ax-line-2);
   color: var(--ax-ink-2);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -8904,7 +8930,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   max-width: 66ch;
   margin: 0;
   color: var(--ax-ink-2);
-  font-size: 15px;
+  font-size: var(--t-body);
   line-height: 1.6;
 }
 .v2 .tk-hero-desc strong { color: var(--ax-ink); }
@@ -8913,7 +8939,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .tk-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -8926,7 +8952,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hero-title {
-  font-size: clamp(26px, 2.5vw, 36px);
+  font-size: var(--t-display);
   font-weight: 800;
   line-height: 1.15;
   color: var(--ax-ink);
@@ -8935,7 +8961,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hero-lead {
-  font-size: 15px;
+  font-size: var(--t-body);
   line-height: 1.6;
   color: var(--ax-ink-2);
   margin: 0;
@@ -8958,7 +8984,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 700;
   border-radius: 0;
   text-decoration: none;
@@ -9012,7 +9038,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.1em;
   color: var(--ax-accent);
@@ -9029,7 +9055,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hud-meta {
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
   
 }
@@ -9051,7 +9077,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hud-step span {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -9059,7 +9085,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hud-step strong {
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-weight: 800;
   color: var(--ax-ink);
   
@@ -9067,7 +9093,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hud-step small {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 
@@ -9087,13 +9113,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid rgba(70, 185, 134, 0.25);
   border-radius: 0;
   padding: 8px 12px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
   
 }
 
 .v2 .tk-hud-formula__badge {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -9121,7 +9147,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-section-kicker {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -9129,7 +9155,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-section-head h2 {
-  font-size: clamp(20px, 2vw, 28px);
+  font-size: var(--t-hero);
   font-weight: 800;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
@@ -9138,7 +9164,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-section-head p {
-  font-size: 14px;
+  font-size: var(--t-label);
   line-height: 1.6;
   color: var(--ax-ink-2);
   margin: 0;
@@ -9182,7 +9208,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-lens-card__letter {
-  font-size: 28px;
+  font-size: var(--t-hero);
   font-weight: 900;
   color: var(--ax-accent);
   
@@ -9199,13 +9225,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-lens-card__title {
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 800;
   color: var(--ax-ink);
 }
 
 .v2 .tk-lens-card__category {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -9213,7 +9239,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-lens-card__question {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-style: italic;
   line-height: 1.5;
   color: var(--ax-ink-2);
@@ -9222,7 +9248,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-lens-card__fact {
-  font-size: 12px;
+  font-size: var(--t-micro);
   line-height: 1.5;
   color: var(--ax-ink-2);
   padding-top: 8px;
@@ -9248,7 +9274,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-comparison-box h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--t-lead);
   font-weight: 800;
   color: var(--ax-ink);
   letter-spacing: -0.01em;
@@ -9269,7 +9295,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 14px 18px;
   background: var(--ax-paper);
   border-bottom: 1px solid var(--ax-line);
-  font-size: 13px;
+  font-size: var(--t-micro);
   line-height: 1.55;
   color: var(--ax-ink-2);
   align-items: center;
@@ -9283,7 +9309,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: var(--ax-panel);
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.08em;
   color: var(--ax-ink);
 }
@@ -9307,7 +9333,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-personas-group-title {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -9357,21 +9383,21 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-persona-num {
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink-3);
   
 }
 
 .v2 .tk-persona-name {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink);
   flex: 1;
 }
 
 .v2 .tk-persona-badge {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -9390,7 +9416,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-persona-meta {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
 }
 
@@ -9399,7 +9425,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-persona-need {
-  font-size: 12px;
+  font-size: var(--t-micro);
   line-height: 1.45;
   color: var(--ax-ink-2);
   margin: 0;
@@ -9422,7 +9448,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-friction-box h4 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink);
 }
@@ -9434,7 +9460,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-friction-tag {
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 600;
   color: var(--ax-ink-2);
   background: var(--ax-paper);
@@ -9464,7 +9490,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-causal-tab {
   padding: 12px 20px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-ink-2);
   background: none;
@@ -9493,7 +9519,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-causal-card__title {
-  font-size: 16px;
+  font-size: var(--t-lead);
   font-weight: 800;
   color: var(--ax-ink);
   margin: 0;
@@ -9510,7 +9536,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: var(--t-lead);
   color: var(--ax-ink-3);
   font-weight: bold;
 }
@@ -9526,7 +9552,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-causal-step__num {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -9534,14 +9560,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-causal-step h4 {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink);
   margin: 0;
 }
 
 .v2 .tk-causal-step p {
-  font-size: 11px;
+  font-size: var(--t-micro);
   line-height: 1.45;
   color: var(--ax-ink-2);
   margin: 0;
@@ -9606,7 +9632,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-quadrant-badge {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -9617,7 +9643,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-quadrant-header h3 {
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink);
   margin: 0;
@@ -9636,12 +9662,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 
 .v2 .tk-rec-n {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   
   color: var(--ax-accent);
@@ -9666,14 +9692,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .tk-ledger-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--t-micro);
   text-align: left;
 }
 
 .v2 .tk-ledger-table th {
   background: var(--ax-paper);
   padding: 12px 16px;
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -9698,7 +9724,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-code-tag {
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--ax-line-2);
   padding: 2px 6px;
@@ -9719,14 +9745,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-roadmap-box h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--t-body);
   font-weight: 800;
   color: var(--ax-ink);
 }
 
 .v2 .tk-roadmap-box p {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 
@@ -9748,13 +9774,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-data-card strong {
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 800;
   color: var(--ax-ink);
 }
 
 .v2 .tk-data-source {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: var(--ax-accent);
   text-transform: uppercase;
@@ -9762,7 +9788,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-data-card p {
-  font-size: 11px;
+  font-size: var(--t-micro);
   line-height: 1.4;
   color: var(--ax-ink-2);
   margin: 0;
@@ -9793,7 +9819,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid var(--ax-line-2);
   border-radius: 0;
   padding: 18px 22px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   line-height: 1.6;
   color: var(--ax-ink-2);
 }
@@ -9860,6 +9886,17 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* Operations wall: honour the dark-room design rule without changing the
    editorial character of Insights and Toolkit. */
 .v2--operations {
+  /* Type scale — the eight names, this surface's values. Every font-size in
+     the v2-* rules is one of these. See STYLE.md, "The type scale". */
+  --t-display:   52px;
+  --t-hero:      30px;
+  --t-figure:    24px;
+  --t-title:     20px;
+  --t-lead:      18px;
+  --t-body:      15px;
+  --t-label:     14px;
+  --t-micro:     13px;
+
   --ax-paper:  #0a0e14;
   --ax-panel:  #0f141d;
   --ax-ink:    #f3f6f8;
@@ -9870,9 +9907,26 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   --ax-accent: #46b986;
   --ax-neg:    #ff8a7a;
   --ax-warn:   #e0a243;
-  --t-micro:   15px;
-  --t-body:    17px;
 }
+/* The capacity screen is an operations surface (it carries the
+   v2--operations class) with its own scale: it is a one-screen command,
+   so its hero numbers are the page's subject and they are bigger than the
+   wall's. Two classes on one element, so this beats .v2--operations
+   whatever the source order. */
+.v2--operations.capacity {
+  /* Type scale — the eight names, this surface's values. Every font-size in
+     the capacity-* rules is one of these. See STYLE.md, "The type scale". */
+  --t-display:   72px;
+  --t-hero:      56px;
+  --t-figure:    40px;
+  --t-title:     32px;
+  --t-lead:      24px;
+  --t-body:      18px;
+  --t-label:     14px;
+  --t-micro:     12px;
+
+}
+
 .v2--operations .v2-alert-banner {
   background: #231f14 !important;
   border-bottom-color: #5e4a20 !important;
@@ -9897,14 +9951,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-fleet__route-tag,
 .v2--operations .v2-fleet__status,
 .v2--operations .v2-fleet__problem-pill {
-  font-size: 13px;
+  font-size: var(--t-micro);
 }
 .v2--operations .v2-hour-plan button,
 .v2--operations .v2-fleet__driver-name,
 .v2--operations .v2-fleet__route-dir,
 .v2--operations .v2-fleet__load-num,
 .v2--operations .v2-fleet__eta {
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 .v2--operations .v2-flight-row:hover,
 .v2--operations .v2-week__row:hover { background: #151b24; }
@@ -9977,7 +10031,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-brief h2 {
   margin: 5px 0 6px;
   color: var(--ax-ink);
-  font-size: 22px;
+  font-size: var(--t-figure);
   line-height: 1.15;
   letter-spacing: -0.025em;
 }
@@ -10005,7 +10059,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 16px 18px;
   border-bottom: 1px solid var(--ax-line);
 }
-.v2-brief__section-head h2 { font-size: 18px; margin-bottom: 0; }
+.v2-brief__section-head h2 { font-size: var(--t-lead); margin-bottom: 0; }
 .v2-brief__section-head > strong {
   color: var(--ax-accent);
   font-size: var(--t-body);
@@ -10046,7 +10100,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-brief__chain span { color: var(--ax-ink-2); font-size: var(--t-body); }
 .v2-brief__chain strong {
   color: var(--ax-ink);
-  font-size: 20px;
+  font-size: var(--t-title);
   font-variant-numeric: tabular-nums;
 }
 .v2-brief__chain li:last-child strong { color: var(--ax-warn); }
@@ -10073,7 +10127,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-brief__totals strong {
   color: var(--ax-ink);
-  font-size: 22px;
+  font-size: var(--t-figure);
   font-variant-numeric: tabular-nums;
 }
 .v2-brief__totals > div:nth-child(3) strong { color: var(--ax-accent); }
@@ -10155,15 +10209,15 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .v2-header__live,
   .v2 .v2-header__day,
   .v2 .v2-header__speed { display: none; }
-  .v2 .v2-header__time { font-size: 14px; }
+  .v2 .v2-header__time { font-size: var(--t-label); }
   .v2 .v2-timebar__day-sweep { padding-inline: 10px; }
 
   .v2-brief { display: flex; flex-direction: column; }
   .v2-brief__decision { padding: 18px 16px; }
-  .v2-brief h2 { font-size: 20px; }
+  .v2-brief h2 { font-size: var(--t-title); }
   .v2-brief__map-frame { height: 65vh; min-height: 420px; }
   .v2-brief__totals { grid-template-columns: 1fr 1fr; flex: none; }
-  .v2-brief__totals strong { font-size: 20px; }
+  .v2-brief__totals strong { font-size: var(--t-title); }
   .v2-brief__hours { grid-template-columns: 1fr; }
   .v2-brief__hours button { min-height: 58px; }
   .v2-brief > .v2-conditions { grid-template-columns: 1fr; }
@@ -10317,7 +10371,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   max-width: 14ch;
   margin: 0 0 22px;
   color: var(--ax-ink);
-  font-size: clamp(42px, 4.6vw, 66px);
+  font-size: var(--t-display);
   font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.98;
@@ -10356,7 +10410,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.62);
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -10398,13 +10452,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   height: 20px;
   background: #10151c;
   color: #71d0a8;
-  font-size: 16px;
+  font-size: var(--t-lead);
 }
 .v2 .tk-live__chain span,
 .v2 .tk-live__money small {
   color: rgba(255, 255, 255, 0.54);
   
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -10413,11 +10467,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   margin: 11px 0 8px;
   color: #fff;
   
-  font-size: 30px;
+  font-size: var(--t-hero);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.v2 .tk-live__chain small { color: rgba(255, 255, 255, 0.62); font-size: 10px; line-height: 1.45; }
+.v2 .tk-live__chain small { color: rgba(255, 255, 255, 0.62); font-size: var(--t-micro); line-height: 1.45; }
 .v2 .tk-live__money {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -10426,14 +10480,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .tk-live__money > span { display: flex; flex-direction: column; gap: 6px; padding: 15px 16px; }
 .v2 .tk-live__money > span:first-child { border-right: 1px solid rgba(255, 255, 255, 0.12); }
-.v2 .tk-live__money strong { color: #71d0a8;  font-size: 24px; font-variant-numeric: tabular-nums; }
+.v2 .tk-live__money strong { color: #71d0a8;  font-size: var(--t-figure); font-variant-numeric: tabular-nums; }
 .v2 .tk-live__money > span:last-child strong { color: #efb45e; }
 .v2 .tk-live__check {
   margin: 0;
   padding: 13px 16px;
   color: rgba(255, 255, 255, 0.62);
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   line-height: 1.5;
 }
 .v2 .tk-live__check.is-true::before { content: "✓ "; color: #71d0a8; font-weight: 700; }
@@ -10446,19 +10500,19 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-top: 1px solid var(--ax-line-2);
   border-bottom: 1px solid var(--ax-line-2);
 }
-.v2 .tk-story__number { color: var(--ax-accent);  font-size: 72px; line-height: 0.9; }
+.v2 .tk-story__number { color: var(--ax-accent);  font-size: var(--t-display); line-height: 0.9; }
 .v2 .tk-story h2,
 .v2 .tk-section-title {
   max-width: 20ch;
   margin: 0 0 20px;
   color: var(--ax-ink);
-  font-size: 40px;
+  font-size: var(--t-display);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.05;
   text-wrap: balance;
 }
-.v2 .tk-story p { max-width: 62ch; margin: 0; color: var(--ax-ink-2); font-size: 18px; line-height: 1.65; }
+.v2 .tk-story p { max-width: 62ch; margin: 0; color: var(--ax-ink-2); font-size: var(--t-lead); line-height: 1.65; }
 .v2 .tk-chapter {
   display: block;
   margin-bottom: 22px;
@@ -10472,9 +10526,9 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 24px 0;
   scroll-margin-top: 52px;
 }
-.v2 .tk-section-title--small { max-width: 26ch; font-size: 30px; line-height: 1.12; }
-.v2 .tk-body { font-size: 17px; line-height: 1.72; }
-.v2 .tk-note { font-size: 12px; line-height: 1.7; }
+.v2 .tk-section-title--small { max-width: 26ch; font-size: var(--t-hero); line-height: 1.12; }
+.v2 .tk-body { font-size: var(--t-lead); line-height: 1.72; }
+.v2 .tk-note { font-size: var(--t-micro); line-height: 1.7; }
 
 /* Repeated ideas use rhythm and rules, not cards. */
 .v2 .tk-tenets {
@@ -10494,10 +10548,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: transparent;
   border-top: 1px solid var(--ax-line);
 }
-.v2 .tk-tenet__l { font-size: 32px; }
+.v2 .tk-tenet__l { font-size: var(--t-display); }
 .v2 .tk-tenet__k { letter-spacing: 0.06em; }
 .v2 .tk-hyp { max-width: 760px; padding: 18px 0 18px 22px; margin: 0; border-bottom: 1px solid var(--ax-line); }
-.v2 .tk-hyp__q { font-size: 17px; }
+.v2 .tk-hyp__q { font-size: var(--t-lead); }
 .v2 .tk-objectives {
   gap: 0;
   background: transparent;
@@ -10528,7 +10582,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-top: 2px solid var(--ax-ink);
   counter-increment: toolkit-pipeline;
 }
-.v2 .tk-pipeline li::before { content: "0" counter(toolkit-pipeline); color: var(--ax-accent);  font-size: 11px; }
+.v2 .tk-pipeline li::before { content: "0" counter(toolkit-pipeline); color: var(--ax-accent);  font-size: var(--t-micro); }
 .v2 .tk-pipeline li:not(:last-child)::after { content: "→"; position: absolute; top: 38px; right: -16px; color: var(--ax-ink-3); }
 .v2 .tk-pipeline strong { color: var(--ax-ink); font-size: var(--t-body); }
 .v2 .tk-pipeline span { color: var(--ax-ink-2); font-size: var(--t-micro); line-height: 1.45; }
@@ -10560,13 +10614,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2 .tk-causal__node { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 24px 18px; }
 .v2 .tk-causal__node > span { color: var(--ax-accent); font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.v2 .tk-causal__node strong { color: var(--ax-ink); font-size: 17px; line-height: 1.45; }
-.v2 .tk-causal__node small { color: var(--ax-ink-2); font-size: 12px; line-height: 1.55; }
+.v2 .tk-causal__node strong { color: var(--ax-ink); font-size: var(--t-lead); line-height: 1.45; }
+.v2 .tk-causal__node small { color: var(--ax-ink-2); font-size: var(--t-micro); line-height: 1.55; }
 .v2 .tk-causal__node--test { background: var(--ax-panel); }
 .v2 .tk-causal__edge { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 12px; border-inline: 1px solid var(--ax-line); text-align: center; }
-.v2 .tk-causal__edge::before { content: "→"; color: var(--ax-accent); font-size: 28px; line-height: 1; }
-.v2 .tk-causal__edge span { color: var(--ax-ink-3); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-.v2 .tk-causal__edge b { color: var(--ax-ink-2); font-size: 10px; line-height: 1.35; }
+.v2 .tk-causal__edge::before { content: "→"; color: var(--ax-accent); font-size: var(--t-hero); line-height: 1; }
+.v2 .tk-causal__edge span { color: var(--ax-ink-3); font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.v2 .tk-causal__edge b { color: var(--ax-ink-2); font-size: var(--t-micro); line-height: 1.35; }
 .v2 .tk-causal__edge--causal { background: color-mix(in srgb, var(--ax-accent) 7%, transparent); }
 .v2 .tk-causal > .tk-note { margin-top: 16px; }
 .v2 .tk-recs-mobile { display: none; }
@@ -10598,7 +10652,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .tk-index a:nth-child(2) { border-right: 0; }
   .v2 .tk-index a:nth-child(-n + 2) { border-bottom: 1px solid var(--ax-line); }
   .v2 .tk-system-hero { padding: 48px 0 54px; }
-  .v2 .tk-display { font-size: 44px; line-height: 1; }
+  .v2 .tk-display { font-size: var(--t-display); line-height: 1; }
   .v2 .tk-actions { display: grid; grid-template-columns: 1fr; }
   .v2 .tk-action { width: 100%; }
   .v2 .tk-live__status { align-items: flex-start; flex-direction: column; gap: 5px; }
@@ -10608,16 +10662,16 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .tk-live__chain li:nth-child(-n + 2)::after { display: none; }
   .v2 .tk-live__chain li:nth-child(3),
   .v2 .tk-live__chain li:nth-child(4) { border-bottom: 0; }
-  .v2 .tk-live__chain strong { font-size: 26px; }
-  .v2 .tk-live__check { font-size: 9px; }
+  .v2 .tk-live__chain strong { font-size: var(--t-hero); }
+  .v2 .tk-live__check { font-size: var(--t-micro); }
   .v2 .tk-story { grid-template-columns: 44px 1fr; gap: 14px; padding: 42px 0 48px; }
-  .v2 .tk-story__number { font-size: 36px; }
+  .v2 .tk-story__number { font-size: var(--t-display); }
   .v2 .tk-story h2,
-  .v2 .tk-section-title { font-size: 30px; }
-  .v2 .tk-story p { font-size: 16px; }
+  .v2 .tk-section-title { font-size: var(--t-hero); }
+  .v2 .tk-story p { font-size: var(--t-lead); }
   .v2 .tk-section { padding: 52px 0; }
-  .v2 .tk-section-title--small { font-size: 24px; }
-  .v2 .tk-body { font-size: 16px; }
+  .v2 .tk-section-title--small { font-size: var(--t-figure); }
+  .v2 .tk-body { font-size: var(--t-lead); }
   .v2 .tk-tenets { grid-template-columns: 1fr; }
   .v2 .tk-tenet { grid-template-columns: 42px 100px 1fr; min-height: 78px; }
   .v2 .tk-objectives { grid-template-columns: 1fr; }
@@ -10634,9 +10688,9 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .tk-fig { display: none; }
   .v2 .tk-recs-mobile { display: block; margin: 24px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--ax-line-2); }
   .v2 .tk-recs-mobile li { display: grid; grid-template-columns: 32px 1fr; gap: 5px 10px; padding: 12px 0; border-bottom: 1px solid var(--ax-line); }
-  .v2 .tk-recs-mobile span { grid-row: 1 / 3; color: var(--ax-accent);  font-size: 11px; }
-  .v2 .tk-recs-mobile strong { color: var(--ax-ink); font-size: 13px; }
-  .v2 .tk-recs-mobile small { color: var(--ax-ink-3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .v2 .tk-recs-mobile span { grid-row: 1 / 3; color: var(--ax-accent);  font-size: var(--t-micro); }
+  .v2 .tk-recs-mobile strong { color: var(--ax-ink); font-size: var(--t-micro); }
+  .v2 .tk-recs-mobile small { color: var(--ax-ink-3); font-size: var(--t-micro); text-transform: uppercase; letter-spacing: 0.08em; }
   .v2 .tk-program .tk-logo { height: 42px; max-width: 140px; padding: 12px; }
 }
 
@@ -10644,10 +10698,18 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
    These selectors intentionally affect only the dark live console; editorial
    Toolkit and Insights typography keeps its own reading rhythm. */
 @media (min-width: 2200px) {
+  /* A wall screen is read from a chair, so the whole scale steps up — not
+     three of the eight. Every step moves, or the wall grows one enormous
+     figure and keeps the microcopy at laptop size. */
   .v2--operations {
-    --t-micro: 16px;
-    --t-body: 18px;
-    --t-display: 34px;
+    --t-display: 64px;
+    --t-hero:    36px;
+    --t-figure:  29px;
+    --t-title:   24px;
+    --t-lead:    21px;
+    --t-body:    18px;
+    --t-label:   16px;
+    --t-micro:   15px;
   }
 
   .v2--operations .v2-decision-rail__head > span,
@@ -10660,7 +10722,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2--operations .v2-fleet__problem-pill,
   .v2--operations .v2-map__flight-badge,
   .v2--operations .v2-map__layer-btn {
-    font-size: 14px;
+    font-size: var(--t-label);
   }
 
   .v2--operations .v2-hour-plan > header small,
@@ -10738,7 +10800,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-modal__eyebrow {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -10747,7 +10809,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-modal__title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-weight: 800;
   color: var(--ax-ink);
   letter-spacing: -0.02em;
@@ -10755,7 +10817,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-modal__close {
   background: transparent;
   border: none;
-  font-size: 18px;
+  font-size: var(--t-lead);
   color: var(--ax-ink-2);
   cursor: pointer;
   padding: 4px 8px;
@@ -10789,20 +10851,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 4px;
 }
 .v2-telemetry-hud__stat span {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
 }
 .v2-telemetry-hud__stat strong {
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-weight: 800;
   
   color: var(--ax-ink);
 }
 .v2-telemetry-hud__stat small {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 
@@ -10823,7 +10885,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-telemetry-section h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -10839,7 +10901,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-telemetry-sub {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
   max-width: 520px;
 }
@@ -10853,7 +10915,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-btn--sm {
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 .v2-telemetry-actions {
@@ -10868,7 +10930,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-btn-mode {
   padding: 8px 14px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   border-radius: 0;
   border: 1px solid var(--ax-line-2);
@@ -10894,7 +10956,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-btn {
   padding: 8px 14px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   border-radius: 0;
   cursor: pointer;
@@ -10927,7 +10989,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   gap: 6px;
 }
 .v2-form-group label {
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2-form-input-row {
@@ -10940,7 +11002,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid var(--ax-line-2);
   border-radius: 0;
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink);
   
 }
@@ -10949,7 +11011,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid var(--ax-line);
   border-radius: 0;
   padding: 10px 14px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
 }
 .v2-telemetry-docs p { margin: 0 0 6px; }
@@ -10960,7 +11022,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-radius: 0;
   color: var(--ax-accent);
   
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 .v2-telemetry-table-wrap {
@@ -10996,13 +11058,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-telemetry-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: var(--t-micro);
   text-align: left;
 }
 .v2-telemetry-table th {
   background: var(--ax-panel);
   padding: 8px 12px;
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -11022,7 +11084,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-telemetry-tag {
   display: inline-block;
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -11038,7 +11100,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: var(--ax-ink-3);
 }
 .v2-freshness-pill {
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   padding: 2px 5px;
@@ -11084,7 +11146,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid var(--ax-line-2);
   border-radius: 0;
   padding: 5px 10px;
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -11111,7 +11173,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: #ffffff;
   padding: 8px 14px;
   border-radius: 0;
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -11123,11 +11185,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 .v2-pier-flag-badge {
   display: inline-block;
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -11166,45 +11228,45 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-map__frame .leaflet-container { background: #0a0e14; }
 
 /* Map chrome: same floor as the rest of the cockpit */
-.v2--operations .v2-map__layer-btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
-.v2--operations .v2-map__telemetry-badge { font-size: 12px; padding: 6px 10px; }
-.v2--operations .v2-map__flight-badge { font-size: 12px; padding: 7px 11px; }
-.v2--operations .v2-map__legend { font-size: 11px; gap: 12px; padding: 8px 10px; }
+.v2--operations .v2-map__layer-btn { min-height: 34px; padding: 0 12px; font-size: var(--t-micro); }
+.v2--operations .v2-map__telemetry-badge { font-size: var(--t-micro); padding: 6px 10px; }
+.v2--operations .v2-map__flight-badge { font-size: var(--t-micro); padding: 7px 11px; }
+.v2--operations .v2-map__legend { font-size: var(--t-micro); gap: 12px; padding: 8px 10px; }
 .v2--operations .v2-map__legend i.is-bus-empty,
 .v2--operations .v2-map__legend i.is-bus-full,
 .v2--operations .v2-map__legend i.is-bus-boarding { width: 8px; height: 13px; }
 .v2--operations .v2-bus { width: 34px; height: 34px; }
 .v2--operations .v2-bus__hull { width: 14px; height: 24px; border-width: 2px; }
 .v2--operations .v2-bus__wedge { border-left-width: 6px; border-right-width: 6px; border-bottom-width: 6px; }
-.v2--operations .v2-bus-tip.leaflet-tooltip { font-size: 12px; padding: 6px 9px; }
+.v2--operations .v2-bus-tip.leaflet-tooltip { font-size: var(--t-micro); padding: 6px 9px; }
 .v2--operations .v2-map__stat,
-.v2--operations .v2-map__next { font-size: 14px; padding: 9px 16px; }
+.v2--operations .v2-map__next { font-size: var(--t-label); padding: 9px 16px; }
 /* The layer toolbar and the telemetry badge were stacked on the same corner
    (both absolute). Let the toolbar flow so the badge sits beside it. */
 .v2--operations .v2-map__top-controls .v2-map__layers { position: static; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .v2--operations .v2-header { grid-template-rows: 56px 44px; }
-.v2--operations .v2-header__story-value { font-size: 20px; }
-.v2--operations .v2-header__story-detail { font-size: 14px; }
-.v2--operations .v2-header__time { font-size: 18px; }
-.v2--operations .v2-header__clock { font-size: 14px; }
-.v2--operations .v2-mode-btn { font-size: 13px; padding: 6px 14px; }
-.v2--operations .v2-alert-banner { font-size: 14px; padding: 9px 24px; }
-.v2--operations .v2-alert-banner strong { font-size: 15px; }
+.v2--operations .v2-header__story-value { font-size: var(--t-title); }
+.v2--operations .v2-header__story-detail { font-size: var(--t-label); }
+.v2--operations .v2-header__time { font-size: var(--t-lead); }
+.v2--operations .v2-header__clock { font-size: var(--t-label); }
+.v2--operations .v2-mode-btn { font-size: var(--t-micro); padding: 6px 14px; }
+.v2--operations .v2-alert-banner { font-size: var(--t-label); padding: 9px 24px; }
+.v2--operations .v2-alert-banner strong { font-size: var(--t-body); }
 
 /* Timebar: play, days, speeds, sweep, report — one row, one size */
-.v2--operations .v2-timebar__play { width: 30px; height: 30px; font-size: 14px; }
-.v2--operations .v2-timebar__speed { font-size: 13px; padding: 5px 10px; min-height: 30px; }
-.v2--operations .v2-timebar__label { font-size: 15px; min-width: 48px; }
-.v2--operations .v2-timebar__day-sweep { font-size: 13px; min-height: 30px; padding: 4px 14px; }
+.v2--operations .v2-timebar__play { width: 30px; height: 30px; font-size: var(--t-label); }
+.v2--operations .v2-timebar__speed { font-size: var(--t-micro); padding: 5px 10px; min-height: 30px; }
+.v2--operations .v2-timebar__label { font-size: var(--t-body); min-width: 48px; }
+.v2--operations .v2-timebar__day-sweep { font-size: var(--t-micro); min-height: 30px; padding: 4px 14px; }
 .v2 .v2-timebar__report {
   background: none;
   border: 1px solid var(--ax-line-2);
   color: var(--ax-ink);
   padding: 4px 12px;
   min-height: 30px;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -11215,39 +11277,39 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-timebar__report:hover { background: var(--ax-ink); color: var(--ax-paper); border-color: var(--ax-ink); }
 
 /* ── Flight board (top-left) ─────────────────────────────────────────────── */
-.v2--operations .v2-flights__h { font-size: 21px; }
-.v2--operations .v2-flights__lede { font-size: 14px; }
-.v2--operations .v2-flights__legend-item { font-size: 13px; }
+.v2--operations .v2-flights__h { font-size: var(--t-figure); }
+.v2--operations .v2-flights__lede { font-size: var(--t-label); }
+.v2--operations .v2-flights__legend-item { font-size: var(--t-micro); }
 .v2--operations .v2-body--operations .v2-flights__hours { height: 150px; }
-.v2--operations .v2-flights__hourlabel { font-size: 13px; }
-.v2--operations .v2-flights__pax { font-size: 13px; }
-.v2--operations .v2-flights__flights { font-size: 11px; }
-.v2--operations .v2-flights__capture { font-size: 13px; }
+.v2--operations .v2-flights__hourlabel { font-size: var(--t-micro); }
+.v2--operations .v2-flights__pax { font-size: var(--t-micro); }
+.v2--operations .v2-flights__flights { font-size: var(--t-micro); }
+.v2--operations .v2-flights__capture { font-size: var(--t-micro); }
 .v2--operations .v2-flights__bars { width: 26px; }
-.v2--operations .v2-flights__cursor-label { font-size: 11px; }
-.v2--operations .v2-flights__callout { font-size: 14px; }
-.v2--operations .v2-flights__callout-clock { font-size: 22px; }
-.v2--operations .v2-flights__callout-hr { font-size: 11px; }
-.v2--operations .v2-flights__callout-item { font-size: 14px; padding: 6px 10px; gap: 4px 8px; }
-.v2--operations .v2-flights__callout-type { font-size: 11px; }
-.v2--operations .v2-flights__callout-time-rel { font-size: 13px; }
-.v2--operations .v2-flights__callout-aircraft { font-size: 12px; }
-.v2--operations .v2-flights__callout-load { font-size: 12px; }
-.v2--operations .v2-flights__callout-empty { font-size: 14px; }
+.v2--operations .v2-flights__cursor-label { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout { font-size: var(--t-label); }
+.v2--operations .v2-flights__callout-clock { font-size: var(--t-figure); }
+.v2--operations .v2-flights__callout-hr { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout-item { font-size: var(--t-label); padding: 6px 10px; gap: 4px 8px; }
+.v2--operations .v2-flights__callout-type { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout-time-rel { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout-aircraft { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout-load { font-size: var(--t-micro); }
+.v2--operations .v2-flights__callout-empty { font-size: var(--t-label); }
 
 /* ── Decision rail (bottom-left) ─────────────────────────────────────────── */
-.v2--operations .v2-decision-rail__head h2 { font-size: 24px; }
+.v2--operations .v2-decision-rail__head h2 { font-size: var(--t-figure); }
 .v2--operations .v2-decision-rail__head p,
-.v2--operations .v2-decision-rail__source p { font-size: 14px; }
-.v2--operations .v2-equation__step { font-size: 12px; }
-.v2--operations .v2-equation__term strong { font-size: 44px; }
-.v2--operations .v2-equation__term p { font-size: 15px; }
-.v2--operations .v2-equation__term small { font-size: 12px; }
-.v2--operations .v2-equation__operator { font-size: 18px; }
-.v2--operations .v2-hour-plan > header small { font-size: 12px; }
-.v2--operations .v2-hour-plan__legend { font-size: 12px; }
-.v2--operations .v2-hour-plan button { font-size: 15px; min-height: 42px; }
-.v2--operations .v2-hour-plan button.is-now strong::after { font-size: 11px; }
+.v2--operations .v2-decision-rail__source p { font-size: var(--t-label); }
+.v2--operations .v2-equation__step { font-size: var(--t-micro); }
+.v2--operations .v2-equation__term strong { font-size: var(--t-display); }
+.v2--operations .v2-equation__term p { font-size: var(--t-body); }
+.v2--operations .v2-equation__term small { font-size: var(--t-micro); }
+.v2--operations .v2-equation__operator { font-size: var(--t-lead); }
+.v2--operations .v2-hour-plan > header small { font-size: var(--t-micro); }
+.v2--operations .v2-hour-plan__legend { font-size: var(--t-micro); }
+.v2--operations .v2-hour-plan button { font-size: var(--t-body); min-height: 42px; }
+.v2--operations .v2-hour-plan button.is-now strong::after { font-size: var(--t-micro); }
 
 /* ── Demand-vs-supply balance chart ──────────────────────────────────────── */
 .v2-balance {
@@ -11259,14 +11321,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-balance__eyebrow {
   display: block;
   
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ax-ink-3);
 }
-.v2-balance__title { margin: 4px 0 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--ax-ink); line-height: 1.2; }
-.v2-balance__legend { display: flex; gap: 12px;  font-size: 12px; color: var(--ax-ink-2); white-space: nowrap; }
+.v2-balance__title { margin: 4px 0 0; font-size: var(--t-lead); font-weight: 700; letter-spacing: -0.01em; color: var(--ax-ink); line-height: 1.2; }
+.v2-balance__legend { display: flex; gap: 12px;  font-size: var(--t-micro); color: var(--ax-ink-2); white-space: nowrap; }
 .v2-balance__legend span { display: inline-flex; align-items: center; gap: 6px; }
 .v2-balance__legend i,
 .v2-balance__foot i { width: 12px; height: 12px; display: inline-block; }
@@ -11275,7 +11337,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-balance__plot { position: relative; display: flex; flex-direction: column; gap: 4px; }
 .v2-balance__axis {
   
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -11324,7 +11386,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-balance__down i.is-out { background: #8fb0d8; opacity: 0.45; }
 .v2-balance__hour {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-3);
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -11332,7 +11394,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .v2-balance__verdict {
   margin-top: 3px;
-  font-size: 13px;
+  font-size: var(--t-micro);
   font-weight: 800;
   text-align: center;
   line-height: 1;
@@ -11360,7 +11422,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding-top: 8px;
   border-top: 1px solid var(--ax-line);
   
-  font-size: 13px;
+  font-size: var(--t-micro);
   color: var(--ax-ink-2);
   font-variant-numeric: tabular-nums;
 }
@@ -11377,10 +11439,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* ── Hero cards over the map: waiting · collected · could have · rolling ─── */
 .v2--operations .v2-map__hero { grid-template-columns: repeat(4, 1fr); }
 .v2--operations .v2-map__hero-card { padding: 12px 18px 10px; }
-.v2--operations .v2-map__hero-label { font-size: 13px; }
-.v2--operations .v2-map__hero-value { font-size: 36px; }
+.v2--operations .v2-map__hero-label { font-size: var(--t-micro); }
+.v2--operations .v2-map__hero-value { font-size: var(--t-display); }
 /* Wrap, never ellipsis: these lines carry the conservation figures (walked away · still waiting). */
-.v2--operations .v2-map__hero-detail { font-size: 13px; }
+.v2--operations .v2-map__hero-detail { font-size: var(--t-micro); }
 .v2--operations .v2-map__hero-card--earned .v2-map__hero-value { color: var(--ax-accent); }
 .v2--operations .v2-map__hero-card--missed .v2-map__hero-value { color: var(--ax-warn); }
 .v2--operations .v2-map__hero-card--earned { box-shadow: inset 0 3px 0 var(--ax-accent); }
@@ -11389,62 +11451,62 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* ── Conditions strip ────────────────────────────────────────────────────── */
 .v2--operations .v2-conditions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .v2--operations .v2-conditions__item { min-height: 0; padding: 9px 14px; }
-.v2--operations .v2-conditions__label { font-size: 11px; }
-.v2--operations .v2-conditions__value { font-size: 15px; }
-.v2--operations .v2-conditions__detail { font-size: 13px; }
-.v2--operations .v2-conditions__alerts { font-size: 13px; }
+.v2--operations .v2-conditions__label { font-size: var(--t-micro); }
+.v2--operations .v2-conditions__value { font-size: var(--t-body); }
+.v2--operations .v2-conditions__detail { font-size: var(--t-micro); }
+.v2--operations .v2-conditions__alerts { font-size: var(--t-micro); }
 
 /* ── Fleet table under the map ───────────────────────────────────────────── */
 .v2--operations .v2-fleet { max-height: none; flex: 1; min-height: 240px; }
 .v2--operations .v2-fleet__list { flex: 1; min-height: 0; overflow-y: auto; }
-.v2--operations .v2-fleet__eyebrow { font-size: 12px; }
-.v2--operations .v2-fleet__title { font-size: 24px; }
-.v2--operations .v2-fleet__sub { font-size: 13px; }
-.v2--operations .v2-fleet__chip { font-size: 13px; padding: 6px 12px; }
-.v2--operations .v2-fleet__problem-pill { font-size: 12px; }
-.v2--operations .v2-fleet__row { grid-template-columns: 172px 1fr 104px 92px 56px; font-size: 14px; padding: 8px 6px; }
-.v2--operations .v2-fleet__row--header { font-size: 12px; }
-.v2--operations .v2-fleet__driver-name { font-size: 14px; }
-.v2--operations .v2-fleet__plate { font-size: 12px; }
-.v2--operations .v2-fleet__route-tag { font-size: 12px; }
-.v2--operations .v2-fleet__route-dir { font-size: 14px; }
-.v2--operations .v2-fleet__load-num { font-size: 14px; }
-.v2--operations .v2-fleet__status { font-size: 12px; }
-.v2--operations .v2-fleet__eta { font-size: 15px; }
+.v2--operations .v2-fleet__eyebrow { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__title { font-size: var(--t-figure); }
+.v2--operations .v2-fleet__sub { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__chip { font-size: var(--t-micro); padding: 6px 12px; }
+.v2--operations .v2-fleet__problem-pill { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__row { grid-template-columns: 172px 1fr 104px 92px 56px; font-size: var(--t-label); padding: 8px 6px; }
+.v2--operations .v2-fleet__row--header { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__driver-name { font-size: var(--t-label); }
+.v2--operations .v2-fleet__plate { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__route-tag { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__route-dir { font-size: var(--t-label); }
+.v2--operations .v2-fleet__load-num { font-size: var(--t-label); }
+.v2--operations .v2-fleet__status { font-size: var(--t-micro); }
+.v2--operations .v2-fleet__eta { font-size: var(--t-body); }
 .v2--operations .v2-fleet__face { width: 32px; height: 32px; }
-.v2--operations .v2-fleet__empty { font-size: 13px; }
+.v2--operations .v2-fleet__empty { font-size: var(--t-micro); }
 
 /* ── Bus plan card on the map ────────────────────────────────────────────── */
 .v2--operations .v2-plan { width: 300px; }
-.v2--operations .v2-plan__kicker { font-size: 12px; }
-.v2--operations .v2-plan__plate { font-size: 22px; }
-.v2--operations .v2-plan__status { font-size: 12px; }
-.v2--operations .v2-plan__label { font-size: 12px; }
-.v2--operations .v2-plan__num { font-size: 26px; }
-.v2--operations .v2-plan__num small { font-size: 13px; }
-.v2--operations .v2-plan__facts dt { font-size: 11px; }
-.v2--operations .v2-plan__facts dd { font-size: 16px; }
+.v2--operations .v2-plan__kicker { font-size: var(--t-micro); }
+.v2--operations .v2-plan__plate { font-size: var(--t-figure); }
+.v2--operations .v2-plan__status { font-size: var(--t-micro); }
+.v2--operations .v2-plan__label { font-size: var(--t-micro); }
+.v2--operations .v2-plan__num { font-size: var(--t-hero); }
+.v2--operations .v2-plan__num small { font-size: var(--t-micro); }
+.v2--operations .v2-plan__facts dt { font-size: var(--t-micro); }
+.v2--operations .v2-plan__facts dd { font-size: var(--t-lead); }
 .v2--operations .v2-plan__ruler-ends,
-.v2--operations .v2-plan__hint { font-size: 11px; }
-.v2--operations .v2-plan__flag { font-size: 13px; }
+.v2--operations .v2-plan__hint { font-size: var(--t-micro); }
+.v2--operations .v2-plan__flag { font-size: var(--t-micro); }
 
 /* ── Footer accumulator ──────────────────────────────────────────────────── */
 .v2--operations .v2-accum__item { padding: 12px 20px; }
-.v2--operations .v2-accum__val { font-size: 26px; }
-.v2--operations .v2-accum__label { font-size: 13px; }
-.v2--operations .v2-accum__earned { font-size: 30px; }
-.v2--operations .v2-accum__lost { font-size: 14px; }
+.v2--operations .v2-accum__val { font-size: var(--t-hero); }
+.v2--operations .v2-accum__label { font-size: var(--t-micro); }
+.v2--operations .v2-accum__earned { font-size: var(--t-hero); }
+.v2--operations .v2-accum__lost { font-size: var(--t-label); }
 .v2--operations .v2-accum__meter { height: 5px; }
 
 /* ── Day report modal ────────────────────────────────────────────────────── */
 .v2 .v2-modal.v2-report { max-width: 1120px; border-radius: 0; }
-.v2 .v2-report__header .v2-modal__title { font-size: 20px; line-height: 1.25; }
-.v2 .v2-report__header .v2-modal__eyebrow { font-size: 12px; }
+.v2 .v2-report__header .v2-modal__title { font-size: var(--t-title); line-height: 1.25; }
+.v2 .v2-report__header .v2-modal__eyebrow { font-size: var(--t-micro); }
 .v2-report__body { padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
 .v2-report__kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--ax-line); border: 1px solid var(--ax-line); }
 .v2-report__kpi { background: var(--ax-panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
-.v2-report__kpi strong { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ax-ink); }
-.v2-report__kpi span { font-size: 13px; color: var(--ax-ink-2); line-height: 1.35; }
+.v2-report__kpi strong { font-size: var(--t-hero); font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ax-ink); }
+.v2-report__kpi span { font-size: var(--t-micro); color: var(--ax-ink-2); line-height: 1.35; }
 .v2-report__kpi.is-earned strong { color: var(--ax-accent); }
 .v2-report__kpi.is-missed strong { color: var(--ax-warn); }
 .v2-report__kpi.is-short strong { color: var(--ax-warn); }
@@ -11455,7 +11517,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-report__fleet header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .v2-report__eyebrow {
   
-  font-size: 12px;
+  font-size: var(--t-micro);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -11465,12 +11527,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-report__eyebrow.is-light { color: #8fb0d8; }
 .v2:not(.v2--operations) .v2-report__eyebrow.is-light { color: #3d67a0; }
 .v2-report__table header small,
-.v2-report__fleet header small { font-size: 12px; color: var(--ax-ink-3); }
-.v2-report__table table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.v2-report__fleet header small { font-size: var(--t-micro); color: var(--ax-ink-3); }
+.v2-report__table table { width: 100%; border-collapse: collapse; font-size: var(--t-label); font-variant-numeric: tabular-nums; }
 .v2-report__table th {
   text-align: left;
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -11487,7 +11549,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-report__table tbody tr { cursor: pointer; }
 .v2-report__table tbody tr:hover td { background: rgba(255, 255, 255, 0.04); }
 .v2:not(.v2--operations) .v2-report__table tbody tr:hover td { background: #f3f1ec; }
-.v2-report__empty { margin: 0; padding: 10px 0; font-size: 14px; color: var(--ax-ink-3); font-style: italic; }
+.v2-report__empty { margin: 0; padding: 10px 0; font-size: var(--t-label); color: var(--ax-ink-3); font-style: italic; }
 
 /* 3-term conservation line under the KPI cards. Each number is a
    sum-part of the couldHave total: collected + lost + waiting = wanted.
@@ -11501,14 +11563,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding: 14px 16px;
   background: var(--ax-panel);
   border: 1px solid var(--ax-line);
-  font-size: 15px;
+  font-size: var(--t-body);
   
   color: var(--ax-ink-2);
 }
 .v2-report__conservation b {
   color: var(--ax-ink);
   font-weight: 800;
-  font-size: 22px;
+  font-size: var(--t-figure);
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   margin-right: 6px;
@@ -11516,22 +11578,22 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-report__conservation > span[aria-hidden="true"] {
   color: var(--ax-ink-3);
   font-weight: 700;
-  font-size: 18px;
+  font-size: var(--t-lead);
 }
 .v2-report__conservation-note {
   margin: -8px 0 0;
-  font-size: 14px;
+  font-size: var(--t-label);
   line-height: 1.4;
   color: var(--ax-ink-2);
 }
 .v2-report__ladder { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--ax-line); border: 1px solid var(--ax-line); }
-.v2-report__rung { background: var(--ax-panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
-.v2-report__rung b { font-size: 15px; color: var(--ax-ink); font-weight: 800; }
-.v2-report__rung strong { margin-top: 4px; font-size: 16px; font-weight: 800; color: var(--ax-ink); }
+.v2-report__rung { background: var(--ax-panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; font-size: var(--t-micro); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.v2-report__rung b { font-size: var(--t-body); color: var(--ax-ink); font-weight: 800; }
+.v2-report__rung strong { margin-top: 4px; font-size: var(--t-lead); font-weight: 800; color: var(--ax-ink); }
 .v2-report__rung.is-gain strong { color: var(--ax-accent); }
 .v2-report__rung.is-loss strong { color: var(--ax-neg); }
 .v2-report__rung.is-best { outline: 2px solid var(--ax-accent); outline-offset: -2px; }
-.v2-report__verdict { margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: var(--ax-ink-2); }
+.v2-report__verdict { margin: 10px 0 0; font-size: var(--t-body); line-height: 1.45; color: var(--ax-ink-2); }
 .v2-report__verdict b { color: var(--ax-ink); font-weight: 800; }
 .v2-report__actions { display: flex; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--ax-line); background: var(--ax-panel); flex-wrap: wrap; }
 .v2-report__btn {
@@ -11539,7 +11601,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid var(--ax-line-2);
   color: var(--ax-ink);
   padding: 8px 14px;
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
@@ -11562,7 +11624,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-alert-banner__content { flex-direction: row; align-items: baseline; gap: 12px; min-width: 0; }
 .v2--operations .v2-alert-banner__content strong,
 .v2--operations .v2-alert-banner__content span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.v2--operations .v2-alert-banner__content span { font-size: 14px; }
+.v2--operations .v2-alert-banner__content span { font-size: var(--t-label); }
 
 /* Header story never wraps into a third line */
 .v2--operations .v2-header { grid-template-rows: 54px 42px; }
@@ -11570,7 +11632,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-header__story-label,
 .v2--operations .v2-header__story-value,
 .v2--operations .v2-header__story-detail { white-space: nowrap; }
-.v2--operations .v2-header__story-value { font-size: 19px; }
+.v2--operations .v2-header__story-value { font-size: var(--t-title); }
 
 /* The .v2-body--operations grid was overridden here with a 33fr/67fr +
    2-row stacked layout (flights row + decisions row) on the left and the
@@ -11602,11 +11664,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-body--operations .v2-flights__callout-aircraft { display: none; }
 .v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 4 / 5; grid-row: 1; text-align: right; }
 .v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 1 / 5; }
-.v2--operations .v2-flights__callout-clock { font-size: 20px; }
+.v2--operations .v2-flights__callout-clock { font-size: var(--t-title); }
 
 /* Decision rail: compact header, the equation reads left-to-right on one row */
 .v2--operations .v2-decision-rail__head { padding: 12px 18px 10px; }
-.v2--operations .v2-decision-rail__head h2 { font-size: 20px; margin: 4px 0 0; }
+.v2--operations .v2-decision-rail__head h2 { font-size: var(--t-title); margin: 4px 0 0; }
 .v2--operations .v2-decision-rail__head p { display: none; }
 .v2--operations .v2-equation {
   display: grid;
@@ -11622,23 +11684,23 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-left-width: 3px;
   min-width: 0;
 }
-.v2--operations .v2-equation__term strong { font-size: 36px; line-height: 1; margin: 2px 0 4px; }
-.v2--operations .v2-equation__term p { font-size: 13px; line-height: 1.3; }
-.v2--operations .v2-equation__term small { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2--operations .v2-equation__term strong { font-size: var(--t-display); line-height: 1; margin: 2px 0 4px; }
+.v2--operations .v2-equation__term p { font-size: var(--t-micro); line-height: 1.3; }
+.v2--operations .v2-equation__term small { font-size: var(--t-micro); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v2--operations .v2-equation__operator {
   position: static;
   height: auto;
   display: flex;
   align-items: center;
   padding: 0 4px;
-  font-size: 20px;
+  font-size: var(--t-title);
 }
 
 /* Balance chart bars: 56px each side at the reference size */
 .v2--operations .v2-balance { padding: 12px 18px 10px; }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 56px; }
-.v2--operations .v2-balance__title { font-size: 15px; }
+.v2--operations .v2-balance__title { font-size: var(--t-body); }
 
 /* Map column: hero cards sit in flow (not floating over the conditions
    strip); map stage and fleet table share the remainder 3:2. */
@@ -11646,7 +11708,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .v2-map__hero-card { backdrop-filter: none; }
 .v2--operations .v2-map { gap: 0; }
 .v2--operations .v2-map__hero-card { padding: 10px 18px 9px; gap: 2px; }
-.v2--operations .v2-map__hero-value { font-size: 34px; }
+.v2--operations .v2-map__hero-value { font-size: var(--t-display); }
 .v2--operations .v2-conditions { border-left: 0; border-right: 0; }
 .v2--operations .v2-conditions__item { min-height: 0; padding: 7px 14px; gap: 1px; }
 .v2--operations .v2-conditions__alerts { padding: 5px 14px; }
@@ -11655,13 +11717,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-map__frame .v2-map__canvas,
 .v2--operations .v2-map .v2-map__canvas { min-height: 0; }
 .v2--operations .v2-fleet { flex: 2 1 0; min-height: 150px; padding: 10px 18px 8px; gap: 6px; border-left: 0; border-right: 0; border-bottom: 0; }
-.v2--operations .v2-fleet__title { font-size: 20px; }
+.v2--operations .v2-fleet__title { font-size: var(--t-title); }
 .v2--operations .v2-fleet__row { padding: 6px 6px; }
 /* The header carries the LIVE / SIMULATION switch; the map's telemetry
    badge collided with the flight badge. One control, one place. */
 .v2--operations .v2-map__telemetry-badge { display: none; }
-.v2--operations .v2-map__layer-btn { font-size: 12px; min-height: 32px; padding: 0 11px; }
-.v2--operations .v2-map__maritime-banner { top: auto; bottom: 44px; left: 12px; right: auto; max-width: 60%; font-size: 12px; padding: 6px 12px; }
+.v2--operations .v2-map__layer-btn { font-size: var(--t-micro); min-height: 32px; padding: 0 11px; }
+.v2--operations .v2-map__maritime-banner { top: auto; bottom: 44px; left: 12px; right: auto; max-width: 60%; font-size: var(--t-micro); padding: 6px 12px; }
 
 /* ── Cockpit fit, second pass: chart above the fold ──────────────────────── */
 /* Header row 1: five cells — brand · story · tabs · clock · LIVE/SIM switch.
@@ -11699,14 +11761,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   align-items: baseline;
   padding: 5px 8px 4px;
   gap: 1px 6px;
-  font-size: 13px;
+  font-size: var(--t-micro);
 }
 .v2--operations .v2-body--operations .v2-flights__callout-fno { grid-column: 1; grid-row: 1; }
 .v2--operations .v2-body--operations .v2-flights__callout-type { grid-column: 2; grid-row: 1; }
-.v2--operations .v2-body--operations .v2-flights__callout-time-rel { grid-column: 3; grid-row: 1; font-size: 12px; }
-.v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 4; grid-row: 1; white-space: nowrap; font-size: 13px; }
-.v2--operations .v2-body--operations .v2-flights__callout-route { grid-column: 1 / 4; grid-row: 2; font-size: 12px; }
-.v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 4; grid-row: 2; white-space: nowrap; font-size: 13px; }
+.v2--operations .v2-body--operations .v2-flights__callout-time-rel { grid-column: 3; grid-row: 1; font-size: var(--t-micro); }
+.v2--operations .v2-body--operations .v2-flights__callout-pax { grid-column: 4; grid-row: 1; white-space: nowrap; font-size: var(--t-micro); }
+.v2--operations .v2-body--operations .v2-flights__callout-route { grid-column: 1 / 4; grid-row: 2; font-size: var(--t-micro); }
+.v2--operations .v2-body--operations .v2-flights__callout-capture { grid-column: 4; grid-row: 2; white-space: nowrap; font-size: var(--t-micro); }
 .v2--operations .v2-body--operations .v2-flights__callout-time { min-width: 0; padding-right: 8px; }
 .v2--operations .v2-body--operations .v2-flights__hours { height: 108px; }
 .v2--operations .v2-flights__callout-empty { padding: 4px 0; }
@@ -11714,15 +11776,15 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* Decision rail: equation then the balance chart, both visible */
 .v2--operations .v2-decision-rail__head { padding: 10px 18px 8px; }
 .v2--operations .v2-equation__term { padding: 8px 12px 8px 10px; }
-.v2--operations .v2-equation__term strong { font-size: 32px; margin: 1px 0 3px; }
+.v2--operations .v2-equation__term strong { font-size: var(--t-display); margin: 1px 0 3px; }
 .v2--operations .v2-balance { padding: 10px 18px 8px; }
 .v2--operations .v2-balance__head { margin-bottom: 6px; align-items: center; }
 .v2--operations .v2-balance__title { display: none; }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 46px; }
-.v2--operations .v2-balance__axis { font-size: 11px; }
-.v2--operations .v2-balance__foot { margin-top: 6px; padding-top: 6px; font-size: 12px; }
-.v2--operations .v2-balance__legend { font-size: 11px; }
+.v2--operations .v2-balance__axis { font-size: var(--t-micro); }
+.v2--operations .v2-balance__foot { margin-top: 6px; padding-top: 6px; font-size: var(--t-micro); }
+.v2--operations .v2-balance__legend { font-size: var(--t-micro); }
 
 /* Map column: give the geography the larger share (map 3 : fleet 1.6) */
 .v2--operations .v2-fleet { flex: 1.6 1 0; }
@@ -11735,7 +11797,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-flights__head { flex-direction: row; align-items: baseline; justify-content: space-between; flex-wrap: nowrap; gap: 12px; min-width: 0; }
 .v2--operations .v2-flights__title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .v2--operations .v2-flights__legend { flex-shrink: 0; gap: 8px; }
-.v2--operations .v2-flights__legend-item { font-size: 12px; }
+.v2--operations .v2-flights__legend-item { font-size: var(--t-micro); }
 .v2--operations .v2-body--operations .v2-flights__hours { height: 100px; }
 .v2--operations .v2-body--operations .v2-flights__callout-item {
   grid-template-columns: auto auto minmax(0, 1fr);
@@ -11749,10 +11811,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-body--operations .v2-flights__callout-time { justify-content: flex-start; padding-top: 2px; }
 
 .v2--operations .v2-decision-rail__head { padding: 8px 18px 6px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.v2--operations .v2-decision-rail__head h2 { font-size: 16px; margin: 0; }
+.v2--operations .v2-decision-rail__head h2 { font-size: var(--t-lead); margin: 0; }
 .v2--operations .v2-equation__term small { display: none; }
 .v2--operations .v2-equation__term { padding: 7px 12px 7px 10px; }
-.v2--operations .v2-equation__term strong { font-size: 30px; }
+.v2--operations .v2-equation__term strong { font-size: var(--t-hero); }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 42px; }
 .v2--operations .v2-balance__hour { margin-top: 4px; }
@@ -11760,10 +11822,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* Fleet head on two lines, not five */
 .v2--operations .v2-fleet__head { align-items: center; gap: 10px; }
 .v2--operations .v2-fleet__head > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
-.v2--operations .v2-fleet__title { font-size: 18px; }
-.v2--operations .v2-fleet__sub { font-size: 12px; }
+.v2--operations .v2-fleet__title { font-size: var(--t-lead); }
+.v2--operations .v2-fleet__sub { font-size: var(--t-micro); }
 .v2--operations .v2-fleet__problems { gap: 4px; }
-.v2--operations .v2-fleet__problem-pill { font-size: 11px; padding: 2px 7px; }
+.v2--operations .v2-fleet__problem-pill { font-size: var(--t-micro); padding: 2px 7px; }
 .v2--operations .v2-fleet { flex: 2 1 0; min-height: 170px; }
 .v2--operations .v2-map__stage { flex: 2.6 1 0; }
 .v2--operations .v2-map__maritime-banner { max-width: none; width: max-content; }
@@ -11796,7 +11858,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 /* Fleet head: one line; chips never wrap; map : fleet = 2.4 : 2 */
 .v2--operations .v2-fleet__chips { flex-wrap: nowrap; flex-shrink: 0; }
-.v2--operations .v2-fleet__chip { padding: 5px 9px; font-size: 12px; white-space: nowrap; }
+.v2--operations .v2-fleet__chip { padding: 5px 9px; font-size: var(--t-micro); white-space: nowrap; }
 .v2--operations .v2-fleet__head > div { flex-wrap: nowrap; overflow: hidden; }
 .v2--operations .v2-fleet__sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .v2--operations .v2-map__stage { flex: 2.4 1 0; }
@@ -11809,24 +11871,24 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-balance__legend i { width: 10px; height: 10px; }
 .v2--operations .v2-balance__eyebrow { white-space: nowrap; }
 .v2--operations .v2-balance__head { gap: 8px; flex-wrap: nowrap; }
-.v2--operations .v2-balance__hour { font-size: 11px; }
-.v2--operations .v2-balance__verdict { font-size: 12px; letter-spacing: -0.02em; }
+.v2--operations .v2-balance__hour { font-size: var(--t-micro); }
+.v2--operations .v2-balance__verdict { font-size: var(--t-micro); letter-spacing: -0.02em; }
 .v2--operations .v2-balance__foot { white-space: nowrap; gap: 8px; }
 .v2--operations .v2-fleet__eyebrow,
 .v2--operations .v2-fleet__title { white-space: nowrap; flex-shrink: 0; }
 
 /* ── Cockpit fit, sixth pass ─────────────────────────────────────────────── */
-.v2--operations .v2-flights__eyebrow { font-size: 12px; letter-spacing: 0.1em; }
+.v2--operations .v2-flights__eyebrow { font-size: var(--t-micro); letter-spacing: 0.1em; }
 .v2--operations .v2-flights__legend { flex-wrap: nowrap; gap: 8px; white-space: nowrap; }
-.v2--operations .v2-flights__legend-item { font-size: 11px; gap: 3px; }
+.v2--operations .v2-flights__legend-item { font-size: var(--t-micro); gap: 3px; }
 .v2--operations .v2-flights__swatch { width: 9px; height: 9px; }
 .v2--operations .v2-body--operations .v2-flights__hours { height: 88px; }
 .v2--operations .v2-decision-rail__head h2 { display: none; }
 .v2--operations .v2-balance__head { flex-direction: column; align-items: flex-start; gap: 3px; margin-bottom: 5px; }
-.v2--operations .v2-balance__legend { font-size: 11px; gap: 9px; }
+.v2--operations .v2-balance__legend { font-size: var(--t-micro); gap: 9px; }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 36px; }
-.v2--operations .v2-balance__foot { font-size: 11px; }
+.v2--operations .v2-balance__foot { font-size: var(--t-micro); }
 
 /* ── Cockpit fit, seventh pass: legends get their own line ──────────────── */
 .v2--operations .v2-flights__head { grid-template-columns: minmax(0, 1fr); }
@@ -11836,7 +11898,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-balance__legend { flex-wrap: wrap; row-gap: 2px; }
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 40px; }
-.v2--operations .v2-balance__verdict { font-size: 11px; }
+.v2--operations .v2-balance__verdict { font-size: var(--t-micro); }
 
 /* ── LIVE ⇄ SIMULATION ───────────────────────────────────────────────────────
    One switch in the header slot the old telemetry pill held; in LIVE the
@@ -11848,7 +11910,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: inline-flex; align-items: center; gap: 7px;
   background: none; border: 0; border-radius: 0;
   padding: 6px 12px; min-height: 30px;
-  font: 700 12px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
+  font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ax-ink-2); cursor: pointer;
 }
 .v2-source__btn + .v2-source__btn { border-left: 1px solid var(--ax-line-2); }
@@ -11858,7 +11920,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-source__btn--live.is-available .v2-telemetry-dot {
   background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite;
 }
-.v2--operations .v2-source__btn { font-size: 13px; }
+.v2--operations .v2-source__btn { font-size: var(--t-micro); }
 /* Fleet deep link: a clickable ghost in the same group, but uses a hairline
    border so the eye reads "more pages" not "more state". */
 .v2-source__btn--fleet { text-decoration: none; color: var(--ax-ink-2); }
@@ -11876,10 +11938,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-livebar--live .v2-livebar__dot { background: var(--ax-accent); box-shadow: 0 0 6px var(--ax-accent); animation: v2-pulse 2s infinite; }
 .v2-livebar--unconfigured .v2-livebar__dot,
 .v2-livebar--offline .v2-livebar__dot { background: var(--ax-warn); }
-.v2-livebar__headline { font-size: 15px; color: var(--ax-ink); white-space: nowrap; }
-.v2-livebar__meta { font-size: 13px; color: var(--ax-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v2-livebar__headline { font-size: var(--t-body); color: var(--ax-ink); white-space: nowrap; }
+.v2-livebar__meta { font-size: var(--t-micro); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v2-livebar__meta--warn { color: var(--ax-warn); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.v2-livebar__basis { margin-left: auto; font-size: 13px; color: var(--ax-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.v2-livebar__basis { margin-left: auto; font-size: var(--t-micro); color: var(--ax-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
 .v2 .v2-fleet__row--live {
@@ -12142,20 +12204,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__brand { display: flex; flex-direction: column; gap: 8px; }
 .capacity__eyebrow {
-  font: 600 11px/1 var(--font-body); letter-spacing: 0.2em; text-transform: uppercase;
+  font: 600 var(--t-micro)/1 var(--font-body); letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--ax-accent);
 }
 .capacity__brand h1 {
-  font: 400 56px/1.05 var(--font-display); color: var(--ax-ink);
+  font: 400 var(--t-hero)/1.05 var(--font-display); color: var(--ax-ink);
   letter-spacing: -0.035em; margin: 0;
 }
 .capacity__sub {
-  font: 400 16px/1.5 var(--font-body); color: var(--ax-ink-2);
+  font: 400 var(--t-body)/1.5 var(--font-body); color: var(--ax-ink-2);
   letter-spacing: -0.005em; max-width: 720px;
 }
 .capacity__meta {
   display: inline-flex; align-items: center; gap: 16px;
-  font: 500 13px/1 var(--font-body); color: var(--ax-ink-2);
+  font: 500 var(--t-label)/1 var(--font-body); color: var(--ax-ink-2);
   font-variant-numeric: tabular-nums;
 }
 .capacity__pulse {
@@ -12164,13 +12226,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   animation: v2-pulse 2s ease-in-out infinite;
 }
 .capacity__time {
-  font: 500 36px/1 var(--font-display); color: var(--ax-ink); letter-spacing: -0.025em;
+  font: 500 var(--t-figure)/1 var(--font-display); color: var(--ax-ink); letter-spacing: -0.025em;
 }
-.capacity__bkk { color: var(--ax-ink-3); font-weight: 500; font-size: 11px; letter-spacing: 0.12em; }
+.capacity__bkk { color: var(--ax-ink-3); font-weight: 500; font-size: var(--t-micro); letter-spacing: 0.12em; }
 .capacity__source { display: inline-flex; border: 1px solid var(--ax-line-2); }
 .capacity__source-btn {
   background: none; border: 0; border-right: 1px solid var(--ax-line-2);
-  padding: 10px 16px; font: 600 12px/1 var(--font-body); letter-spacing: 0.08em;
+  padding: 10px 16px; font: 600 var(--t-micro)/1 var(--font-body); letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--ax-ink-2); cursor: pointer; text-decoration: none;
   display: inline-block;
 }
@@ -12186,11 +12248,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__story-label {
   display: inline-block; padding: 6px 12px;
-  font: 700 10px/1 var(--font-body); letter-spacing: 0.18em; text-transform: uppercase;
+  font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ax-accent); border: 1px solid var(--ax-accent); margin-bottom: 28px;
 }
 .capacity__story-text {
-  font: 400 36px/1.35 var(--font-display); color: var(--ax-ink);
+  font: 400 var(--t-figure)/1.35 var(--font-display); color: var(--ax-ink);
   letter-spacing: -0.02em; margin: 0;
   max-width: 1100px;
 }
@@ -12209,18 +12271,18 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__hero + .capacity__hero { border-left: 1px solid var(--ax-line); }
 .capacity__hero-label {
-  display: block; font: 600 11px/1 var(--font-body); letter-spacing: 0.18em;
+  display: block; font: 600 var(--t-micro)/1 var(--font-body); letter-spacing: 0.18em;
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 16px;
 }
 .capacity__hero-value {
-  display: block; font: 400 72px/1 var(--font-display); color: var(--ax-ink);
+  display: block; font: 400 var(--t-display)/1 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; letter-spacing: -0.04em; margin-bottom: 14px;
 }
 .capacity__hero--accent .capacity__hero-value { color: var(--ax-accent); }
 .capacity__hero--alert .capacity__hero-value { color: var(--ax-neg); }
 .capacity__hero-thb::before { content: "฿"; margin-right: 4px; opacity: 0.6; }
 .capacity__hero-sub {
-  font: 400 14px/1.5 var(--font-body); color: var(--ax-ink-2);
+  font: 400 var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -12234,29 +12296,29 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__equation-cell + .capacity__equation-cell { border-left: 1px solid var(--ax-line); }
 .capacity__equation-label {
-  display: block; font: 600 11px/1 var(--font-body); letter-spacing: 0.16em;
+  display: block; font: 600 var(--t-micro)/1 var(--font-body); letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 12px;
 }
 .capacity__equation-value {
   display: flex; align-items: baseline; gap: 10px;
-  font: 400 40px/1 var(--font-display); color: var(--ax-ink);
+  font: 400 var(--t-figure)/1 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; letter-spacing: -0.03em; margin-bottom: 8px;
 }
 .capacity__equation-value.is-shortfall { color: var(--ax-neg); }
 .capacity__equation-value.is-ok { color: var(--ax-accent); }
 .capacity__equation-unit {
-  font: 400 16px/1 var(--font-body); color: var(--ax-ink-2); letter-spacing: 0;
+  font: 400 var(--t-body)/1 var(--font-body); color: var(--ax-ink-2); letter-spacing: 0;
 }
 .capacity__equation-tag {
   display: inline-block; padding: 4px 10px;
-  font: 700 10px/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase;
+  font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase;
   border: 1px solid currentColor;
 }
 .capacity__equation-value.is-shortfall .capacity__equation-tag { color: var(--ax-neg); }
 .capacity__equation-value.is-ok .capacity__equation-tag { color: var(--ax-accent); }
-.capacity__equation-detail { font: 13px/1.5 var(--font-body); color: var(--ax-ink-2); }
+.capacity__equation-detail { font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2); }
 .capacity__equation-op {
-  padding: 0 20px; font: 300 32px/1 var(--font-display); color: var(--ax-ink-3);
+  padding: 0 20px; font: 300 var(--t-title)/1 var(--font-display); color: var(--ax-ink-3);
   text-align: center;
 }
 .capacity__equation-ok { color: var(--ax-accent); font-weight: 400; }
@@ -12270,11 +12332,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__section-head h2 {
   /* The shorthand already sets the weight. A trailing `font-weight: 600`
      longhand silently overrode it — 600 at 18px is the blob. */
-  margin: 0; font: 500 18px/1.2 var(--font-display); color: var(--ax-ink);
+  margin: 0; font: 500 var(--t-body)/1.2 var(--font-display); color: var(--ax-ink);
   letter-spacing: -0.02em;
 }
 .capacity__section-meta {
-  font: 500 13px/1 var(--font-body); color: var(--ax-ink-2);
+  font: 500 var(--t-label)/1 var(--font-body); color: var(--ax-ink-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -12282,7 +12344,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__forecast { margin-bottom: 56px; }
 .capacity__forecast-legend {
   display: inline-flex; gap: 14px; align-items: center;
-  font: 500 12px/1 var(--font-body); color: var(--ax-ink-3);
+  font: 500 var(--t-micro)/1 var(--font-body); color: var(--ax-ink-3);
 }
 .capacity__legend-swatch {
   display: inline-block; width: 10px; height: 10px; margin-right: 6px;
@@ -12316,18 +12378,18 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__hour-bar--demand { background: var(--ax-ink); }
 .capacity__hour-bar--supply { background: var(--ax-accent); opacity: 0.55; }
 .capacity__hour-label {
-  font: 600 11px/1 var(--font-body); color: var(--ax-ink-3); padding: 6px 0;
+  font: 600 var(--t-micro)/1 var(--font-body); color: var(--ax-ink-3); padding: 6px 0;
   letter-spacing: 0.02em;
 }
 .capacity__hour.is-now .capacity__hour-label { color: var(--ax-accent); font-weight: 700; }
 .capacity__hour-badge {
   position: absolute; top: 8px; right: 4px;
   background: var(--ax-neg); color: #fff;
-  font: 700 10px/1 var(--font-body);
+  font: 700 var(--t-micro)/1 var(--font-body);
   padding: 3px 5px;
 }
 .capacity__forecast-axis {
-  margin-top: 12px; font: 500 11px/1.4 var(--font-body); color: var(--ax-ink-3);
+  margin-top: 12px; font: 500 var(--t-micro)/1.4 var(--font-body); color: var(--ax-ink-3);
   font-variant-numeric: tabular-nums;
 }
 
@@ -12339,14 +12401,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__live-cell { padding: 20px 24px; }
 .capacity__live-cell + .capacity__live-cell { border-left: 1px solid var(--ax-line); }
 .capacity__live-label {
-  display: block; font: 600 10px/1 var(--font-body); letter-spacing: 0.16em;
+  display: block; font: 600 var(--t-micro)/1 var(--font-body); letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 8px;
 }
 .capacity__live-value {
-  display: block; font: 400 24px/1.1 var(--font-display); color: var(--ax-ink);
+  display: block; font: 400 var(--t-lead)/1.1 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; letter-spacing: -0.02em; margin-bottom: 6px;
 }
-.capacity__live-sub { font: 12px/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.capacity__live-sub { font: var(--t-micro)/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
 /* ── Two-column grid ──────────────────────────────────────────────────── */
 .capacity__grid {
@@ -12365,19 +12427,19 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .capacity__action:last-child { border-bottom: 0; }
 .capacity__action-num {
-  font: 500 32px/1 var(--font-display); color: var(--ax-ink-3);
+  font: 500 var(--t-title)/1 var(--font-display); color: var(--ax-ink-3);
   font-variant-numeric: tabular-nums;
 }
 .capacity__action--shortfall .capacity__action-num { color: var(--ax-neg); }
 .capacity__action--tight .capacity__action-num { color: var(--ax-warn); }
 .capacity__action--surplus .capacity__action-num { color: var(--ax-ink-3); }
 .capacity__action-hour {
-  font: 500 24px/1 var(--font-display); color: var(--ax-ink); font-variant-numeric: tabular-nums;
+  font: 500 var(--t-lead)/1 var(--font-display); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
-.capacity__action-text { font: 14px/1.5 var(--font-body); color: var(--ax-ink-2); }
+.capacity__action-text { font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2); }
 .capacity__action-text strong { color: var(--ax-ink); font-weight: 600; }
 .capacity__action-money {
-  font: 600 16px/1 var(--font-body); color: var(--ax-neg);
+  font: 600 var(--t-body)/1 var(--font-body); color: var(--ax-neg);
   font-variant-numeric: tabular-nums; text-align: right;
 }
 .capacity__action-money.is-light { color: var(--ax-ink-3); }
@@ -12385,10 +12447,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 /* ── Next 6 hours detail table ────────────────────────────────────────── */
 .capacity__hours-table {
   width: 100%; border-collapse: collapse;
-  font: 14px/1.5 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
+  font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
 .capacity__hours-table thead th {
-  text-align: left; padding: 12px 16px; font: 600 11px/1 var(--font-body);
+  text-align: left; padding: 12px 16px; font: 600 var(--t-micro)/1 var(--font-body);
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--ax-ink-3);
   border-bottom: 1px solid var(--ax-line); white-space: nowrap;
 }
@@ -12408,11 +12470,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__now-tag {
   display: inline-block; margin-left: 8px; padding: 3px 8px;
   background: var(--ax-accent); color: var(--ax-panel);
-  font: 700 9px/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase;
+  font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase;
   vertical-align: middle;
 }
 .capacity__verdict {
-  display: inline-block; padding: 3px 10px; font: 700 10px/1.4 var(--font-body);
+  display: inline-block; padding: 3px 10px; font: 700 var(--t-micro)/1.4 var(--font-body);
   letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid;
 }
 .capacity__verdict--shortfall { color: var(--ax-neg); border-color: var(--ax-neg); }
@@ -12421,16 +12483,16 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__verdict--surplus { color: var(--ax-ink-3); border-color: var(--ax-ink-3); }
 .capacity__verdict-add {
   display: inline-block; margin-left: 8px; padding: 3px 8px;
-  background: var(--ax-neg); color: #fff; font: 700 10px/1 var(--font-body);
+  background: var(--ax-neg); color: #fff; font: 700 var(--t-micro)/1 var(--font-body);
 }
 
 /* ── Fleet snapshot ───────────────────────────────────────────────────── */
 .capacity__fleet-table {
   width: 100%; border-collapse: collapse;
-  font: 14px/1.5 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
+  font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
 .capacity__fleet-table thead th {
-  text-align: left; padding: 12px 16px; font: 600 11px/1 var(--font-body);
+  text-align: left; padding: 12px 16px; font: 600 var(--t-micro)/1 var(--font-body);
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--ax-ink-3);
   border-bottom: 1px solid var(--ax-line); white-space: nowrap;
 }
@@ -12442,7 +12504,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__fleet-row--in_transit td { background: rgba(70, 185, 134, 0.04); }
 .capacity__fleet-row--stale td { color: var(--ax-ink-3); }
 .capacity__state {
-  display: inline-block; padding: 3px 10px; font: 700 10px/1.4 var(--font-body);
+  display: inline-block; padding: 3px 10px; font: 700 var(--t-micro)/1.4 var(--font-body);
   letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid;
 }
 .capacity__state--in_transit, .capacity__state--moving {
@@ -12459,34 +12521,34 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .capacity__footer {
   display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: baseline;
   margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--ax-line);
-  font: 13px/1.5 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums;
+  font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums;
 }
 .capacity__footer strong { color: var(--ax-ink); font-weight: 600; }
 .capacity__footer code {
-  font: 12px/1 var(--font-code); color: var(--ax-accent); background: transparent;
+  font: var(--t-micro)/1 var(--font-code); color: var(--ax-accent); background: transparent;
   padding: 0;
 }
 
 /* ── Compact + responsive ─────────────────────────────────────────────── */
-.capacity--compact .capacity__brand h1 { font-size: 40px; }
-.capacity--compact .capacity__story-text { font-size: 26px; }
-.capacity--compact .capacity__hero-value { font-size: 56px; }
-.capacity--compact .capacity__equation-value { font-size: 32px; }
+.capacity--compact .capacity__brand h1 { font-size: var(--t-figure); }
+.capacity--compact .capacity__story-text { font-size: var(--t-title); }
+.capacity--compact .capacity__hero-value { font-size: var(--t-hero); }
+.capacity--compact .capacity__equation-value { font-size: var(--t-title); }
 .capacity--compact .capacity__grid { grid-template-columns: 1fr; }
 .capacity--compact .capacity__heroes { grid-template-columns: repeat(3, 1fr); }
 .capacity--compact .capacity__live-strip { grid-template-columns: repeat(2, 1fr); }
 
 @media (max-width: 1100px) {
   .capacity { padding: 40px 32px 48px; }
-  .capacity__brand h1 { font-size: 36px; }
-  .capacity__story-text { font-size: 22px; }
+  .capacity__brand h1 { font-size: var(--t-figure); }
+  .capacity__story-text { font-size: var(--t-lead); }
   .capacity__heroes { grid-template-columns: 1fr; }
   .capacity__hero + .capacity__hero { border-left: 0; border-top: 1px solid var(--ax-line); }
   .capacity__equation { grid-template-columns: 1fr; }
   .capacity__equation-cell + .capacity__equation-cell { border-left: 0; border-top: 1px solid var(--ax-line); }
-  .capacity__equation-op { padding: 12px 0; font-size: 24px; }
-  .capacity__equation-value { font-size: 28px; }
-  .capacity__hero-value { font-size: 48px; }
+  .capacity__equation-op { padding: 12px 0; font-size: var(--t-lead); }
+  .capacity__equation-value { font-size: var(--t-title); }
+  .capacity__hero-value { font-size: var(--t-hero); }
   .capacity__grid { grid-template-columns: 1fr; gap: 32px; }
   .capacity__live-strip { grid-template-columns: repeat(2, 1fr); }
   .capacity__live-cell + .capacity__live-cell { border-left: 0; border-top: 1px solid var(--ax-line); }
@@ -12499,9 +12561,9 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
      briefing is a reading column, so the facts stack instead. */
   .v2--operations .v2-conditions { grid-template-columns: 1fr; }
   .v2--operations .v2-conditions__item { padding: 12px 16px; }
-  .v2--operations .v2-conditions__label { font-size: 13px; }
-  .v2--operations .v2-conditions__value { font-size: 17px; }
-  .v2--operations .v2-conditions__detail { font-size: 14px; line-height: 1.45; }
+  .v2--operations .v2-conditions__label { font-size: var(--t-micro); }
+  .v2--operations .v2-conditions__value { font-size: var(--t-lead); }
+  .v2--operations .v2-conditions__detail { font-size: var(--t-label); line-height: 1.45; }
 
   /* 44 px minimum touch target. These were 30–36 px: the LIVE/SIMULATION
      switch, the FLEET/STUDY/CAPACITY links, play, DAY·60s, DAY REPORT and
@@ -12604,7 +12666,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0;
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 700;
   color: #e6edf3;
   white-space: nowrap;
@@ -12620,7 +12682,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
    should be the thing you read, not the labels sitting on top of it. */
 .v2-landmark-badge.is-compact {
   padding: 2px 6px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   gap: 4px;
   background: rgba(10, 14, 20, 0.78);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
@@ -12629,13 +12691,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   border-color: rgba(245, 158, 11, 0.7);
   background: rgba(245, 158, 11, 0.14);
   color: #fbbf24;
-  font-size: 12px;
+  font-size: var(--t-micro);
 }
 .v2-landmark-badge--terminus {
   border-color: rgba(22, 184, 176, 0.7);
   background: rgba(22, 184, 176, 0.14);
   color: #2dd4bf;
-  font-size: 11.5px;
+  font-size: var(--t-micro);
 }
 .v2-landmark-badge--town {
   border-color: rgba(147, 197, 253, 0.6);
@@ -12656,7 +12718,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: 0.04em;
 }
 .v2-landmark-sub {
-  font-size: 9.5px;
+  font-size: var(--t-micro);
   font-weight: 500;
   opacity: 0.75;
 }
@@ -12744,14 +12806,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: var(--ax-panel);
   border-bottom: 1px solid var(--ax-line-2);
 }
-.v2-headline__label { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-ink-2); }
-.v2-headline__value { font-family: var(--font-display); font-weight: 500;  font-size: 52px; line-height: 1; letter-spacing: -0.02em; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
-.v2-headline__why { font-size: 14px; color: var(--ax-ink-2); }
-.v2-headline__sum { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 15px; color: var(--ax-ink-2); }
+.v2-headline__label { font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-ink-2); }
+.v2-headline__value { font-family: var(--font-display); font-weight: 500;  font-size: var(--t-display); line-height: 1; letter-spacing: -0.02em; color: var(--ax-warn); font-variant-numeric: tabular-nums; }
+.v2-headline__why { font-size: var(--t-label); color: var(--ax-ink-2); }
+.v2-headline__sum { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: var(--t-body); color: var(--ax-ink-2); }
 .v2-headline__sum b {  font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
 
 /* Supporting cast: conditions step back. */
-.v2--operations .v2-conditions__value { font-size: 15px; }
+.v2--operations .v2-conditions__value { font-size: var(--t-body); }
 
 /* Footer: one slim row of supporting figures. Measured at 69 px; the
    map-first rule caps a bottom bar at 56 px. The extra height came from the
@@ -12759,5 +12821,5 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
    from anything anyone decided. */
 .v2--operations .v2-accum { padding: 0; }
 .v2--operations .v2-accum__item { padding: 5px 16px; gap: 1px; }
-.v2--operations .v2-accum__val { font-size: 19px; line-height: 1.15; }
-.v2--operations .v2-accum__label { font-size: 12px; line-height: 1.3; letter-spacing: 0; text-transform: none; font-weight: 600; white-space: nowrap; }
+.v2--operations .v2-accum__val { font-size: var(--t-title); line-height: 1.15; }
+.v2--operations .v2-accum__label { font-size: var(--t-micro); line-height: 1.3; letter-spacing: 0; text-transform: none; font-weight: 600; white-space: nowrap; }

@@ -28,6 +28,31 @@ Evidence: the type ramp that produced this rule is rendered by `scripts/design/t
 
 **The invariant, for anyone adding a heading:** the base heading weight in the toolkit is 500, and a rule that overrides a heading's `font-size` downward **must declare its own `font-weight`**. It will not inherit the right one.
 
+### The type scale — eight names, one per surface
+
+The law is **≤8 distinct rendered font sizes on a page**. It was open, and the measured state was bad: the toolkit's `build` tab rendered 36 sizes on its own, the fleet detail 15, the capacity screen 14, and `/ops` ten — several of them 9–11px microcopy, below the floor the ops wall claims for itself.
+
+Eight names, shared by every surface. **The names are the vocabulary; the values are per surface**, because an operations board at 50 inches and an editorial publication are not the same object and should not pretend to be:
+
+| Token | What it is |
+|---|---|
+| `--t-display` | the biggest thing on the surface — the hero figure, the display title |
+| `--t-hero` | the second display level, below `--t-display` |
+| `--t-figure` | a large data number |
+| `--t-title` | a heading |
+| `--t-lead` | a standfirst or lead-in |
+| `--t-body` | body copy |
+| `--t-label` | a label or caption |
+| `--t-micro` | the smallest text |
+
+A surface declares its own **values** for these names in one block, and every `font-size` in that surface's CSS uses one of them. A surface that uses six of the eight has six sizes; the rule is satisfied by construction, not by vigilance.
+
+**Why tokens and not fewer literals.** A literal `font-size` is a size nobody can reason about: the ramp was 37 distinct values in `src/styles.css` alone, and no two of them were the same *role*. A token carries the role with it, so the next person to add a number adds it to the scale or does not add it. `:root` already carried `--t-display`, `--t-body` and `--t-micro`; 115 declarations used them and 676 did not. That is the whole defect in one sentence.
+
+**The mapping is monotonic.** A bigger size never maps to a smaller step than a smaller size does. Collapsing a ramp by taking "the nearest value" inverts hierarchy — a 72px hero and a 56px heading both become "the display step" and the page loses the thing it was trying to say. Merge downwards: the band keeps the top of the band.
+
+**Instruments.** `scripts/design/typemap.mjs` maps every `font-size` declaration in a stylesheet to the size it *renders* at (px and rem directly, `clamp()` evaluated at the viewport, `em` reported as parent-relative because a parent's size change moves the child). `scripts/design/scalemap.mjs` measures the rendered result per route and names the elements at each size. Run both against the **deployed** build. A `clamp()` is one size at any width, so a fluid step does not break the count — but it must land on a value that is not one of the fixed steps, or two steps collide and the count drops (which is fine) rather than gaining a ninth (which is not).
+
 ## Colour
 
 - Ground `#fafaf7` (warm paper, not flat `#fff`), ink `#131312` (near-black with a blue undertone).
