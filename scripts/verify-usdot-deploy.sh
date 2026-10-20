@@ -111,3 +111,16 @@ fi
 
 echo
 echo "✓ toolkit deploy verified"
+
+# ── the design gate ────────────────────────────────────────────────────────
+# The bytes can be perfect and the page can still be wrong: a type token
+# that no scope defines, a band that starts on a different line, a size
+# that no token names. The branch carries its own copy of the toolkit, so
+# it needs the gate too.
+if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
+  if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
+    bash scripts/design/verify-design.sh "$CUSTOM"
+  else
+    echo "warn: playwright is not installed — the design gate did not run"
+  fi
+fi
