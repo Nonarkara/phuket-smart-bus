@@ -35,6 +35,13 @@ jobs:
         run: npm test
 
       - run: npm run build:client
+        env:
+          # The GISTDA tile key is a BUILD input (a public tile key, visible in
+          # every tile URL). This workflow is a THIRD build of the same commit,
+          # and without the key it compiles the incident layer out — a
+          # different product from the same source. It must be the same string
+          # the local build and the Pages build use.
+          VITE_GISTDA_API_KEY: ${{ secrets.VITE_GISTDA_API_KEY }}
       - name: Copy 404.html for SPA routing
         run: cp dist/client/index.html dist/client/404.html
       - uses: actions/upload-pages-artifact@v3
