@@ -104,6 +104,15 @@ export function RoiCalculator() {
   const latestRealDay = realDays.length > 0 ? realDays[realDays.length - 1] : null;
   const yesterdayRealDay = realDays.length > 1 ? realDays[realDays.length - 2] : latestRealDay;
 
+  // The diesel card shows litres AND the money those litres cost. They are
+  // computed once, here, from the same rounded litre figure — otherwise the
+  // card prints "1,346 Liters" beside a spend that was multiplied by 1,346.37,
+  // and a reader who does 1,346 × ฿33 gets a different number from the one
+  // on the screen. One number, one arithmetic, one truth.
+  const trackedKm = yesterdayRealDay?.totalKmTracked ?? 1464;
+  const litresUsed = Math.round(trackedKm / fuelInputs.fuelEfficiencyKmPerLiter);
+  const fuelSpendTHB = litresUsed * fuelInputs.fuelPricePerLiterTHB;
+
   return (
     <div className="roi-page">
       {/* Header */}
@@ -594,7 +603,7 @@ export function RoiCalculator() {
                 <div className="roi-real-card">
                   <span className="roi-real-card__label">YESTERDAY'S TOTAL DISTANCE</span>
                   <strong className="roi-real-card__value">
-                    {(yesterdayRealDay?.totalKmTracked ?? 1464).toLocaleString()} km
+                    {trackedKm.toLocaleString()} km
                   </strong>
                   <small>Odometer verified · {(yesterdayRealDay?.totalHoursMoving ?? 42).toFixed(1)} operating hours</small>
                 </div>
@@ -602,15 +611,11 @@ export function RoiCalculator() {
                 <div className="roi-real-card">
                   <span className="roi-real-card__label">MODELLED DIESEL BURN</span>
                   <strong className="roi-real-card__value text-warn">
-                    {(((yesterdayRealDay?.totalKmTracked ?? 1464)) / fuelInputs.fuelEfficiencyKmPerLiter).toFixed(0)} Liters
+                    {litresUsed.toLocaleString()} Liters
                   </strong>
                   <small>
                     Tracked km ÷ your {fuelInputs.fuelEfficiencyKmPerLiter} km/L · ฿
-                    {(
-                      (((yesterdayRealDay?.totalKmTracked ?? 1464)) / fuelInputs.fuelEfficiencyKmPerLiter) *
-                      fuelInputs.fuelPricePerLiterTHB
-                    ).toLocaleString()}{" "}
-                    fuel spend @ ฿{fuelInputs.fuelPricePerLiterTHB}/L
+                    {fuelSpendTHB.toLocaleString()} fuel spend @ ฿{fuelInputs.fuelPricePerLiterTHB}/L
                   </small>
                 </div>
 

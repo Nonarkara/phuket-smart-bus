@@ -27,6 +27,16 @@
 #
 #   Probe keys are disposable so a stale response cannot poison a
 #   user-facing URL.
+#
+# WHY IT ALSO COMPARES EVERY DEPLOYMENT OF THE COMMIT
+#   One commit is deployed twice — locally by scripts/deploy.sh and in CI by
+#   cloudflare-pages.yml — and whichever finishes last owns the production
+#   alias. If the LOCAL deployment owns the alias, then comparing the alias
+#   against the local build is comparing the deployment to itself, and the
+#   check passes no matter what CI built. The comparison that has teeth is
+#   against EVERY deployment of this commit, each by its own URL: the CI
+#   deployment's bytes are compared to the local build's bytes, so a build
+#   input that differs between the two is a failure, not a coincidence.
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -67,5 +77,55 @@ else
   echo "warn: could not read the production deployment commit; byte check only"
 fi
 
+# ── every deployment of THIS commit must serve the same bytes ───────────────
+# The CI deployment and the local deployment are two builds of one commit.
+# The alias may be owned by either, so the alias check above can degenerate
+# into a self-comparison. Each deployment of the commit is therefore checked
+# by its own deployment URL.
+DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" '
+  {
+    src = $5; url = $6;
+    gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
+    if (src != "" && url != "" && index(src, sha) == 1) print url
+  }' | sort -u)"
+
+CHECKED=0
+while IFS= read -r url; do
+  [ -n "$url" ] || continue
+  case "$url" in
+    "$CANONICAL" | "$CUSTOM") continue ;; # already compared above
+  esac
+  echo "→ comparing deployment $url"
+  BASE_URL="$url" node scripts/verify-assets.mjs
+  CHECKED=$((CHECKED + 1))
+done <<< "$DEPLOY_URLS"
+
+if [ "$CHECKED" -gt 0 ]; then
+  echo "ok: $CHECKED further deployment(s) of ${HEAD_SHORT} serve identical bytes"
+else
+  echo "warn: no further deployment of ${HEAD_SHORT} was found to compare"
+fi
+
 curl -fsS --max-time 20 "$CUSTOM/api/live-buses?probe=$(date +%s)" | grep -q '"status":"live"'
 echo "ok: live-bus edge function returned live JSON"
+
+# ── the two hosts must answer an unknown path the same way ────────────────
+# MEASURED 2026-10-20: an unknown path answers with the app shell. The
+# STATUS depends on whether the build carried the 404.html copy — 200 with
+# it, 404 without — and only the local build used to make the copy, so the
+# same commit could answer differently depending on which build owned the
+# alias. The two hosts must not disagree, and the answer must be the shell
+# (text/html), never a real asset.
+INV="assets/INVENTED-NAME-$$.js"
+canon_status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$CANONICAL/$INV")"
+custom_status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$CUSTOM/$INV")"
+custom_type="$(curl -s -o /dev/null -w '%{content_type}' --max-time 20 "$CUSTOM/$INV")"
+if [ "$canon_status" != "$custom_status" ]; then
+  echo "error: an unknown path answers ${canon_status} on the alias and ${custom_status} on the host — the two builds of this commit disagree" >&2
+  exit 1
+fi
+if [ "${custom_type%%;*}" != "text/html" ]; then
+  echo "error: an unknown path answers ${custom_type}, not the app shell" >&2
+  exit 1
+fi
+echo "ok: an unknown path answers ${custom_status} with the app shell on both hosts"

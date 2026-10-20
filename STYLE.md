@@ -28,6 +28,31 @@ Evidence: the type ramp that produced this rule is rendered by `scripts/design/t
 
 **The invariant, for anyone adding a heading:** the base heading weight in the toolkit is 500, and a rule that overrides a heading's `font-size` downward **must declare its own `font-weight`**. It will not inherit the right one.
 
+### The type scale — eight names, one per surface
+
+The law is **≤8 distinct rendered font sizes on a page**. It was open, and the measured state was bad: the toolkit's `build` tab rendered 36 sizes on its own, the fleet detail 15, the capacity screen 14, and `/ops` ten — several of them 9–11px microcopy, below the floor the ops wall claims for itself.
+
+Eight names, shared by every surface. **The names are the vocabulary; the values are per surface**, because an operations board at 50 inches and an editorial publication are not the same object and should not pretend to be:
+
+| Token | What it is |
+|---|---|
+| `--t-display` | the biggest thing on the surface — the hero figure, the display title |
+| `--t-hero` | the second display level, below `--t-display` |
+| `--t-figure` | a large data number |
+| `--t-title` | a heading |
+| `--t-lead` | a standfirst or lead-in |
+| `--t-body` | body copy |
+| `--t-label` | a label or caption |
+| `--t-micro` | the smallest text |
+
+A surface declares its own **values** for these names in one block, and every `font-size` in that surface's CSS uses one of them. A surface that uses six of the eight has six sizes; the rule is satisfied by construction, not by vigilance.
+
+**Why tokens and not fewer literals.** A literal `font-size` is a size nobody can reason about: the ramp was 37 distinct values in `src/styles.css` alone, and no two of them were the same *role*. A token carries the role with it, so the next person to add a number adds it to the scale or does not add it. `:root` already carried `--t-display`, `--t-body` and `--t-micro`; 115 declarations used them and 676 did not. That is the whole defect in one sentence.
+
+**The mapping is monotonic.** A bigger size never maps to a smaller step than a smaller size does. Collapsing a ramp by taking "the nearest value" inverts hierarchy — a 72px hero and a 56px heading both become "the display step" and the page loses the thing it was trying to say. Merge downwards: the band keeps the top of the band.
+
+**Instruments.** `scripts/design/typemap.mjs` maps every `font-size` declaration in a stylesheet to the size it *renders* at (px and rem directly, `clamp()` evaluated at the viewport, `em` reported as parent-relative because a parent's size change moves the child). `scripts/design/scalemap.mjs` measures the rendered result per route and names the elements at each size. Run both against the **deployed** build. A `clamp()` is one size at any width, so a fluid step does not break the count — but it must land on a value that is not one of the fixed steps, or two steps collide and the count drops (which is fine) rather than gaining a ninth (which is not).
+
 ## Colour
 
 - Ground `#fafaf7` (warm paper, not flat `#fff`), ink `#131312` (near-black with a blue undertone).
@@ -117,7 +142,7 @@ These read as hits but are not. Each is recorded so a reviewer can test the reas
 
 - rule shadow-everything in src/styles.css: the scanner counts `box-shadow` declarations in source; most resolve through `--shadow-*` vars set to `none` in `:root`. The rendered page is the check, and `/ops` renders **9 shadow-bearing elements in LIVE from 7 rules** — the telemetry dot, the livebar dot, the flights cursor, the maritime banner, the landmark badge, the balance "now" marker and the marine flag dot; the landmark badge is three elements on one rule, which is why the element count and the rule count differ — and **8 elements from 6 rules in SIMULATION**, where the live bar does not exist and the rule it carries is not applied. All functional, none of them fake depth. Earlier versions of this line claimed 11, then 4, then "7 shadows" — the last of which was a rule count read as an element count. Both numbers are now measured (`scripts/design/shadowcount.mjs`).
 - rule shadow-everything in src/components/toolkit/toolkit-showcase.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and the toolkit renders **2 elements from 2 rules** — the ticker's pill and its pulse dot. Declared is not applied.
-- rule shadow-everything in src/components/v2/fleetDetail.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and `/fleet/raw` renders **5 rules** — the map bus dot, the legend and its dot, and two controls — on **37 to 44 elements**, because one shadowed span is drawn per Leaflet marker on the map and the marker count moves with the number of buses reporting. The rule count is the fixed one; the element count is a reading of the moment, not a property of the page. Declared is not applied.
+- rule shadow-everything in src/components/v2/fleetDetail.css: the scanner counts `box-shadow` declarations in source; these resolve through `--shadow-*` vars set to `none` in `:root`, and `/fleet/raw` renders **5 rules** — the map bus dot, the legend and its dot, and two controls — on **an element count that moves with the buses on the map**, because one shadowed span is drawn per Leaflet marker: 33 elements with a handful reporting at 06:20, 44 at the busiest. The rule count is the fixed one; the element count is a reading of the moment, not a property of the page. Declared is not applied.
 - rule hype-copy in src/engine/*.test.ts: "seamless playback" is a Vitest `describe()` string. No user ever sees it.
 - rule lang-th in src/App.tsx: the Thai here is a URL path, a search alias, a plate regex or a lookup table — data, not rendered prose. Every Thai string that reaches the screen now carries `lang`. It is a URL path segment, `/driver/กข 1001 ภูเก็ต`.
 - rule lang-th in src/components/WelcomeSheet.tsx: the Thai here is a URL path, a search alias, a plate regex or a lookup table — data, not rendered prose. Every Thai string that reaches the screen now carries `lang`. It is a search alias for stop-name matching.

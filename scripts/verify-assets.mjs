@@ -170,11 +170,13 @@ const localByLogical = byLogical(localAssets);
 const liveByLogical = byLogical(liveAssets);
 
 const problems = [];
+const differing = new Set();
 for (const [logical, live] of liveByLogical) {
   const local = localByLogical.get(logical);
   if (!local) {
     problems.push(`live serves "${logical}" (${live.file}) but the local build has no such asset`);
   } else if (local.digest !== live.digest) {
+    differing.add(logical);
     problems.push(
       `"${logical}" differs: local ${local.file} ${local.digest.slice(0, 12)} vs live ${live.file} ${live.digest.slice(0, 12)}`
     );
@@ -189,13 +191,26 @@ for (const [logical, local] of localByLogical) {
 if (problems.length) {
   console.error(`error: the deployed asset graph does not match the local build (${problems.length} problem(s)):`);
   for (const p of problems) console.error(`  - ${p}`);
-  console.error(
-    "\nhint: a build-time variable is the usual cause when the difference is one chunk.\n" +
-      "      VITE_GISTDA_API_KEY must carry the SAME value in .env and in the\n" +
-      "      repository secret, or the GISTDA incident layer is compiled out of\n" +
-      "      one of the two builds and the two builds of one commit are two\n" +
-      "      different products."
-  );
+  // The hint names the cause that is most often right, and only for the chunk
+  // that carries the build input. Printing it for every single-chunk
+  // difference taught the reader to ignore it: an ordinary route edit also
+  // differs in exactly one chunk, and the GISTDA advice there was noise.
+  if (differing.has("V2LiveMap")) {
+    console.error(
+      "\nhint: V2LiveMap is the chunk the build-time variable reaches, so a build\n" +
+        "      input is the likely cause. VITE_GISTDA_API_KEY must carry the SAME\n" +
+        "      value in .env and in the repository secret, or the GISTDA incident\n" +
+        "      layer is compiled out of one of the two builds and the two builds\n" +
+        "      of one commit are two different products."
+    );
+  } else {
+    console.error(
+      "\nhint: a chunk that differs but is not V2LiveMap is almost always a source\n" +
+        "      change that was not deployed, or a deployment that is older than the\n" +
+        "      working tree. Rebuild and deploy, then check the deployment list for\n" +
+        "      a deployment carrying the commit you are shipping."
+    );
+  }
   process.exit(1);
 }
 

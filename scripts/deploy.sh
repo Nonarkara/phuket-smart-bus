@@ -12,8 +12,14 @@
 # otherwise the static bundle ships alone and every /api/* route 404s.
 #
 # SPA routes (/ops, /fleet, …) are explicit public/_redirects → / 200 rules.
-# dist/client/404.html (a copy of index.html) catches everything else with
-# status 404 — keep it, or Pages' SPA mode serves HTML 200 for /assets/nope.js.
+# dist/client/404.html (a copy of index.html) is what the rest of the paths
+# get. MEASURED 2026-10-20, not assumed: with the copy present, an unknown
+# path answers with the app shell and status 200; without it, Pages' SPA
+# fallback answers with the same shell and status 404. The copy is kept so
+# the local build and the CI build of one commit behave identically — they
+# used to differ, because only the local build made the copy, and one commit
+# shipped two different products. The status of an unknown URL is a detail;
+# the two builds agreeing is not.
 #
 # Usage:
 #   scripts/deploy.sh                  # auto commit-message from git log
