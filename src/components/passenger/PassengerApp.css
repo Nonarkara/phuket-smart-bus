@@ -844,6 +844,13 @@ body.passenger-site-mode #root {
     width: 100%;
   }
 
+  /* On desktop portal, the full-height interactive map stage is already
+     active on the right. Hiding the duplicate 58svh map inside the 440px
+     sidebar eliminates spatial hallucination and prevents unnecessary scrolling. */
+  .pa-portal-layout .pa-app-column .pa-map {
+    display: none;
+  }
+
   /* Right: Live Interactive Transit Stage */
   .pa-stage {
     flex: 1;
