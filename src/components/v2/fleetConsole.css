@@ -156,7 +156,7 @@
 
 /* all buses */
 .fc-all { margin-top: 1.5em; border: 1px solid var(--ax-line); background: var(--ax-panel); }
-.fc-all summary { min-height: 2.75em; display: flex; align-items: center; padding: 0 1em; cursor: pointer; font-weight: 700; color: var(--ax-ink); }
+.fc-all summary { min-height: 2.75em; display: flex; align-items: center; padding: 0 1em; cursor: pointer; font-weight: 700; color: var(--ax-ink); font-size: var(--t-body); }
 .fc-all table { width: 100%; border-collapse: collapse; font-size: var(--t-label); }
 .fc-all th { text-align: left; padding: 0.6em 1em; color: var(--ax-ink-3); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--ax-line-2); }
 .fc-all td { padding: 0.5em 1em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }

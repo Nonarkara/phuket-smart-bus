@@ -198,6 +198,11 @@ export function ToolkitPanel({
   const [activeCausalId, setActiveCausalId] = useState<(typeof CAUSAL_STORIES)[number]["id"]>("wait");
   const activeStory = CAUSAL_STORIES.find((s) => s.id === activeCausalId) ?? CAUSAL_STORIES[0];
 
+  // The eight mode lenses are an INDEX you click, not eight cards you read.
+  const [activeLens, setActiveLens] = useState<string>(TENETS[0].l);
+  const activeLensData = TENETS.find((t) => t.l === activeLens) ?? TENETS[0];
+  const activeLensCat = activeLensData.cat;
+
   const accountedFor = boarded + waiting + walkedAway;
 
   return (
@@ -208,13 +213,13 @@ export function ToolkitPanel({
           <div className="tk-subnav__inner">
             <span className="tk-subnav__brand">USASCP Toolkit Briefing</span>
             <div className="tk-subnav__links">
-              <a href="#tk-hero">01 Overview</a>
-              <a href="#tk-lenses">02 The 8 Lenses</a>
-              <a href="#tk-personas">03 Personas</a>
-              <a href="#tk-causation">04 Causation</a>
-              <a href="#tk-recs">05 Recommendations</a>
-              <a href="#tk-ledger">06 Traceability</a>
-              <a href="#tk-partners">07 Partners</a>
+              <a className="tk-subnav__link" href="#tk-hero">01 Overview</a>
+              <a className="tk-subnav__link" href="#tk-lenses">02 The 8 Lenses</a>
+              <a className="tk-subnav__link" href="#tk-personas">03 Personas</a>
+              <a className="tk-subnav__link" href="#tk-causation">04 Causation</a>
+              <a className="tk-subnav__link" href="#tk-recs">05 Recommendations</a>
+              <a className="tk-subnav__link" href="#tk-ledger">06 Traceability</a>
+              <a className="tk-subnav__link" href="#tk-partners">07 Partners</a>
             </div>
           </div>
         </nav>
@@ -295,22 +300,41 @@ export function ToolkitPanel({
             </p>
           </div>
 
-          <div className="tk-lenses-grid">
+          <div className="tk-lens-index" role="tablist" aria-label="The eight mode lenses">
             {TENETS.map((t) => (
-              <article key={t.l} className={`tk-lens-card tk-lens-card--${t.cat}`}>
-                <div className="tk-lens-card__top">
-                  <span className="tk-lens-card__letter">{t.l}</span>
-                  <div className="tk-lens-card__title-wrap">
-                    <strong className="tk-lens-card__title">{t.k}</strong>
-                    <span className="tk-lens-card__category">{t.cat === "fund" ? "Service Fundamental" : "Value Extension"}</span>
-                  </div>
-                </div>
-                <p className="tk-lens-card__question">"{t.q}"</p>
-                <div className="tk-lens-card__fact">
-                  <span>Takeaway:</span> {t.d}
-                </div>
-              </article>
+              <button
+                key={t.l}
+                type="button"
+                role="tab"
+                id={`tk-lens-tab-${t.l}`}
+                aria-selected={activeLens === t.l}
+                aria-controls="tk-lens-panel"
+                className={`tk-lens-tab tk-lens-tab--${t.cat}${activeLens === t.l ? " is-active" : ""}`}
+                onClick={() => setActiveLens(t.l)}
+              >
+                <span className="tk-lens-tab__letter">{t.l}</span>
+                <span className="tk-lens-tab__name">{t.k}</span>
+              </button>
             ))}
+          </div>
+
+          <div
+            className="tk-lens-panel"
+            id="tk-lens-panel"
+            role="tabpanel"
+            aria-labelledby={`tk-lens-tab-${activeLens}`}
+            tabIndex={0}
+          >
+            <div>
+              <span className={`tk-lens-panel__category${activeLensCat === "ext" ? " tk-lens-panel__category--ext" : ""}`}>
+                {activeLensCat === "fund" ? "Service Fundamental" : "Value Extension"}
+              </span>
+              <p className="tk-lens-panel__question">{activeLensData.q}</p>
+            </div>
+            <div className="tk-lens-panel__fact">
+              <span className="tk-lens-panel__fact-label">Takeaway</span>
+              <p>{activeLensData.d}</p>
+            </div>
           </div>
 
           {/* City Comparison Table */}

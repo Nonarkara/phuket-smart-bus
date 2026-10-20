@@ -28,6 +28,8 @@ Evidence: the type ramp that produced this rule is rendered by `scripts/design/t
 
 **The invariant, for anyone adding a heading:** the base heading weight in the toolkit is 500, and a rule that overrides a heading's `font-size` downward **must declare its own `font-weight`**. It will not inherit the right one.
 
+**The editorial surfaces set their headings in the DISPLAY face, at 400–500.** The hero and the chapter titles of the toolkit and the insights bridge are Josefin Sans; the body copy is Source Sans 3. A heavy grotesque is not a substitute for the geometric: the toolkit's hero once read "We Did the Research. Then We Made It Move." in the body face at weight 800 — that is the "fat ugly front" this whole section was written about, and it was invisible for as long as the rule that should have set the display face was a dead declaration. Weight 600 and above in the display face is legal only at 40px and up, and even there the brand voice is thin: 400–500, drawn on, not a poster.
+
 ### The type scale — eight names, one per surface
 
 The law is **≤8 distinct rendered font sizes on a page**. It was open, and the measured state was bad: the toolkit's `build` tab rendered 36 sizes on its own, the fleet detail 15, the capacity screen 14, and `/ops` ten — several of them 9–11px microcopy, below the floor the ops wall claims for itself.
@@ -53,6 +55,17 @@ A surface declares its own **values** for these names in one block, and every `f
 
 **Instruments.** `scripts/design/typemap.mjs` maps every `font-size` declaration in a stylesheet to the size it *renders* at (px and rem directly, `clamp()` evaluated at the viewport, `em` reported as parent-relative because a parent's size change moves the child). `scripts/design/scalemap.mjs` measures the rendered result per route and names the elements at each size. Run both against the **deployed** build. A `clamp()` is one size at any width, so a fluid step does not break the count — but it must land on a value that is not one of the fixed steps, or two steps collide and the count drops (which is fine) rather than gaining a ninth (which is not).
 
+**A rule that names a token its scope does not define is a DEAD RULE, and it fails silently.** This is the failure the whole scale was built to prevent, and it shipped: the toolkit view's scope defined three of the eight names, so sixteen declarations — `var(--t-hero)`, `var(--t-label)`, `var(--t-title)`, `var(--t-figure)`, `var(--t-lead)` — were **invalid at computed-value time**. The property inherited instead. The page rendered every text element at 13, 15 or 28px, the hierarchy it had been designed with never appeared, and **nothing failed**: a `var()` with no value is not an error, it is a declaration that quietly does nothing. The hero was set in the body face at weight 800 — the "fat ugly front" — because the rule that would have set the display face was the dead one.
+
+Two rules follow, and they are not optional:
+
+- **Every surface that renders type declares all eight names.** A surface may use six of them; it may not leave one undefined and reference it. A scale block that is missing a name is a trap, not a shortcut.
+- **A token is a promise about a scope.** `--t-hero` means the same size everywhere it is defined, but it only means anything at all where it is defined. The scope is part of the token.
+
+`scripts/design/tokenscope.mjs` is the check: for every rule that names a token, the token must actually **resolve** on an element the rule matches. It found 17 dead declarations on the build that had the bug, and is clean on the build that does not. It has a static pass too (every `--t-*` name referenced must be defined somewhere), which is the part that runs in the pre-commit hook.
+
+`scripts/design/offscale.mjs` is the other half: every size a page **renders** must be a size the scale **names**. It resolves tokens by *usage* — the sizes that token-ruled elements actually render at — so a fluid step is measured at the size it renders rather than at the floor of its `clamp()`. The first version of this probe parsed the token declarations instead, and cried wolf on the toolkit's 108px hero; an instrument that cries wolf is as useless as one that cannot fail.
+
 ## Colour
 
 - Ground `#fafaf7` (warm paper, not flat `#fff`), ink `#131312` (near-black with a blue undertone).
@@ -71,6 +84,7 @@ A surface declares its own **values** for these names in one block, and every `f
 - **A colour is a colour whether CSS or SVG painted it.** The first sweep had no `stroke`/`fill` handling at all, so the four marine ferry routes on the toolkit's system map were invisible to it. The sweep now reads SVG paint, and reports **one global count** of distinct blues with the routes each appears on — a per-route sum cannot answer "how many blues are left", which is the only question this record asks.
 - The toolkit is a separate published surface with its own editorial palette: paper `#f5f5f2`, ink `#111820`, red `#ef442f`, navy `#12304b`, yellow `#f2cc3d`. Its status chips use green (measured), navy (computed), amber (a milestone) and red (needs a decision), each also a word.
 - The fleet console declares its own law: **one accent** (`--ax-accent`). Its speed ramp runs neutral → `--ax-warn` → the accent at 55% → the accent full, so the four speed bands stay distinct without inventing a hue.
+- **The editorial console's palette is four hues with one job each.** The console (`.v2`) carries a warm paper ground and four hues, and each hue means exactly one thing: **green `#0f7a47` is what was earned** — boarded, saved, live, the action button; **blue `#1d5fa8` is the navigational layer** — links, the current chapter, the second structural hue, and the reason the page is not ninety per cent green; **amber `#b8720c` asks for attention**; **red `#b4341f` is money that leaked**. Structure is ink and hairlines, never colour. A colour that means nothing is decoration, and the toolkit region used to carry a dozen hard-coded greens and ambers that meant nothing in particular — they are now tokens. The dark operations wall and the dark sub-nav have their own four, because a green that reads as "earned" on paper disappears on charcoal.
 
 ## Devices
 
@@ -82,6 +96,8 @@ A surface declares its own **values** for these names in one block, and every `f
 - The map is the operating table. It takes the largest share of the first screen and nothing covers it on load. Everything else is an instrument docked at its edge, sized to its content.
 - **Empty space is a decision**, never a filler. If a block could be removed without losing meaning, it is removed.
 - No box, border, shadow, radius, pill or badge unless it groups things that belong together or it encodes a state.
+- **One page, one left edge.** A page made of stacked bands — a header, a source switcher, a sub-nav, a body — puts every band's **content** on the same line. The bands themselves may be full-bleed; their content may not. This shipped broken: the toolkit's header sat at 24px, its body at 104px, and the top of the page looked like it had been built by a different team than the page under it. The console now has ONE column (`--v2-column`, `--v2-gutter`) and every band reads it; the dark operations wall is a different object and sets `--v2-column: 100%`, so one rule serves both views and they cannot drift apart. `scripts/design/guttercheck.mjs` measures the bands' content edges and fails when they disagree — it reported 80px of disagreement on the build that had the bug, and passes on the build that does not.
+- **A box that holds one sentence is a box drawn to fill a gap.** Eight bordered cards, each carrying a short quote, is a yellow pages, not a system. An index you can click and one panel that answers is half the boxes and a page you can use. The same rule kills the dead space under short cards: a grid that stretches every cell to the tallest one is padding the short ones with emptiness.
 - The intent is three sizes on a page: display, body, micro. It is not yet true. **Measured 2026-10-20 on the DEPLOYED site at 1440** — distinct rendered font sizes per route: `/research` 3 · `/info` `/more` `/stops` `/ride` `/compare` 5 · `/` 7 · `/driver` 7 · `/pass` 8 · `/fleet` 9 · `/study` 9 · `/ops` 10 · `/v2` 10 · `/roi` 11 · `/governor` 11 · `/capacity` 14 · `/fleet/raw` 15 · `/toolkit` 27. **Method, so the number can be reproduced and compared:** only elements that own a non-whitespace text node count, because an element that merely contains text inherits its parent's size and would double-count one physical size; sizes are compared at 0.5px. **Measure it on the deployed site, not on a local preview** — a preview has no backend, renders fewer elements and reports fewer sizes, which is exactly what the first version of this line did. A live page can also render one more size than the number above when the feed returns a state that draws an extra element, so `/fleet` reads 9 or 10. And the 390 pass is not optional: four toolkit headings were legal at 1440 and blobs at 390. The rule is ≤8. Treat a fourth size on a page as a decision to justify, and shrink the ramp before adding to it. This line records the intent and the measured state; the gap between them is the type-scale scanner hit, and it is not closed.
 - **One radius for the product.** The house radius is 0 (`--radius-sm/-md/-lg/-pill` are all 0). Full round is reserved for true circles and pills (`50%`, `999px`). One shape keeps a corner radius of its own: `20px 20px 0 0`, a photo with two rounded top corners. Nothing else gets a radius.
 
@@ -104,6 +120,7 @@ A surface declares its own **values** for these names in one block, and every `f
      Rule ids: `node .non-slop/bin/non-slop.mjs rules`. Access rules can't be allowed away. -->
 
 - rule cream-terracotta in src/styles.css: warm paper is the Braun/Vignelli ground; the brick red is PKSB's actual livery red, not a taste default
+- rule cream-terracotta in src/components/v2/fleetDetail.css: same PKSB house — the cream is the alert band's text on a dark ground, the brick red is the livery red. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it names whichever file the scan reaches first.
 - rule cream-terracotta in src/components/passenger/PassengerApp.css: warm paper is the Braun/Vignelli ground; the brick red is PKSB's actual livery red, not a taste default
 - rule cream-terracotta in src/components/toolkit/toolkit-showcase.css: the toolkit is the same PKSB house — paper #f5f5f2 against the PKSB livery red #a23a26, the same two colours the rider app uses. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it only names this file when the toolkit stylesheet is scanned alone.
 - rule cream-terracotta in src/components/toolkit/toolkit-hub.css: the toolkit is the same PKSB house — paper #f5f5f2 against the PKSB livery red #a23a26, the same two colours the rider app uses. The scanner's rule is project-scoped and reports the FIRST cream it finds, so it only names this file when the toolkit stylesheet is scanned alone.
@@ -115,6 +132,10 @@ A surface declares its own **values** for these names in one block, and every `f
 - font "IBM Plex Sans Thai": non-looped Thai, required — Sarabun is banned
 - font "--font-code": monospace is correct for code and ticket identifiers; never a UI voice
 - colour #a23a26: PKSB operator livery red, brand not accent
+- colour #0f7a47: the earned green — what was boarded, what was saved, what is live. The one accent.
+- colour #1d5fa8: the navigational blue — links, the current chapter, the second structural hue. It exists so the page is not ninety per cent green.
+- colour #b8720c: the attention amber — one job: something wants looking at.
+- colour #b4341f: PKSB operator livery red, brand not accent. The LOSS colour: money that leaked, never a decoration.
 
 The following are deliberate, with the reason recorded so a reviewer can disagree with the reason rather than rediscover the fact:
 

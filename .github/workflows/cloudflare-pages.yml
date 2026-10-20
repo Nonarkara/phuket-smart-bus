@@ -66,3 +66,16 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.86.0"
           command: deploy -c wrangler.research.toml
+
+      # The design gate. The bytes can be perfect and the page can still be
+      # wrong: a type token that no scope defines (the declaration is then
+      # invalid and silently inherits — this shipped and flattened a whole
+      # page to three font sizes), a band that starts on a different line
+      # from the bands above it, a rendered size that no token names. None
+      # of those is visible to a byte comparison, and all three have shipped.
+      # This runs against the site that is LIVE, after the deploy.
+      - name: Design gate
+        run: |
+          npx playwright install --with-deps chromium
+          sleep 20
+          bash scripts/design/verify-design.sh https://bus.nonarkara.org
