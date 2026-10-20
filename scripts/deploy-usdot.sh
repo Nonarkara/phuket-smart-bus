@@ -40,6 +40,16 @@ echo "→ vite build"
 npx vite build
 
 # The SPA shell, so an unknown path still renders the app (with a 404).
+#
+# MEASURED 2026-10-20, and only the invariant is claimed: the local build
+# and the CI build of one commit used to differ on this, because only the
+# local build made the copy, and one commit shipped two different products.
+# Both make it now. What status the edge answers with has been observed as
+# both 404 and 200 across deployments of the same source, and which one
+# applies is NOT visible from outside — Pages' clean-URL redirect on
+# /404.html only says the path is not served as a file. So the rule is: the
+# two builds must be identical, and the two hosts must agree, and
+# scripts/verify-usdot-deploy.sh asserts the second.
 cp dist/client/index.html dist/client/404.html
 
 # Pages Functions ship with the deploy directory.
