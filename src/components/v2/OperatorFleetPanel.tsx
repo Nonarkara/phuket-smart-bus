@@ -76,11 +76,16 @@ export function OperatorFleetPanel({ rows, waitingAtCurb, nextDepartureMin = nul
           </strong>
           <span className="v2-fleet__sub">
             {nextDepartureMin != null
-              ? `Next airport departure in ${nextDepartureMin} min · `
-              : waitingAtCurb > 0 ? `${waitingAtCurb} pax waiting at curb · ` : "Curb queue clear · "}
+              ? `Next departure ${nextDepartureMin} min · `
+              : waitingAtCurb > 0 ? `${waitingAtCurb} waiting at curb · ` : "Curb queue clear · "}
             click a driver for today's record
           </span>
         </div>
+        <div className="v2-fleet__tools">
+        {problemCounts.STUCK > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--stuck">{problemCounts.STUCK} STUCK</span>}
+        {problemCounts.RUNNING_EMPTY > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--empty">{problemCounts.RUNNING_EMPTY} EMPTY + WAIT</span>}
+        {problemCounts.IDLE_QUEUED > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--hub">{problemCounts.IDLE_QUEUED} EMPTY AT HUB</span>}
+        {problemCounts.FULL > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--full">{problemCounts.FULL} FULL</span>}
         <div className="v2-fleet__chips" role="toolbar" aria-label="Filter fleet">
           {(["all", "issues", "moving", "idle"] as Filter[]).map((f) => (
             <button
@@ -94,16 +99,8 @@ export function OperatorFleetPanel({ rows, waitingAtCurb, nextDepartureMin = nul
             </button>
           ))}
         </div>
-      </header>
-
-      {(issueCount > 0 || problemCounts.FULL > 0) && (
-        <div className="v2-fleet__problems">
-          {problemCounts.STUCK > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--stuck">{problemCounts.STUCK} STUCK</span>}
-          {problemCounts.RUNNING_EMPTY > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--empty">{problemCounts.RUNNING_EMPTY} EMPTY + WAIT</span>}
-          {problemCounts.IDLE_QUEUED > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--hub">{problemCounts.IDLE_QUEUED} EMPTY AT HUB</span>}
-          {problemCounts.FULL > 0 && <span className="v2-fleet__problem-pill v2-fleet__problem-pill--full">{problemCounts.FULL} FULL</span>}
         </div>
-      )}
+      </header>
 
       <div className="v2-fleet__list" role="list">
         <div className="v2-fleet__row v2-fleet__row--header" aria-hidden="true">
@@ -199,14 +196,18 @@ function FleetRow({
           </span>
         )}
       </span>
-      <span className="v2-fleet__load">
+      {/* The load BAR is the read. It used to share the cell with a "FULL"
+          badge, and the badge won: the bar was squeezed to zero width and
+          every row's occupancy was invisible. A full bus already shows as a
+          full bar and is counted in the header's pill. */}
+      <span
+        className="v2-fleet__load"
+        title={isFull ? "Bus at capacity" : undefined}
+      >
         <span className={`v2-fleet__bar ${loadTone}`}>
           <span className="v2-fleet__bar-fill" style={{ width: `${Math.min(100, row.loadPct)}%` }} />
         </span>
-        <span className="v2-fleet__load-num">
-          {row.load}/{row.capacity}
-          {isFull && !row.problem && <span className="v2-fleet__full-tag" title="Bus at capacity">FULL</span>}
-        </span>
+        <span className="v2-fleet__load-num">{row.load}/{row.capacity}</span>
       </span>
       <span className={`v2-fleet__status v2-fleet__status--${row.status.toLowerCase()}`}>{row.status.replace("_", " ")}</span>
       <span className="v2-fleet__eta">{eta}</span>

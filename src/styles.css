@@ -6528,7 +6528,9 @@ a { color: var(--amber-text); }
 .v2 .v2-body--operations {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr) 380px;
+  /* The rail is sized by what it holds: the fleet table's tracks and the
+     operating equation's terms both want ~380px of content. */
+  grid-template-columns: minmax(0, 1fr) clamp(460px, 34vw, 520px);
   gap: 1px;
   height: 100%;
   min-height: 0;
@@ -6599,12 +6601,34 @@ a { color: var(--amber-text); }
   grid-column: 2;
   min-width: 0;
   min-height: 0;
+  /* The rail's FIRST SCREEN is the headline, the operating equation and the
+     fleet table — three answers, and they fill the rail exactly. The
+     hour-by-hour analysis is below them, and it scrolls INSIDE its own
+     bounded region so the rail itself scrolls half a screen rather than
+     three. The old arrangement put 1,652px of content in a 527px rail and
+     the fleet table 1,482px below the fold. */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   background: var(--ax-panel);
   border-left: 1px solid var(--ax-line);
 }
+.v2-side-rail__first {
+  flex: 0 0 auto;
+  /* The first screen's height is the rail's height, so the fleet table
+     inside it takes exactly what the headline and the equation leave. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2-side-rail__rest {
+  flex: 0 0 auto;
+}
+/* The analysis keeps its own scroll, so the rail scrolls half a screen
+   instead of three. */
+.v2-side-rail__rest > .v2-decision-rail { max-height: 520px; }
 /* ── Side rail: story on top, then equation, conditions, fleet ──────────── */
 .v2-side-rail__story {
   display: grid;
@@ -6661,6 +6685,16 @@ a { color: var(--amber-text); }
   padding: 14px;
   background: var(--ax-panel);
 }
+/* The conservation line is ONE sentence of arithmetic. It used to wrap
+   three terms and strand the fourth alone on a line of its own, so the
+   reader's eye landed on "+ 170 waiting" with nothing to attach it to.
+   Two balanced halves: the wanted, and everything that became of them. */
+.v2-headline__sum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 10px;
+}
+.v2-headline__sum > span { flex: 0 1 auto; min-width: 0; }
 .v2-side-rail__story.v2-headline > * { min-width: 0; }
 .v2-side-rail .v2-decision-rail {
   border-top: 1px solid var(--ax-line);
@@ -6671,28 +6705,42 @@ a { color: var(--amber-text); }
      strip below it and any flex weight above. */
   flex-shrink: 0;
 }
-.v2-side-rail > .v2-conditions {
+/* The strip GROWS to fit its tiles. It used to be capped at 110px while its
+   four tiles each needed ~146px, so the cap was cutting the tiles, not the
+   strip — every tile lost its bottom line. */
+/* Two columns, not four. At the rail's width a row of four left each tile
+   115px, and every tile's detail wrapped to five lines — a tile 230px tall
+   holding three facts. Two columns give each tile the width its text needs,
+   and the strip grows to fit instead of cutting. */
+.v2 .v2-side-rail__rest > .v2-conditions {
   flex-shrink: 0;
   padding: 10px 14px;
   border-top: 1px solid var(--ax-line);
   border-bottom: 1px solid var(--ax-line);
   background: var(--ax-panel);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  /* The conditions strip's natural width is ~360px (one row of four tiles
-     fits at the rail's 380px column). At 1440+ it must be CAP'd at the
-     smaller of those — never balloon to fill the rail — so the table below
-     isn't pushed off the screen by an expanding condition row. */
-  max-height: 110px;
-  overflow: hidden;
 }
-.v2-side-rail > .v2-fleet-panel,
-.v2-side-rail > [class*="LiveFleetPanel"],
-.v2-side-rail > [class*="OperatorFleetPanel"] {
+.v2 .v2-side-rail__rest > .v2-conditions > .v2-conditions__alerts { grid-column: 1 / -1; }
+.v2-side-rail__first > .v2-fleet-panel,
+.v2-side-rail__first > [class*="LiveFleetPanel"],
+.v2-side-rail__first > [class*="OperatorFleetPanel"] {
   flex-shrink: 0;
   border-top: 1px solid var(--ax-line);
 }
+
+/* ── The rail's first screen ───────────────────────────────────────────────
+   Three questions, three answers, all above the fold: how much did we lose
+   today (the headline), what do I do about it now (the equation), which bus
+   is it (the fleet table). The hour-by-hour analysis is one scroll below. */
+.v2-equation-block {
+  flex-shrink: 0;
+  background: var(--ax-panel);
+  border-bottom: 1px solid var(--ax-line);
+}
+.v2-equation-block .v2-decision-rail__head { padding: 8px 18px 6px; }
+
 @media (max-width: 1199px) {
   .v2 .v2-body--operations {
     grid-template-columns: minmax(0, 1fr);
@@ -8348,6 +8396,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.04em;
 }
+.v2-fleet__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .v2-fleet__chips { display: inline-flex; border-radius: 0; overflow: hidden; }
 .v2-fleet__chip {
   
@@ -11653,7 +11702,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-conditions__alerts { font-size: var(--t-micro); }
 
 /* ── Fleet table under the map ───────────────────────────────────────────── */
-.v2--operations .v2-fleet { max-height: none; flex: 1; min-height: 240px; }
+.v2--operations .v2-fleet { max-height: none; }
 .v2--operations .v2-fleet__list { flex: 1; min-height: 0; overflow-y: auto; }
 .v2--operations .v2-fleet__eyebrow { font-size: var(--t-micro); }
 .v2--operations .v2-fleet__title { font-size: var(--t-figure); }
@@ -11838,7 +11887,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
    to do here is to scope the wall-size rules to the same skeleton — the
    column count + row count stay; the column widths shift to 1fr + 380. */
 .v2--operations .v2-body--operations {
-  grid-template-columns: minmax(0, 1fr) 380px;
+  /* The rail's width is set by what the rail has to HOLD, not by what the
+     grid would like. The fleet table's five tracks need ~380px of content
+     and the operating equation's three terms need ~380px; at 380px the
+     rail starved both — the fleet table scrolled sideways to reach its ETA
+     column and the equation's terms wrapped to three lines each. The
+     2026-10-18 note beside this rule already said the rail wants >=500px.
+     The map keeps 60%+ at every width. */
+  grid-template-columns: minmax(0, 1fr) clamp(460px, 34vw, 520px);
   grid-template-rows: auto minmax(0, 1fr);
 }
 .v2--operations .v2-body--operations > .v2-flights { overflow: hidden; gap: 6px; padding: 12px 18px 8px; }
@@ -11912,7 +11968,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-map__frame,
 .v2--operations .v2-map__frame .v2-map__canvas,
 .v2--operations .v2-map .v2-map__canvas { min-height: 0; }
-.v2--operations .v2-fleet { flex: 2 1 0; min-height: 150px; padding: 10px 18px 8px; gap: 6px; border-left: 0; border-right: 0; border-bottom: 0; }
+.v2--operations .v2-fleet { padding: 10px 18px 8px; gap: 6px; border-left: 0; border-right: 0; border-bottom: 0; }
 .v2--operations .v2-fleet__title { font-size: var(--t-title); }
 .v2--operations .v2-fleet__row { padding: 6px 6px; }
 /* The header carries the LIVE / SIMULATION switch; the map's telemetry
@@ -11982,8 +12038,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-balance__foot { margin-top: 6px; padding-top: 6px; font-size: var(--t-micro); }
 .v2--operations .v2-balance__legend { font-size: var(--t-micro); }
 
-/* Map column: give the geography the larger share (map 3 : fleet 1.6) */
-.v2--operations .v2-fleet { flex: 1.6 1 0; }
+/* Map column: give the geography the larger share. The fleet table's own
+   height is decided in the rail, where it now lives. */
 .v2--operations .v2-conditions__item { padding: 6px 14px; }
 /* Wrap, never ellipsis: "Small boats prohibited" was the clipped half. */
 .v2--operations .v2-conditions__detail { white-space: normal; }
@@ -12022,7 +12078,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-fleet__sub { font-size: var(--t-micro); }
 .v2--operations .v2-fleet__problems { gap: 4px; }
 .v2--operations .v2-fleet__problem-pill { font-size: var(--t-micro); padding: 2px 7px; }
-.v2--operations .v2-fleet { flex: 2 1 0; min-height: 170px; }
+
 .v2--operations .v2-map__stage { flex: 2.6 1 0; }
 .v2--operations .v2-map__maritime-banner { max-width: none; width: max-content; }
 
@@ -12989,8 +13045,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2--operations .v2-map > .v2-map__overlay { display: none; }
   .v2--operations .v2-map > .v2-fleet { grid-column: 2; grid-row: 4; min-height: 0; overflow-y: auto; }
 
-  /* Simulated fleet table: five tracks that fit a ~470 px list. */
-  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) { grid-template-columns: 104px minmax(124px, 1fr) 72px 72px 44px; min-width: 0; column-gap: 8px; }
+  /* Simulated fleet table: five tracks that fit the rail's list without a
+     sideways scroll. The old widths needed 448px of content in a 343px
+     list, so the ETA column was off the edge and the operator had to scroll
+     a wall display sideways to read it. */
+  .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) { grid-template-columns: 88px minmax(80px, 1fr) 92px 62px 34px; min-width: 0; column-gap: 6px; }
   /* The avatar is a simulated driver's illustration; in the rail the plate and
      name identify the bus, and the 28 px face forced every row to three lines. */
   .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__face { display: none; }
@@ -13000,8 +13059,22 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__route-dir { flex: 0 0 auto; min-width: 0; }
   .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__route-progress { flex: 0 0 100%; }
   .v2--operations .v2-fleet__row:not(.v2-fleet__row--live) .v2-fleet__driver-name { white-space: normal; overflow: visible; text-overflow: clip; }
+  /* THE FLEET TABLE'S HEIGHT — a decision, in the place the table lives.
+     It used to come from four rules written for the old layout, where the
+     table sat UNDER the map and the two divided a vertical column (map 2.6 :
+     fleet 2). Those rules survived the table's move into the side rail, so
+     the height of the thing the rail exists for was the residue of their
+     source order: 170px, four rows of nineteen, with no sign there was
+     more. Now the table takes a real share of the rail and its rows scroll
+     inside it. */
+  .v2 .v2-side-rail__first > .v2-fleet {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 140px;
+    max-height: none;
+  }
   /* Live fleet table (no per-plate ฿ column): seven tracks in the same list. */
-  .v2--operations .v2-fleet__row--live { grid-template-columns: 76px minmax(112px, 1fr) 60px 52px 40px 42px 44px; min-width: 0; column-gap: 6px; }
+  .v2--operations .v2-fleet__row--live { grid-template-columns: 72px minmax(96px, 1fr) 52px 46px 36px 38px 40px; min-width: 0; column-gap: 6px; }
   .v2--operations .v2-fleet__row--live .v2-fleet__route { flex-wrap: wrap; row-gap: 2px; }
   .v2--operations .v2-fleet__row--live .v2-fleet__route-dir { flex: 0 0 auto; min-width: 0; white-space: normal; }
   /* The narrower map column: the sea-state alert spans the map and wraps. */
