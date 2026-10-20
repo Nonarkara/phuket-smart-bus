@@ -39,9 +39,19 @@ jobs:
 
       - name: Build
         run: npm run build:client
+        env:
+          # The GISTDA tile key is a BUILD input (a public tile key, visible in
+          # every tile URL). It must be the same value the local branch build
+          # uses, or this build compiles the incident layer out and the map's
+          # "Incidents" control disappears — one commit, two products.
+          VITE_GISTDA_API_KEY: ${{ secrets.VITE_GISTDA_API_KEY }}
 
       - name: Include Pages Functions
         run: cp -R functions dist/client/functions
+      - name: Include the 404 shell
+        # Same as scripts/deploy-usdot.sh: an unmatched path answers with the
+        # SPA shell and a 404 status, not a 200 for a file that is not there.
+        run: cp dist/client/index.html dist/client/404.html
 
       - name: Deploy toolkit branch to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

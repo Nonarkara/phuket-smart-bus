@@ -2,7 +2,11 @@
 # Rewrite to "/", never "/index.html": Pages strips index.html, so a
 # "/* /index.html 200" rule is dropped as an infinite loop.
 # No catch-all: _redirects beats static files, so "/*" would serve HTML
-# for /assets/*.js. Unknown paths fall to 404.html (the app, status 404).
+# for /assets/*.js. Unknown paths fall to the app shell (404.html, which is
+# a copy of index.html). MEASURED 2026-10-20: the shell answers an unknown
+# path with status 200 when the copy is in the build, and with status 404
+# when it is not — so both build paths make the copy and one commit always
+# behaves the same way.
 # New top-level route in src/App.tsx → add it here.
 /ops        /  200
 /fleet      /  200

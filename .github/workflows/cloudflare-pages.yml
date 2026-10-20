@@ -40,6 +40,13 @@ jobs:
           VITE_GISTDA_API_KEY: ${{ secrets.VITE_GISTDA_API_KEY }}
       - name: Include Pages Functions
         run: cp -R functions dist/client/functions
+      - name: Include the 404 shell
+        # scripts/deploy.sh copies index.html to 404.html so an unmatched path
+        # answers with the SPA shell AND a 404 status. Without it, Pages' SPA
+        # mode answers /assets/nope.js with 200 text/html — the shell for a
+        # file that does not exist. The local and CI builds of one commit must
+        # behave identically, so this step exists in both deploy paths.
+        run: cp dist/client/index.html dist/client/404.html
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
