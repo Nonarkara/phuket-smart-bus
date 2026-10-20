@@ -9974,6 +9974,32 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font-family: var(--font-body);
 }
 
+/* ── The standalone toolkit's hour strip ─────────────────────────────────────
+   Twenty-four cells of `1fr`. A `1fr` track is minmax(auto, 1fr), and its
+   automatic minimum is the cell's min-content — so twenty-four two-digit
+   hours (24 × 13px plus their gaps) became a 335px minimum. The panel
+   inherited it, the grid inherited the panel, and the grid inherited it off
+   the page: at 390px the hour strip and both panels around it ran 22px past
+   the right edge, and the last hours of the day could not be seen.
+   The strip now scrolls on a phone, which is what a 24-hour axis wants: a
+   scroll container's min-content contribution is zero, so nothing downstream
+   is forced wider, and the hours stay ONE row — a time axis broken in half
+   reads as two days.
+   These rules live here rather than in toolkit-showcase.css because that
+   file is being edited elsewhere; the selector is scoped to the toolkit and
+   is more specific than the rule it corrects. */
+.toolkit-site .abc-hour-strip {
+  grid-template-columns: repeat(24, minmax(13px, 1fr));
+  gap: 1px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.toolkit-site .abc-controls,
+.toolkit-site .abc-results { min-width: 0; }
+@media (max-width: 920px) {
+  .toolkit-site .abc-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
   .v2 .tk-hero-block {

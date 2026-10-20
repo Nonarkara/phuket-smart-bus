@@ -43,7 +43,8 @@ function getNextBusEta(
     }
     return null;
   }
-  const nextVehicle = moving[0];
+  const sorted = [...moving].sort((a, b) => (a.stopsAway ?? 999) - (b.stopsAway ?? 999));
+  const nextVehicle = sorted[0];
   const estimatedMin = nextVehicle.stopsAway ? Math.ceil(nextVehicle.stopsAway * 2) : 8;
   return {
     minutes: estimatedMin,

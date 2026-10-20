@@ -11,6 +11,7 @@ import { getLiveBusesRaw, getLiveFeedState, getLiveLedgerSnapshot, startLiveFeed
 import { appPath } from "../../lib/paths";
 import { LINES, ago, bkkClock, isOut, readRow } from "../v2/fleetRows";
 import { arrivalsAt, buildPace, nearestStop, placeBuses, towardLabel, type Arrival, type Dir, type Pace, type StopRef } from "./arrivals";
+import { RiderDecisionCard } from "./RiderDecisionCard";
 
 const RiderMap = lazy(() => import("./RiderMap").then((m) => ({ default: m.RiderMap })));
 
@@ -69,7 +70,13 @@ const minutes = (a: Arrival) =>
   : a.etaMin < 1 ? "Under 1 min" : `${Math.round(a.etaMin)} min`;
 const kmText = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
 
-export function LiveArrivals({ timetableNext }: { timetableNext: string | null }) {
+export function LiveArrivals({
+  timetableNext,
+  children
+}: {
+  timetableNext: string | null;
+  children?: React.ReactNode;
+}) {
   const { buses, feed } = useLiveBuses();
   const { pace, trips, since } = usePace();
   const now = useNow(5_000);
@@ -93,6 +100,12 @@ export function LiveArrivals({ timetableNext }: { timetableNext: string | null }
   }, [buses]);
 
   const board = useMemo(() => arrivalsAt(placed, ref, pace, now), [placed, ref, pace, now]);
+  const bestEtaMin = useMemo(() => {
+    const fwdEta = board.fwd[0]?.etaMin ?? null;
+    const revEta = board.rev[0]?.etaMin ?? null;
+    if (fwdEta !== null && revEta !== null) return Math.min(fwdEta, revEta);
+    return fwdEta !== null ? fwdEta : revEta;
+  }, [board]);
   const onLine = useMemo(() => new Set(placed.filter((p) => p.line.routeId === ref.routeId).map((p) => p.bus.plate)), [placed, ref.routeId]);
   const reporting = buses.filter((b) => isOut(readRow(b, now))).length;
   const live = feed.status === "live" || feed.status === "quiet";
@@ -170,6 +183,15 @@ export function LiveArrivals({ timetableNext }: { timetableNext: string | null }
           );
         })}
       </div>
+
+      <RiderDecisionCard
+        currentStopRef={ref}
+        stopName={stop.name}
+        liveEtaMin={bestEtaMin}
+        timetableNextStr={timetableNext}
+      >
+        {children}
+      </RiderDecisionCard>
 
       <Suspense fallback={<div className="pa-map pa-map--loading">Loading the map…</div>}>
         <RiderMap buses={buses} onLine={onLine} line={line} stop={stop} now={now} />

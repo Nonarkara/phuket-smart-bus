@@ -29,6 +29,7 @@ import type { Lang } from "@shared/types";
 import { ResearchPanel, type Citation, type Stat } from "./ResearchPanel";
 import { VegasFile, VEGAS_CASES } from "./ProgramArchive";
 import { VEGAS } from "./translations";
+import { VegasPhuketSimulator } from "./VegasPhuketSimulator";
 
 function tr(key: string, lang: Lang): string {
   return VEGAS[key]?.[lang] ?? VEGAS[key]?.en ?? key;
@@ -589,6 +590,8 @@ export function VegasDemandCase({ lang = "en" }: { lang?: Lang }) {
         stats={PHUKET_STATS}
         citations={PHUKET_TRANSFER_CITATIONS}
       />
+
+      <VegasPhuketSimulator />
 
       <p className="vc-next">
         <span className="tk-kicker">Where this leads</span>

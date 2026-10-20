@@ -58,6 +58,11 @@ describe("PassengerApp", () => {
 
     expect(screen.getByRole("heading", { name: "Next real buses" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Toward Rawai" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Should you wait for the bus?" })).toBeInTheDocument();
+    expect(screen.getByText("Smart Bus")).toBeInTheDocument();
+    expect(screen.getByText("Grab / Taxi")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Why do buses come every ~45 minutes?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+2 Buses (12 buses)" })).toBeInTheDocument();
     expect(screen.getByText("Connecting to the bus trackers…")).toBeInTheDocument();
     expect(screen.getByText("Next scheduled bus leaves in")).toBeInTheDocument();
     expect(screen.getByText("30:00")).toBeInTheDocument();

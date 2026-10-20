@@ -74,8 +74,11 @@ run "one left edge per page" \
 run "every rendered size is on the scale" \
   node scripts/design/offscale.mjs "${ROUTES[@]}" --base "$BASE"
 
+run "nothing hangs off the edge of the screen" \
+  node scripts/design/overflow.mjs "${ROUTES[@]}" --base "$BASE"
+
 run "the ramp law, and no grotesque posing as type" \
-  BASE="$BASE" node scripts/design/typeaudit2.mjs
+  env BASE="$BASE" node scripts/design/typeaudit2.mjs
 
 echo ""
 if [ "$failed" -gt 0 ]; then

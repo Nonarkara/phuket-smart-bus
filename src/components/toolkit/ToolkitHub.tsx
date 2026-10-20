@@ -29,6 +29,8 @@ import { DataProvenance } from "./DataProvenance";
 import { CriticalReading } from "./CriticalReading";
 import { Glossary } from "./Glossary";
 import { RejectedAlternatives } from "./RejectedAlternatives";
+import { TravelerJourneySimulator } from "./TravelerJourneySimulator";
+import { PolicyConcessionSandbox } from "./PolicyConcessionSandbox";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
 import "./toolkit-hub.css";
@@ -251,6 +253,7 @@ function OverviewTab() {
 function PhuketTab() {
   return (
     <>
+      <TravelerJourneySimulator />
       <PhuketContext />
       <PhuketBusSystems />
     </>
@@ -271,6 +274,7 @@ function EvidenceTab() {
 function BuildTab() {
   return (
     <>
+      <PolicyConcessionSandbox />
       <section className="hub-section">
         <div className="hub-section__intro-pad">
           <p className="tk-kicker">Method · how findings become instruments</p>
