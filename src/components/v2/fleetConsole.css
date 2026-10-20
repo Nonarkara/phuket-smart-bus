@@ -2,6 +2,20 @@
    Everything is in em off one root size that grows with the screen, so a 4K wall
    reads like a laptop. Three sizes: 1.6em (title) · 1em (body) · 0.8em (small). */
 
+/* Type scale — the eight names, this console's values. The file was written
+   with three sizes in mind (1.6em title, 1em body, 0.8em small) and grew to
+   nine ratios; the scale is the three, named. Every font-size below is one
+   of these. See STYLE.md, "The type scale". */
+.v2--operations.fc {
+  --t-display: 32px;
+  --t-hero:    21px;
+  --t-figure:  19.5px;
+  --t-title:   18px;
+  --t-body:    17px;
+  --t-label:   13.5px;
+  --t-micro:   12px;
+}
+
 /* html/body/#root hide overflow (app shell), so the console is its own scroller. */
 .v2.fc {
   position: fixed;
@@ -24,31 +38,31 @@
 /* header */
 .fc-head { min-height: 4.5em; display: flex; flex-direction: column; gap: 0.8em; justify-content: space-between; padding: 0.75em 0; border-bottom: 2px solid var(--ax-line-2); }
 .fc-identity { display: flex; align-items: baseline; gap: 1em; }
-.fc-eyebrow { margin: 0; font-size: 0.8em; font-weight: 700; letter-spacing: 0.08em; color: var(--ax-ink); }
-.fc-system-id { font: 700 0.65em/1 var(--font-body); letter-spacing: 0.08em; color: var(--ax-accent); }
-.fc-title { margin: 0.16em 0 0.24em; max-width: 18ch; font-size: 2.45em; line-height: 1.02; font-weight: 500; letter-spacing: -0.045em; color: var(--ax-ink); text-wrap: balance; }
-.fc-sub { margin: 0; font-size: 1em; color: var(--ax-ink-2); max-width: 48em; }
+.fc-eyebrow { margin: 0; font-size: var(--t-label); font-weight: 700; letter-spacing: 0.08em; color: var(--ax-ink); }
+.fc-system-id { font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.08em; color: var(--ax-accent); }
+.fc-title { margin: 0.16em 0 0.24em; max-width: 18ch; font-size: var(--t-display); line-height: 1.02; font-weight: 500; letter-spacing: -0.045em; color: var(--ax-ink); text-wrap: balance; }
+.fc-sub { margin: 0; font-size: var(--t-body); color: var(--ax-ink-2); max-width: 48em; }
 .fc-sub.is-dead { color: var(--ax-neg); font-weight: 700; }
 .fc-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ax-line-2); border: 1px solid var(--ax-line-2); }
 /* Small-text controls: 3.45em × 0.8em = 44 px tap height at the 16 px floor. */
-.fc-nav a { display: flex; align-items: center; min-height: 3.45em; padding: 0 1em; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
+.fc-nav a { display: flex; align-items: center; min-height: 3.45em; padding: 0 1em; font-size: var(--t-label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ax-ink-2); text-decoration: none; background: var(--ax-paper); white-space: nowrap; }
 .fc-nav a:hover { color: var(--ax-ink); background: var(--ax-panel); }
 
 /* briefing: one operational statement, then the evidence contract */
 .fc-briefing { display: grid; gap: 1.5em; padding: 2.2em 0 1.6em; border-bottom: 1px solid var(--ax-line); }
-.fc-kicker { margin: 0; font-size: 0.8em; color: var(--ax-accent); }
+.fc-kicker { margin: 0; font-size: var(--t-label); color: var(--ax-accent); }
 .fc-evidence { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ax-line-2); border-left: 1px solid var(--ax-line-2); }
 .fc-evidence > div { min-width: 0; padding: 0.75em 0.85em; border-right: 1px solid var(--ax-line-2); border-bottom: 1px solid var(--ax-line-2); }
-.fc-evidence dt { margin: 0 0 0.3em; font-size: 0.7em; font-weight: 700; color: var(--ax-ink-3); }
-.fc-evidence dd { margin: 0; font-size: 0.8em; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+.fc-evidence dt { margin: 0 0 0.3em; font-size: var(--t-micro); font-weight: 700; color: var(--ax-ink-3); }
+.fc-evidence dd { margin: 0; font-size: var(--t-label); color: var(--ax-ink); font-variant-numeric: tabular-nums; }
 .fc-evidence dd.is-neg { color: var(--ax-neg); }
 
 /* map stage: header strip + map filling the rest */
 .fc-mapstage { min-width: 0; display: flex; flex-direction: column; height: 78svh; min-height: 22em; border-top: 3px solid var(--ax-accent); }
 .fc-mapstage__head { min-height: 3.4em; padding: 0.65em 1em; display: flex; align-items: center; justify-content: space-between; gap: 1em; border-bottom: 1px solid var(--ax-line); }
 .fc-mapstage__head div { display: flex; align-items: baseline; gap: 0.8em; min-width: 0; }
-.fc-mapstage__head strong { font-size: 1em; color: var(--ax-ink); }
-.fc-mapstage__head span { font-size: 0.8em; color: var(--ax-ink-3); }
+.fc-mapstage__head strong { font-size: var(--t-body); color: var(--ax-ink); }
+.fc-mapstage__head span { font-size: var(--t-label); color: var(--ax-ink-3); }
 .fc-mapwrap { position: relative; flex: 1; min-height: 0; background: var(--ax-paper); }
 .fc-map { position: absolute; inset: 0; background: var(--ax-paper); }
 /* Filter the whole tile pane, not each tile: per-tile filters leave a seam grid. */
@@ -56,7 +70,7 @@
 .fc-route { stroke: #c9d2da; stroke-opacity: 0.55; fill: none; }
 .fc-terminal span, .fc-landmark-pin span {
   position: absolute; transform: translate(-50%, -150%); white-space: nowrap;
-  font: 700 0.8em/1 var(--font-body, sans-serif); color: var(--ax-ink); background: var(--ax-paper);
+  font: 700 var(--t-label)/1 var(--font-body, sans-serif); color: var(--ax-ink); background: var(--ax-paper);
   padding: 0.2em 0.45em; border: 1px solid var(--ax-line-2); border-radius: 2px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3); pointer-events: none;
 }
@@ -65,7 +79,7 @@
 .fc-landmark-pin--town span { border-color: #93c5fd; color: #93c5fd; }
 .fc-legend {
   position: absolute; left: 0.6em; bottom: 0.6em; z-index: 500; display: flex; flex-wrap: wrap; gap: 0.4em 1em;
-  padding: 0.4em 0.7em; background: var(--ax-paper); border: 1px solid var(--ax-line-2); font-size: 0.8em; color: var(--ax-ink-2);
+  padding: 0.4em 0.7em; background: var(--ax-paper); border: 1px solid var(--ax-line-2); font-size: var(--t-label); color: var(--ax-ink-2);
 }
 .fc-legend span { display: inline-flex; align-items: center; gap: 0.4em; }
 
@@ -90,7 +104,7 @@
 .fc-mapbus.is-focus .fc-mapbus__dot { width: 1.1em; height: 1.1em; }
 .fc-mapbus__label {
   position: absolute; left: 0; top: 0; translate: -50% -230%; white-space: nowrap;
-  font: 700 0.8em/1 var(--font-body, sans-serif); color: var(--ax-paper); background: var(--ax-accent); padding: 0.25em 0.45em;
+  font: 700 var(--t-label)/1 var(--font-body, sans-serif); color: var(--ax-paper); background: var(--ax-accent); padding: 0.25em 0.45em;
 }
 
 /* board */
@@ -98,25 +112,25 @@
 .fc-line, .fc-attn, .fc-detail, .fc-posture { background: var(--ax-panel); padding: 0.9em 1em; }
 .fc-posture { border-left: 3px solid var(--ax-accent); }
 .fc-posture.has-exception { border-left-color: var(--ax-warn); }
-.fc-posture__label { display: block; margin-bottom: 0.5em; font-size: 0.7em; font-weight: 700; color: var(--ax-ink-3); }
-.fc-posture > strong { display: block; font-size: 1.15em; line-height: 1.25; color: var(--ax-ink); }
+.fc-posture__label { display: block; margin-bottom: 0.5em; font-size: var(--t-micro); font-weight: 700; color: var(--ax-ink-3); }
+.fc-posture > strong { display: block; font-size: var(--t-figure); line-height: 1.25; color: var(--ax-ink); }
 .fc-posture dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 1em 0 0; border-top: 1px solid var(--ax-line); }
 .fc-posture dl div { padding-top: 0.7em; }
-.fc-posture dt { font-size: 0.7em; color: var(--ax-ink-3); }
-.fc-posture dd { margin: 0.15em 0 0; font: 700 1.25em/1 var(--font-body); color: var(--ax-ink); }
+.fc-posture dt { font-size: var(--t-micro); color: var(--ax-ink-3); }
+.fc-posture dd { margin: 0.15em 0 0; font: 700 var(--t-hero)/1 var(--font-body); color: var(--ax-ink); }
 .fc-record { background: var(--ax-panel); padding: 0.9em 1em; border-left: 3px solid var(--ax-accent); }
-.fc-record h2 { margin: 0 0 0.5em; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
-.fc-record ul { margin: 0 0 0.6em; padding: 0; list-style: none; display: grid; gap: 0.45em; font-size: 0.9em; color: var(--ax-ink); }
+.fc-record h2 { margin: 0 0 0.5em; font-size: var(--t-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-accent); }
+.fc-record ul { margin: 0 0 0.6em; padding: 0; list-style: none; display: grid; gap: 0.45em; font-size: var(--t-body); color: var(--ax-ink); }
 .fc-record strong { font-weight: 700; }
-.fc-record a { display: inline-flex; align-items: center; min-height: 2.75em; color: var(--ax-accent); font-size: 0.9em; }
+.fc-record a { display: inline-flex; align-items: center; min-height: 2.75em; color: var(--ax-accent); font-size: var(--t-body); }
 .fc-line__head, .fc-detail header { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; }
-.fc-line__head h3, .fc-detail h2 { margin: 0; font-size: 1em; font-weight: 700; color: var(--ax-ink); }
-.fc-line__head strong { font-size: 1em; color: var(--ax-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.fc-line__say { margin: 0.5em 0 0; font-size: 1em; color: var(--ax-ink); }
-.fc-line__say--quiet { color: var(--ax-ink-2); font-size: 0.8em; }
+.fc-line__head h3, .fc-detail h2 { margin: 0; font-size: var(--t-body); font-weight: 700; color: var(--ax-ink); }
+.fc-line__head strong { font-size: var(--t-body); color: var(--ax-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fc-line__say { margin: 0.5em 0 0; font-size: var(--t-body); color: var(--ax-ink); }
+.fc-line__say--quiet { color: var(--ax-ink-2); font-size: var(--t-label); }
 
 .fc-line__diagram { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.6em; margin-top: 0.7em; }
-.fc-line__end { font-size: 0.8em; font-weight: 700; color: var(--ax-ink-2); white-space: nowrap; }
+.fc-line__end { font-size: var(--t-label); font-weight: 700; color: var(--ax-ink-2); white-space: nowrap; }
 .fc-line__track { position: relative; height: 2.75em; }
 .fc-line__rail { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: var(--ax-line-2); }
 .fc-line__bus { position: absolute; top: 0; height: 2.75em; width: 1.6em; margin-left: -0.8em; display: flex; align-items: center; justify-content: center; color: var(--ax-ink-2); }
@@ -128,22 +142,22 @@
 .fc-arrow--left { border-right: 0.85em solid currentColor; }
 .fc-arrow--dot { width: 0.6em; height: 0.6em; border: 0; border-radius: 50%; background: currentColor; }
 
-.fc-attn h2 { margin: 0 0 0.4em; font-size: 0.8em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-warn); }
+.fc-attn h2 { margin: 0 0 0.4em; font-size: var(--t-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-warn); }
 .fc-attn ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4em; }
 .fc-attn li { border-left: 3px solid var(--ax-warn); padding-left: 0.7em; }
 .fc-attn li.is-neg { border-left-color: var(--ax-neg); }
 .fc-attn button { min-height: 2.75em; color: var(--ax-ink); }
 
 .fc-detail { border-left: 3px solid var(--ax-accent); }
-.fc-detail header button { min-height: 3.45em; padding: 0 0.9em; border: 1px solid var(--ax-line-2); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
-.fc-detail details { margin-top: 0.5em; font-size: 0.8em; color: var(--ax-ink-2); }
+.fc-detail header button { min-height: 3.45em; padding: 0 0.9em; border: 1px solid var(--ax-line-2); font-size: var(--t-label); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ax-ink-2); }
+.fc-detail details { margin-top: 0.5em; font-size: var(--t-label); color: var(--ax-ink-2); }
 .fc-detail summary { min-height: 3.45em; display: flex; align-items: center; cursor: pointer; }
 .fc-detail pre { overflow-x: auto; background: var(--ax-paper); padding: 0.8em; border: 1px solid var(--ax-line); }
 
 /* all buses */
 .fc-all { margin-top: 1.5em; border: 1px solid var(--ax-line); background: var(--ax-panel); }
 .fc-all summary { min-height: 2.75em; display: flex; align-items: center; padding: 0 1em; cursor: pointer; font-weight: 700; color: var(--ax-ink); }
-.fc-all table { width: 100%; border-collapse: collapse; font-size: 0.8em; }
+.fc-all table { width: 100%; border-collapse: collapse; font-size: var(--t-label); }
 .fc-all th { text-align: left; padding: 0.6em 1em; color: var(--ax-ink-3); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--ax-line-2); }
 .fc-all td { padding: 0.5em 1em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 .fc-all td button { min-height: 3.45em; font-weight: 700; color: var(--ax-ink); }
@@ -152,7 +166,7 @@
 .fc-state-word--late { color: var(--ax-warn) !important; }
 .fc-state-word--quiet { color: var(--ax-neg) !important; }
 .fc-state-word--off { color: var(--ax-ink-3) !important; }
-.fc-foot { margin: 1.5em 0 0; padding: 1em 0; border-top: 1px solid var(--ax-line); font-size: 0.8em; color: var(--ax-ink-3); max-width: 80em; }
+.fc-foot { margin: 1.5em 0 0; padding: 1em 0; border-top: 1px solid var(--ax-line); font-size: var(--t-label); color: var(--ax-ink-3); max-width: 80em; }
 .fc-foot strong { color: var(--ax-ink-2); }
 
 /* phone: the bus table hides the least-needed columns */
@@ -174,5 +188,5 @@
   .fc-rail .fc-head { flex-direction: column; align-items: stretch; }
   .fc-rail .fc-nav { grid-template-columns: 1fr 1fr; }
   .fc-rail .fc-briefing { grid-template-columns: 1fr; padding-top: 1.4em; }
-  .fc-rail .fc-title { font-size: 1.9em; }
+  .fc-rail .fc-title { font-size: var(--t-display); }
 }

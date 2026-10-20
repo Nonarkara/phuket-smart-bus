@@ -47,6 +47,28 @@ const width = Number(opt("width", 1440));
 const dry = has("dry");
 const emit = has("emit");
 
+/**
+ * An explicit table for PARENT-RELATIVE sizes.
+ *
+ * `em` cannot be evaluated from the stylesheet alone — it needs its parent's
+ * size. The two fleet stylesheets are built entirely in `em`, so they are
+ * mapped by an explicit table: the ratio, and the step it belongs to. The
+ * table is written from the RENDERED sizes, measured in the browser, so it
+ * is a statement about what the page shows, not about what the source says.
+ *
+ *   --em "0.65em=micro,0.8em=label,1em=body"
+ */
+const EM_TABLE = new Map(
+  opt("em", "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const [ratio, token] = s.split("=");
+      return [ratio.trim(), token.trim()];
+    })
+);
+
 if (!file) {
   console.error("error: --file is required");
   process.exit(1);
@@ -173,7 +195,15 @@ function tokenFor(size) {
   return scale[scale.length - 1]; // below the floor: the smallest step
 }
 
+const SKIP = new Set(
+  opt("skip", "")
+    .split("|")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+
 const inGroup = (selector) => {
+  for (const s of SKIP) if (selector.includes(s)) return false;
   if (!group) return true;
   const m = selector.match(/\.([a-zA-Z][\w-]*)/);
   if (!m) return false;
@@ -188,12 +218,22 @@ const inGroup = (selector) => {
  * rules in src/styles.css are written that way, and every one of them was
  * invisible to a tool that only asked for fontSize — which is how a ramp
  * hides 95 of its own sizes.
+ *
+ * The size is the length that sits immediately before the line-height ("/…")
+ * or before the family. Taking the FIRST length in the string is wrong: in
+ * `font: 700 clamp(0.95rem, 1.8vw, 1.3rem)/1.1 …` the first length is the
+ * clamp's FLOOR, not the size that renders.
  */
-const FONT_SIZE_IN_SHORTHAND = /(^|\s)(\d+(?:\.\d+)?)(px|rem|em)\b(?=\s*\/|\s|$)/;
 function shorthandSize(value) {
-  const m = value.match(FONT_SIZE_IN_SHORTHAND);
+  const v = value.trim();
+  const slash = v.indexOf("/");
+  const head = slash === -1 ? v : v.slice(0, slash);
+  const m = head.match(/(clamp\([^)]*\)|\d+(?:\.\d+)?(?:px|rem|em|vw|%)?)\s*$/);
   if (!m) return null;
-  return { raw: m[2] + m[3], index: m.index + m[1].length, length: (m[2] + m[3]).length };
+  const raw = m[1];
+  if (!raw) return null;
+  const index = head.length - m[0].length;
+  return { raw, index, length: raw.length };
 };
 
 // ── rewrite ──────────────────────────────────────────────────────────────────
@@ -210,6 +250,12 @@ for (const r of rules(text)) {
     const important = /!important/.test(decl) ? " !important" : "";
     const bare = decl.replace(/\s*!important$/, "").trim();
     if (/^var\(/.test(bare)) return full; // already a token
+    if (EM_TABLE.has(bare)) {
+      const name = EM_TABLE.get(bare);
+      changed++;
+      perValue.set(`${bare} → ${name} (table)`, (perValue.get(`${bare} → ${name} (table)`) || 0) + 1);
+      return `font-size: var(--t-${name})${important}`;
+    }
     const size = evalSize(bare, width);
     if (size === null) {
       skipped++;
@@ -230,6 +276,13 @@ for (const r of rules(text)) {
     if (/!important/.test(decl)) return full;
     const hit = shorthandSize(decl);
     if (!hit) return full;
+    if (EM_TABLE.has(hit.raw)) {
+      const name = EM_TABLE.get(hit.raw);
+      changed++;
+      perValue.set(`font ${hit.raw} → ${name} (table)`, (perValue.get(`font ${hit.raw} → ${name} (table)`) || 0) + 1);
+      const replaced = decl.slice(0, hit.index) + `var(--t-${name})` + decl.slice(hit.index + hit.length);
+      return `font: ${replaced}`;
+    }
     const size = evalSize(hit.raw, width);
     if (size === null) {
       skipped++;
