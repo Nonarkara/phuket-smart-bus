@@ -69,6 +69,9 @@ const DEAD_SPACE = 48;      // px of emptiness under a cell
 const ORPHAN_RATIO = 0.55;  // a last-row item narrower than this
 const SCATTER_GAP = 0.35;   // of the container's width, between two actions
 const EMPTY_BAND = 0.3;     // a screen covered less than this is wasted
+const PEER_SHARE = 0.06;    // of the screen: how much a peer set must own to be a choice
+const VERTICAL_TRAP = 2.5;  // screens of scroll before it reads as a hole
+const HORIZONTAL_TRAP = 1.25; // a column pushed off the edge
 
 const WIDTHS = [
   { label: "1440", width: 1440, height: 900 },
@@ -106,7 +109,7 @@ for (const route of ROUTES) {
       continue;
     }
 
-    const res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND }) => {
+    const res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP }) => {
       const label = (el) => {
         const c = typeof el.className === "string" ? el.className.trim() : "";
         return el.tagName.toLowerCase() + (c ? "." + c.split(/\s+/).slice(0, 2).join(".") : "");
@@ -132,7 +135,24 @@ for (const route of ROUTES) {
         const isBox = cs.borderTopWidth !== "0px" || cs.borderBottomWidth !== "0px" ||
           (cs.backgroundColor !== "rgba(0, 0, 0, 0)" && cs.backgroundColor !== "transparent");
         if (!isBox) continue;
+        // The page shell is not a stretched cell. A body with 600px of page
+        // background under its content is a page with little to say, not a
+        // layout that invented the space.
+        if (el.tagName === "BODY" || el.tagName === "HTML") continue;
+        // A rule, a divider, a 2px rail marker — a box too narrow to hold
+        // content is a mark, and the space around a mark is its own job.
         const r = el.getBoundingClientRect();
+        if (r.width < 24) continue;
+        // THE TEST. A cell is stretched when its container is a grid or a
+        // flex and the cell is taller than its own content. Only then is the
+        // space under the content the leftover of a taller sibling.
+        const parent = el.parentElement;
+        const pcs = parent ? getComputedStyle(parent) : null;
+        const stretched = pcs && (
+          pcs.display === "grid" || pcs.display === "inline-grid" ||
+          pcs.display === "flex" || pcs.display === "inline-flex"
+        );
+        if (!stretched) continue;
         // the last visible content inside the box
         let last = -Infinity;
         let lastEl = null;
@@ -246,12 +266,22 @@ for (const route of ROUTES) {
               if ([...d.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0)) { textEl = d; break; }
             }
             const tcs = textEl ? getComputedStyle(textEl) : kcs;
+            // A cell can be marked by a colour that is not on its FIRST line —
+            // a green figure under a grey label marks the cell as surely as a
+            // tinted ground would. So the cell's mark is the SET of colours it
+            // carries, and a group where the sets differ HAS a leader.
+            const colours = new Set();
+            for (const d of [k, ...k.querySelectorAll("*")]) {
+              if (![...d.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0)) continue;
+              colours.add(getComputedStyle(d).color);
+            }
             return {
               k, isBox,
               size: tcs.fontSize,
               weight: tcs.fontWeight,
               bg: kcs.backgroundColor,
               color: tcs.color,
+              colours: [...colours].sort().join(","),
             };
           });
           const boxed = peers.filter((p) => p.isBox);
@@ -260,9 +290,24 @@ for (const route of ROUTES) {
             // A row where one cell is marked — a tab strip's active tab, a
             // card's accent — HAS a leader. The defect is a row where every
             // cell is identical, so nothing tells the reader where to look.
-            const marks = new Set(boxed.map((p) => `${p.bg}|${p.color}|${p.weight}`));
+            const marks = new Set(boxed.map((p) => `${p.bg}|${p.colours}|${p.weight}`));
             if (same.size === 1 && marks.size === 1) {
-              equals.push({ el: label(el), n: boxed.length, size: boxed[0].size, weight: boxed[0].weight });
+              // PROMINENCE. A navigation row and a metadata strip are peers
+              // BY DESIGN: nothing there is meant to win, because nothing
+              // there is a choice. The defect is a set of identical cells
+              // that owns so much of the screen that the reader is expected
+              // to choose among them and cannot.
+              const area = boxed.reduce((s, p) => {
+                const r = p.k.getBoundingClientRect();
+                return s + r.width * r.height;
+              }, 0);
+              const share = area / (window.innerWidth * window.innerHeight);
+              if (share >= PEER_SHARE) {
+                equals.push({
+                  el: label(el), n: boxed.length, size: boxed[0].size, weight: boxed[0].weight,
+                  share: Math.round(share * 100),
+                });
+              }
             }
           }
         }
@@ -361,6 +406,37 @@ for (const route of ROUTES) {
       }
       bands.sort((a, b) => a.ratio - b.ratio);
 
+      // ── 8 · scroll traps ─────────────────────────────────────────────────
+      // A region that scrolls three screens deep is not a scroll region, it
+      // is a page that has been cut into a hole. The reader has to scroll to
+      // find what they came for, and nothing on the surface says that it is
+      // down there.
+      //
+      // The page's own scroller is exempt: that is how a page is a page.
+      const traps = [];
+      for (const el of all) {
+        const cs = getComputedStyle(el);
+        const vScroll = cs.overflowY === "auto" || cs.overflowY === "scroll";
+        const hScroll = cs.overflowX === "auto" || cs.overflowX === "scroll";
+        if (!vScroll && !hScroll) continue;
+        if (el === document.scrollingElement || el === document.documentElement) continue;
+        const r = el.getBoundingClientRect();
+        if (vScroll && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
+          traps.push({
+            el: label(el), axis: "vertical",
+            screens: +(el.scrollHeight / el.clientHeight).toFixed(1),
+            visible: Math.round(el.clientHeight), total: Math.round(el.scrollHeight),
+          });
+        }
+        if (hScroll && el.scrollWidth > el.clientWidth * HORIZONTAL_TRAP && el.clientWidth > 120) {
+          traps.push({
+            el: label(el), axis: "horizontal",
+            ratio: +(el.scrollWidth / el.clientWidth).toFixed(2),
+            visible: Math.round(el.clientWidth), total: Math.round(el.scrollWidth),
+          });
+        }
+      }
+
       return {
         clipped: clipped.slice(0, 12), clippedCount: clipped.length,
         dead: dead.slice(0, 12), deadCount: dead.length,
@@ -369,11 +445,12 @@ for (const route of ROUTES) {
         equals: equals.slice(0, 12), equalCount: equals.length,
         wrapped: wrapped.slice(0, 12), wrapCount: wrapped.length,
         bands: bands.slice(0, 6), bandCount: bands.length,
+        traps: traps.slice(0, 12), trapCount: traps.length,
         docH, vh,
       };
-    }, { DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND });
+    }, { DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP });
 
-    const total = res.deadCount + res.orphanCount + res.scatterCount + res.equalCount + res.wrapCount + res.bandCount + res.clippedCount;
+    const total = res.deadCount + res.orphanCount + res.scatterCount + res.equalCount + res.wrapCount + res.bandCount + res.clippedCount + res.trapCount;
     findings += total;
     console.log(`\n=== ${route} @${vp.label} — ${total} finding(s) · page ${res.docH}px tall, ${Math.ceil(res.docH / res.vh)} screens`);
     if (!total) { console.log("  clean — every band, cell and row explains itself."); continue; }
@@ -387,9 +464,12 @@ for (const route of ROUTES) {
     section("DEAD SPACE under a cell", res.dead, (x) => `${x.el}  ${x.gap}px of nothing below its content (${x.w}×${x.h})`);
     section("ORPHAN in a last row", res.orphans, (x) => `${x.el} → ${x.item} is ${x.w}px in a ${x.of}px row`);
     section("SCATTERED actions", res.scattered, (x) => `${x.el}: ${x.a} … ${x.b}  ${x.gap}px apart in a ${x.of}px row`);
-    section("EQUAL-WEIGHT peers", res.equals, (x) => `${x.el}  ${x.n} boxed cells, all ${x.size}/${x.weight}`);
+    section("EQUAL-WEIGHT peers", res.equals, (x) => `${x.el}  ${x.n} boxed cells, all ${x.size}/${x.weight}, holding ${x.share}% of the screen`);
     section("ACCIDENTAL WRAP", res.wrapped, (x) => `${x.el} → ${x.item} alone on the last line (${x.w}px in ${x.of}px)`);
     section("EMPTY SCREEN", res.bands, (x) => `at y=${x.y} — ${x.why} (${Math.round(x.ratio * 100)}% covered)`);
+    section("SCROLL TRAP", res.traps, (x) => x.axis === "vertical"
+      ? `${x.el}  ${x.screens} screens of scroll inside ${x.visible}px (${x.total}px of content)`
+      : `${x.el}  ${x.ratio}× wider than its box — a column is off the edge (${x.visible}px visible of ${x.total}px)`);
   }
 }
 

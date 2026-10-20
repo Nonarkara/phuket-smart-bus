@@ -45,7 +45,7 @@ fail=0
 echo "── the fixture: every mode must be caught ──────────────────────────"
 OUT=$(node scripts/design/space.mjs /space.html --base "http://127.0.0.1:$PORT" 2>&1)
 echo "$OUT" | sed 's/^/  /'
-for mode in "CLIPPED CONTENT" "DEAD SPACE" "ORPHAN" "SCATTERED actions" "EQUAL-WEIGHT peers" "ACCIDENTAL WRAP" "EMPTY SCREEN"; do
+for mode in "CLIPPED CONTENT" "DEAD SPACE" "ORPHAN" "SCATTERED actions" "EQUAL-WEIGHT peers" "ACCIDENTAL WRAP" "EMPTY SCREEN" "SCROLL TRAP"; do
   if echo "$OUT" | grep -q "$mode"; then
     echo "  ✓ $mode is caught"
   else

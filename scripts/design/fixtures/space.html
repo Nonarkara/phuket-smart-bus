@@ -41,6 +41,10 @@
   .clipper { width: 320px; overflow: hidden; border: 1px solid #d9d2c4; background: #fff; }
   .clipper .wide { width: 700px; white-space: nowrap; font-size: 13px; }
 
+  /* 8 · SCROLL TRAP — a region three screens deep */
+  .trap { height: 240px; overflow-y: auto; border: 1px solid #d9d2c4; background: #fff; }
+  .trap > div { height: 900px; padding: 12px; font-size: 13px; }
+
   /* 6 · EMPTY SCREEN — a long page with a mostly-empty band */
   .void { height: 2400px; }
 </style>
@@ -113,6 +117,13 @@
     <h2>7 · clipped</h2>
     <div class="clipper">
       <div class="wide">This text is much wider than its clipping box and will be cut off.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>8 · scroll trap</h2>
+    <div class="trap">
+      <div>Three screens of content inside a 240px window. The reader has to scroll to find what they came for, and nothing says it is down there.</div>
     </div>
   </section>
 
