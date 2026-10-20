@@ -3090,7 +3090,10 @@ a { color: var(--amber-text); }
   grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.1fr) auto auto;
   align-items: center;
   gap: 16px;
-  padding: 10px 22px 8px;
+  /* The padding and the column live in ONE place — the `.v2 .v2-header`
+     rule further down, which is the one that actually wins the cascade.
+     Two owners of the gutter is how the header ended up at 24px while the
+     body sat at 104px. */
   background: #0d121b;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: none;
@@ -3770,7 +3773,6 @@ a { color: var(--amber-text); }
 }
 
 @media (max-width: 720px) {
-  .v2-header { padding: 16px; }
   .v2-body { padding: 12px; gap: 12px; }
   /* Squares only — Dr Non rule §11.6.1. The 22px radius was Vercel-template
      residue from an earlier iteration. */
@@ -6233,6 +6235,19 @@ a { color: var(--amber-text); }
 
 /* ── Axiom tokens + root surface — light editorial default ───────────────── */
 .v2 {
+  /* ── Palette ───────────────────────────────────────────────────────────────
+     Four hues, each with exactly ONE job, on a warm paper ground. A palette
+     is not "many colours" — it is a set of colours that MEAN something, and
+     a colour that means nothing is decoration.
+
+       green  — what was earned: boarded, saved, live, the action button
+       blue   — the navigational layer: links, chapter marks, the current tab
+       amber  — attention
+       red    — money that leaked
+
+     Structure is ink and hairlines, not colour. The dark ops console
+     overrides this whole set (.v2--operations); these are the light
+     editorial views' values — the toolkit and the insights bridge. */
   --ax-paper:   #faf9f7;
   --ax-panel:   #ffffff;
   --ax-ink:     #191712;
@@ -6240,14 +6255,56 @@ a { color: var(--amber-text); }
   --ax-ink-3:   #a9a59a;
   --ax-line:    #e7e5dd;
   --ax-line-2:  #d2cfc5;
-  --ax-accent:  #1f6e43;
-  --ax-neg:     #a23a26;
-  --ax-warn:    #c47a0f;
+  --ax-accent:  #0f7a47;
+  --ax-accent-lift: #19b46c;
+  --ax-accent-wash: rgba(15, 122, 71, 0.09);
+  --ax-accent-line: rgba(15, 122, 71, 0.35);
+  --ax-info:    #1d5fa8;
+  --ax-info-wash: rgba(29, 95, 168, 0.07);
+  --ax-info-line: rgba(29, 95, 168, 0.32);
+  --ax-neg:     #b4341f;
+  --ax-neg-wash: rgba(180, 52, 31, 0.08);
+  --ax-warn:    #b8720c;
+  --ax-warn-wash: rgba(184, 114, 12, 0.10);
+  --ax-warn-line: rgba(184, 114, 12, 0.40);
 
-  /* Type scale — fixed sizes, zoom handles scaling for big screens */
-  --t-micro:   13px;
+  /* The same four jobs, on a DARK ground. A green that reads as "earned"
+     on paper disappears on the dark subnav, and a link blue that reads as
+     "navigation" on paper is invisible on charcoal. */
+  --ax-accent-on-dark: #46b986;
+  --ax-info-on-dark:   #8ab8ea;
+  --ax-neg-on-dark:    #ff8a7a;
+  --ax-warn-on-dark:   #e0a243;
+
+  /* ── The console's ONE column ──────────────────────────────────────────────
+     Every band in an EDITORIAL view — the header, the source switcher, the
+     toolkit subnav, the body — puts its content on this column, so the page
+     has ONE left edge. It had three (the header sat at 24px, the source row
+     at 24px and the body at 104px), which is why the top of the page and the
+     page below it looked like two teams' work.
+
+     The body centres a max-width column and pads it; a full-bleed band pads
+     by the same amount, which is why the header uses max() rather than a
+     fixed 24px.
+
+     The dark operations wall is a DIFFERENT object: a full-bleed instrument
+     whose panels run to the edge. It sets --v2-column to 100%, so the same
+     one-line rule gives it a plain gutter and the two views cannot drift
+     apart. */
+  --v2-column: 1280px;
+  --v2-gutter: 24px;
+
+  /* Type scale — the eight names, this surface's values. The dark ops
+     console overrides all eight; the light editorial views use these.
+     The floor is 13px and the top is 44px: a publication, not a terminal. */
+  --t-display: 44px;
+  --t-hero:    30px;
+  --t-figure:  24px;
+  --t-title:   19px;
+  --t-lead:    17px;
   --t-body:    15px;
-  --t-display: 28px;
+  --t-label:   14px;
+  --t-micro:   13px;
 
   background: var(--ax-paper);
   color: var(--ax-ink);
@@ -6286,11 +6343,14 @@ a { color: var(--amber-text); }
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: 52px 40px;
-  padding: 0 24px;
+  /* The console's ONE column. The header's content and the body's content
+     must start on the same line, or the top of the page looks like it was
+     built by a different team than the page under it. max() keeps the
+     gutter at narrow widths and grows to the centred column above 1280. */
+  padding: 0 max(var(--v2-gutter), calc((100% - var(--v2-column)) / 2 + var(--v2-gutter)));
   gap: 0;
   flex-shrink: 0;
 }
-
 .v2 .v2-header__brand {
   background: transparent;
   display: flex;
@@ -8831,12 +8891,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-subnav__inner {
-  max-width: 1280px;
+  max-width: var(--v2-column);
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
+  padding: 10px var(--v2-gutter);
   gap: 16px;
 }
 
@@ -8845,51 +8905,59 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ax-accent);
+  color: var(--ax-accent-on-dark);
   white-space: nowrap;
 }
 
 .v2 .tk-subnav__links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .v2 .tk-subnav__link {
-  font-size: var(--t-micro);
+  font-size: var(--t-label);
   font-weight: 600;
-  color: var(--ax-ink-2);
+  color: var(--ax-info-on-dark);
   text-decoration: none;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 0;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .v2 .tk-subnav__link:hover {
-  color: var(--ax-ink);
+  color: #fff;
   background: rgba(255, 255, 255, 0.08);
 }
 
 /* Briefing Body */
 .v2 .tk-briefing-body {
-  max-width: 1280px;
+  max-width: var(--v2-column);
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 32px var(--v2-gutter) 80px;
   display: flex;
   flex-direction: column;
   gap: 56px;
 }
 
 /* ToolkitPanel renders its chapters directly under .tk-briefing. Keep the
-   readable measure and gutter even when the optional body wrapper is absent. */
+   readable measure and gutter even when the optional body wrapper is absent.
+   This is the SAME column the header sits on — one left edge for the page. */
 .v2 .tk-briefing > .tk-hero-block,
 .v2 .tk-briefing > .tk-section-box {
-  width: min(100%, 1280px);
+  width: min(100%, var(--v2-column));
   margin-inline: auto;
-  padding-inline: 24px;
+  padding-inline: var(--v2-gutter);
   box-sizing: border-box;
+}
+
+/* The subnav is sticky, so a chapter link must not land UNDER it. Without
+   this, clicking "03 Personas" scrolls the heading behind the bar and the
+   reader loses the title. */
+.v2 .tk-briefing > [id] {
+  scroll-margin-top: 60px;
 }
 .v2 .tk-briefing > .tk-section-box { padding-top: 48px; }
 
@@ -8930,8 +8998,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   max-width: 66ch;
   margin: 0;
   color: var(--ax-ink-2);
-  font-size: var(--t-body);
-  line-height: 1.6;
+  font-size: var(--t-lead);
+  line-height: 1.55;
 }
 .v2 .tk-hero-desc strong { color: var(--ax-ink); }
 .v2 .tk-hero-actions { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 8px; }
@@ -8944,8 +9012,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ax-accent);
-  background: rgba(70, 185, 134, 0.12);
-  border: 1px solid rgba(70, 185, 134, 0.35);
+  background: var(--ax-accent-wash);
+  border: 1px solid var(--ax-accent-line);
   padding: 4px 10px;
   border-radius: 0;
   width: fit-content;
@@ -8953,11 +9021,17 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-hero-title {
   font-size: var(--t-display);
-  font-weight: 800;
-  line-height: 1.15;
+  /* The display face, and thin. This title was set in the BODY face at
+     weight 800 — that is the "fat ugly front": a heavy grotesque shouting
+     the first thing on the page. The house voice for a display moment is
+     the geometric at 400–500. */
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.08;
   color: var(--ax-ink);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
   margin: 0;
+  text-wrap: balance;
 }
 
 .v2 .tk-hero-lead {
@@ -9023,7 +9097,6 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 .v2 .tk-hud-card__head {
@@ -9060,20 +9133,25 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   
 }
 
+/* The four pipeline steps are ONE instrument, not four cards. A hairline
+   grid — 1px gaps showing the rule colour — is the house pattern: the
+   cells read as a table, not as four boxes someone drew to fill a gap. */
 .v2 .tk-hud-pipeline {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--ax-line);
+  border: 1px solid var(--ax-line);
 }
 
 .v2 .tk-hud-step {
-  background: var(--ax-paper);
-  border: 1px solid var(--ax-line);
+  background: var(--ax-panel);
+  border: 0;
   border-radius: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .v2 .tk-hud-step span {
@@ -9088,8 +9166,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font-size: var(--t-figure);
   font-weight: 800;
   color: var(--ax-ink);
-  
-  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
 }
 
 .v2 .tk-hud-step small {
@@ -9098,24 +9176,23 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-hud-step--accent strong {
-  color: var(--gain, #16a574);
+  color: var(--ax-accent);
 }
 
 .v2 .tk-hud-step--alert strong {
-  color: var(--amber, #f5a623);
+  color: var(--ax-neg);
 }
 
 .v2 .tk-hud-formula {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(70, 185, 134, 0.08);
-  border: 1px solid rgba(70, 185, 134, 0.25);
+  background: var(--ax-accent-wash);
+  border: 1px solid var(--ax-accent-line);
   border-radius: 0;
   padding: 8px 12px;
   font-size: var(--t-micro);
   color: var(--ax-ink-2);
-  
 }
 
 .v2 .tk-hud-formula__badge {
@@ -9124,7 +9201,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ax-accent);
-  background: rgba(70, 185, 134, 0.2);
+  background: var(--ax-accent-wash);
   padding: 2px 6px;
   border-radius: 0;
   white-space: nowrap;
@@ -9156,108 +9233,139 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 .v2 .tk-section-head h2 {
   font-size: var(--t-hero);
-  font-weight: 800;
+  /* Display face at 400–500. Weight 800 here would fuse the counters of the
+     geometric — the blob the type rules ban between 18 and 39px. */
+  font-family: var(--font-display);
+  font-weight: 500;
   color: var(--ax-ink);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .v2 .tk-section-head p {
-  font-size: var(--t-label);
-  line-height: 1.6;
+  font-size: var(--t-lead);
+  line-height: 1.55;
   color: var(--ax-ink-2);
   margin: 0;
+  max-width: 68ch;
 }
 
-/* 02 · The 8 Mode Lenses */
-.v2 .tk-lenses-grid {
+/* 02 · The 8 Mode Lenses — an INDEX, not eight cards.
+   Eight bordered cards, each holding one sentence, is the yellow-pages
+   failure the anti-slop rules name: the reader has to hunt for the thing
+   they came for. One row of lenses you can click, and one panel that
+   answers, is an instrument — and it is half the boxes. */
+.v2 .tk-lens-index {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px;
+  background: var(--ax-line);
+  border: 1px solid var(--ax-line);
+  border-bottom: 0;
 }
 
-.v2 .tk-lens-card {
+.v2 .tk-lens-tab {
   background: var(--ax-panel);
-  border: 1px solid var(--ax-line-2);
-  border-radius: 0;
-  padding: 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 12px 12px 11px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  align-items: flex-start;
+  gap: 5px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.v2 .tk-lens-card:hover {
-  border-color: var(--ax-accent);
-  transform: translateY(-2px);
-}
+.v2 .tk-lens-tab:hover { background: var(--ax-paper); }
 
-.v2 .tk-lens-card--fund {
-  border-top: 3px solid var(--ax-accent);
-}
-
-.v2 .tk-lens-card--ext {
-  border-top: 3px solid var(--amber, #f5a623);
-}
-
-.v2 .tk-lens-card__top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.v2 .tk-lens-card__letter {
-  font-size: var(--t-hero);
-  font-weight: 900;
-  color: var(--ax-accent);
-  
+.v2 .tk-lens-tab__letter {
+  font-family: var(--font-display);
+  font-size: var(--t-figure);
+  font-weight: 500;
   line-height: 1;
+  color: var(--ax-accent);
 }
 
-.v2 .tk-lens-card--ext .tk-lens-card__letter {
-  color: var(--amber, #f5a623);
-}
+.v2 .tk-lens-tab--ext .tk-lens-tab__letter { color: var(--ax-info); }
 
-.v2 .tk-lens-card__title-wrap {
-  display: flex;
-  flex-direction: column;
-}
-
-.v2 .tk-lens-card__title {
-  font-size: var(--t-label);
-  font-weight: 800;
-  color: var(--ax-ink);
-}
-
-.v2 .tk-lens-card__category {
+.v2 .tk-lens-tab__name {
   font-size: var(--t-micro);
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ax-ink-3);
+  transition: color 0.15s ease;
+}
+
+.v2 .tk-lens-tab.is-active {
+  border-bottom-color: var(--ax-accent);
+  background: var(--ax-accent-wash);
+}
+
+.v2 .tk-lens-tab.is-active .tk-lens-tab__name { color: var(--ax-ink); }
+
+.v2 .tk-lens-tab:focus-visible {
+  outline: 2px solid var(--ax-info);
+  outline-offset: -2px;
+}
+
+.v2 .tk-lens-panel {
+  border: 1px solid var(--ax-line);
+  border-top: 0;
+  background: var(--ax-panel);
+  padding: 26px 28px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+
+.v2 .tk-lens-panel__question {
+  font-family: var(--font-display);
+  font-size: var(--t-title);
+  font-weight: 500;
+  line-height: 1.24;
+  color: var(--ax-ink);
+  margin: 0;
+  max-width: 34ch;
+}
+
+.v2 .tk-lens-panel__category {
+  display: block;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ax-accent);
+  margin-bottom: 10px;
+}
+
+.v2 .tk-lens-panel__category--ext { color: var(--ax-info); }
+
+.v2 .tk-lens-panel__fact {
+  border-left: 2px solid var(--ax-accent);
+  padding-left: 16px;
+}
+
+.v2 .tk-lens-panel__fact-label {
+  display: block;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ax-ink-3);
 }
 
-.v2 .tk-lens-card__question {
-  font-size: var(--t-micro);
-  font-style: italic;
-  line-height: 1.5;
+.v2 .tk-lens-panel__fact p {
+  font-size: var(--t-body);
+  line-height: 1.55;
   color: var(--ax-ink-2);
-  margin: 0;
-  flex: 1;
-}
-
-.v2 .tk-lens-card__fact {
-  font-size: var(--t-micro);
-  line-height: 1.5;
-  color: var(--ax-ink-2);
-  padding-top: 8px;
-  border-top: 1px dashed var(--ax-line);
-}
-
-.v2 .tk-lens-card__fact span {
-  font-weight: 700;
-  color: var(--ax-ink);
+  margin: 7px 0 0;
 }
 
 /* Comparison Table */
@@ -9348,8 +9456,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-personas-group-title.text-warn {
-  color: var(--amber, #f5a623);
-  border-color: var(--amber, #f5a623);
+  color: var(--ax-warn);
+  border-color: var(--ax-warn);
 }
 
 .v2 .tk-persona-cards {
@@ -9373,7 +9481,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-persona-card--nonuser {
-  border-left: 3px solid var(--amber, #f5a623);
+  border-left: 3px solid var(--ax-warn);
 }
 
 .v2 .tk-persona-card__head {
@@ -9406,13 +9514,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-persona-badge--won {
-  background: rgba(70, 185, 134, 0.15);
+  background: var(--ax-accent-wash);
   color: var(--ax-accent);
 }
 
 .v2 .tk-persona-badge--opp {
-  background: rgba(245, 166, 35, 0.15);
-  color: var(--amber, #f5a623);
+  background: var(--ax-warn-wash);
+  color: var(--ax-warn);
 }
 
 .v2 .tk-persona-meta {
@@ -9508,7 +9616,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2 .tk-causal-tab.is-active {
   color: var(--ax-accent);
   border-bottom-color: var(--ax-accent);
-  background: rgba(70, 185, 134, 0.06);
+  background: var(--ax-accent-wash);
 }
 
 .v2 .tk-causal-card {
@@ -9574,8 +9682,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-causal-step--action {
-  border-color: rgba(70, 185, 134, 0.4);
-  background: rgba(70, 185, 134, 0.05);
+  border-color: var(--ax-accent-line);
+  background: var(--ax-accent-wash);
 }
 
 .v2 .tk-causal-step--action .tk-causal-step__num {
@@ -9583,12 +9691,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-causal-step--metric {
-  border-color: rgba(224, 162, 67, 0.4);
-  background: rgba(224, 162, 67, 0.05);
+  border-color: var(--ax-warn-line);
+  background: var(--ax-warn-wash);
 }
 
 .v2 .tk-causal-step--metric .tk-causal-step__num {
-  color: var(--amber, #f5a623);
+  color: var(--ax-warn);
 }
 
 /* 05 · Action Roadmap (15 Recommendations) */
@@ -9596,6 +9704,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  /* Each quadrant holds a different number of items, so they are NOT the
+     same height. Stretching them leaves dead space under the short ones —
+     the "boxes fit their content" rule. */
+  align-items: start;
 }
 
 .v2 .tk-recs-quadrant {
@@ -9609,7 +9721,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 .v2 .tk-recs-quadrant--quick {
-  border-top: 3px solid var(--gain, #16a574);
+  border-top: 3px solid var(--ax-accent);
 }
 
 .v2 .tk-recs-quadrant--major {
@@ -9671,7 +9783,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   font-weight: 800;
   
   color: var(--ax-accent);
-  background: rgba(70, 185, 134, 0.12);
+  background: var(--ax-accent-wash);
   padding: 2px 5px;
   border-radius: 0;
 }
@@ -9834,13 +9946,26 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: var(--ax-ink-3);
 }
 
+/* The insights charts label themselves with SVG presentation attributes
+   (fontSize="9"), which are 9–10px — under the floor, and off the scale.
+   One CSS rule beats a presentation attribute, so every label in the
+   charts lands on the surface's smallest step without touching the TSX. */
+.v2--insights .v2-insights__svg text {
+  font-size: var(--t-micro);
+  font-family: var(--font-body);
+}
+
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
   .v2 .tk-hero-block {
     grid-template-columns: 1fr;
   }
-  .v2 .tk-lenses-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .v2 .tk-lens-index {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .v2 .tk-lens-panel {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
   .v2 .tk-causal-flow {
     grid-template-columns: 1fr;
@@ -9860,8 +9985,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .tk-recs-grid {
     grid-template-columns: 1fr;
   }
-  .v2 .tk-lenses-grid {
-    grid-template-columns: 1fr;
+  .v2 .tk-lens-index {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .v2 .tk-lens-panel {
+    padding: 20px 18px 22px;
   }
   .v2 .tk-comparison-tr {
     grid-template-columns: 1fr;
@@ -9907,6 +10035,22 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   --ax-accent: #46b986;
   --ax-neg:    #ff8a7a;
   --ax-warn:   #e0a243;
+
+  /* The same four jobs on the dark ground. */
+  --ax-accent-wash: rgba(70, 185, 134, 0.10);
+  --ax-accent-line: rgba(70, 185, 134, 0.38);
+  --ax-info:    #7fb3e8;
+  --ax-info-wash: rgba(127, 179, 232, 0.10);
+  --ax-info-line: rgba(127, 179, 232, 0.34);
+  --ax-neg-wash: rgba(255, 138, 122, 0.10);
+  --ax-warn-wash: rgba(224, 162, 67, 0.10);
+  --ax-warn-line: rgba(224, 162, 67, 0.40);
+
+  /* The operations wall is a full-bleed instrument: its panels run to the
+     edge of the screen, so there is no centred column for the header to
+     sit on. The same one-line padding rule gives it a plain gutter, and the
+     two views cannot drift apart. */
+  --v2-column: 100%;
 }
 /* The capacity screen is an operations surface (it carries the
    v2--operations class) with its own scale: it is a one-screen command,
@@ -10160,7 +10304,9 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .v2-header {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: 44px 44px 48px;
-    padding: 0 16px;
+    /* No padding override here: the column rule owns the gutter at every
+       width, so the header and the body cannot disagree about where the
+       page starts. */
   }
   .v2 .v2-header__brand { grid-column: 1; grid-row: 1; }
   .v2 .v2-header__story { display: none; }
@@ -10202,7 +10348,6 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 
 @media (max-width: 720px) {
-  .v2 .v2-header { padding: 0 12px; }
   .v2 .v2-header__eyebrow { letter-spacing: 0.09em; }
   .v2 .v2-header__eyebrow-full { display: none; }
   .v2 .v2-header__eyebrow-compact { display: inline; }
@@ -11979,7 +12124,26 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 /* ── Real-Bus Study screen ─────────────────────────────────────────────────
    /study — patient, consistent, true. Dark theme via the v2 operations
-   tokens. Dense tables, honest nulls, no rounding up. */
+   tokens. Dense tables, honest nulls, no rounding up.
+
+   Type scale — this surface's values. The screen was written with nine
+   literal sizes (9px to 36px) and three of them were under the ops floor:
+   the coverage strip ran at 9–10px and the labels at 11px, which is the
+   microcopy the wall rule forbids. The scale is seven steps and the floor
+   is 13px, like every other ops surface.
+
+   There is no `--t-micro` here: this surface's smallest step IS the label
+   step. A surface may use six of the eight names; what it must not do is
+   declare a token it does not use and leave the smallest text unnamed. */
+.v2--operations.study {
+  --t-display: 36px;
+  --t-hero:    32px;
+  --t-figure:  28px;
+  --t-title:   20px;
+  --t-lead:    16px;
+  --t-body:    14px;
+  --t-label:   13px;
+}
 .study { padding: 0 24px 48px; min-height: 100vh; background: var(--ax-paper); color: var(--ax-ink); }
 .study__header { padding: 16px 0 12px !important; align-items: flex-start; }
 .study__controls {
@@ -11989,7 +12153,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__chips { display: inline-flex; border: 1px solid var(--ax-line-2); }
 .study__chip {
   background: none; border: 0; border-right: 1px solid var(--ax-line-2);
-  padding: 6px 10px; font: 600 11px/1 var(--font-body); letter-spacing: 0.06em;
+  padding: 6px 10px; font: 600 var(--t-label)/1 var(--font-body); letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--ax-ink-2); cursor: pointer;
 }
 .study__chip:last-child { border-right: 0; }
@@ -12006,13 +12170,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__chip--legend { pointer-events: none; margin-right: 4px; }
 .study__date {
   background: var(--ax-panel); border: 1px solid var(--ax-line-2); color: var(--ax-ink);
-  font: 13px/1.4 var(--font-body); padding: 6px 10px; color-scheme: dark;
+  font: var(--t-label)/1.4 var(--font-body); padding: 6px 10px; color-scheme: dark;
   font-variant-numeric: tabular-nums;
 }
 .study__date:focus { outline: 1px solid var(--ax-accent); outline-offset: -1px; }
 .study__refresh {
   background: var(--ax-ink); color: var(--ax-panel); border: 0;
-  padding: 7px 14px; font: 700 12px/1 var(--font-body); letter-spacing: 0.08em;
+  padding: 7px 14px; font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.08em;
   text-transform: uppercase; cursor: pointer;
 }
 .study__refresh:hover { background: var(--ax-accent); }
@@ -12022,10 +12186,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: rgba(255, 138, 122, 0.06); border: 1px solid var(--ax-neg);
   padding: 12px 16px; margin: 16px 0; display: flex; flex-direction: column; gap: 4px;
 }
-.study__error strong { color: var(--ax-neg); font-size: 14px; }
+.study__error strong { color: var(--ax-neg); font-size: var(--t-body); }
 .study__error span { color: var(--ax-ink-2); }
 .study__error code {
-  background: var(--ax-panel); padding: 4px 8px; font: 11px/1.4 var(--font-code);
+  background: var(--ax-panel); padding: 4px 8px; font: var(--t-label)/1.4 var(--font-code);
   color: var(--ax-ink-3); margin-top: 4px; align-self: flex-start;
 }
 
@@ -12041,31 +12205,31 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__kpi--alert { border-color: var(--ax-warn); }
 .study__kpi--alert .study__kpi-value, .study__state--alert { color: var(--ax-warn); }
 .study__kpi-label {
-  display: block; font: 700 12px/1 var(--font-body); letter-spacing: 0.12em;
+  display: block; font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 8px;
 }
 .study__kpi-value {
-  display: block; font: 500 32px/1.05 var(--font-display); color: var(--ax-ink);
+  display: block; font: 500 var(--t-hero)/1.05 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; margin-bottom: 8px;
   /* "1,561 · 1,368 h" wrapped onto a third line at the narrow tail of the
      grid when the rendered column was <310px. Keep the value together so
      "h" never orphans onto its own line. */
   white-space: nowrap;
 }
-.study__kpi-detail { font: 13px/1.45 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.study__kpi-detail { font: var(--t-label)/1.45 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
 .study__caveats {
   background: rgba(224, 162, 67, 0.04); border: 1px solid rgba(224, 162, 67, 0.25);
   padding: 14px 16px; margin: 16px 0;
 }
-.study__caveats h3 { margin: 0 0 8px; font: 700 11px/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-warn); }
-.study__caveats ul { margin: 0; padding: 0 0 0 18px; color: var(--ax-ink-2); font: 13px/1.5 var(--font-body); }
+.study__caveats h3 { margin: 0 0 8px; font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ax-warn); }
+.study__caveats ul { margin: 0; padding: 0 0 0 18px; color: var(--ax-ink-2); font: var(--t-label)/1.5 var(--font-body); }
 .study__caveats li { margin-bottom: 6px; }
 .study__caveats strong { color: var(--ax-ink); }
 
 .study__coverage { margin: 16px 0; }
 .study__coverage h3, .study__table-wrap h3 {
-  margin: 0 0 10px; font: 700 11px/1 var(--font-body); letter-spacing: 0.12em;
+  margin: 0 0 10px; font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ax-ink-3);
 }
 .study__coverage-strip {
@@ -12082,22 +12246,22 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__coverage-cell--thin .study__coverage-bar { background: var(--ax-ink-3); }
 .study__coverage-cell--missing .study__coverage-bar { background: transparent; }
 .study__coverage-cell--future .study__coverage-bar { background: transparent; }
-.study__coverage-date { font: 700 10px/1 var(--font-body); color: var(--ax-ink-2); }
-.study__coverage-pct { font: 9px/1.2 var(--font-body); font-variant-numeric: tabular-nums; color: var(--ax-ink-3); }
-.study__hint { font: 12px/1.5 var(--font-body); color: var(--ax-ink-2); margin: 10px 0 0; }
+.study__coverage-date { font: 700 var(--t-label)/1 var(--font-body); color: var(--ax-ink-2); }
+.study__coverage-pct { font: var(--t-label)/1.2 var(--font-body); font-variant-numeric: tabular-nums; color: var(--ax-ink-3); }
+.study__hint { font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2); margin: 10px 0 0; }
 
 .study__table-wrap { margin: 24px 0; overflow-x: auto; border: 1px solid var(--ax-line); }
 .study__table {
   width: 100%; border-collapse: collapse; background: var(--ax-panel);
-  font: 13px/1.4 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
+  font: var(--t-label)/1.4 var(--font-body); color: var(--ax-ink); font-variant-numeric: tabular-nums;
 }
 .study__table thead th {
   background: var(--ax-panel); text-align: left; padding: 14px 16px;
-  font: 700 12px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
+  font: 700 var(--t-label)/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap;
 }
 .study__table thead th.study__num { text-align: right; }
-.study__table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--ax-line); white-space: nowrap; vertical-align: top; font-size: 14px; }
+.study__table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--ax-line); white-space: nowrap; vertical-align: top; font-size: var(--t-body); }
 .study__table tbody td.study__num { text-align: right; }
 .study__table tbody tr:hover { background: rgba(70, 185, 134, 0.04); }
 .study__table tbody tr.study__row--missing td { color: var(--ax-ink-3); background: rgba(255, 138, 122, 0.03); }
@@ -12110,10 +12274,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__footer {
   display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline;
   margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--ax-line);
-  font: 12px/1.4 var(--font-body); color: var(--ax-ink-2);
+  font: var(--t-label)/1.4 var(--font-body); color: var(--ax-ink-2);
 }
 .study__footer strong { color: var(--ax-ink); font-weight: 700; }
-.study__footer-detail { font: 11px/1.4 var(--font-body); color: var(--ax-ink-3); }
+.study__footer-detail { font: var(--t-label)/1.4 var(--font-body); color: var(--ax-ink-3); }
 
 
 @media (max-width: 720px) {
@@ -12139,19 +12303,19 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   padding-bottom: 14px; border-bottom: 1px solid var(--ax-line); margin-bottom: 16px;
 }
 .study__now-eyebrow {
-  font: 700 13px/1 var(--font-body); letter-spacing: 0.16em; text-transform: uppercase;
+  font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--ax-accent);
 }
 .study__now-pill {
   display: inline-block;
-  font: 700 12px/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase;
+  font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase;
   padding: 5px 10px; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3);
 }
 .study__now-pill--live { background: var(--ax-accent); color: var(--ax-panel); border-color: var(--ax-accent); }
 .study__now-pill--quiet { color: var(--ax-warn); border-color: var(--ax-warn); }
 .study__now-pill--offline, .study__now-pill--connecting { color: var(--ax-ink-3); }
 .study__now-detail {
-  font: 13px/1.5 var(--font-body); color: var(--ax-ink-2);
+  font: var(--t-label)/1.5 var(--font-body); color: var(--ax-ink-2);
   font-variant-numeric: tabular-nums;
 }
 .study__now-detail strong { color: var(--ax-ink); font-weight: 700; }
@@ -12168,20 +12332,20 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .study__now-tile--quiet { background: rgba(224, 162, 67, 0.06); border-color: rgba(224, 162, 67, 0.25); }
 .study__now-tile--alert { background: rgba(255, 138, 122, 0.06); border-color: rgba(255, 138, 122, 0.25); }
 .study__now-label {
-  display: block; font: 700 11px/1 var(--font-body); letter-spacing: 0.12em;
+  display: block; font: 700 var(--t-label)/1 var(--font-body); letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--ax-ink-3); margin-bottom: 6px;
 }
 .study__now-value {
-  display: block; font: 500 36px/1.05 var(--font-display); color: var(--ax-ink);
+  display: block; font: 500 var(--t-display)/1.05 var(--font-display); color: var(--ax-ink);
   font-variant-numeric: tabular-nums; margin-bottom: 6px;
 }
 .study__now-tile--live .study__now-value { color: var(--ax-accent); }
 .study__now-tile--quiet .study__now-value { color: var(--ax-warn); }
 .study__now-tile--alert .study__now-value { color: var(--ax-neg); }
-.study__now-sub { font: 12px/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
+.study__now-sub { font: var(--t-label)/1.4 var(--font-body); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; }
 
 .study--compact .study__now-grid { grid-template-columns: repeat(2, 1fr); }
-.study--compact .study__now-value { font-size: 28px; }
+.study--compact .study__now-value { font-size: var(--t-figure); }
 
 
 /* ── Capacity Command — modern operations console ──────────────────────────

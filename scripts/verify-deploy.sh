@@ -129,3 +129,16 @@ if [ "${custom_type%%;*}" != "text/html" ]; then
   exit 1
 fi
 echo "ok: an unknown path answers ${custom_status} with the app shell on both hosts"
+
+# ── the design gate ────────────────────────────────────────────────────────
+# The bytes can be perfect and the page can still be wrong: a type token
+# that no scope defines, a band that starts on a different line, a size
+# that no token names. Those are the defects a byte check cannot see, and
+# they have shipped before. The gate runs against the site that is LIVE.
+if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
+  if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
+    bash scripts/design/verify-design.sh "$CUSTOM"
+  else
+    echo "warn: playwright is not installed — the design gate did not run"
+  fi
+fi

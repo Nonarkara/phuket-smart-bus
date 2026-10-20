@@ -6,7 +6,13 @@
 /* Type scale — the eight names, this console's values. The file was written
    with three sizes in mind (1.6em title, 1em body, 0.8em small) and grew to
    thirteen ratios; the scale is the three, named. Every font-size below is
-   one of these. See STYLE.md, "The type scale". */
+   one of these. See STYLE.md, "The type scale".
+
+   The root below carries a FLUID size — it is the console's em unit, so the
+   spacing grows with the screen. It is therefore NOT a type size: anything
+   that inherits it renders a size no token names (16.94px at 1440 — the
+   ninth size the page did not admit to). Text on this surface must name a
+   token. `scripts/design/offscale.mjs` is what proves it does. */
 .v2--operations.fd {
   --t-display: 29px;
   --t-hero:    23.5px;
@@ -312,7 +318,7 @@
 .fd-downloads button:hover { color: var(--ax-ink); background: var(--ax-panel); }
 
 .fd-group { margin-top: 1.5em; }
-.fd-group h2 { margin: 0 0 0.5em; font-size: 1em; font-weight: 700; color: var(--ax-ink); }
+.fd-group h2 { margin: 0 0 0.5em; font-size: var(--t-lead); font-weight: 700; color: var(--ax-ink); }
 .fd-group h2 span { font-weight: 400; font-size: var(--t-label); color: var(--ax-ink-3); margin-left: 0.5em; }
 .fd-scroll { overflow-x: auto; border: 1px solid var(--ax-line); background: var(--ax-panel); }
 .fd-table { width: 100%; border-collapse: collapse; }
@@ -320,8 +326,8 @@
   text-align: left; padding: 0.6em 0.9em; font-size: var(--t-label); font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--ax-ink-3); border-bottom: 1px solid var(--ax-line-2); white-space: nowrap;
 }
-.fd-table td { padding: 0.4em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.6em; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; }
+.fd-table td { padding: 0.4em 0.9em; border-bottom: 1px solid var(--ax-line); color: var(--ax-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; font-size: var(--t-body); }
+.fd-plate { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.6em; font-weight: 700; color: var(--ax-ink); font-variant-numeric: tabular-nums; font-size: var(--t-body); }
 .fd-caret { display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; border: 1px solid var(--ax-line-2); color: var(--ax-ink-3); font-weight: 400; }
 .fd-doing { color: var(--ax-ink) !important; }
 .fd-row--driving .fd-doing { color: var(--ax-accent) !important; }
