@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>spatial-hallucination fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; border-bottom: 1px solid #d9d2c4; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+
+  /* 1 · DEAD SPACE — a grid stretches its cells; the short one carries a cushion */
+  .dead-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dead-card { background: #fff; border: 1px solid #d9d2c4; padding: 12px; }
+  .dead-card--tall { min-height: 180px; }
+  .dead-card--short { min-height: 180px; }
+  .dead-card--short .pad { height: 60px; }
+
+  /* 2 · ORPHAN — a grid's last row holds one narrow item */
+  .orphan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 900px; }
+  .orphan-grid > div { background: #eef3f0; border: 1px solid #cfd9d3; padding: 10px; font-size: 13px; }
+  .orphan-grid > .narrow { grid-column: 1 / -1; width: 180px; }
+
+  /* 3 · SCATTERED ACTIONS — two same-shaped buttons pushed to opposite ends */
+  .scatter { display: flex; gap: 8px; width: 1000px; justify-content: space-between; }
+  .scatter button { width: 110px; padding: 10px; font-size: 14px; }
+
+  /* 4 · EQUAL-WEIGHT PEERS — four boxed cells, identical type, identical ground */
+  .peers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 900px; }
+  .peers > div { background: #fff; border: 1px solid #d9d2c4; padding: 14px; }
+  .peers p { font-size: 13px; font-weight: 700; margin: 0; }
+
+  /* 5 · ACCIDENTAL WRAP — a flex row that breaks and strands one item */
+  .wrap-row { display: flex; flex-wrap: wrap; gap: 10px; width: 420px; }
+  .wrap-row > div { background: #eef3f0; border: 1px solid #cfd9d3; padding: 8px 14px; font-size: 13px; }
+  .wrap-row > .wide { width: 300px; }
+  .wrap-row > .stranded { width: 120px; }
+
+  /* 7 · CLIPPED — content that runs past the edge of an overflow:hidden box */
+  .clipper { width: 320px; overflow: hidden; border: 1px solid #d9d2c4; background: #fff; }
+  .clipper .wide { width: 700px; white-space: nowrap; font-size: 13px; }
+
+  /* 6 · EMPTY SCREEN — a long page with a mostly-empty band */
+  .void { height: 2400px; }
+</style>
+</head>
+<body>
+  <section>
+    <h2>1 · dead space</h2>
+    <div class="dead-grid">
+      <div class="dead-card dead-card--tall">
+        <p>Tall sibling with real content and a decision behind it.</p>
+        <p>Another line of copy that fills the cell honestly.</p>
+      </div>
+      <div class="dead-card dead-card--short">
+        <p>Short sibling.</p>
+        <div class="pad"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · orphan</h2>
+    <div class="orphan-grid">
+      <div>Cell one</div>
+      <div>Cell two</div>
+      <div>Cell three</div>
+      <div class="narrow">Stranded</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · scattered actions</h2>
+    <div class="scatter">
+      <button>Confirm</button>
+      <button>Cancel</button>
+      <div class="spacer"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4 · equal-weight peers</h2>
+    <div class="peers">
+      <div><p>Alpha metric</p></div>
+      <div><p>Beta metric</p></div>
+      <div><p>Gamma metric</p></div>
+      <div><p>Delta metric</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5 · accidental wrap</h2>
+    <div class="wrap-row">
+      <div>One</div>
+      <div>Two</div>
+      <div>Three</div>
+      <div>Four</div>
+      <div>Five</div>
+      <div>Six</div>
+      <div>Seven</div>
+      <div>Eight</div>
+      <div>Nine</div>
+      <div>Ten</div>
+      <div>Eleven</div>
+      <div>Twelve</div>
+      <div class="wide">A wide label that fills most of the line</div>
+      <div class="stranded">Stranded</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7 · clipped</h2>
+    <div class="clipper">
+      <div class="wide">This text is much wider than its clipping box and will be cut off.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6 · empty screen</h2>
+    <div class="void"></div>
+  </section>
+</body>
+</html>

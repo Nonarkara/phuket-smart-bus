@@ -179,22 +179,26 @@ for (const route of ROUTES) {
 
         // 2 · an orphan in the last row
         //
-        // Only for AUTO-placed grids. A grid whose children are put into
-        // named columns — a header with its controls in column five — is a
-        // layout, not a row that ran out of room.
-        const placed = kids.some((k) => {
-          const kcs = getComputedStyle(k);
-          return kcs.gridColumnStart !== "auto" || kcs.gridColumnEnd !== "auto" ||
-            kcs.gridRowStart !== "auto" || kcs.gridRowEnd !== "auto";
-        });
-        if (isGrid && !placed) {
+        // A row that holds one item while the rest of the grid's width lies
+        // empty. The test is not "the item is placed" — an item can be
+        // placed on purpose and still be an orphan — it is the space the
+        // item LEAVES BEHIND it. A header's control sits in the grid's last
+        // track on purpose and nothing follows it; an orphan strands the
+        // reader with an empty field on the item's trailing side.
+        if (isGrid) {
           const cols = cs.gridTemplateColumns.split(" ").filter((x) => x && x !== "none").length;
           const rowKeys = [...rows.keys()].sort((a, b) => a - b);
           const lastRow = rows.get(rowKeys[rowKeys.length - 1]);
           if (cols >= 2 && lastRow && lastRow.length === 1) {
-            const w = lastRow[0].r.width;
-            if (w < r.width * ORPHAN_RATIO) {
-              orphans.push({ el: label(el), item: label(lastRow[0].k), w: Math.round(w), of: Math.round(r.width) });
+            const item = lastRow[0];
+            const w = item.r.width;
+            const contentRight = r.right - (parseFloat(cs.paddingRight) || 0);
+            const emptyRight = Math.max(0, contentRight - item.r.right);
+            if (w < r.width * ORPHAN_RATIO && emptyRight > r.width * 0.45) {
+              orphans.push({
+                el: label(el), item: label(item.k),
+                w: Math.round(w), of: Math.round(r.width), empty: Math.round(emptyRight),
+              });
             }
           }
         }
@@ -202,12 +206,13 @@ for (const route of ROUTES) {
         // 3 · two same-shaped actions with a gulf between them
         //
         // A navigation row spread across the width is not scattered actions —
-        // that is what a navigation row IS. The defect is two actions pushed
-        // to opposite ends of a row that is mostly empty, so the row's own
-        // width is what makes the gap. Hence: the actions must leave the
-        // row mostly empty, or the spread is the layout's own doing.
+        // that is what a navigation row IS. The defect is a PAIR pushed to
+        // opposite ends of a row that is mostly empty, so the row's own
+        // width is what makes the gap. Hence: exactly two actions, and they
+        // must leave the row mostly empty.
         for (const [, row] of rows) {
           const acts = row.filter((x) => /^(button|a)$/i.test(x.k.tagName) && x.r.width > 0);
+          if (acts.length !== 2) continue;
           const used = acts.reduce((s, x) => s + x.r.width, 0);
           if (used > r.width * 0.55) continue;
           for (let i = 0; i < acts.length; i++) {
@@ -327,15 +332,32 @@ for (const route of ROUTES) {
         const owns = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
         return owns || el.tagName === "IMG" || el.tagName === "SVG" || el.tagName === "CANVAS";
       });
+      const contentRects = content.map((el) => el.getBoundingClientRect());
+      const contentTop = contentRects.length ? Math.min(...contentRects.map((r) => r.top)) : 0;
+      const contentBottom = contentRects.length ? Math.max(...contentRects.map((r) => r.bottom)) : 0;
+      const bandCount = Math.ceil(docH / vh);
       for (let y = 0; y < docH; y += vh) {
         let covered = 0;
-        for (const el of content) {
-          const r = el.getBoundingClientRect();
+        let inBand = false;
+        for (const r of contentRects) {
           const top = Math.max(r.top, y), bot = Math.min(r.bottom, y + vh);
-          if (bot > top) covered += bot - top;
+          if (bot > top) { covered += bot - top; inBand = true; }
         }
         const ratio = Math.min(1, covered / vh);
-        if (ratio < EMPTY_BAND) bands.push({ y, ratio: +ratio.toFixed(2) });
+        // A page that fits on one screen has not wasted a screen — it has
+        // simply said what it had to say. Only a page the reader must SCROLL
+        // can waste one.
+        if (bandCount <= 1) continue;
+        if (!inBand) {
+          // An empty band. It is wasted if the reader scrolled into it (there
+          // is content above), or if it is a void before the content starts
+          // (there is content below). Either way the reader paid for it.
+          const above = contentRects.some((r) => r.bottom <= y + 1);
+          const below = contentRects.some((r) => r.top >= y + vh - 1);
+          if (above || below) bands.push({ y, ratio: 0, why: "no content in this screen" });
+          continue;
+        }
+        if (ratio < EMPTY_BAND) bands.push({ y, ratio: +ratio.toFixed(2), why: "this screen is mostly empty" });
       }
       bands.sort((a, b) => a.ratio - b.ratio);
 
@@ -367,7 +389,7 @@ for (const route of ROUTES) {
     section("SCATTERED actions", res.scattered, (x) => `${x.el}: ${x.a} … ${x.b}  ${x.gap}px apart in a ${x.of}px row`);
     section("EQUAL-WEIGHT peers", res.equals, (x) => `${x.el}  ${x.n} boxed cells, all ${x.size}/${x.weight}`);
     section("ACCIDENTAL WRAP", res.wrapped, (x) => `${x.el} → ${x.item} alone on the last line (${x.w}px in ${x.of}px)`);
-    section("EMPTY SCREEN", res.bands, (x) => `at y=${x.y} the screen is ${Math.round(x.ratio * 100)}% covered`);
+    section("EMPTY SCREEN", res.bands, (x) => `at y=${x.y} — ${x.why} (${Math.round(x.ratio * 100)}% covered)`);
   }
 }
 
