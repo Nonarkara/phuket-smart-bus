@@ -12,13 +12,13 @@ import { useState } from "react";
 interface Persona {
   id: string;
   name: string;
+  badge: string;
   origin: string;
   flightTime: string;
   destination: string;
   paxCount: number;
   luggage: string;
   budgetThb: number;
-  avatar: string;
   motivation: string;
 }
 
@@ -26,49 +26,49 @@ const PERSONAS: Persona[] = [
   {
     id: "elena",
     name: "Elena · Solo Backpacker",
+    badge: "Solo",
     origin: "Berlin (via Singapore)",
     flightTime: "21:30 (Late Night)",
     destination: "Patong Beach (Hostel)",
     paxCount: 1,
     luggage: "15 kg backpack",
     budgetThb: 500,
-    avatar: "🎒",
     motivation: "Wants affordable, safe transit without getting scammed by unmetered taxis."
   },
   {
     id: "somchai",
     name: "Somchai & Family",
+    badge: "Family",
     origin: "Bangkok (Suvarnabhumi)",
     flightTime: "11:15 (Mid-day)",
     destination: "Kata Beach (Resort)",
     paxCount: 4,
     luggage: "3 large suitcases + stroller",
     budgetThb: 1500,
-    avatar: "👨‍👩‍👧‍👦",
     motivation: "Values convenience and luggage space for young kids and elderly parents."
   },
   {
     id: "chen",
     name: "Chen & Partner",
+    badge: "Couple",
     origin: "Chengdu (Direct Charter)",
     flightTime: "14:20 (Peak Afternoon)",
     destination: "Phuket Old Town",
     paxCount: 2,
     luggage: "2 carry-on bags",
     budgetThb: 800,
-    avatar: "🧳",
     motivation: "First time in Thailand; wants easy English/Chinese signage and electronic payment."
   },
   {
     id: "liam",
     name: "Liam · Remote Worker",
+    badge: "Nomad",
     origin: "Living in Rawai",
     flightTime: "08:30 (Morning Departure)",
     destination: "Phuket Airport (HKT)",
     paxCount: 1,
     luggage: "1 cabin roller + laptop bag",
     budgetThb: 400,
-    avatar: "💻",
     motivation: "Frequent flyer doing a visa run; needs predictable arrival time."
   }
 ];
@@ -171,7 +171,7 @@ export function TravelerJourneySimulator() {
             className={`tjs-persona-card ${selectedPersonaId === p.id ? "is-selected" : ""}`}
             onClick={() => setSelectedPersonaId(p.id)}
           >
-            <span className="tjs-persona-avatar">{p.avatar}</span>
+            <span className="tjs-persona-badge">{p.badge}</span>
             <div className="tjs-persona-meta">
               <strong>{p.name}</strong>
               <small>{p.destination} · {p.flightTime}</small>
@@ -209,21 +209,21 @@ export function TravelerJourneySimulator() {
             className={`tjs-mode-btn ${selectedMode === "bus" ? "is-active" : ""}`}
             onClick={() => setSelectedMode("bus")}
           >
-            🚌 Phuket Smart Bus (฿100)
+            Phuket Smart Bus (฿100)
           </button>
           <button
             type="button"
             className={`tjs-mode-btn ${selectedMode === "grab" ? "is-active" : ""}`}
             onClick={() => setSelectedMode("grab")}
           >
-            🚗 Grab / Private Taxi (~฿{selectedPersonaId === "chen" ? "550" : selectedPersonaId === "somchai" ? "850" : "750"})
+            Grab / Private Taxi (~฿{selectedPersonaId === "chen" ? "550" : selectedPersonaId === "somchai" ? "850" : "750"})
           </button>
           <button
             type="button"
             className={`tjs-mode-btn ${selectedMode === "minivan" ? "is-active" : ""}`}
             onClick={() => setSelectedMode("minivan")}
           >
-            🚐 Shared Minivan (฿200/pax)
+            Shared Minivan (฿200/pax)
           </button>
         </div>
       </div>
