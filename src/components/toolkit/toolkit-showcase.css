@@ -1677,9 +1677,14 @@ html.toolkit-site-mode #root {
 }
 .tjs-personas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 16px;
+}
+@media (min-width: 900px) {
+  .tjs-personas {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .tjs-persona-card {
   display: flex;
@@ -1763,8 +1768,13 @@ html.toolkit-site-mode #root {
 }
 .tjs-results__scorecard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+}
+@media (min-width: 640px) {
+  .tjs-results__scorecard {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .tjs-metric {
   padding: 14px;
@@ -1846,9 +1856,14 @@ html.toolkit-site-mode #root {
 }
 .vps-results {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 16px;
+}
+@media (min-width: 720px) {
+  .vps-results {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .vps-kpi {
   padding: 14px;
@@ -1925,9 +1940,14 @@ html.toolkit-site-mode #root {
 }
 .pcs-results {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 16px;
+}
+@media (min-width: 760px) {
+  .pcs-results {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .pcs-card {
   padding: 14px;
