@@ -13,13 +13,17 @@
 #
 # SPA routes (/ops, /fleet, …) are explicit public/_redirects → / 200 rules.
 # dist/client/404.html (a copy of index.html) is what the rest of the paths
-# get. MEASURED 2026-10-20, not assumed: with the copy present, an unknown
-# path answers with the app shell and status 200; without it, Pages' SPA
-# fallback answers with the same shell and status 404. The copy is kept so
-# the local build and the CI build of one commit behave identically — they
-# used to differ, because only the local build made the copy, and one commit
-# shipped two different products. The status of an unknown URL is a detail;
-# the two builds agreeing is not.
+# get: the app, with a 404 status, instead of a host error page.
+#
+# MEASURED 2026-10-20, and only the invariant is claimed here: the local
+# build and the CI build of one commit used to differ on this, because only
+# the local build made the copy, and one commit shipped two different
+# products. Both make it now. What status the edge answers with has been
+# observed as both 404 and 200 across deployments of the same source, and
+# which one applies is NOT visible from outside — Pages' clean-URL redirect
+# on /404.html only says the path is not served as a file. So the rule is:
+# the two builds must be identical, and the two hosts must agree, and
+# scripts/verify-deploy.sh asserts the second.
 #
 # Usage:
 #   scripts/deploy.sh                  # auto commit-message from git log

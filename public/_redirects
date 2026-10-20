@@ -3,10 +3,9 @@
 # "/* /index.html 200" rule is dropped as an infinite loop.
 # No catch-all: _redirects beats static files, so "/*" would serve HTML
 # for /assets/*.js. Unknown paths fall to the app shell (404.html, which is
-# a copy of index.html). MEASURED 2026-10-20: the shell answers an unknown
-# path with status 200 when the copy is in the build, and with status 404
-# when it is not — so both build paths make the copy and one commit always
-# behaves the same way.
+# a copy of index.html) — the app, with a 404 status. Both build paths make
+# the copy, so one commit behaves the same way whichever build owns the
+# alias.
 # New top-level route in src/App.tsx → add it here.
 /ops        /  200
 /fleet      /  200
