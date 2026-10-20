@@ -86,6 +86,26 @@ const p = await c.newPage();
 const report = {};
 let total = 0;
 
+// THE ≤8 LAW, and the ONE known exception — named, dated, and to be deleted
+// when the rider phone app gets its own reviewed type pass. An exception
+// that is not written down is a hole; one that is written down is a debt
+// with an owner.
+//
+//   "/ @390" — the rider app renders 16 sizes at 390 because it is built in
+//   `rem` against a 16px root with about sixty separate font-size
+//   declarations. It does not read as a ramp (the phone screen shows a clear
+//   hierarchy and 0 band violations), but the count is over the limit the
+//   law states.
+const KNOWN_OPEN = {
+  "/ @390": "the rider phone app — 16 sizes at 390; its own type pass is pending",
+};
+
+// PROVING THE INSTRUMENT CAN FAIL. Set NO_KNOWN_OPEN=1 and every exception
+// is ignored, so the rider app's 16 sizes at 390 must turn the run red. A
+// gate whose exceptions cannot be switched off is a gate whose exceptions
+// are permanent, and a permanent exception is a deleted law.
+const OPEN = process.env.NO_KNOWN_OPEN === "1" ? {} : KNOWN_OPEN;
+
 for (const vp of VIEWPORTS) {
   await p.setViewportSize({ width: vp.width, height: vp.height });
   for (const r of ROUTES) {
@@ -98,11 +118,17 @@ for (const vp of VIEWPORTS) {
 for (const [route, r] of Object.entries(report)) {
   const display = r.inv.filter(([k]) => /Josefin/.test(k));
   const bad = r.offenders.length;
-  total += bad;
-  console.log(`\n=== ${route} — ${r.sizeCount} sizes, ${display.length} display-face entries, ${bad} violations`);
+  const over = r.sizeCount > 8;
+  const open = OPEN[route];
+  total += bad + (over && !open ? 1 : 0);
+  console.log(`\n=== ${route} — ${r.sizeCount} sizes, ${display.length} display-face entries, ${bad} violations${over ? (open ? " (KNOWN OPEN)" : " — OVER THE LAW") : ""}`);
   console.log(`   sizes: ${r.sizes.join(" ")}`);
   if (bad) {
     for (const o of r.offenders.slice(0, 25)) console.log(`     [${o.rule}] ${o.fam} ${o.w} ${o.size}px  ${o.el}  "${o.text}"`);
+  }
+  if (over) {
+    if (open) console.log(`     [ramp law] ${r.sizeCount} sizes — known open: ${open}`);
+    else console.log(`     [ramp law] ${r.sizeCount} sizes — the law is 8`);
   }
 }
 
