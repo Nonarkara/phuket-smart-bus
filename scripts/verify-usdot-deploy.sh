@@ -76,5 +76,38 @@ for want in strict-transport-security content-security-policy x-content-type-opt
 done
 echo "ok: HSTS, CSP and nosniff are all present"
 
+# ── every deployment of THIS commit must serve the same bytes ───────────────
+# One commit is deployed twice — locally by scripts/deploy-usdot.sh and in CI
+# by depa-usdot.yml — and whichever finishes last owns the preview domain. If
+# the LOCAL deployment owns it, comparing the domain against the local build is
+# comparing the deployment to itself. Each deployment of the commit is
+# therefore checked by its own deployment URL, so a build input that differs
+# between the two is a failure rather than a coincidence.
+PROJECT="${PAGES_PROJECT:-phuket-smart-bus}"
+HEAD_SHORT="$(git rev-parse --short HEAD)"
+BRANCH_NAME="${CUSTOM#https://}"; BRANCH_NAME="${BRANCH_NAME#http://}"; BRANCH_NAME="${BRANCH_NAME%/}"
+DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
+
+DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" -v branch="$BRANCH_NAME" '
+  {
+    br = $4; src = $5; url = $6;
+    gsub(/[[:space:]]/, "", br); gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
+    if (br == branch && src != "" && url != "" && index(src, sha) == 1) print url
+  }' | sort -u)"
+
+CHECKED=0
+while IFS= read -r url; do
+  [ -n "$url" ] || continue
+  echo "→ comparing deployment $url"
+  BASE_URL="$url" node scripts/verify-assets.mjs
+  CHECKED=$((CHECKED + 1))
+done <<< "$DEPLOY_URLS"
+
+if [ "$CHECKED" -gt 0 ]; then
+  echo "ok: $CHECKED further deployment(s) of ${HEAD_SHORT} serve identical bytes"
+else
+  echo "warn: no further deployment of ${HEAD_SHORT} was found to compare"
+fi
+
 echo
 echo "✓ toolkit deploy verified"
