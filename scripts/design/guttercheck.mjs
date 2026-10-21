@@ -93,56 +93,82 @@ for (const surface of SURFACES) {
   await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
   await p.waitForTimeout(5000);
 
-  const edges = await p.evaluate((probes) => {
+  const measured = await p.evaluate((probes) => {
     const out = [];
     for (const [sel, label, role] of probes) {
       const el = document.querySelector(sel);
-      if (!el) { out.push({ label, sel, role: role || "band", x: null, y: 0, h: 0 }); continue; }
+      if (!el) { out.push({ label, sel, role: role || "band", x: null, y: 0, h: 0, w: 0 }); continue; }
       const r = el.getBoundingClientRect();
-      out.push({ label, sel, role: role || "band", x: Math.round(r.left * 10) / 10, y: Math.round(r.top), h: Math.round(r.height) });
+      out.push({ label, sel, role: role || "band", x: Math.round(r.left * 10) / 10, y: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width) });
     }
-    return out;
+    return { edges: out, viewport: window.innerWidth };
   }, surface.probes);
+  const edges = measured.edges;
+  const viewport = measured.viewport;
 
   const missing = edges.filter((e) => e.x === null);
   const real = edges.filter((e) => e.x !== null);
 
-  // ── a band is a STRIP of the page, and a control cluster is not a band ──
+  // A BAND is a strip of the page: its content must start on the page's
+  // gutter, wherever it happens to sit vertically. A band that has drifted
+  // right is still a band that has drifted.
   //
-  // The operations wall puts the LIVE ⇄ SIMULATION switch at the top RIGHT
-  // of the header, in the header's own row. Measured as a band, that group's
-  // left edge (910px) "disagrees" with the page's gutter (104px) — but it was
-  // never a band. It is part of the header strip, and the header strip's left
-  // edge is the brand's.
+  // A CONTROL CLUSTER is a group of controls inside a band's own row — the
+  // operations wall puts its LIVE = SIMULATION switch at the top right of
+  // the header, and the toolkit's source switcher joined it there. Measured
+  // as a band, that group's left edge (910px) "disagreed" with the page's
+  // gutter (104px), but it was never a band: it is part of the header strip,
+  // and the header strip's left edge is the brand's. A cluster may sit
+  // anywhere to the RIGHT of the gutter and is not measured against it. It
+  // may never sit to the LEFT of it — that is the defect the rule was
+  // written for (the source switcher flush to the corner while the body sat
+  // at 104px), and it stays caught.
   //
-  // So a probe that shares a row with the band before it is a CLUSTER: it may
-  // sit anywhere to the right of the gutter, and it is not measured against
-  // the gutter. It may never sit to the LEFT of the gutter — that is the
-  // defect the rule was written for (the source switcher flush to the corner
-  // while the body sat at 104px), and it stays caught.
-  // A BAND is measured against the gutter wherever it sits vertically. A band
-  // that has drifted right is still a band that has drifted, and the rule
-  // says so — it is not excused because it happens to share a row with
-  // something else.
-  const bands = real.filter((e) => e.role !== "cluster");
-  const clusters = real.filter((e) => e.role === "cluster");
+  // AND THE CLUSTER'S EXEMPTION IS BOUNDED BY ITS BAND. A cluster is part of
+  // the band it shares a row with; a declared cluster that has LEFT its band
+  // (moved onto a row of its own) is measured like a band. Either the
+  // declaration is stale or the layout changed, and a 400px drift must not
+  // ride on a declaration that no longer describes the page. The geometry can
+  // only make this rule STRICTER: a cluster still in its band is still
+  // excused, and one that is not can only fail.
+  const declaredBands = real.filter((e) => e.role !== "cluster");
+  const declaredClusters = real.filter((e) => e.role === "cluster");
+  const sharesRow = (c, b) => {
+    const overlap = Math.min(c.y + c.h, b.y + b.h) - Math.max(c.y, b.y);
+    return overlap > 0 && overlap >= Math.min(c.h, b.h) * 0.5;
+  };
+  const bands = [
+    ...declaredBands,
+    ...declaredClusters.filter((c) => !declaredBands.some((b) => sharesRow(c, b))),
+  ];
+  const clusters = declaredClusters.filter((c) => declaredBands.some((b) => sharesRow(c, b)));
 
   const lefts = [...new Set(bands.map((e) => e.x))];
   const gutter = lefts.length ? Math.min(...lefts) : null;
   const drifted = bands.filter((e) => gutter !== null && Math.abs(e.x - gutter) > TOL);
   const stranded = clusters.filter((e) => gutter !== null && e.x < gutter - TOL);
+  const overhung = clusters.filter((e) => e.x + e.w > viewport + TOL);
 
   console.log(`\n=== ${route} — ${surface.label} ===`);
   for (const e of edges) {
-    console.log(`  ${e.x === null ? "  ?" : String(e.x).padStart(6)}  ${e.label}  (${e.role})${e.x === null ? `  (${e.sel} not found)` : ""}`);
+    const kind = e.role === "cluster" ? (clusters.includes(e) ? "cluster" : "cluster (left its band)") : "band";
+    console.log(`  ${e.x === null ? "  ?" : String(e.x).padStart(6)}  ${e.label}  (${kind})${e.x === null ? `  (${e.sel} not found)` : ""}`);
   }
 
   if (missing.length) {
     failures += missing.length;
     console.error(`  FAIL — ${missing.length} probe(s) did not render.`);
+  } else if (!declaredBands.length) {
+    // A surface that declares no band has no gutter to measure against, and
+    // a rule with nothing to measure must not report a pass.
+    failures++;
+    console.error(`  FAIL — this surface declares no band: the rule has no gutter to measure, so it cannot pass.`);
   } else if (stranded.length) {
     failures++;
     console.error(`  FAIL — ${stranded.map((e) => e.label).join(", ")} sits ${(gutter - stranded[0].x).toFixed(1)}px LEFT of the page's gutter (${gutter}px).`);
+  } else if (overhung.length) {
+    failures++;
+    console.error(`  FAIL — ${overhung.map((e) => e.label).join(", ")} hangs past the right edge of the screen (${viewport}px).`);
   } else if (drifted.length) {
     failures++;
     console.error(`  FAIL — the bands do not share a left edge: ${bands.map((e) => `${e.label} ${e.x}px`).join(", ")} (tolerance ${TOL}px).`);

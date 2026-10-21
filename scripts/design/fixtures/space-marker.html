@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>track-marker fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  p { font-size: 14px; line-height: 1.5; max-width: 60ch; }
+
+  /* The corridor rail, exactly as the fleet detail draws it: a positioned
+     track whose children are placed by a percentage, not by the flow. */
+  .fd-corridor-line { position: relative; display: flex; align-items: center; width: 1000px; height: 60px; }
+  .fd-corridor-line > button { height: 28px; }
+  .fd-corridor-bus {
+    position: absolute; top: 50%; translate: -50% -50%; left: 0;
+    width: 80px; font: 700 12px/1 "Source Sans 3", system-ui, sans-serif;
+  }
+  /* An absolutely positioned button that is NOT a track marker: a genuine
+     action that happens to be placed by a percentage. */
+  .placed-action {
+    position: absolute; top: 50%; translate: -50% -50%; left: 0;
+    width: 80px; font: 700 12px/1 "Source Sans 3", system-ui, sans-serif;
+  }
+  .plain { width: 110px; font: 700 12px/1 "Source Sans 3", system-ui, sans-serif; }
+
+  /* One variant at a time: the proof asserts on each case separately. */
+  .case { display: none; }
+  html[data-variant="pair-of-markers"]    .case-pair,
+  html[data-variant="marker-and-action"]  .case-mixed,
+  html[data-variant="absolute-not-marker"] .case-placed { display: flex; }
+</style>
+</head>
+<body>
+<section>
+  <h2>track markers and real actions</h2>
+  <p>Two bus markers on a rail are data points, not two scattered actions. One
+     marker and one real action is a pair, and a pair pushed to opposite ends
+     of a mostly empty row is a defect. An action that merely happens to be
+     placed by a percentage is still an action.</p>
+
+  <!-- VARIANT pair-of-markers: two markers on the rail → NOT scattered -->
+  <div class="fd-corridor-line case case-pair">
+    <button class="fd-corridor-bus" style="left: 30%">bus</button>
+    <button class="fd-corridor-bus" style="left: 82%">bus</button>
+  </div>
+
+  <!-- VARIANT marker-and-action: one marker, one action → IS scattered -->
+  <div class="fd-corridor-line case case-mixed">
+    <button class="fd-corridor-bus" style="left: 82%">bus</button>
+    <button class="plain">Action</button>
+  </div>
+
+  <!-- VARIANT absolute-not-marker: a placed action that is not a marker → IS scattered -->
+  <div class="fd-corridor-line case case-placed">
+    <button class="placed-action" style="left: 82%">action</button>
+    <button class="plain">Action</button>
+  </div>
+</section>
+<script>
+  const v = new URLSearchParams(location.search).get("variant");
+  if (v) document.documentElement.dataset.variant = v;
+</script>
+</body>
+</html>

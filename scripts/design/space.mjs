@@ -105,6 +105,10 @@ const freshPage = async () => {
 };
 
 const open = async (route, vp) => {
+  // The path the gate ASKED for. `goto` follows redirects and reports the
+  // final status, so a 302 that lands on the homepage answers 200 — and the
+  // gate would measure the homepage and call it the route it wanted.
+  const wanted = new URL(BASE + route, BASE).pathname.replace(/\/+$/, "") || "/";
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       if (p.isClosed()) p = await freshPage();
@@ -117,6 +121,11 @@ const open = async (route, vp) => {
       // is a route that could not be measured.
       if (res && res.status() >= 400) {
         console.error(`  (${route} @${vp.label} answered ${res.status()} — not a page this gate can measure)`);
+        return false;
+      }
+      const landed = new URL(p.url()).pathname.replace(/\/+$/, "") || "/";
+      if (landed !== wanted) {
+        console.error(`  (${route} @${vp.label} ended on ${landed} — a different page than the one that was asked for)`);
         return false;
       }
       await p.waitForTimeout(5000);
@@ -294,17 +303,26 @@ for (const route of ROUTES) {
         // is WHERE THE BUS IS, not where the layout put it. Two buses 149px
         // apart on a 258px rail is a gap in the DATA, and reading it as a
         // gap in the layout made the gate fail or pass with the traffic.
-        // An absolutely positioned child placed by a percentage is placed by
-        // its own coordinate, so the flow never made that gap.
+        //
+        // The exclusion is SCOPED to the two rail classes, and it takes BOTH
+        // members of the pair. A generic "any absolutely positioned button
+        // with a percentage left" rule would have excused a real pair of
+        // scattered actions; a pair where only one member is a marker is
+        // still a pair to measure.
+        const TRACK_MARKER = /\b(fc-line__bus|fd-corridor-bus)\b/;
         const isTrackMarker = (x) => {
           const kcs = getComputedStyle(x.k);
           if (kcs.position !== "absolute" && kcs.position !== "fixed") return false;
+          if (!TRACK_MARKER.test(String(x.k.className || ""))) return false;
           const inline = x.k.getAttribute("style") || "";
           return /(^|;)\s*left\s*:\s*[\d.]+%\s*(;|$)/.test(inline);
         };
         for (const [, row] of rows) {
-          const acts = row.filter((x) => /^(button|a)$/i.test(x.k.tagName) && x.r.width > 0 && !isTrackMarker(x));
+          const acts = row.filter((x) => /^(button|a)$/i.test(x.k.tagName) && x.r.width > 0);
           if (acts.length !== 2) continue;
+          // A PAIR OF MARKERS is a pair of data points on a rail, not a pair
+          // of actions. One marker and one real action is still a pair.
+          if (acts.every((x) => isTrackMarker(x))) continue;
           const used = acts.reduce((s, x) => s + x.r.width, 0);
           if (used > r.width * 0.55) continue;
           for (let i = 0; i < acts.length; i++) {
@@ -313,11 +331,20 @@ for (const route of ROUTES) {
               const wA = A.width, wB = B.width;
               if (!wA || !wB) continue;
               const similar = Math.max(wA, wB) / Math.min(wA, wB) < 1.6;
-              const gap = B.left - A.right;
+              // The gap between two boxes, in whichever order they sit. DOM
+              // order is not visual order: a button placed by a percentage can
+              // come FIRST in the markup and land on the RIGHT, and a gap
+              // computed as `B.left - A.right` then reads as a large negative
+              // number and the pair is never measured. The space between two
+              // boxes does not care which one came first.
+              const left = A.left <= B.left ? A : B;
+              const right = left === A ? B : A;
+              const gap = right.left - left.right;
               if (similar && gap > r.width * SCATTER_GAP) {
                 scattered.push({
                   el: label(el),
-                  a: label(acts[i].k), b: label(acts[j].k),
+                  a: label(left === A ? acts[i].k : acts[j].k),
+                  b: label(right === A ? acts[i].k : acts[j].k),
                   gap: Math.round(gap), of: Math.round(r.width),
                 });
               }

@@ -228,7 +228,7 @@ a { color: var(--amber-text); }
   letter-spacing: -0.01em;
 }
 .desktop-rider__brand-text small {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--ink-2, rgba(0, 0, 0, 0.6));
   margin-top: 2px;
 }
@@ -370,7 +370,7 @@ a { color: var(--amber-text); }
   border-bottom: 1px solid var(--satbg-line);
   background: var(--satbg-panel);
   
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.02em;
   color: var(--satbg-ink-2);
   overflow-x: auto;
@@ -391,7 +391,7 @@ a { color: var(--amber-text); }
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-left: 4px;
-  font-size: 9px;
+  font-size: var(--t-micro);
 }
 
 .satbg__ledger-item {
@@ -430,7 +430,7 @@ a { color: var(--amber-text); }
 
 .satbg__group-label {
   
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -450,7 +450,7 @@ a { color: var(--amber-text); }
   background: transparent;
   color: var(--satbg-ink-2);
   
-  font-size: 10px;
+  font-size: var(--t-micro);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   padding: 4px 9px;
@@ -474,7 +474,7 @@ a { color: var(--amber-text); }
   margin-left: auto;
   flex: 0 0 auto;
   
-  font-size: 9px;
+  font-size: var(--t-micro);
   color: var(--satbg-ink-2);
   padding-left: 18px;
   border-left: 1px solid var(--satbg-line);
@@ -621,7 +621,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__min-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -634,7 +634,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__bus-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0; color: var(--text-tertiary);
 }
@@ -817,7 +817,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-sm);
   background: rgba(255, 149, 0, 0.08);
   border-left: 3px solid var(--orange);
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--text-secondary);
   line-height: 1.4;
   text-align: left;
@@ -899,7 +899,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__fare-mode {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--text-secondary);
 }
 
@@ -1081,7 +1081,7 @@ a { color: var(--amber-text); }
   color: var(--amber-text);
   min-width: 1.6rem;
   padding: 0.2rem 0.3rem;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   cursor: pointer;
   line-height: 1;
@@ -1143,7 +1143,7 @@ a { color: var(--amber-text); }
 }
 
 .bottom-nav__label {
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0;
   color: var(--amber-text);
@@ -1293,7 +1293,7 @@ a { color: var(--amber-text); }
 
 .map-pill__count {
   opacity: 0.5;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 /* Live count badge — translucent white */
@@ -1536,7 +1536,7 @@ a { color: var(--amber-text); }
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0; }
 
 .decision-panel__label { color: var(--panel-accent); font-weight: 600; }
@@ -1557,7 +1557,7 @@ a { color: var(--amber-text); }
   border: 0;
   background: rgba(0, 0, 0, 0.04);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 500;
 }
 
@@ -1639,7 +1639,7 @@ a { color: var(--amber-text); }
 
 .decision-panel__env-stat small {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--text-tertiary);
   margin-top: 1px;
 }
@@ -1654,7 +1654,7 @@ a { color: var(--amber-text); }
 }
 
 .decision-panel__occupancy-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--text-secondary);
   letter-spacing: 0; }
 
@@ -1694,7 +1694,7 @@ a { color: var(--amber-text); }
 
 .decision-panel__advantages-title {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0; color: var(--green);
   margin-bottom: 6px;
@@ -1805,7 +1805,7 @@ a { color: var(--amber-text); }
 .hero__eyebrow {
   display: inline-flex;
   color: var(--text-tertiary);
-  letter-spacing: 0; font-size: 11px;
+  letter-spacing: 0; font-size: var(--t-micro);
   font-weight: 600;
 }
 
@@ -1823,7 +1823,7 @@ a { color: var(--amber-text); }
 }
 
 .spotlight-stat span, .spotlight-stat small { display: block; color: var(--text-secondary); }
-.spotlight-stat span { font-size: 10px; letter-spacing: 0; }
+.spotlight-stat span { font-size: var(--t-micro); letter-spacing: 0; }
 .spotlight-stat strong { display: block; margin-top: 3px; font-size: 17px; font-weight: 400; letter-spacing: -0.02em; }
 .spotlight-stat small { margin-top: 3px; line-height: 1.3; font-size: 12px; }
 
@@ -1880,7 +1880,7 @@ a { color: var(--amber-text); }
   background: rgba(0, 0, 0, 0.03);
 }
 
-.spotlight-timetable-card span { display: block; color: var(--text-secondary); font-size: 10px; letter-spacing: 0; }
+.spotlight-timetable-card span { display: block; color: var(--text-secondary); font-size: var(--t-micro); letter-spacing: 0; }
 .spotlight-timetable-card strong { display: block; margin-top: 3px; line-height: 1.3; font-size: 14px; font-weight: 400; }
 
 .spotlight__timetable-list,
@@ -1913,7 +1913,7 @@ a { color: var(--amber-text); }
   align-items: center;
   margin-bottom: 6px;
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0; }
 
 .advisory-badge {
@@ -1923,7 +1923,7 @@ a { color: var(--amber-text); }
   border-radius: 0;
   font-weight: 600;
   color: #fff;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 .advisory-badge.is-warning { background: var(--red); }
@@ -2012,7 +2012,7 @@ a { color: var(--amber-text); }
 .pass-ticket__name { font-size: 22px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; }
 
 .pass-ticket__countdown { display: grid; gap: 2px; }
-.pass-ticket__countdown span { color: var(--text-tertiary); font-size: 11px; letter-spacing: 0; }
+.pass-ticket__countdown span { color: var(--text-tertiary); font-size: var(--t-micro); letter-spacing: 0; }
 .pass-ticket__countdown strong { font-size: 34px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .pass-ticket__countdown small { color: var(--text-secondary); line-height: 1.3; font-size: 13px; }
 
@@ -2027,7 +2027,7 @@ a { color: var(--amber-text); }
   background: rgba(0, 0, 0, 0.03);
 }
 
-.pass-ticket__meta-card span { color: var(--text-tertiary); font-size: 10px; letter-spacing: 0; }
+.pass-ticket__meta-card span { color: var(--text-tertiary); font-size: var(--t-micro); letter-spacing: 0; }
 .pass-ticket__meta-card strong { font-size: 14px; font-weight: 400; line-height: 1.3; }
 
 .pass-qr-card {
@@ -2056,7 +2056,7 @@ a { color: var(--amber-text); }
 .pass-qr-card__copy { display: grid; gap: 2px; text-align: center; }
 .pass-qr-card__copy strong { font-size: 15px; font-weight: 500; line-height: 1.25; }
 .pass-qr-card__copy p, .pass-qr-card__copy small { margin: 0; color: var(--text-secondary); line-height: 1.4; font-size: 13px; }
-.pass-qr-card__copy small { font-size: 11px; letter-spacing: 0.04em; }
+.pass-qr-card__copy small { font-size: var(--t-micro); letter-spacing: 0.04em; }
 
 /* ===== Compare View ===== */
 
@@ -2248,7 +2248,7 @@ a { color: var(--amber-text); }
 .ops__sim-strip .ops__sim-stats {
   display: flex;
   gap: 20px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: #666;
   font-variant-numeric: tabular-nums;
 }
@@ -2343,7 +2343,7 @@ a { color: var(--amber-text); }
 /* ── Driver alerts ── */
 
 .ops-driver-alerts h3 {
-  font-size: 10px;
+  font-size: var(--t-micro);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #5f5f5f;
@@ -2482,7 +2482,7 @@ a { color: var(--amber-text); }
 
 /* Driver name + plate: truncate, never wrap */
 .fleet-row__info .fleet-row__meta {
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: #555;
   white-space: nowrap;
   overflow: hidden;
@@ -2659,7 +2659,7 @@ a { color: var(--amber-text); }
 /* Pill with time */
 .welcome-sheet__pill-time {
   font-variant-numeric: tabular-nums;
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: #0f766e;
   font-weight: 600;
 }
@@ -2964,7 +2964,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__next-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: var(--text-tertiary);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -3004,7 +3004,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__peek-hint {
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--text-tertiary);
 }
 
@@ -3071,7 +3071,7 @@ a { color: var(--amber-text); }
 
 /* ── Map badge — premium ── */
 .map-badge {
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 500;
   letter-spacing: 0.02em;
   padding: 7px 12px;
@@ -3830,7 +3830,7 @@ a { color: var(--amber-text); }
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.04em;
 }
@@ -3914,7 +3914,7 @@ a { color: var(--amber-text); }
 
 .analytics-col__hour {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.45);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -3970,7 +3970,7 @@ a { color: var(--amber-text); }
 .analytics-summary__cell--lost { background: rgba(232, 84, 72, 0.10); }
 
 .analytics-summary__label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0; }
 
@@ -4070,7 +4070,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__brand-eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.5);
@@ -4092,7 +4092,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__route-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.42);
   font-weight: 700;
@@ -4117,7 +4117,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__clock-zone {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.2em;
   color: rgba(255, 255, 255, 0.42);
 }
@@ -4129,7 +4129,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__hero-eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.22em;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 700;
@@ -4194,7 +4194,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__indicator-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.42);
@@ -4215,7 +4215,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__indicator-status {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.06em;
 }
@@ -4237,7 +4237,7 @@ a { color: var(--amber-text); }
   display: flex;
   justify-content: space-between;
   padding: 0 28px 12px;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.42);
   font-weight: 700;
@@ -4295,7 +4295,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__stop-name-th {
-  font-size: 11px;
+  font-size: var(--t-micro);
   color: rgba(255, 255, 255, 0.5);
   font-family: "IBM Plex Sans Thai", "Noto Sans Thai", sans-serif;
   margin-top: 2px;
@@ -4318,7 +4318,7 @@ a { color: var(--amber-text); }
   gap: 12px;
   padding: 12px 28px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   color: rgba(255, 255, 255, 0.45);
   font-variant-numeric: tabular-nums;
@@ -4339,7 +4339,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__missing-eyebrow {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.22em;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 700;
@@ -5196,7 +5196,7 @@ a { color: var(--amber-text); }
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   pointer-events: none;
 }
@@ -5251,7 +5251,7 @@ a { color: var(--amber-text); }
 }
 
 .driver-tablet__missing-plates-label {
-  font-size: 11px;
+  font-size: var(--t-micro);
   letter-spacing: 0.18em;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.5);
@@ -5327,7 +5327,7 @@ a { color: var(--amber-text); }
      Use a dark amber text on a pale amber background for WCAG AA contrast. */
   background: rgba(255, 149, 0, 0.10);
   border-top: 1px solid rgba(255, 149, 0, 0.35);
-  font-size: 10px;
+  font-size: var(--t-micro);
   line-height: 1.4;
   color: #7a3a00;   /* dark amber — contrast ratio >7:1 on the pale bg */
 }
@@ -5807,7 +5807,7 @@ a { color: var(--amber-text); }
   align-items: center;
   gap: 6px;
   padding: 4px 6px 4px 4px;
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 600;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
@@ -10513,13 +10513,13 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .map-lang--compact .lang-toggle__button {
   min-width: 30px;
   min-height: 28px;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 /* Laptop landing: make the product architecture legible, not a list of
    cryptic demo links. */
 .desktop-shell__link strong { color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 600; }
-.desktop-shell__link span { color: rgba(255, 255, 255, 0.5); font-size: 10px; line-height: 1.35; }
+.desktop-shell__link span { color: rgba(255, 255, 255, 0.5); font-size: var(--t-micro); line-height: 1.35; }
 .desktop-shell__more a:last-child::after { content: none; }
 
 /* Toolkit narrative redesign: the running system is the opening proof. The
