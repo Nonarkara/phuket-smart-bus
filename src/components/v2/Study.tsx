@@ -458,7 +458,7 @@ export function Study() {
             <div className="study__kpi study__kpi--model">
               <span className="study__kpi-label">Airport-line model</span>
               <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
-              <span className="study__kpi-detail">modelled boarders, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
+              <span className="study__kpi-detail">modelled boarders, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {fmtN(aggregate.modelledFlights)} arrivals modelled</span>
             </div>
           </section>
 
