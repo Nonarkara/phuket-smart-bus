@@ -20,6 +20,13 @@
   .actions { display: flex; gap: 10px; margin-top: 14px; }
   .actions button { font-size: 14px; padding: 9px 16px; background: #0f7a47; color: #fff; border: 0; }
   .actions button.ghost { background: transparent; color: #0f7a47; border: 1px solid #0f7a47; }
+  /* A COLUMN stack is a stack, not a row that broke. Every child is on its
+     own line by design, so the last line holding one item is the shape of
+     the thing and not a widow. The live fleet table's route cell is exactly
+     this: a line badge, a direction, a progress rule. */
+  .stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .stack > span { font-size: 13px; }
+  .stack .rule { width: 64px; height: 4px; background: #d9d2c4; }
   footer { padding: 16px 24px; border-top: 1px solid #d9d2c4; font-size: 13px; }
 </style>
 </head>
@@ -43,6 +50,11 @@
     <div class="actions">
       <button>Add a bus</button>
       <button class="ghost">Open the day report</button>
+    </div>
+    <div class="stack">
+      <span>10-1209</span>
+      <span>→ Rawai</span>
+      <span class="rule"></span>
     </div>
   </main>
   <footer>Phuket Smart Bus · live tracker relay</footer>
