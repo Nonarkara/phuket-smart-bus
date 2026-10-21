@@ -417,6 +417,12 @@ for (const route of ROUTES) {
         // simply said what it had to say. Only a page the reader must SCROLL
         // can waste one.
         if (bandCount <= 1) continue;
+        // The page's TAIL. Content that ends in the middle of the last
+        // screen is not a hole — it is the end of the page. A band that
+        // holds the page's final content is measured against what the
+        // reader is actually looking at, not against a full screen.
+        const isTail = contentBottom <= y + vh + 4;
+        if (isTail) continue;
         if (!inBand) {
           // An empty band. It is wasted if the reader scrolled into it (there
           // is content above), or if it is a void before the content starts

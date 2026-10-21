@@ -111,6 +111,48 @@ Two rules follow, and they are not optional:
   - **The one that is still open is the rider's phone app**, and it is open on purpose, not by accident. It renders 16 sizes at 390 because it is built in `rem` against a 16px root with about sixty separate `font-size` declarations — `0.62rem` to `2.4rem` — and every one of them lands on its own step. **It does not read as a ramp**: the phone screen shows a clear hierarchy, the display-face heading is a legal 38px, and the audit reports 0 band violations. The count is over the limit the number states; the page is not over the limit the limit is for. Closing it is a deliberate type redesign of the rider UI — a phone-first, six-language surface — and it wants its own reviewed pass, not a drive-by collapse at the end of a long one. It is named here so it cannot be forgotten.
 - **One radius for the product.** The house radius is 0 (`--radius-sm/-md/-lg/-pill` are all 0). Full round is reserved for true circles and pills (`50%`, `999px`). One shape keeps a corner radius of its own: `20px 20px 0 0`, a photo with two rounded top corners. Nothing else gets a radius.
 
+## Spatial hallucination
+
+**A layout that invents a reason for things to occupy space, instead of arranging them around how people read, choose and act.** It looks composed at first glance and cannot explain its own geometry. The recurring test is: **"Why is this here, why this size, and why this far from that?"** If the answer is "the grid put it there", the layout has failed. Whitespace is intentional when it separates meaningful groups, supports reading, or establishes emphasis. It becomes hallucination when it asks the reader to supply an intention the designer never had.
+
+Six failure modes, and every one of them is measurable:
+
+1. **Unjustified gaps** — space stretched to fill a container. A grid stretches its cells to the tallest one; the short cell then carries a cushion of nothing.
+2. **Orphan elements** — an element stranded in a mostly-empty row. A photo beside an empty area; a 60px span alone in a 588px row.
+3. **Scattered actions** — related buttons on different rows, or pushed to opposite edges of a row that is mostly empty.
+4. **False hierarchy** — everything gets equal weight, so nothing helps the reader choose. A grid of four or more identical boxed cells that owns half the screen.
+5. **Accidental wrapping** — a row breaks where it runs out of room and strands one item alone on the last line.
+6. **Spatially expensive information** — a small decision requires a long scroll. A region inside the page that is several screens deep.
+
+**`scripts/design/space.mjs` measures all six, plus content clipped by its own box and scroll traps. It is a screen, not a judge: it reports geometry with its measurements, and a human decides whether the geometry is a decision.**
+
+```bash
+node scripts/design/space.mjs "/v2?view=toolkit" /ops --base http://127.0.0.1:4173
+```
+
+**It is proven to fail, and proven to be quiet.** `scripts/design/prove-space.sh` serves a fixture carrying one deliberate instance of every mode beside a clean control, and fails if a mode goes uncaught or the control goes noisy. The fixture found four real blindnesses in the instrument itself: a rule that skipped every grid whose children were explicitly placed (so a row that ended with a stranded item went unseen), a rule that compared every pair of actions in a row (so a navigation row spread across the width read as scattered actions), a dead-space rule that judged the page's own body, and an equal-weight rule that fired on every metadata row. A mutation test — blinding one rule — is what proves the proof itself bites.
+
+**The instrument's own false positives are recorded here, because a gate that cries wolf is as useless as one that cannot fail:**
+
+- A ROW is a line of items, not a set of identical tops. A pill is vertically centred and a chip beside it is not; a 3px difference once split one flex line into two, so a pill next to its own chips read as "alone on the last line". Rows are clustered with a tolerance.
+- The page's OWN scroll is not a trap. A long briefing on a phone is a long briefing. A region INSIDE the page that is several screens deep is the trap.
+- A wide DATA TABLE on a phone is a legitimate horizontal scroll. The map engine sizes its own overlay to the route's bounds, not to the viewport; both are exempt.
+- A strip of three parallel facts is not a choice. The reader reads all of it and equal weight is the point. Only a grid of four or more identical cells that owns a large share of the screen is a false hierarchy.
+- The page's TAIL is not a hole. Content that ends in the middle of the last screen is the end of the page.
+- A cell's mark is the SET of colours it carries, not the colour of its first line. A green figure under a grey label marks the cell as surely as a tinted ground would.
+
+**What the massacre found, measured on the local build at 1440 and 390, 2026-10-21** — the operations wall's right rail was 527px tall and held 1,652px of content: the hour-by-hour analysis sat BETWEEN the headline and the fleet table, so the thing the rail exists for finished 1,482px below the fold and nothing on the surface said it was down there. The fleet table's height came from four rules written when the table sat under the map and the two divided a vertical column; the table moved into the rail, the rules stayed, and the height of the thing the rail exists for was the residue of their source order. The rail was 380px, which the note beside it already said was too narrow, so the ETA column was off the edge and the operator had to scroll a wall sideways to read it. A FULL badge shared the load cell with the bar and squeezed the bar to zero width, so every row's occupancy was invisible. The conditions strip was capped at 110px while its four tiles each needed 230px, so the cap was cutting the tiles, not the strip. On a phone, the briefing's second column wanted 320px, the RED FLAG banner was `width: max-content` — 627px of text in a 388px map — and the timebar's chips and controls together wanted 472px of a 340px row.
+
+**The rules that came out of it, each one earned by a measurement:**
+
+- **A rail's width is set by what the rail holds.** 380px starved both the fleet table's five tracks and the operating equation's three terms. The rail is now `clamp(460px, 34vw, 520px)`, and the map keeps 60%+ at every width.
+- **A region's height is a decision, made where the region lives.** Rules left over from a layout that no longer exists will decide the geometry of the one that does, if nobody deletes them.
+- **The first screen answers three questions, in order, and nothing else.** How much did we lose today, what do I do about it right now, which bus is it. Everything else is one bounded scroll away.
+- **A bar that is squeezed to zero width is a measurement failure, not a design.** The badge next to it was the winner; the bar was the truth.
+- **A cap must be applied to the thing that overflows, not to its container.** Capping a strip does not shorten its tiles.
+- **A narrow-width rule that sits before the rule it overrides does nothing.** The declaration is there; it simply loses on source order. The narrow-width fixes live at the END of the stylesheet.
+- **A peer set must have a leader.** Four or more identical boxed cells that own half the screen are a yellow pages, not a system. Three parallel facts in a row are not a choice, and equal weight is the point.
+
 ## Voice
 
 - EN: plain, concrete, operational. Real plate numbers, real times, real distances. A figure that cannot be backed is not shown at all — distance alone beats an invented ETA.
