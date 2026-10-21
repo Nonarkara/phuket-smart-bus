@@ -66,6 +66,17 @@ else
 fi
 
 echo
+echo "── a route that is not there must not read as a clean route ──────────"
+GONE=$(node scripts/design/space.mjs /no-such-route.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$GONE" | sed 's/^/  /'
+if echo "$GONE" | grep -q "NOT MEASURED"; then
+  echo "  ✓ a 404 is reported as a route that could not be measured"
+else
+  echo "  ✗ a 404 was measured as if it were a page — the gate can pass on a route that does not exist"
+  fail=1
+fi
+
+echo
 if [ "$fail" -eq 0 ]; then
   echo "space instrument: PROVEN — it bites, and it stays quiet."
 else

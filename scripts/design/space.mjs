@@ -79,7 +79,7 @@ const WIDTHS = [
   { label: "390", width: 390, height: 844 },
 ];
 
-const b = await chromium.launch();
+let b = await chromium.launch();
 let c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 let p = await c.newPage();
 
@@ -91,7 +91,15 @@ const freshPage = async () => {
     // retry above cannot come back from, and an instrument that dies on a
     // dropped page stops checking every route after it — which is how a gate
     // ends up green on the routes it never reached.
-    c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+    try {
+      c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+    } catch {
+      // The BROWSER went too. A page cannot be made from a closed browser,
+      // so the browser is relaunched. An instrument that crashes is an
+      // instrument that stops checking.
+      b = await chromium.launch();
+      c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+    }
     return c.newPage();
   }
 };
@@ -101,13 +109,28 @@ const open = async (route, vp) => {
     try {
       if (p.isClosed()) p = await freshPage();
       await p.setViewportSize({ width: vp.width, height: vp.height });
-      await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
+      const res = await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
+      // A ROUTE THAT IS NOT THERE is not a clean route. The instrument
+      // measures whatever HTML came back, so a 404 — or a typo in the route
+      // list — reads as a pass on a page nobody asked for. The status is the
+      // answer to "is this the route?", and anything that is not a success
+      // is a route that could not be measured.
+      if (res && res.status() >= 400) {
+        console.error(`  (${route} @${vp.label} answered ${res.status()} — not a page this gate can measure)`);
+        return false;
+      }
       await p.waitForTimeout(5000);
       return true;
     } catch (e) {
       console.error(`  (the browser dropped the page on ${route} @${vp.label}; retrying)`);
       try { await p.close(); } catch { /* already gone */ }
-      p = await freshPage();
+      try {
+        p = await freshPage();
+      } catch (e2) {
+        // The browser is gone for good. The route is unmeasured, and the
+        // caller counts that as a finding.
+        return false;
+      }
     }
   }
   return false;
@@ -265,8 +288,22 @@ for (const route of ROUTES) {
         // opposite ends of a row that is mostly empty, so the row's own
         // width is what makes the gap. Hence: exactly two actions, and they
         // must leave the row mostly empty.
+        //
+        // A MARKER ON A TRACK is not a pair of actions. The fleet console
+        // draws each bus on the corridor rail at `left: NN%` — its position
+        // is WHERE THE BUS IS, not where the layout put it. Two buses 149px
+        // apart on a 258px rail is a gap in the DATA, and reading it as a
+        // gap in the layout made the gate fail or pass with the traffic.
+        // An absolutely positioned child placed by a percentage is placed by
+        // its own coordinate, so the flow never made that gap.
+        const isTrackMarker = (x) => {
+          const kcs = getComputedStyle(x.k);
+          if (kcs.position !== "absolute" && kcs.position !== "fixed") return false;
+          const inline = x.k.getAttribute("style") || "";
+          return /(^|;)\s*left\s*:\s*[\d.]+%\s*(;|$)/.test(inline);
+        };
         for (const [, row] of rows) {
-          const acts = row.filter((x) => /^(button|a)$/i.test(x.k.tagName) && x.r.width > 0);
+          const acts = row.filter((x) => /^(button|a)$/i.test(x.k.tagName) && x.r.width > 0 && !isTrackMarker(x));
           if (acts.length !== 2) continue;
           const used = acts.reduce((s, x) => s + x.r.width, 0);
           if (used > r.width * 0.55) continue;

@@ -458,7 +458,7 @@ export function Study() {
             <div className="study__kpi study__kpi--model">
               <span className="study__kpi-label">Airport-line model</span>
               <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
-              <span className="study__kpi-detail">modelled, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
+              <span className="study__kpi-detail">modelled boarders, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
             </div>
           </section>
 
@@ -474,7 +474,8 @@ export function Study() {
                 They're the demand-side <em>expectation</em>, not a measurement.
               </li>
               <li>
-                <strong>These are town buses.</strong> {aggregate.airportBusDays === 0 ? "No tracked bus came within 1 km of HKT airport in this range" : `${aggregate.airportBusDays} tracked bus-days reached HKT airport`}. The airport-line model is shown for reference only — it is not a target for this fleet.
+                <strong>{aggregate.airportBusDays === 0 ? "These are town buses." : "The tracked fleet now includes airport-line buses."}</strong>{" "}
+                {aggregate.airportBusDays === 0 ? "No tracked bus came within 1 km of HKT airport in this range" : `${aggregate.airportBusDays} tracked bus-days reached HKT airport in this range`}. The airport-line model is shown for reference only — it models the whole airport line, not this fleet.
               </li>
               <li>
                 <strong>Runs and hours moving</strong> come from the fixes: a run starts when a bus leaves a halt of 10+ minutes; hours moving count only fix-to-fix steps of 50 m+ taken ≤3 min apart. The feed carries no line or trip, so these are not timetable trips.

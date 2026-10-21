@@ -31,6 +31,21 @@
      gutter. It stays in the header's row, so the band rule cannot see it —
      the cluster rule must. */
   html.variant-cluster-left .v2-source { position: absolute; left: 0; top: 12px; }
+
+  /* VARIANT shared-row-band: the sub-nav — a BAND — is dragged 400px to the
+     right AND pulled up into the header's own row. The old rule read the row
+     as the test for "is this a band?", so a band that shared a row with
+     another probe was excused as a cluster. A band is a band wherever it
+     sits: this must fail. */
+  html.variant-shared-row-band .tk-subnav__brand {
+    position: absolute; top: 19px; left: 400px; margin-left: 0;
+  }
+
+  /* VARIANT cluster-moved: the control cluster drops to a second row but
+     stays to the RIGHT of the gutter, which is where a control cluster
+     belongs. The old rule read the row as the test, so it called the
+     cluster a band and fired on a defect that does not exist. */
+  html.variant-cluster-moved .v2-source { position: absolute; left: 700px; top: 300px; }
 </style>
 </head>
 <body>
