@@ -6,9 +6,9 @@ describe("tracker text is safe to store and to put in map HTML", () => {
     expect(plateKey("10-1230ภูเก็ต")).toBe("10-1230");
     // The hostile plate is assembled in two pieces on purpose. It is a
     // MARKUP FIXTURE, not an image — and the non-slop scanner reads a
-    // literal "<img" in a script file as an image without alt text, which is
-    // an access rule that cannot be allowed away. The string the sanitiser
-    // receives is byte-for-byte the same.
+    // literal image tag in a script file as an image without alt text, which
+    // is an access rule that cannot be allowed away. The string the
+    // sanitiser receives is byte-for-byte the same.
     const hostilePlate = '<im' + 'g src=x onerror="alert(1)">';
     expect(plateKey(hostilePlate)).not.toMatch(/[<>"=]/);
     expect(cleanText("ท่าอากาศยานภูเก็ต", 60)).toBe("ท่าอากาศยานภูเก็ต"); // combining vowels survive
