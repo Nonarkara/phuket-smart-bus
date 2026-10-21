@@ -62,6 +62,17 @@ const INVENTORY = () => {
     const isDisplay = /Josefin/.test(fam);
     const isBody = /Source Sans|Plex Sans Thai/i.test(fam);
     const label = e.tagName.toLowerCase() + (e.className && typeof e.className === "string" ? "." + e.className.trim().split(/\s+/).slice(0, 2).join(".") : "");
+    // THE FLOOR. The smallest text a reader can be asked to read is 11px.
+    // The rider phone app's rule has said so since 2026-10-21 ("the smallest
+    // text on the screen is 11"), and the legacy consumer chain was below it:
+    // 9px in three declarations, 10px in thirteen, rendering 10px tab labels
+    // on seven routes and a 10px ticket meta on a phone. A floor that lives
+    // only in a stylesheet is a number; a floor the audit checks is a rule.
+    // Only an element that OWNS text is judged — a container's own font-size
+    // never renders as text on its own.
+    if (ownsText && size < 11) {
+      offenders.push({ rule: "text below the 11px floor", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
+    }
     if (isDisplay) {
       if (size < 18) offenders.push({ rule: "display face below 18px", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
       else if (size < 40 && w >= 600) offenders.push({ rule: "display face 600+ below 40px", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
