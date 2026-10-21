@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>type floor — the deliberate violation</title>
+<style>
+  * { box-sizing: border-box; }
+  html { font-family: "Source Sans 3", system-ui, sans-serif; }
+  body { margin: 0; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  p { font-size: 14px; line-height: 1.5; max-width: 60ch; }
+  /* THE FLOOR VIOLATION. 10px is below the smallest text a reader is
+     asked to read, and the audit must catch it. */
+  .floor { font-size: 10px; }
+</style>
+</head>
+<body>
+<section>
+  <h2>the type floor</h2>
+  <p>Everything on this page is within the law except one line, and that one
+     line is the point of the page: it is ten pixels tall, and the audit has
+     to say so.</p>
+  <p class="floor">This line is ten pixels tall and must be reported.</p>
+</section>
+</body>
+</html>

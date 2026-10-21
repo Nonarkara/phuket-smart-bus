@@ -21,14 +21,23 @@
 //   any other face                 -> must be Source Sans 3 / IBM Plex Sans Thai
 import { chromium } from "playwright";
 
-const BASE = process.env.BASE || "https://bus.nonarkara.org";
+const BASE_DEFAULT = "https://bus.nonarkara.org";
 // EVERY route the app serves. A type rule that only holds on seven of
 // thirteen routes is not a rule.
-const ROUTES = [
+//
+// Routes may also be given on the command line, so the proof script can
+// point the instrument at a fixture. A rule that can only be run against
+// the live site cannot be proven to fail.
+const ALL_ROUTES = [
   "/", "/ops", "/fleet", "/fleet/raw", "/study", "/research", "/capacity",
   "/toolkit", "/roi", "/driver", "/v2", "/governor", "/info", "/more",
   "/stops", "/pass", "/ride", "/compare",
 ];
+const argv = process.argv.slice(2);
+const baseArg = argv.indexOf("--base");
+const BASE = baseArg === -1 ? (process.env.BASE || BASE_DEFAULT) : argv[baseArg + 1];
+const ROUTES = argv.filter((a, i) => !a.startsWith("--") && i !== baseArg && i !== baseArg + 1);
+const ROUTE_LIST = ROUTES.length ? ROUTES : ALL_ROUTES;
 
 const VIEWPORTS = [
   { label: "1440", width: 1440, height: 900 },
@@ -113,7 +122,7 @@ const KNOWN_OPEN = {};
 
 for (const vp of VIEWPORTS) {
   await p.setViewportSize({ width: vp.width, height: vp.height });
-  for (const r of ROUTES) {
+  for (const r of ROUTE_LIST) {
     await p.goto(BASE + r, { waitUntil: "load", timeout: 30000 });
     await p.waitForTimeout(2500);
     report[`${r} @${vp.label}`] = await p.evaluate(INVENTORY);

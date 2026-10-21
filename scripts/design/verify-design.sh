@@ -19,7 +19,8 @@
 #                   and every scope that defines tokens defines all eight
 #     guttercheck — every band of a page starts on the same line
 #     offscale    — every size a page renders is a size the scale names
-#     typeaudit2  — the ≤8 ramp law, and no heavy grotesque posing as type
+#     typeaudit2  — the ≤8 ramp law, the 11px floor, and no heavy grotesque
+#                   posing as type
 #
 #   Each one is proven to FAIL: tokenscope named 17 dead declarations and
 #   guttercheck reported 80px of disagreement against the build that had
