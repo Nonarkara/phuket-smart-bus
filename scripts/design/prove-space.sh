@@ -11,6 +11,13 @@
 #
 # If the instrument stops biting, or starts crying wolf, this fails.
 #
+# It also proves three rules that are easy to get wrong:
+#
+#   a 404 is NOT a clean route
+#   a redirect is NOT the page you asked for
+#   a marker on a rail is data, not an action — but only when BOTH members
+#   of the pair are markers
+#
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -27,7 +34,9 @@ fi
 
 FIXTURES="scripts/design/fixtures"
 
-python3 -m http.server "$PORT" --directory "$FIXTURES" >/dev/null 2>&1 &
+# The fixture server answers 200, 404 and ONE redirect — the redirect is what
+# proves the gate notices when it lands on a different page than it asked for.
+node "$FIXTURES/serve.mjs" "$PORT" >/dev/null 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null || true' EXIT
 
@@ -73,6 +82,46 @@ if echo "$GONE" | grep -q "NOT MEASURED"; then
   echo "  ✓ a 404 is reported as a route that could not be measured"
 else
   echo "  ✗ a 404 was measured as if it were a page — the gate can pass on a route that does not exist"
+  fail=1
+fi
+
+echo
+echo "── a redirect is not the page you asked for ────────────────────────"
+REDIR=$(node scripts/design/space.mjs /redirect-to-clean.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$REDIR" | sed 's/^/  /'
+if echo "$REDIR" | grep -q "NOT MEASURED"; then
+  echo "  ✓ a redirect is reported as a route that could not be measured"
+else
+  echo "  ✗ a redirect was measured as if it were the requested route — the gate can pass on a page it never asked for"
+  fail=1
+fi
+
+echo
+echo "── a marker on a rail is data; an action is an action ───────────────"
+MARKERS=$(node scripts/design/space.mjs "/space-marker.html?variant=pair-of-markers" --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$MARKERS" | sed 's/^/  /'
+if echo "$MARKERS" | grep -q "SCATTERED actions"; then
+  echo "  ✗ two bus markers on a rail were reported as scattered actions — the instrument reads data as layout"
+  fail=1
+else
+  echo "  ✓ two markers on a rail are not scattered actions"
+fi
+
+MIXED=$(node scripts/design/space.mjs "/space-marker.html?variant=marker-and-action" --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$MIXED" | sed 's/^/  /'
+if echo "$MIXED" | grep -q "SCATTERED actions"; then
+  echo "  ✓ a marker and a real action are still a pair to measure"
+else
+  echo "  ✗ a marker excused a real scattered action — the marker exemption is too wide"
+  fail=1
+fi
+
+PLACED=$(node scripts/design/space.mjs "/space-marker.html?variant=absolute-not-marker" --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$PLACED" | sed 's/^/  /'
+if echo "$PLACED" | grep -q "SCATTERED actions"; then
+  echo "  ✓ an action placed by a percentage is still an action"
+else
+  echo "  ✗ a placed action was excused because it is absolutely positioned — the marker exemption is generic"
   fail=1
 fi
 

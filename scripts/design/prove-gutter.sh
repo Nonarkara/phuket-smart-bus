@@ -53,9 +53,9 @@ fi
 
 fail=0
 
-run() { # variant, expected (pass|fail)
-  local variant="$1" expect="$2" out code
-  out=$(node scripts/design/guttercheck.mjs --base "http://127.0.0.1:$PORT" --route "/gutter.html?variant=$variant" --surface toolkit 2>&1)
+run() { # variant, expected (pass|fail), surface
+  local variant="$1" expect="$2" surface="${3:-toolkit}" out code
+  out=$(node scripts/design/guttercheck.mjs --base "http://127.0.0.1:$PORT" --route "/gutter.html?variant=$variant" --surface "$surface" 2>&1)
   code=$?
   echo "$out" | sed 's/^/  /'
   if [ "$expect" = "pass" ] && [ "$code" -eq 0 ]; then
@@ -81,8 +81,12 @@ run cluster-left fail
 echo "── a band dragged right while sharing the header's row ───────────────"
 run shared-row-band fail
 
-echo "── a control cluster that drops to a second row ──────────────────────"
-run cluster-moved pass
+echo "── a control cluster that has left its band ─────────────────────────"
+run cluster-moved fail toolkit
+
+echo "── the insights bridge: a band on its own row ───────────────────────"
+run insights pass insights
+run insights-off fail insights
 
 if [ "$fail" -eq 0 ]; then
   echo "gutter instrument: PROVEN — it bites, and it stays quiet."

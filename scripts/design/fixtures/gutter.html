@@ -42,10 +42,18 @@
   }
 
   /* VARIANT cluster-moved: the control cluster drops to a second row but
-     stays to the RIGHT of the gutter, which is where a control cluster
-     belongs. The old rule read the row as the test, so it called the
-     cluster a band and fired on a defect that does not exist. */
+     stays to the RIGHT of the gutter. The old rule read the row as the
+     test, so it called the cluster a band and fired on a defect that does
+     not exist. The declared role fixed that — but only while the cluster is
+     IN its band. A cluster that has left its band is measured like a band:
+     a control group alone on a row at 700px is an orphan, and the
+     declaration cannot excuse it. */
   html.variant-cluster-moved .v2-source { position: absolute; left: 700px; top: 300px; }
+
+  /* VARIANT insights: the insights bridge's switcher is a BAND on its own
+     row, so it must start on the page's gutter. */
+  html.variant-insights .v2-source { position: absolute; left: 104px; top: 70px; }
+  html.variant-insights-off .v2-source { position: absolute; left: 24px; top: 70px; }
 </style>
 </head>
 <body>
