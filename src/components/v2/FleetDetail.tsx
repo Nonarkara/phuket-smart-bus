@@ -797,17 +797,22 @@ export function FleetDetail() {
               aria-label="Find a bus by plate"
             />
             <div className="fd-chips" role="group" aria-label="Show">
-              {(["all", "road", "quiet", "off"] as Show[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={show === k ? "is-active" : undefined}
-                  aria-pressed={show === k}
-                  onClick={() => setShow(k)}
-                >
-                  {SHOW_LABEL[k]}{k !== "all" ? ` · ${count(k)}` : ""}
-                </button>
-              ))}
+              {(["all", "road", "quiet", "off"] as Show[]).map((k) => {
+                const n = k === "all" ? rows.length : count(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className={show === k ? "is-active" : undefined}
+                    aria-pressed={show === k}
+                    aria-label={`${SHOW_LABEL[k]}, ${n} buses`}
+                    onClick={() => setShow(k)}
+                  >
+                    <span className="fd-chip-name">{SHOW_LABEL[k]}</span>
+                    <span className="fd-chip-count">{n}</span>
+                  </button>
+                );
+              })}
             </div>
             <label className="fd-select">
               <span>Service</span>

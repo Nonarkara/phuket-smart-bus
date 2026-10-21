@@ -80,13 +80,26 @@ const WIDTHS = [
 ];
 
 const b = await chromium.launch();
-const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+let c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 let p = await c.newPage();
+
+const freshPage = async () => {
+  try {
+    return await c.newPage();
+  } catch {
+    // The CONTEXT went with the page. A dead context is the only thing the
+    // retry above cannot come back from, and an instrument that dies on a
+    // dropped page stops checking every route after it — which is how a gate
+    // ends up green on the routes it never reached.
+    c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
+    return c.newPage();
+  }
+};
 
 const open = async (route, vp) => {
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      if (p.isClosed()) p = await c.newPage();
+      if (p.isClosed()) p = await freshPage();
       await p.setViewportSize({ width: vp.width, height: vp.height });
       await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
       await p.waitForTimeout(5000);
@@ -94,7 +107,7 @@ const open = async (route, vp) => {
     } catch (e) {
       console.error(`  (the browser dropped the page on ${route} @${vp.label}; retrying)`);
       try { await p.close(); } catch { /* already gone */ }
-      p = await c.newPage();
+      p = await freshPage();
     }
   }
   return false;
@@ -110,7 +123,9 @@ for (const route of ROUTES) {
       continue;
     }
 
-    const res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP, ROW_TOLERANCE }) => {
+    let res;
+    try {
+      res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP, ROW_TOLERANCE }) => {
       const label = (el) => {
         const c = typeof el.className === "string" ? el.className.trim() : "";
         return el.tagName.toLowerCase() + (c ? "." + c.split(/\s+/).slice(0, 2).join(".") : "");
@@ -524,6 +539,14 @@ for (const route of ROUTES) {
         docH, vh,
       };
     }, { DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP, ROW_TOLERANCE });
+    } catch (e) {
+      // The page died while it was being measured. A route that could not be
+      // measured is NOT a clean route — it is an unmeasured route, and it is
+      // counted as a finding so the gate cannot pass over it.
+      console.log(`\nNOT MEASURED: ${route} @${vp.label} — the browser dropped it mid-measurement`);
+      findings++;
+      continue;
+    }
 
     const total = res.deadCount + res.orphanCount + res.scatterCount + res.equalCount + res.wrapCount + res.bandCount + res.clippedCount + res.trapCount;
     findings += total;

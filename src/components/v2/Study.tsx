@@ -419,10 +419,15 @@ export function Study() {
         <>
           <RightNowPanel feed={liveFeed} buses={liveBuses} now={now} />
 
-          <section className="study__kpis">
+          <section className="study__kpis" aria-label="Archive summary">
+            <div className="study__kpis-head">
+              <span className="study__kpis-eyebrow">The archive</span>
+              <span className="study__kpis-note">What the collector recorded across the {data.days.length} days in range — measured, except where the row says otherwise.</span>
+            </div>
+
             <div className={`study__kpi${collectorStale ? " study__kpi--alert" : ""}`}>
               <span className="study__kpi-label">Collector</span>
-              <strong className="study__kpi-value">{collectorAgeMin === null ? "no sample today" : `${collectorAgeMin} min ago`}</strong>
+              <strong className="study__kpi-value">{collectorAgeMin === null ? "no sample" : `${collectorAgeMin} min ago`}</strong>
               <span className="study__kpi-detail">{collectorStale ? "Not recording — check the phuket-smart-bus-collector cron" : "last archived fleet sample · cron every 30 s"}</span>
             </div>
             <div className="study__kpi">
@@ -431,9 +436,14 @@ export function Study() {
               <span className="study__kpi-detail">out of {data.days.length} days in the range</span>
             </div>
             <div className="study__kpi">
-              <span className="study__kpi-label">Tracked km (odometer / GPS trace)</span>
+              <span className="study__kpi-label">Tracked km</span>
               <strong className="study__kpi-value">{fmtN(Math.round(aggregate.totalKm), "")}</strong>
-              <span className="study__kpi-detail">GPS trace {fmtN(Math.round(aggregate.totalGpsKm), "")} km — odometer is the bus's own count</span>
+              <span className="study__kpi-detail">odometer · GPS trace {fmtN(Math.round(aggregate.totalGpsKm), "")} km — the odometer is the bus's own count</span>
+            </div>
+            <div className="study__kpi">
+              <span className="study__kpi-label">Runs · hours moving</span>
+              <strong className="study__kpi-value">{fmtN(aggregate.totalRuns)} · {fmtN(Math.round(aggregate.totalHoursMoving))} h</strong>
+              <span className="study__kpi-detail">{aggregate.busDaysMoved} bus-days moved · a run = leaving a halt of 10+ min</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Counters moved (APC)</span>
@@ -446,14 +456,9 @@ export function Study() {
               <span className="study__kpi-detail">{aggregate.countersMovedEver > 0 ? `${fmtThb(aggregate.totalCountedRev)} revenue` : "unknown — no counter reported"}</span>
             </div>
             <div className="study__kpi study__kpi--model">
-              <span className="study__kpi-label">Airport-line model · reference</span>
+              <span className="study__kpi-label">Airport-line model</span>
               <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
-              <span className="study__kpi-detail">{aggregate.airportBusDays === 0 ? "Not these buses — none reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
-            </div>
-            <div className="study__kpi">
-              <span className="study__kpi-label">Runs · hours moving</span>
-              <strong className="study__kpi-value">{fmtN(aggregate.totalRuns)} · {fmtN(Math.round(aggregate.totalHoursMoving))} h</strong>
-              <span className="study__kpi-detail">{aggregate.busDaysMoved} bus-days moved · a run = leaving a halt of 10+ min</span>
+              <span className="study__kpi-detail">modelled, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {aggregate.modelledFlights} arrivals modelled</span>
             </div>
           </section>
 
