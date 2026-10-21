@@ -12415,7 +12415,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
    and in the note, and the figure itself is quieter than the ones beside
    it — a modelled number must never read like a counted one. */
 .study__kpi--model .study__kpi-value { color: var(--ax-ink-2); }
-.study__kpi--alert .study__kpi-label { color: var(--ax-warn); }
+/* A stale collector is a warning in three places or it is not a warning:
+   the label, the figure, and the note that says what to do about it. */
+.study__kpi--alert { border-bottom-color: var(--ax-warn); }
+.study__kpi--alert .study__kpi-label,
+.study__kpi--alert .study__kpi-detail { color: var(--ax-warn); }
 .study__kpi--alert .study__kpi-value, .study__state--alert { color: var(--ax-warn); }
 
 .study__caveats {

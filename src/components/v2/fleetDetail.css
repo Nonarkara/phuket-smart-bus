@@ -401,3 +401,14 @@
   .fd-rail .fd-nav { grid-template-columns: repeat(4, 1fr); }
   .fd-rail .fd-analytics__grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ── The filter row on a small phone ───────────────────────────────────────
+   Four chips with their names on one line need 315px; a 320px phone has
+   272px after the rail's padding, so the row broke 3 + 1 and left a chip
+   alone. Tighter padding buys the 40px the row needs and costs nothing at
+   390, where the row already fits. This is at the END of the file on
+   purpose: a media query that sits BEFORE the rule it overrides does
+   nothing. */
+@media (max-width: 380px) {
+  .fd-chips button { padding-left: 0.55em; padding-right: 0.55em; }
+}

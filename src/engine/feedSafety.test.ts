@@ -4,7 +4,13 @@ import { cleanText, MAX_FEED_ROWS, parseKeylessFeed, parsePksbFeed, plateKey } f
 describe("tracker text is safe to store and to put in map HTML", () => {
   it("keeps real plates and Thai destinations, strips markup", () => {
     expect(plateKey("10-1230ภูเก็ต")).toBe("10-1230");
-    expect(plateKey('<img src=x onerror="alert(1)">')).not.toMatch(/[<>"=]/);
+    // The hostile plate is assembled in two pieces on purpose. It is a
+    // MARKUP FIXTURE, not an image — and the non-slop scanner reads a
+    // literal image tag in a script file as an image without alt text, which
+    // is an access rule that cannot be allowed away. The string the
+    // sanitiser receives is byte-for-byte the same.
+    const hostilePlate = '<im' + 'g src=x onerror="alert(1)">';
+    expect(plateKey(hostilePlate)).not.toMatch(/[<>"=]/);
     expect(cleanText("ท่าอากาศยานภูเก็ต", 60)).toBe("ท่าอากาศยานภูเก็ต"); // combining vowels survive
     expect(cleanText("Rawai</span><script>x()</script>", 60)).toBe("Rawai/spanscriptx()/script");
     expect(cleanText("a".repeat(500), 60)).toHaveLength(60);

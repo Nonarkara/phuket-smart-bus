@@ -2,9 +2,9 @@
 #
 # Proves the one-left-edge rule can fail — including the control-cluster
 # carve-out added when the toolkit's source switcher moved into the header's
-# own row.
+# own row, and the DECLARED ROLES that replaced the geometric guess.
 #
-# A gate that has never failed is a gate that might never work. Three cases:
+# A gate that has never failed is a gate that might never work. Five cases:
 #
 #   the clean control   → every band on the gutter, the switcher at the
 #                         right of the header's row → must PASS
@@ -13,8 +13,17 @@
 #   the cluster variant→ the switcher is pushed LEFT of the gutter, still in
 #                         the header's row, so only the cluster rule can see
 #                         it → must FAIL
+#   the shared-row band→ a BAND is dragged 400px right AND pulled into the
+#                         header's row, which is where the old geometric
+#                         guess excused it → must FAIL
+#   the moved cluster  → a cluster drops to a second row but stays right of
+#                         the gutter, which the old guess called a band and
+#                         failed on → must PASS
 #
-# The third case is the one the refinement could have quietly switched off.
+# The fourth case is the hole the geometric guess left open. The fifth is
+# the false positive the same guess produced. Both were found by an
+# independent review; a rule that cannot tell a band from a cluster by its
+# own geometry cannot survive either.
 #
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -46,7 +55,7 @@ fail=0
 
 run() { # variant, expected (pass|fail)
   local variant="$1" expect="$2" out code
-  out=$(node scripts/design/guttercheck.mjs --base "http://127.0.0.1:$PORT" --route "/gutter.html?variant=$variant" 2>&1)
+  out=$(node scripts/design/guttercheck.mjs --base "http://127.0.0.1:$PORT" --route "/gutter.html?variant=$variant" --surface toolkit 2>&1)
   code=$?
   echo "$out" | sed 's/^/  /'
   if [ "$expect" = "pass" ] && [ "$code" -eq 0 ]; then
@@ -68,6 +77,12 @@ run band-off fail
 
 echo "── a control cluster pushed left of the gutter ───────────────────────"
 run cluster-left fail
+
+echo "── a band dragged right while sharing the header's row ───────────────"
+run shared-row-band fail
+
+echo "── a control cluster that drops to a second row ──────────────────────"
+run cluster-moved pass
 
 if [ "$fail" -eq 0 ]; then
   echo "gutter instrument: PROVEN — it bites, and it stays quiet."

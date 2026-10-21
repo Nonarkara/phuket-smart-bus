@@ -25,28 +25,53 @@ const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i === -1 ? d : args[i + 1]; };
 const BASE = opt("base", "http://127.0.0.1:4173");
 const TOL = Number(opt("tolerance", 1.5));
-const ROW_TOL = 12; // px of centre difference that still means "the same row"
 // The fixture server serves one page for every surface. `--route` points the
 // checker at it, which is how the proof script drives the instrument.
+// `--surface` picks ONE surface: a fixture page models one surface's bands,
+// and the two surfaces declare different ROLES for the same switcher (the
+// toolkit's is a cluster in the header's row, the insights bridge's is a band
+// on its own row).
 const ROUTE = opt("route", null);
+const SURFACE = opt("surface", null);
 
 /**
  * The probes are the CONTENT of each band — the thing whose left edge the
- * eye reads as the page's margin. `label` names the band.
+ * eye reads as the page's margin. `label` names the band. The third element
+ * is the probe's ROLE, and it is DECLARED, not inferred:
+ *
+ *   "band"    (the default) — a strip of the page. Its content must start on
+ *               the page's gutter, wherever it happens to sit vertically.
+ *   "cluster" — a CONTROL CLUSTER inside a band's own row. The operations
+ *               wall puts its LIVE ⇄ SIMULATION switch at the top right of
+ *               the header, so that group's left edge is not the page's
+ *               gutter and must not be measured against it. It may sit
+ *               anywhere to the RIGHT of the gutter, and it may never sit to
+ *               the LEFT of it.
+ *
+ * The role used to be INFERRED from geometry — "a probe whose vertical
+ * centre is within 12px of the band before it is a cluster". That was two
+ * bugs waiting: a band that happened to share a row with another probe was
+ * excused as a cluster, and a cluster that dropped a row was reported as a
+ * band. A declared role cannot do either. It also ends the zero-margin
+ * comparison the inference depended on: the toolkit's source switcher sits
+ * 0.0px from the brand's centre, and the rule above it was written to
+ * tolerate a 12px difference.
  */
 const SURFACES = [
   {
+    id: "toolkit",
     route: "/v2?view=toolkit",
     label: "the toolkit briefing",
     probes: [
       [".v2-header__brand", "header"],
-      [".v2-source", "source switcher"],
+      [".v2-source", "source switcher", "cluster"],
       [".tk-subnav__brand", "sub-nav"],
       [".tk-briefing > .tk-hero-block .tk-tag", "body"],
       [".tk-briefing > .tk-section-box .tk-section-kicker", "body (chapter)"],
     ],
   },
   {
+    id: "insights",
     route: "/v2?view=insights",
     label: "the insights bridge",
     probes: [
@@ -63,17 +88,18 @@ const p = await c.newPage();
 let failures = 0;
 
 for (const surface of SURFACES) {
+  if (SURFACE && surface.id !== SURFACE) continue;
   const route = ROUTE ?? surface.route;
   await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
   await p.waitForTimeout(5000);
 
   const edges = await p.evaluate((probes) => {
     const out = [];
-    for (const [sel, label] of probes) {
+    for (const [sel, label, role] of probes) {
       const el = document.querySelector(sel);
-      if (!el) { out.push({ label, sel, x: null, y: 0, h: 0 }); continue; }
+      if (!el) { out.push({ label, sel, role: role || "band", x: null, y: 0, h: 0 }); continue; }
       const r = el.getBoundingClientRect();
-      out.push({ label, sel, x: Math.round(r.left * 10) / 10, y: Math.round(r.top), h: Math.round(r.height) });
+      out.push({ label, sel, role: role || "band", x: Math.round(r.left * 10) / 10, y: Math.round(r.top), h: Math.round(r.height) });
     }
     return out;
   }, surface.probes);
@@ -94,28 +120,21 @@ for (const surface of SURFACES) {
   // the gutter. It may never sit to the LEFT of the gutter — that is the
   // defect the rule was written for (the source switcher flush to the corner
   // while the body sat at 104px), and it stays caught.
-  let rowCentre = null;
-  const bands = [];
-  const clusters = [];
-  for (const e of real) {
-    const centre = e.y + e.h / 2;
-    if (rowCentre === null || centre - rowCentre > ROW_TOL) {
-      bands.push(e);
-      rowCentre = centre;
-    } else {
-      clusters.push(e);
-    }
-  }
+  // A BAND is measured against the gutter wherever it sits vertically. A band
+  // that has drifted right is still a band that has drifted, and the rule
+  // says so — it is not excused because it happens to share a row with
+  // something else.
+  const bands = real.filter((e) => e.role !== "cluster");
+  const clusters = real.filter((e) => e.role === "cluster");
 
   const lefts = [...new Set(bands.map((e) => e.x))];
-  const spread = lefts.length ? Math.max(...lefts) - Math.min(...lefts) : 0;
   const gutter = lefts.length ? Math.min(...lefts) : null;
+  const drifted = bands.filter((e) => gutter !== null && Math.abs(e.x - gutter) > TOL);
   const stranded = clusters.filter((e) => gutter !== null && e.x < gutter - TOL);
 
   console.log(`\n=== ${route} — ${surface.label} ===`);
   for (const e of edges) {
-    const kind = e.x === null ? "?" : clusters.includes(e) ? "cluster" : "band";
-    console.log(`  ${e.x === null ? "  ?" : String(e.x).padStart(6)}  ${e.label}  (${kind})${e.x === null ? `  (${e.sel} not found)` : ""}`);
+    console.log(`  ${e.x === null ? "  ?" : String(e.x).padStart(6)}  ${e.label}  (${e.role})${e.x === null ? `  (${e.sel} not found)` : ""}`);
   }
 
   if (missing.length) {
@@ -124,9 +143,9 @@ for (const surface of SURFACES) {
   } else if (stranded.length) {
     failures++;
     console.error(`  FAIL — ${stranded.map((e) => e.label).join(", ")} sits ${(gutter - stranded[0].x).toFixed(1)}px LEFT of the page's gutter (${gutter}px).`);
-  } else if (spread > TOL) {
+  } else if (drifted.length) {
     failures++;
-    console.error(`  FAIL — ${spread}px of disagreement between the bands' left edges (tolerance ${TOL}px).`);
+    console.error(`  FAIL — the bands do not share a left edge: ${bands.map((e) => `${e.label} ${e.x}px`).join(", ")} (tolerance ${TOL}px).`);
   } else {
     console.log(`  PASS — every band starts on the same line (${gutter}px)${clusters.length ? `; ${clusters.length} control cluster${clusters.length > 1 ? "s sit" : " sits"} inside it` : ""}.`);
   }
