@@ -72,7 +72,19 @@ Two rules follow, and they are not optional:
 - **A selector LIST is not one selector.** `button, input, a` is three selectors of specificity (0,0,1) each. Reading it as one selector and summing its type counts made it look stronger than it is, which changed which rule won, and so which leak was found.
 - **A gate must pass its arguments as arguments.** The gate passed the routes to `offscale.mjs` as `--fleet/raw --fleet --study` — flags — and the probe drops anything that starts with `--`. It received zero routes, printed "total off-scale elements: 0", and the gate printed "ok" for a check that had never run.
 
-**The law is enforced, not just recorded.** `scripts/design/typeaudit2.mjs` fails a page that renders more than eight sizes, at 1440 and at 390. One exception is named, dated and owned — the rider phone app at 390 — and `NO_KNOWN_OPEN=1` switches it off, so the check can be seen to bite.
+**The law is enforced, not just recorded.** `scripts/design/typeaudit2.mjs` fails a page that renders more than eight sizes, at 1440 and at 390.
+
+**The exception is closed (2026-10-21).** The rider phone app was the one named, dated exception, and it was the worst offender in the product: **18 sizes at 390**, from 26 distinct `font-size` declarations in `PassengerApp.css` written in `rem` against a 16px root. The screen a person holds in daylight carried microcopy at 9.9px and 10px, and its reading band was a fog of 12.5 / 13.1 / 13.6 / 14.1 / 14.7 / 15.2 — six sizes that are visually one size, which is the yellow-pages flatness this law exists to stop, only sideways.
+
+The sheet now declares the eight names once, on the two roots that can carry them (`.pa-app` for the phone, `.pa-shell` for the portal chrome beside it), and every one of its 83 declarations is one of them. Measured on the rider domain at 390: **18 → 7**.
+
+Three things the pass earned, worth keeping:
+
+- **The reading band is ONE step on purpose.** A standfirst and a paragraph are the same size on a phone in sunlight; a 1px step between them is a fake hierarchy. The standfirst and the body are both 17, the labels are 13, and the smallest text on the screen is 11.
+- **A third party can push a surface over the law.** Leaflet ships its own 18px zoom glyph and 12px attribution and tooltip. Neither was the app's, and neither was on the scale — the surface had to name them, or the count would drift back up with no one knowing which size did it.
+- **A surface that renders type declares all eight names, on every root that can carry them.** The phone app renders *without* `.pa-shell` (the router returns the app content directly), so a scale declared on `.pa-shell` alone would have been undefined on the phone — the dead-rule trap, in a new shape.
+
+With the exception closed, the switch that turned it off went with it: a switch with nothing to switch is a trap, and a named exception that is closed is a deleted law. The check still bites on any surface that crosses eight.
 
 ## Colour
 
