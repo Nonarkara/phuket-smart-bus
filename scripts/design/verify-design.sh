@@ -80,6 +80,14 @@ run "nothing hangs off the edge of the screen" \
 run "the ramp law, and no grotesque posing as type" \
   env BASE="$BASE" node scripts/design/typeaudit2.mjs
 
+# The spatial-hallucination gate. A layout can be on the type scale, on one
+# gutter and inside the viewport and still not explain its own geometry:
+# space stretched to fill a container, an element stranded in an empty row,
+# a peer set with no leader, a row that breaks where it runs out of room, a
+# region that is three screens deep. The instrument measures all of it.
+run "the geometry explains itself" \
+  node scripts/design/space.mjs "${ROUTES[@]}" --base "$BASE"
+
 echo ""
 if [ "$failed" -gt 0 ]; then
   echo "design gate: $failed check(s) FAILED against $BASE" >&2
