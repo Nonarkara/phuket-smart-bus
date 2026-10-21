@@ -30,12 +30,20 @@ export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observ
       {feedAgeSec !== null && <span className="v2-livebar__meta">feed {feedAgeSec}s old</span>}
       {observedSinceMin !== null && <span className="v2-livebar__meta">observed since {hhmm(observedSinceMin)}</span>}
       {status === "offline" && detail && <span className="v2-livebar__meta v2-livebar__meta--warn">{detail}</span>}
-      <span className="v2-livebar__basis">
-        Fleet, trips &amp; km: GPS · Demand, queues and dispatch: model · Riders: {countersOnline ? "counted where available, otherwise modelled" : "modelled load per run"}
+      {/* The basis and the action that belongs with it are ONE thing. As two
+          loose children of the strip they were placed independently: the
+          basis took a whole line by itself — 624px of prose in a 342px
+          strip on a phone — and the DEVICES action was pushed onto a line
+          of its own below it. Grouped, they wrap as one unit and the
+          basis gives way instead of the line. */}
+      <span className="v2-livebar__foot">
+        <span className="v2-livebar__basis">
+          Fleet, trips &amp; km: GPS · Demand, queues and dispatch: model · Riders: {countersOnline ? "counted where available, otherwise modelled" : "modelled load per run"}
+        </span>
+        <button type="button" className="v2-timebar__speed" onClick={onOpenDevices} title="Direct GPS device ingest console">
+          DEVICES
+        </button>
       </span>
-      <button type="button" className="v2-timebar__speed" onClick={onOpenDevices} title="Direct GPS device ingest console">
-        DEVICES
-      </button>
     </div>
   );
 }

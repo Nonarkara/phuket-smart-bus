@@ -12248,6 +12248,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-livebar__meta { font-size: var(--t-micro); color: var(--ax-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .v2-livebar__meta--warn { color: var(--ax-warn); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .v2-livebar__basis { margin-left: auto; font-size: var(--t-micro); color: var(--ax-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* The basis and the action that belongs with it travel together. On a phone
+   the pair takes a line of its own, the basis gives way (it is prose and
+   can be shortened with an ellipsis) and the action keeps its size. */
+.v2 .v2-livebar__foot { display: flex; align-items: center; gap: 12px; min-width: 0; margin-left: auto; }
+.v2 .v2-livebar__foot .v2-livebar__basis { margin-left: 0; flex: 0 1 auto; min-width: 0; }
+.v2 .v2-livebar__foot .v2-timebar__speed { flex: 0 0 auto; }
 
 /* Live fleet table: plate · heading to · speed · seen · trips · km · ฿ */
 .v2 .v2-fleet__row--live {
@@ -13207,6 +13213,24 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
     min-width: 0;
   }
   .v2 .v2-map__layers { max-width: calc(100% - 20px); }
+
+  /* The timebar's chips and transport controls keep their size on a phone
+     — that is what `.v2 .v2-timebar > * { flex: 0 0 auto; }` is for, and
+     it is right for a control. The LIVE bar's basis is PROSE, and prose
+     that cannot shrink is 624px of text in a 342px strip: it ran off the
+     right edge, and because it filled the line by itself it pushed the
+     DEVICES action onto a line of its own. The basis and the action now
+     travel together in one group that takes a line of its own: the basis
+     gives way (ellipsised), the action keeps its size, and neither is
+     stranded. */
+  .v2 .v2-timebar.v2-livebar .v2-livebar__foot {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .v2 .v2-timebar.v2-livebar .v2-livebar__foot .v2-livebar__basis {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
 
   /* The insights legend is three parallel facts — a reader reads all of
      them, so they are not a choice and they do not need equal boxes. On a
