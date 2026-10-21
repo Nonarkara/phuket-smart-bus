@@ -91,20 +91,14 @@ let total = 0;
 // that is not written down is a hole; one that is written down is a debt
 // with an owner.
 //
-//   "/ @390" — the rider app renders 16 sizes at 390 because it is built in
-//   `rem` against a 16px root with about sixty separate font-size
-//   declarations. It does not read as a ramp (the phone screen shows a clear
-//   hierarchy and 0 band violations), but the count is over the limit the
-//   law states.
-const KNOWN_OPEN = {
-  "/ @390": "the rider phone app — 16 sizes at 390; its own type pass is pending",
-};
-
-// PROVING THE INSTRUMENT CAN FAIL. Set NO_KNOWN_OPEN=1 and every exception
-// is ignored, so the rider app's 16 sizes at 390 must turn the run red. A
-// gate whose exceptions cannot be switched off is a gate whose exceptions
-// are permanent, and a permanent exception is a deleted law.
-const OPEN = process.env.NO_KNOWN_OPEN === "1" ? {} : KNOWN_OPEN;
+// The rider phone app WAS the one open exception, and it is closed. On
+// 2026-10-21 the app at 390 rendered 18 sizes — 26 distinct declarations in
+// PassengerApp.css, built in `rem` against a 16px root, with microcopy at
+// 9.9px and 10px. It now renders 7: the sheet declares the eight names
+// once and every font-size in it is one of them. The switch that turned the
+// exception off went with it — a switch with nothing to switch is a trap,
+// and a named exception that is closed is a deleted law.
+const KNOWN_OPEN = {};
 
 for (const vp of VIEWPORTS) {
   await p.setViewportSize({ width: vp.width, height: vp.height });
@@ -119,7 +113,7 @@ for (const [route, r] of Object.entries(report)) {
   const display = r.inv.filter(([k]) => /Josefin/.test(k));
   const bad = r.offenders.length;
   const over = r.sizeCount > 8;
-  const open = OPEN[route];
+  const open = KNOWN_OPEN[route];
   total += bad + (over && !open ? 1 : 0);
   console.log(`\n=== ${route} — ${r.sizeCount} sizes, ${display.length} display-face entries, ${bad} violations${over ? (open ? " (KNOWN OPEN)" : " — OVER THE LAW") : ""}`);
   console.log(`   sizes: ${r.sizes.join(" ")}`);

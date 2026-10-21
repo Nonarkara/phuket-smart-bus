@@ -4436,6 +4436,10 @@ a { color: var(--amber-text); }
   grid-template-columns: 1fr 1fr;
   gap: 36px;
   margin-bottom: 48px;
+  /* Each card's height is its own. The grid stretched the shorter one to
+     the taller one's height, and the shorter one carried a cushion of
+     nothing under its last line. */
+  align-items: start;
 }
 
 @media (max-width: 900px) {
@@ -5489,6 +5493,9 @@ a { color: var(--amber-text); }
 @media (max-width: 720px) {
   .governor__grid { grid-template-columns: 1fr; }
   .governor__kpis { grid-template-columns: 1fr 1fr; }
+  /* Five KPIs in two columns leave the fifth alone on a row of its own.
+     It spans the row instead — the space is used, not left as a void. */
+  .governor__kpis .governor__kpi:last-child { grid-column: 1 / -1; border-right: 0; }
 }
 
 .governor__panel {
@@ -6463,6 +6470,7 @@ a { color: var(--amber-text); }
 .v2 .v2-timebar__play:hover { background: var(--ax-ink); color: var(--ax-paper); }
 .v2 .v2-timebar__slider {
   flex: 1;
+  min-width: 0;
   accent-color: var(--ax-accent);
   cursor: pointer;
 }
@@ -6628,7 +6636,7 @@ a { color: var(--amber-text); }
 }
 /* The analysis keeps its own scroll, so the rail scrolls half a screen
    instead of three. */
-.v2-side-rail__rest > .v2-decision-rail { max-height: 520px; }
+.v2-side-rail__rest > .v2-decision-rail { max-height: 440px; }
 /* ── Side rail: story on top, then equation, conditions, fleet ──────────── */
 .v2-side-rail__story {
   display: grid;
@@ -8397,6 +8405,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   letter-spacing: 0.04em;
 }
 .v2-fleet__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.v2-fleet__tools .v2-fleet__chips { flex: 0 0 auto; }
 .v2-fleet__chips { display: inline-flex; border-radius: 0; overflow: hidden; }
 .v2-fleet__chip {
   
@@ -10381,7 +10390,10 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-brief__hours { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ax-line); }
 .v2-brief__hours button {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* Four tracks for four fields. With three, the affordance arrow fell to a
+     line of its own under the row — the reader's eye landed on "→" with
+     nothing to attach it to. */
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 8px;
   min-height: 54px;
@@ -10517,6 +10529,32 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--toolkit .v2-timebar,
 .v2--toolkit .v2-footer { display: none; }
 .v2--toolkit .v2-header { grid-template-rows: 56px; }
+
+/* The toolkit header: one row, and everything that belongs in it.
+   MEASURED 2026-10-21 on the toolkit view at 1440. The header is a grid
+   of `auto 1fr auto` and the data-source group was never placed in it, so
+   the grid dropped it into an implicit second row, under the brand. Two
+   things were wrong with that, and the second was invisible:
+   1. the group was alone in its row — a stranded 397px in a 1440px row;
+   2. because the group sat in COLUMN 1, it set that column's width to
+      397px, so the brand's own 190px of text sat in a 397px track and a
+      207px hole opened beside it. A hole the eye reads as a mistake and
+      nobody can say which rule made it.
+   So the group joins the row, in the last column, where the operations
+   view already puts it — and the brand's column is 190px again.
+   The "Right now" story is the ops wall's live line, not a research
+   page's, and the row cannot hold it and the group at once; it was
+   already hidden below 1700px, so this makes it consistent rather than
+   new. */
+.v2--toolkit .v2-header__story { display: none; }
+@media (min-width: 1360px) {
+  .v2--toolkit .v2-source {
+    grid-column: 5;
+    grid-row: 1;
+    align-self: center;
+    margin-left: 10px;
+  }
+}
 .v2 .tk-inner {
   max-width: none;
   width: 100%;
@@ -12048,7 +12086,16 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 46px; }
 .v2--operations .v2-balance__axis { font-size: var(--t-micro); }
-.v2--operations .v2-balance__foot { margin-top: 6px; padding-top: 6px; font-size: var(--t-micro); }
+.v2--operations .v2-balance__foot {
+  margin-top: 6px;
+  padding-top: 6px;
+  font-size: var(--t-micro);
+  /* Two figures side by side, each wrapping inside its own column. As a
+     flex row the second one fell to a line of its own. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 12px;
+}
 .v2--operations .v2-balance__legend { font-size: var(--t-micro); }
 
 /* Map column: give the geography the larger share. The fleet table's own
@@ -12114,7 +12161,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2-balance__legend-axis.is-short { color: var(--ax-warn); }
 .v2-balance__legend-axis.is-light { color: #8fb0d8; }
 .v2:not(.v2--operations) .v2-balance__legend-axis.is-light { color: #3d67a0; }
-.v2--operations .v2-balance__legend { flex-wrap: wrap; gap: 4px 10px; }
+/* Two by two, not a wrapping row. Four legend keys at the rail's width
+   came within a hair of fitting on one line and wrapped three-and-one, so
+   the last key sat alone under the others. A grid decides the break. */
+.v2--operations .v2-balance__legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+}
 .v2--operations .v2-balance__up,
 .v2--operations .v2-balance__down { height: 38px; }
 .v2--operations .v2-balance { padding: 8px 18px 8px; }
@@ -12706,8 +12760,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 
 /* ── Action queue — top 3, big readable rows ───────────────────────────── */
 .capacity__actions { list-style: none; margin: 0; padding: 0; counter-reset: action; }
+/* `1fr` is `minmax(auto, 1fr)`, and its automatic minimum is the cell's
+   min-content — so this row could not shrink to a phone and ran 330px past
+   the edge. The track has to be allowed to shrink. */
 .capacity__action {
-  display: grid; grid-template-columns: 56px 90px 1fr auto; align-items: center;
+  display: grid; grid-template-columns: 56px 90px minmax(0, 1fr) auto; align-items: center;
   gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--ax-line);
 }
 .capacity__action:last-child { border-bottom: 0; }
@@ -13125,3 +13182,54 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--operations .v2-accum__item { padding: 5px 16px; gap: 1px; }
 .v2--operations .v2-accum__val { font-size: var(--t-title); line-height: 1.15; }
 .v2--operations .v2-accum__label { font-size: var(--t-micro); line-height: 1.3; letter-spacing: 0; text-transform: none; font-weight: 600; white-space: nowrap; }
+
+
+/* ── Narrow-width fixes, last in the file so they win on source order ─────
+   A media query that sits BEFORE the rule it overrides loses to it, and
+   the loss is invisible: the declaration is there, it just does nothing. */
+@media (max-width: 920px) {
+  /* The briefing's second column wanted 320px, so a 390px phone had to
+     scroll sideways to read the evidence panel. One column at phone width. */
+  .v2-brief { grid-template-columns: minmax(0, 1fr); }
+  .v2-brief__map, .v2-brief__evidence { grid-column: 1; }
+}
+@media (max-width: 720px) {
+  /* The day chips and the transport controls together wanted 472px of a
+     340px row, so the phone had to scroll sideways to find the play
+     button. The chips take their own row and the controls share the
+     next one — a deliberate break, not an accidental one. */
+  .v2 .v2-timebar { flex-wrap: wrap; row-gap: 8px; }
+  .v2 .v2-timebar__days { flex: 1 1 100%; min-width: 0; flex-wrap: wrap; }
+  .v2 .v2-timebar__slider { min-width: 0; }
+
+  /* The map's overlays are anchored to the map's edges, not to the
+     viewport. At phone width the RED FLAG banner was `width: max-content`
+     — 627px of text in a 388px map — and the top controls were 538px.
+     They take the map's width and wrap inside it. */
+  .v2 .v2-map__maritime-banner {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    white-space: normal;
+  }
+  .v2 .v2-map__top-controls {
+    left: 12px;
+    right: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .v2 .v2-map__layers { max-width: calc(100% - 20px); }
+
+  /* The insights legend is three parallel facts — a reader reads all of
+     them, so they are not a choice and they do not need equal boxes. On a
+     phone they do not fit on one line: 370px of labels in a 342px row.
+     The row broke 2 + 1 and left the third one stranded on a line of its
+     own. A legend reads down on a phone; three stacked lines say the same
+     thing without a widow. */
+  .v2 .v2-insights__legend {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

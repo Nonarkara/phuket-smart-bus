@@ -1509,6 +1509,8 @@ html.toolkit-site-mode #root {
   line-height: 1.4;
 }
 
+/* The caveat is a labelled note, like every other caveat on this site: the
+   label sits above the sentence, so the sentence is the block's content. */
 .abc-results__caveat {
   font-size: var(--t-label);
   line-height: 1.5;
@@ -1517,9 +1519,8 @@ html.toolkit-site-mode #root {
   background: rgba(17, 24, 32, 0.04);
   border-left: 3px solid var(--tk-muted);
 }
-/* The caveat is a labelled note, like every other caveat on this site: the
-   label sits above the sentence, so the sentence is the block's content. */
 .abc-results__caveat .tk-kicker { color: var(--tk-muted); margin-bottom: 4px; }
+.abc-results__caveat strong { color: var(--tk-ink); }
 
 @media (max-width: 560px) {
   .abc-results__pair { grid-template-columns: 1fr; }
