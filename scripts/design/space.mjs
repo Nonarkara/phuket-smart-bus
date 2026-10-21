@@ -69,9 +69,10 @@ const DEAD_SPACE = 48;      // px of emptiness under a cell
 const ORPHAN_RATIO = 0.55;  // a last-row item narrower than this
 const SCATTER_GAP = 0.35;   // of the container's width, between two actions
 const EMPTY_BAND = 0.3;     // a screen covered less than this is wasted
-const PEER_SHARE = 0.06;    // of the screen: how much a peer set must own to be a choice
+const PEER_SHARE = 0.4;     // of the screen: how much a peer set must own to be a choice
 const VERTICAL_TRAP = 2.5;  // screens of scroll before it reads as a hole
 const HORIZONTAL_TRAP = 1.25; // a column pushed off the edge
+const ROW_TOLERANCE = 8;   // px of baseline difference that is still one row
 
 const WIDTHS = [
   { label: "1440", width: 1440, height: 900 },
@@ -109,7 +110,7 @@ for (const route of ROUTES) {
       continue;
     }
 
-    const res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP }) => {
+    const res = await p.evaluate(({ DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP, ROW_TOLERANCE }) => {
       const label = (el) => {
         const c = typeof el.className === "string" ? el.className.trim() : "";
         return el.tagName.toLowerCase() + (c ? "." + c.split(/\s+/).slice(0, 2).join(".") : "");
@@ -189,10 +190,29 @@ for (const route of ROUTES) {
         const kids = [...el.children].filter(visible);
         if (kids.length < 2) continue;
         const r = el.getBoundingClientRect();
+        // A ROW is a line of items, not a set of identical tops. Items in one
+        // flex line sit at different baselines — a pill is vertically
+        // centred, a chip is not — and a 3px difference used to split one
+        // line into two, so a pill beside its chips read as "alone on the
+        // last line". Cluster the tops with a tolerance.
         const rows = new Map();
+        const tops = [];
+        for (const k of kids) tops.push(Math.round(k.getBoundingClientRect().top));
+        tops.sort((a, b) => a - b);
+        const rowKeys = [];
+        for (const t of tops) {
+          const last = rowKeys[rowKeys.length - 1];
+          if (last !== undefined && t - last <= ROW_TOLERANCE) continue;
+          rowKeys.push(t);
+        }
+        const keyFor = (top) => {
+          let best = rowKeys[0];
+          for (const k of rowKeys) if (Math.abs(top - k) <= ROW_TOLERANCE) best = k;
+          return best;
+        };
         for (const k of kids) {
           const kr = k.getBoundingClientRect();
-          const key = Math.round(kr.top / 4) * 4;
+          const key = keyFor(Math.round(kr.top));
           if (!rows.has(key)) rows.set(key, []);
           rows.get(key).push({ k, r: kr });
         }
@@ -302,7 +322,11 @@ for (const route of ROUTES) {
                 return s + r.width * r.height;
               }, 0);
               const share = area / (window.innerWidth * window.innerHeight);
-              if (share >= PEER_SHARE) {
+              // A strip of three parallel facts is NOT a choice — the reader
+              // reads all of it, and equal weight is the point. A grid of
+              // four or more identical cells that owns half the screen IS a
+              // choice, and nothing in it helps the reader make it.
+              if (share >= PEER_SHARE && boxed.length >= 4) {
                 equals.push({
                   el: label(el), n: boxed.length, size: boxed[0].size, weight: boxed[0].weight,
                   share: Math.round(share * 100),
@@ -421,14 +445,29 @@ for (const route of ROUTES) {
         if (!vScroll && !hScroll) continue;
         if (el === document.scrollingElement || el === document.documentElement) continue;
         const r = el.getBoundingClientRect();
-        if (vScroll && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
+        // The page's OWN scroll is not a trap. A long briefing on a phone is
+        // a long briefing. What is a trap is a REGION inside the page that
+        // is several screens deep — the fleet table that finished 1,482px
+        // below the fold of a rail the reader was looking at. A scroller
+        // that IS the page's <main>, or contains it, is the page.
+        const isThePage = el.tagName === "MAIN" || !!el.querySelector("main");
+        if (vScroll && !isThePage && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
           traps.push({
             el: label(el), axis: "vertical",
             screens: +(el.scrollHeight / el.clientHeight).toFixed(1),
             visible: Math.round(el.clientHeight), total: Math.round(el.scrollHeight),
           });
         }
-        if (hScroll && el.scrollWidth > el.clientWidth * HORIZONTAL_TRAP && el.clientWidth > 120) {
+        // A wide DATA TABLE on a phone is a legitimate horizontal scroll:
+        // the reader reaches it, and that is what tables do at 390px. What is
+        // not legitimate is a card grid or a column pushed off the edge, so
+        // a scroller whose overflow comes from a <table> is exempt.
+        const tableOverflow = el.querySelector("table");
+        // The map engine sizes its own overlay to the route's bounds, not to
+        // the viewport. Leaflet clips it; the box model still counts it. It
+        // is the map's business, not the layout's.
+        const leafletOverflow = el.querySelector(".leaflet-container");
+        if (hScroll && !tableOverflow && !leafletOverflow && el.scrollWidth > el.clientWidth * HORIZONTAL_TRAP && el.clientWidth > 120) {
           traps.push({
             el: label(el), axis: "horizontal",
             ratio: +(el.scrollWidth / el.clientWidth).toFixed(2),
@@ -448,7 +487,7 @@ for (const route of ROUTES) {
         traps: traps.slice(0, 12), trapCount: traps.length,
         docH, vh,
       };
-    }, { DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP });
+    }, { DEAD_SPACE, ORPHAN_RATIO, SCATTER_GAP, EMPTY_BAND, PEER_SHARE, VERTICAL_TRAP, HORIZONTAL_TRAP, ROW_TOLERANCE });
 
     const total = res.deadCount + res.orphanCount + res.scatterCount + res.equalCount + res.wrapCount + res.bandCount + res.clippedCount + res.trapCount;
     findings += total;
