@@ -83,30 +83,83 @@
 .hub-section__intro-pad h2 { font-weight: 500; font-size: var(--t-hero); margin: 16px 0 20px; letter-spacing: -0.04em; }
 .hub-section__intro-pad p { font-size: var(--t-lead); line-height: 1.5; color: var(--tk-muted); }
 
-.hub-tab-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--tk-ink); border-left: 1px solid var(--tk-ink); }
-.hub-tab-nav button { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; min-height: 120px; padding: 20px; border: 0; border-right: 1px solid var(--tk-ink); border-bottom: 1px solid var(--tk-ink); background: var(--tk-paper); text-align: left; cursor: pointer; }
-.hub-tab-nav button:hover { background: var(--tk-ink); color: #fff; }
-.hub-tab-nav span { grid-row: span 2; color: var(--tk-red); font: 700 var(--t-micro)/1 var(--font-body); }
-.hub-tab-nav strong { font: 700 var(--t-body)/1 var(--font-body); }
-.hub-tab-nav small { color: var(--tk-muted); font-size: var(--t-micro); }
-.hub-tab-nav button:hover small { color: rgba(255,255,255,0.7); }
+/* The jump index is a list of four destinations, not four tiles. The tab
+   strip above the panel already navigates; this one answers the same
+   question from inside the page, so it stays quiet: no tile, no ground, no
+   fixed height, and the index hangs in the margin of each entry. */
+.hub-tab-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 26px 32px;
+  border-top: 1px solid var(--tk-ink);
+  padding-top: 20px;
+}
+.hub-tab-nav button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 2px 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.hub-tab-nav span {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  color: var(--tk-red);
+  font: 700 var(--t-micro)/1 var(--font-body);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  padding-top: 3px;
+}
+.hub-tab-nav strong {
+  grid-column: 2;
+  grid-row: 1;
+  font: 700 var(--t-body)/1.25 var(--font-body);
+  letter-spacing: -0.015em;
+}
+.hub-tab-nav small {
+  grid-column: 2;
+  grid-row: 2;
+  color: var(--tk-muted);
+  font: 400 var(--t-label)/1.35 var(--font-body);
+}
+.hub-tab-nav button:hover strong,
+.hub-tab-nav button:hover small { color: var(--tk-red); }
+@media (max-width: 920px) {
+  .hub-tab-nav { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .hub-tab-nav { grid-template-columns: 1fr; }
+}
 
 .hub-footer { border-top: 1px solid var(--tk-ink); background: var(--tk-ink); color: #fff; }
-.hub-footer__inner { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1280px; margin: 0 auto; padding: 48px clamp(20px, 5vw, 80px); }
+.hub-footer__inner { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1280px; margin: 0 auto; padding: 48px clamp(20px, 5vw, 80px) 24px; }
 .hub-footer__inner p { font-size: var(--t-label); }
-.hub-footer__inner .pa-privacy {
-  grid-column: 1 / -1;
-  font-size: var(--t-micro);
-  line-height: 1.55;
-  color: var(--tk-muted);
-  max-width: 78ch;
-  border-top: 1px solid var(--tk-line);
-  padding-top: 18px;
-}
-.hub-footer__inner .pa-privacy strong { color: var(--tk-ink); }
 .hub-footer__inner strong { color: var(--tk-yellow); }
 .hub-footer__inner a { color: #fff; text-decoration: none; }
 .hub-footer__inner a:hover { color: var(--tk-yellow); }
+/* The tracker disclosure is a legal note, not a third line of the footer's
+   own copy. It gets its own band under the rule and a reading measure, so
+   the note is not a 465px paragraph stranded in a 1280px row. The label used
+   to be ink-on-ink and therefore invisible. */
+.hub-footer__legal {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 80px) 48px;
+  border-top: 1px solid var(--tk-line);
+}
+.hub-footer__legal .pa-privacy {
+  max-width: 65ch;
+  font-size: var(--t-micro);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.68);
+  padding-top: 18px;
+}
+.hub-footer__legal .pa-privacy strong { color: var(--tk-yellow); }
 
 .fc-section, .pb-section, .cr-section, .lf-section, .rt-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .fc-section__head, .pb-section__head, .cr-section__head, .lf-section__head, .rt-section__head { max-width: 900px; margin: 0 auto 48px; }
@@ -788,18 +841,22 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .cr-limit {
   display: grid;
-  grid-template-columns: 70px 1fr;
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 24px;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--tk-line);
+  padding: 26px 0;
 }
-.cr-limit:last-child { border-bottom: none; }
+/* Each limitation already ends with a marked block — the red-ruled "what
+   closes the gap" — so a rule under the item as well would say the end of an
+   item twice. Space separates them, and the index stays in the margin: the
+   number is a marker, the claim is the content. */
+.cr-limit:last-child { padding-bottom: 0; }
 .cr-limit__num {
   font-variant-numeric: tabular-nums;
-  font-size: var(--t-title);
+  font-size: var(--t-micro);
   font-weight: 700;
+  letter-spacing: 0.12em;
   color: var(--tk-red);
-  line-height: 1;
+  padding-top: 3px;
 }
 .cr-limit h4 {
   font-family: var(--font-body);
@@ -828,25 +885,28 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .cr-limit__changes .tk-kicker { display: block; margin-bottom: 4px; }
 
+/* A counter-argument is a dialogue: their claim on the left, our answer on
+   the right. The pair is not a card — a card around every exchange would be
+   five boxes holding the same shape of thing — so the objection is marked
+   with the toolkit's red rule and the pair is separated by space. Each column
+   is as tall as its own words. */
 .cr-counter {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 34px;
 }
 .cr-counter__item {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
-  gap: 0;
-  border: 1px solid var(--tk-ink);
-  background: #fff;
+  gap: 32px;
+  align-items: start;
 }
 .cr-counter__against {
-  padding: 18px 20px;
-  background: var(--tk-paper);
-  border-right: 1px solid var(--tk-ink);
+  padding-left: 18px;
+  border-left: 3px solid var(--tk-red);
 }
 .cr-counter__against .tk-kicker { display: block; margin-bottom: 6px; color: var(--tk-red); }
 .cr-counter__against p {
@@ -856,7 +916,6 @@ html.high-contrast-mode .toolkit-site .abc-controls {
   margin: 0;
   font-style: italic;
 }
-.cr-counter__answer { padding: 18px 20px; }
 .cr-counter__answer .tk-kicker { display: block; margin-bottom: 6px; }
 .cr-counter__answer p { font-size: var(--t-body); line-height: 1.55; margin: 0; }
 
@@ -870,18 +929,22 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .cr-open__item {
   display: grid;
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 20px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--tk-line);
+  padding: 22px 0;
   align-items: start;
 }
-.cr-open__item:last-child { border-bottom: none; }
+/* The question is the content and the number is a marker, so the marker
+   steps back. Each question already ends with a marked "where it lands"
+   block, so no rule is needed under the item as well. */
+.cr-open__item:last-child { padding-bottom: 0; }
 .cr-open__num {
   font-variant-numeric: tabular-nums;
-  font-size: var(--t-body);
+  font-size: var(--t-micro);
   font-weight: 700;
+  letter-spacing: 0.1em;
   color: var(--tk-red);
+  padding-top: 4px;
 }
 .cr-open h4 {
   font-size: var(--t-body);

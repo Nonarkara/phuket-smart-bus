@@ -250,10 +250,10 @@ export function LandingPage() {
           <a className="lp-btn" href="https://bus.nonarkara.org/ops">Run the operations console <span>↗</span></a>
         </div>
         <ol className="lp-handover__chapters" role="list" aria-label="Full research chapters">
-          <li><span>01</span><div><strong>Phuket</strong><em>the island and its transit landscape</em></div></li>
-          <li><span>02</span><div><strong>Evidence</strong><em>Las Vegas, and how the case compares</em></div></li>
-          <li><span>03</span><div><strong>Build &amp; Finance</strong><em>method, prototype, feasibility and the deal</em></div></li>
-          <li><span>04</span><div><strong>Field Notes</strong><em>the people, the history, the toolkit itself</em></div></li>
+          <li><span>01</span><strong>Phuket</strong><em>the island and its transit landscape</em></li>
+          <li><span>02</span><strong>Evidence</strong><em>Las Vegas, and how the case compares</em></li>
+          <li><span>03</span><strong>Build &amp; Finance</strong><em>method, prototype, feasibility and the deal</em></li>
+          <li><span>04</span><strong>Field Notes</strong><em>the people, the history, the toolkit itself</em></li>
         </ol>
       </section>
     </section>

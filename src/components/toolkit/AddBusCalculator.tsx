@@ -179,7 +179,6 @@ export function AddBusCalculator() {
               <strong>{formatTHB(calc.before.thb)}</strong>
               <small>{calc.before.pax} pax missed this hour</small>
             </div>
-            <div className="abc-results__arrow" aria-hidden="true">→</div>
             <div className="abc-results__cell abc-results__cell--after">
               <span className="tk-kicker">After +{extraBuses} bus{extraBuses === 1 ? "" : "es"}</span>
               <strong>{formatTHB(calc.after.thb)}</strong>
@@ -228,12 +227,15 @@ export function AddBusCalculator() {
             </div>
           </div>
 
-          <p className="abc-results__caveat">
-            <strong>Caveat:</strong> this assumes the extra buses are staffed and
-            positioned at the right terminal at the right minute. Real-world
-            duty planning is a separate problem; the operator who clears the math
-            still has to clear the contract.
-          </p>
+          <div className="abc-results__caveat">
+            <span className="tk-kicker">Caveat</span>
+            <p>
+              This assumes the extra buses are staffed and positioned at the
+              right terminal at the right minute. Real-world duty planning is a
+              separate problem; the operator who clears the math still has to
+              clear the contract.
+            </p>
+          </div>
         </div>
       </div>
     </section>
