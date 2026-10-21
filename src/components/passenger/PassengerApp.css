@@ -21,6 +21,25 @@ body.passenger-site-mode #root {
   background: #1c252e;
 }
 
+.pa-app,
+.pa-shell {
+  /* ── The rider's phone: the type scale ─────────────────────────────────
+     Eight names, eight values. The names are the vocabulary; the values are
+     this surface's. The reading band is ONE step on purpose: a standfirst
+     and a paragraph are the same size on a phone in sunlight, and a 1px
+     step between them would be a fake hierarchy. Everything below 13px was
+     microcopy that a rider in daylight could not read — it now sits at 13
+     or 11. */
+  --t-display: clamp(2.2rem, 9vw, 3rem);  /* 35.2 @390 · 48 @1440 — the one number that matters */
+  --t-hero:    1.6rem;                     /* 25.6 — the statement heading, the fare, the ETA */
+  --t-figure:  1.25rem;                    /* 20   — the big data numbers */
+  --t-title:   1.125rem;                   /* 18   — a heading */
+  --t-lead:    1.0625rem;                  /* 17   — a standfirst */
+  --t-body:    1.0625rem;                  /* 17   — body copy */
+  --t-label:   0.8125rem;                  /* 13   — a label */
+  --t-micro:   0.6875rem;                  /* 11   — the smallest text on the screen */
+}
+
 .pa-app {
   --pa-pad: clamp(16px, 5vw, 28px);
   --pa-bg: #fafaf7;
@@ -34,8 +53,8 @@ body.passenger-site-mode #root {
   background: var(--pa-bg);
   color: var(--pa-ink);
   font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.4;
+  font-size: var(--t-body);
+  line-height: 1.41;
   display: flex;
   flex-direction: column;
 }
@@ -67,17 +86,17 @@ body.passenger-site-mode #root {
   font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.02em;
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   padding: 4px 8px;
 }
 .pa-header__name {
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--t-body);
   letter-spacing: -0.01em;
 }
 .pa-header__link {
-  font-size: 0.82rem;
+  font-size: var(--t-label);
   color: var(--pa-muted);
   font-weight: 700;
   /* It measured 66x18 — a link you have to aim at with a thumb. Give it the
@@ -105,7 +124,7 @@ body.passenger-site-mode #root {
   border-bottom: 1px solid var(--pa-line);
 }
 .pa-countdown__label {
-  font-size: 0.95rem;
+  font-size: var(--t-lead);
   letter-spacing: 0;
   text-transform: none;
   color: var(--pa-muted);
@@ -113,14 +132,14 @@ body.passenger-site-mode #root {
 }
 .pa-countdown__time {
   font-variant-numeric: tabular-nums;
-  font-size: clamp(2.2rem, 9vw, 3rem);
+  font-size: var(--t-display);
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.9;
   color: var(--pa-ink);
 }
 .pa-countdown__sub {
-  font-size: 0.95rem;
+  font-size: var(--t-lead);
   color: var(--pa-muted);
 }
 .pa-countdown__sub strong {
@@ -132,22 +151,22 @@ body.passenger-site-mode #root {
 /* LIVE BOARD — real buses, real minutes ----------------------- */
 .pa-live { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
 .pa-live__head { display: flex; flex-direction: column; gap: 4px; }
-.pa-live__head h2 { font-weight: 500; margin: 0; font-family: var(--font-display); font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
-.pa-live__feed { font-size: 0.8rem; color: var(--pa-muted); }
+.pa-live__head h2 { font-weight: 500; margin: 0; font-family: var(--font-display); font-size: var(--t-hero); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; }
+.pa-live__feed { font-size: var(--t-label); color: var(--pa-muted); }
 .pa-live__feed.is-live::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--pa-green); vertical-align: 1px; }
 .pa-live__pick { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.pa-live__select { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--pa-muted); }
+.pa-live__select { display: flex; flex-direction: column; gap: 4px; font-size: var(--t-label); color: var(--pa-muted); }
 .pa-live__select select {
   min-height: 48px; width: 100%; padding: 0 12px;
-  font: inherit; font-size: 17px; color: var(--pa-ink);
+  font: inherit; font-size: var(--t-body); color: var(--pa-ink);
   background: #fff; border: 1px solid var(--pa-ink); border-radius: 0;
 }
 .pa-live__locate {
-  min-height: 48px; padding: 0 16px; font-size: 17px; font-weight: 700;
+  min-height: 48px; padding: 0 16px; font-size: var(--t-body); font-weight: 700;
   color: var(--pa-ink); background: #fff; border: 1px solid var(--pa-ink); border-radius: 0;
 }
 .pa-live__locate:active { transform: scale(0.97); }
-.pa-live__note { margin: 0; font-size: 0.8rem; color: var(--pa-muted); }
+.pa-live__note { margin: 0; font-size: var(--t-body); color: var(--pa-muted); }
 .pa-live__board { display: grid; grid-template-columns: 1fr; border: 1px solid var(--pa-ink); background: #fff; }
 .pa-live__dir { padding: 12px 14px; }
 .pa-live__dir + .pa-live__dir { border-top: 1px solid var(--pa-line); }
@@ -156,7 +175,7 @@ body.passenger-site-mode #root {
    heading; what goes is the 0.08em tracking and the shout. */
 .pa-live__dir h3 {
   margin: 0 0 8px;
-  font-size: 1rem;
+  font-size: var(--t-title);
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
@@ -165,12 +184,12 @@ body.passenger-site-mode #root {
 .pa-live__dir ol { margin: 0; padding: 0; list-style: none; }
 .pa-live__row { display: grid; grid-template-columns: 7.5em 1fr; align-items: baseline; gap: 10px; padding: 8px 0; }
 .pa-live__row + .pa-live__row { border-top: 1px solid var(--pa-line); }
-.pa-live__eta {  font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--pa-ink); }
+.pa-live__eta {  font-size: var(--t-hero); line-height: 1; font-variant-numeric: tabular-nums; color: var(--pa-ink); }
 .pa-live__row:first-child .pa-live__eta { color: var(--pa-red); }
 .pa-live__bus { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.pa-live__bus small { font-size: 0.8rem; color: var(--pa-muted); }
+.pa-live__bus small { font-size: var(--t-label); color: var(--pa-muted); }
 .pa-live__none { margin: 0; color: var(--pa-muted); }
-.pa-live__truth { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--pa-muted); }
+.pa-live__truth { margin: 0; font-size: var(--t-body); line-height: 1.45; color: var(--pa-muted); }
 
 .pa-map { height: 58svh; min-height: 320px; border: 1px solid var(--pa-ink); background: #0f151d; }
 /* Leaflet's own stylesheet sets `.leaflet-container { background: #ddd }` and
@@ -190,7 +209,17 @@ body.passenger-site-mode #root {
   color: rgba(255, 255, 255, 0.66);
 }
 .pa-map .leaflet-control-attribution a { color: #e6edf3; }
-.pa-map--loading { display: flex; align-items: center; justify-content: center; color: var(--pa-muted); font-size: 0.8rem; }
+/* Leaflet ships its own 18px zoom glyph and its own 12px attribution and
+   tooltip. Those are the two sizes on this screen the scale does not own, so
+   they are named here rather than left to arrive from a third party. */
+.pa-map .leaflet-control-zoom a { font-size: var(--t-title); }
+.pa-map .leaflet-tooltip,
+.pa-map .leaflet-control-attribution { font-size: var(--t-micro); }
+/* The rider's own heading for the screen reader. The global h1 rule sets
+   34px; the scale owns this surface, so the surface says so. */
+.pa-app .sr-only { font-size: var(--t-body); }
+
+.pa-map--loading { display: flex; align-items: center; justify-content: center; color: var(--pa-muted); font-size: var(--t-label); }
 .pa-map__bus, .pa-map__stop { position: relative; }
 .pa-map__dot, .pa-map__arrow, .pa-map__stop span { position: absolute; left: 0; top: 0; }
 .pa-map__dot { width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #8a9198; border: 2px solid #fff; }
@@ -224,14 +253,14 @@ body.passenger-site-mode #root {
 .pa-flights__kicker {
   display: block;
   color: var(--pa-red);
-  font-size: 0.9rem;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0;
 }
 .pa-flights h2 { font-weight: 500;
   margin: 4px 0 0;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: var(--t-title);
   line-height: 1.15;
 }
 .pa-flights__radar {
@@ -240,7 +269,7 @@ body.passenger-site-mode #root {
   border: 1px solid var(--pa-line);
   color: var(--pa-muted);
   
-  font-size: 0.62rem;
+  font-size: var(--t-micro);
   font-weight: 700;
   }
 .pa-flights__radar--live { color: #9a5d00; border-color: #e4b55a; background: #fff8e8; }
@@ -251,7 +280,7 @@ body.passenger-site-mode #root {
   border-right: 1px solid var(--pa-line);
   background: #f5f5f1;
   color: var(--pa-muted);
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   font-weight: 800;
   letter-spacing: 0; }
 .pa-flights__tabs button:last-child { border-right: 0; }
@@ -265,20 +294,20 @@ body.passenger-site-mode #root {
   min-height: 43px;
   padding: 11px 0;
   border-bottom: 1px solid var(--pa-line);
-  font-size: 0.82rem;
+  font-size: var(--t-label);
 }
 .pa-flights__row time,
 .pa-flights__row strong {  font-weight: 800; }
 .pa-flights__row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pa-flights__row small { color: var(--pa-muted); font-size: 0.7rem; }
-.pa-flights__truth { margin: 14px 18px 8px; color: var(--pa-muted); font-size: 0.75rem; line-height: 1.45; }
+.pa-flights__row small { color: var(--pa-muted); font-size: var(--t-micro); }
+.pa-flights__truth { margin: 14px 18px 8px; color: var(--pa-muted); font-size: var(--t-body); line-height: 1.45; }
 .pa-flights__official {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 44px;
   margin: 0 18px 16px;
-  font-size: 0.8rem;
+  font-size: var(--t-label);
   font-weight: 800;
 }
 
@@ -310,20 +339,20 @@ body.passenger-site-mode #root {
 .pa-card--featured .pa-card__copy { color: rgba(255, 255, 255, 0.88); }
 .pa-card--featured .pa-card__cta { color: #fff; }
 .pa-card__kicker {
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   letter-spacing: 0; color: var(--pa-red);
   font-weight: 700;
 }
 .pa-card__price {
   font-family: var(--font-display);
-  font-size: 2.4rem;
+  font-size: var(--t-display);
   letter-spacing: -0.03em;
   font-weight: 500;
   line-height: 1;
   margin-top: 4px;
 }
 .pa-card__copy {
-  font-size: 0.95rem;
+  font-size: var(--t-body);
   line-height: 1.45;
   color: #1c252e;
   margin: 4px 0 12px;
@@ -331,7 +360,7 @@ body.passenger-site-mode #root {
 }
 .pa-card__cta {
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: var(--t-label);
   color: var(--pa-red);
   letter-spacing: 0.02em;
 }
@@ -343,7 +372,7 @@ body.passenger-site-mode #root {
 }
 .pa-promise h2 {
   font-family: var(--font-body);
-  font-size: 1.05rem;
+  font-size: var(--t-title);
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 18px 0 10px;
@@ -358,7 +387,7 @@ body.passenger-site-mode #root {
   gap: 8px;
 }
 .pa-promise li {
-  font-size: 0.88rem;
+  font-size: var(--t-body);
   line-height: 1.4;
   color: var(--pa-muted);
   padding-left: 18px;
@@ -386,20 +415,20 @@ body.passenger-site-mode #root {
   border: none;
   color: var(--pa-red);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: var(--t-label);
   padding: 8px 0;
   text-align: left;
   width: fit-content;
 }
 .pa-form__title { font-weight: 500;
   font-family: var(--font-display);
-  font-size: clamp(1.7rem, 5vw, 2.2rem);
+  font-size: var(--t-hero);
   letter-spacing: -0.025em;
   line-height: 1.05;
   margin: 0;
 }
 .pa-form__sub {
-  font-size: 0.95rem;
+  font-size: var(--t-body);
   line-height: 1.5;
   color: var(--pa-muted);
   margin: 0;
@@ -411,7 +440,7 @@ body.passenger-site-mode #root {
   gap: 6px;
 }
 .pa-form__field span {
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0; color: var(--pa-muted);
 }
@@ -419,7 +448,7 @@ body.passenger-site-mode #root {
   appearance: none;
   width: 100%;
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: var(--t-body);
   padding: 16px 14px;
   background: #fff;
   border: 1px solid var(--pa-ink);
@@ -440,14 +469,14 @@ body.passenger-site-mode #root {
   gap: 12px;
 }
 .pa-form__note {
-  font-size: 0.78rem;
+  font-size: var(--t-body);
   color: var(--pa-muted);
   line-height: 1.5;
 }
 
 .pa-suggestions { display: flex; flex-direction: column; gap: 8px; }
 .pa-suggestions__label {
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0; color: var(--pa-muted);
 }
@@ -464,7 +493,7 @@ body.passenger-site-mode #root {
   background: #fff;
   border: 1px solid var(--pa-ink);
   padding: 10px 14px;
-  font-size: 0.92rem;
+  font-size: var(--t-label);
   font-weight: 700;
   color: var(--pa-ink);
   border-radius: 0;
@@ -491,12 +520,12 @@ body.passenger-site-mode #root {
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: 0.04em;
-  font-size: 1.2rem;
+  font-size: var(--t-figure);
   color: #635bff; /* Stripe purple */
 }
 .pa-stripe__brand small {
   
-  font-size: 0.7rem;
+  font-size: var(--t-micro);
   letter-spacing: 0.1em;
   color: var(--pa-muted);
 }
@@ -507,7 +536,7 @@ body.passenger-site-mode #root {
   border: none;
   color: #fff;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--t-body);
   padding: 18px 16px;
   width: 100%;
   margin-top: 8px;
@@ -532,19 +561,19 @@ body.passenger-site-mode #root {
 }
 .pa-ticket__head { display: flex; flex-direction: column; gap: 8px; }
 .pa-ticket__success {
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   letter-spacing: 0; color: var(--pa-green);
   font-weight: 700;
 }
 .pa-ticket__title { font-weight: 500;
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 5vw, 2rem);
+  font-size: var(--t-hero);
   letter-spacing: -0.025em;
   line-height: 1.05;
   margin: 0;
 }
 .pa-ticket__sub {
-  font-size: 0.95rem;
+  font-size: var(--t-body);
   color: var(--pa-muted);
   line-height: 1.5;
 }
@@ -567,7 +596,7 @@ body.passenger-site-mode #root {
   justify-content: space-between;
   align-items: baseline;
   width: 100%;
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0; color: var(--pa-muted);
   padding-bottom: 12px;
@@ -585,7 +614,7 @@ body.passenger-site-mode #root {
   letter-spacing: 0;
   font-weight: 400;
   color: var(--pa-muted);
-  font-size: 0.82rem;
+  font-size: var(--t-label);
 }
 .pa-qr {
   width: 200px;
@@ -607,10 +636,10 @@ body.passenger-site-mode #root {
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
-  font-size: 0.92rem;
+  font-size: var(--t-body);
 }
 .pa-ticket__card dt {
-  font-size: 0.74rem;
+  font-size: var(--t-label);
   font-weight: 700;
   letter-spacing: 0; color: var(--pa-muted);
 }
@@ -628,7 +657,7 @@ body.passenger-site-mode #root {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 0.74rem;
+  font-size: var(--t-micro);
   color: var(--pa-muted);
   text-align: center;
   background: var(--pa-bg);
@@ -647,7 +676,7 @@ body.passenger-site-mode #root {
    readable measure rather than the footer's centred run-on. */
 .pa-privacy {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-body);
   line-height: 1.5;
   color: var(--pa-muted);
   max-width: 68ch;
@@ -658,7 +687,7 @@ body.passenger-site-mode #root {
   margin: 4px auto 0;
   text-align: center;
   max-width: 46ch;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 @media (max-width: 430px) {
@@ -717,7 +746,7 @@ body.passenger-site-mode #root {
   }
 
   .pa-portal-header__name {
-    font-size: 16px;
+    font-size: var(--t-body);
     font-weight: 700;
     font-family: var(--font-body);
     letter-spacing: -0.02em;
@@ -725,7 +754,7 @@ body.passenger-site-mode #root {
   }
 
   .pa-portal-header__sub {
-    font-size: 11px;
+    font-size: var(--t-micro);
     
     color: rgba(255, 255, 255, 0.6);
     letter-spacing: 0.04em;
@@ -746,7 +775,7 @@ body.passenger-site-mode #root {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     
-    font-size: 11px;
+    font-size: var(--t-micro);
     color: rgba(255, 255, 255, 0.85);
   }
 
@@ -782,7 +811,7 @@ body.passenger-site-mode #root {
   .pa-portal-btn {
     padding: 6px 12px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: var(--t-label);
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
@@ -809,7 +838,7 @@ body.passenger-site-mode #root {
   }
 
   .pa-portal-link {
-    font-size: 12px;
+    font-size: var(--t-label);
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
   }
@@ -880,13 +909,13 @@ body.passenger-site-mode #root {
   }
 
   .pa-stage__banner-info strong {
-    font-size: 13px;
+    font-size: var(--t-label);
     font-weight: 700;
     color: #fff;
   }
 
   .pa-stage__banner-info span {
-    font-size: 11px;
+    font-size: var(--t-micro);
     color: rgba(255, 255, 255, 0.65);
     
   }
@@ -902,7 +931,7 @@ body.passenger-site-mode #root {
     background: rgba(239, 68, 47, 0.15);
     border: 1px solid rgba(239, 68, 47, 0.4);
     color: #ff8a7a;
-    font-size: 10px;
+    font-size: var(--t-micro);
     font-weight: 700;
     
     border-radius: 3px;
@@ -921,7 +950,7 @@ body.passenger-site-mode #root {
     place-items: center;
     background: #111722;
     color: rgba(255, 255, 255, 0.62);
-    font: 700 11px/1 var(--font-body); font-variant-numeric: tabular-nums;
+    font: 700 var(--t-micro)/1 var(--font-body); font-variant-numeric: tabular-nums;
     letter-spacing: 0; }
 
   .pa-stage__map-wrapper .v2-map__frame {
@@ -956,7 +985,7 @@ body.passenger-site-mode #root {
     background: #0d121b;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.7);
-    font-size: 11.5px;
+    font-size: var(--t-micro);
     
     z-index: 5;
   }
@@ -1029,7 +1058,7 @@ body.passenger-site-mode #root {
   gap: 12px;
 }
 .pa-preview-topbar__brand strong {
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 700;
 }
 
@@ -1039,7 +1068,7 @@ body.passenger-site-mode #root {
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: #fff;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 700;
   cursor: pointer;
 }
@@ -1109,13 +1138,13 @@ body.passenger-site-mode #root {
   gap: 4px;
 }
 .pa-decision__kicker {
-  font-size: 0.85rem;
+  font-size: var(--t-label);
   font-weight: 700;
   color: var(--pa-red);
 }
 .pa-decision__head h2 {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: var(--t-title);
   font-weight: 500;
   margin: 0;
   line-height: 1.2;
@@ -1138,7 +1167,7 @@ body.passenger-site-mode #root {
   border: 2px solid var(--pa-green);
 }
 .pa-decision__badge {
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   font-weight: 700;
   color: var(--pa-green);
   text-transform: uppercase;
@@ -1153,14 +1182,14 @@ body.passenger-site-mode #root {
   gap: 6px;
 }
 .pa-decision__amount {
-  font-size: 1.6rem;
+  font-size: var(--t-hero);
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--pa-ink);
 }
 .pa-decision__unit {
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   color: var(--pa-muted);
 }
 .pa-decision__wait {
@@ -1168,19 +1197,19 @@ body.passenger-site-mode #root {
   flex-direction: column;
 }
 .pa-decision__metric {
-  font-size: 1.15rem;
+  font-size: var(--t-figure);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--pa-ink);
 }
 .pa-decision__caption {
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   color: var(--pa-muted);
 }
 .pa-decision__perks {
   margin: 4px 0 0;
   padding-left: 16px;
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   color: var(--pa-muted);
   line-height: 1.4;
 }
@@ -1207,12 +1236,12 @@ body.passenger-site-mode #root {
   background: #fef5f4;
 }
 .pa-decision__verdict-title {
-  font-size: 0.95rem;
+  font-size: var(--t-lead);
   color: var(--pa-ink);
 }
 .pa-decision__verdict-text {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--t-body);
   line-height: 1.45;
   color: var(--pa-ink);
 }
@@ -1234,26 +1263,26 @@ body.passenger-site-mode #root {
   gap: 12px;
 }
 .pa-sim-bridge__tag {
-  font-size: 0.75rem;
+  font-size: var(--t-label);
   font-weight: 700;
   color: var(--pa-blue);
   display: block;
 }
 .pa-sim-bridge__title {
   margin: 2px 0 0;
-  font-size: 1.05rem;
+  font-size: var(--t-title);
   font-weight: 600;
   color: var(--pa-ink);
 }
 .pa-sim-bridge__cta {
-  font-size: 0.82rem;
+  font-size: var(--t-label);
   font-weight: 700;
   color: var(--pa-red);
   white-space: nowrap;
 }
 .pa-sim-bridge__copy {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--t-body);
   line-height: 1.45;
   color: var(--pa-muted);
 }
@@ -1264,7 +1293,7 @@ body.passenger-site-mode #root {
 }
 .pa-sim-bridge__btn {
   padding: 8px 4px;
-  font-size: 0.78rem;
+  font-size: var(--t-label);
   font-weight: 600;
   background: #fff;
   border: 1px solid var(--pa-line);
@@ -1290,11 +1319,11 @@ body.passenger-site-mode #root {
   gap: 2px;
 }
 .pa-sim-bridge__stat-label {
-  font-size: 0.7rem;
+  font-size: var(--t-micro);
   color: var(--pa-muted);
 }
 .pa-sim-bridge__stat-value {
-  font-size: 0.95rem;
+  font-size: var(--t-figure);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: var(--pa-ink);
