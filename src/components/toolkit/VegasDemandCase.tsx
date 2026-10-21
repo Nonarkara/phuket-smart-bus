@@ -189,11 +189,13 @@ function VegasStripMap() {
 
         <rect x="0" y="0" width="720" height="380" fill={`url(#${id}-desert)`} />
 
-        {/* McCarran / Harry Reid airport — top right */}
+        {/* McCarran / Harry Reid airport — top right. The labels run left
+            from the dot: anchored at the right edge they ran off the canvas
+            and the words were cut in half. */}
         <circle cx="640" cy="80" r="6" fill="var(--tk-red)" />
-        <text x="652" y="78" fontSize="11" fontWeight="700" fill="var(--tk-red)">Harry Reid (formerly McCarran) Airport</text>
-        <text x="652" y="91" fontSize="9" fill="#111820">51.5M pax / 2024</text>
-        <text x="652" y="102" fontSize="9" fill="#111820">Monorail was planned to reach here — never built.</text>
+        <text x="628" y="72" textAnchor="end" fontSize="11" fontWeight="700" fill="var(--tk-red)">Harry Reid (formerly McCarran) Airport</text>
+        <text x="628" y="86" textAnchor="end" fontSize="9" fill="#111820">51.5M pax / 2024</text>
+        <text x="628" y="100" textAnchor="end" fontSize="9" fill="#111820">Monorail was planned to reach here — never built.</text>
 
         {/* The Strip — diagonal from upper-right to lower-left */}
         <line x1="630" y1="120" x2="120" y2="320" stroke="#111820" strokeWidth="3" strokeLinecap="round" />
@@ -209,7 +211,7 @@ function VegasStripMap() {
           strokeDasharray="8 4"
         />
         <text x="455" y="135" fontSize="9" fontWeight="700" fill="#5f666d">Monorail — 3.9 mi · US$650M</text>
-        <text x="455" y="148" fontSize="9" fill="#5f666d">Bankrupt 2010 · sold 2020 for US$24.3M (3.7% of cost)</text>
+        <text x="446" y="148" fontSize="9" fill="#5f666d">Bankrupt 2010 · sold 2020 for US$24.3M (3.7% of cost)</text>
 
         {/* Deuce on the Strip — bold, full corridor */}
         <polyline
@@ -228,8 +230,9 @@ function VegasStripMap() {
         <text x="40" y="305" fontSize="10" fontWeight="700" fill="var(--tk-blue)" textAnchor="start">Fremont / Downtown</text>
 
         {/* Airport connection "missing" */}
-        <path d="M 630 120 Q 660 60 660 80" stroke="#5f666d" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-        <text x="640" y="155" fontSize="9" fontStyle="italic" fill="#5f666d">monorail extension to airport: planned, never built</text>
+        <path d="M 630 120 Q 655 62 646 74" stroke="#5f666d" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
+        <text x="535" y="156" fontSize="9" fontStyle="italic" fill="#5f666d">monorail extension:</text>
+        <text x="535" y="167" fontSize="9" fontStyle="italic" fill="#5f666d">planned, never built</text>
 
         {/* Compass */}
         <g transform="translate(60, 60)">

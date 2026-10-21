@@ -166,14 +166,14 @@ export function DataProvenance() {
             {CLAIMS.map((c) => (
               <tr key={c.number}>
                 <th scope="row">{c.number}</th>
-                <td>{c.figure}</td>
-                <td>
+                <td data-label="Value">{c.figure}</td>
+                <td data-label="Source">
                   <a href={c.sourceHref} target="_blank" rel="noreferrer">
                     {c.source} <span aria-hidden="true">↗</span>
                   </a>
                 </td>
-                <td><time dateTime={c.verified}>{c.verified}</time></td>
-                <td>
+                <td data-label="Last verified"><time dateTime={c.verified}>{c.verified}</time></td>
+                <td data-label="Cycle">
                   <span className={`dp-freshness dp-freshness--${c.freshness.toLowerCase()}`}>
                     {c.freshness}
                   </span>

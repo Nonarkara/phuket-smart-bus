@@ -1,0 +1,235 @@
+/* ===========================================================================
+ * toolkit-panel.css — the ops-console toolkit briefing (/v2?view=toolkit)
+ *
+ * These rules live outside src/styles.css on purpose: the ops console theme
+ * owns the tokens, and this file only changes how the toolkit briefing's own
+ * groups are put together. Every selector is scoped to .v2 .tk-briefing so it
+ * outranks the equal-specificity rules in styles.css whatever the load order.
+ *
+ * The four groups this file fixes shared one fault: four or six identical
+ * boxes, every line of type inside them the same size, and nothing in the
+ * group saying where to look. The fix is the one the toolkit's own house
+ * rules ask for — a box around each item is replaced by the rule and the
+ * space that carry meaning, and the thing the reader scans for is allowed to
+ * be bigger than the thing it is qualified by.
+ * ========================================================================= */
+
+.v2 .tk-briefing .tk-persona-card {
+  /* A persona is an entry in a register, not a card. The left rule says
+     which segment it belongs to and the badge says whether it rides today;
+     those two carry the meaning, so the box around them carried nothing. */
+  background: none;
+  border: 0;
+  border-left: 3px solid var(--ax-line-2);
+  padding: 12px 0 12px 16px;
+}
+.v2 .tk-briefing .tk-persona-card--user { border-left-color: var(--ax-accent); }
+.v2 .tk-briefing .tk-persona-card--nonuser { border-left-color: var(--ax-warn); }
+
+.v2 .tk-briefing .tk-persona-num {
+  /* The index steps back into the margin. */
+  min-width: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.v2 .tk-briefing .tk-persona-name {
+  /* The name is what the reader scans for. It was 13px/800, the same size
+     as the demographic line and the need line under it, so nothing in the
+     entry said what it was about. */
+  font-size: var(--t-lead);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.v2 .tk-briefing .tk-persona-card__head {
+  align-items: baseline;
+  row-gap: 6px;
+}
+.v2 .tk-briefing .tk-persona-badge {
+  align-self: center;
+}
+
+/* ── 05 · the action roadmap ─────────────────────────────────────────────
+ * The four quadrants are an impact-by-effort matrix, so they are four
+ * columns of a matrix rather than four tiles: the rule above each one is
+ * the quadrant, and the badge repeats that colour in type so the quadrant
+ * can be found without reading the border. */
+.v2 .tk-briefing .tk-recs-grid {
+  gap: 30px 36px;
+}
+.v2 .tk-briefing .tk-recs-quadrant {
+  background: none;
+  border: 0;
+  border-top: 3px solid var(--ax-line-2);
+  padding: 14px 0 0;
+}
+.v2 .tk-briefing .tk-recs-quadrant--quick { border-top-color: var(--ax-accent); }
+.v2 .tk-briefing .tk-recs-quadrant--major { border-top-color: var(--ax-warn); }
+.v2 .tk-briefing .tk-recs-quadrant--fill { border-top-color: var(--ax-ink-3); }
+.v2 .tk-briefing .tk-recs-quadrant--hard { border-top-color: var(--ax-neg); }
+
+.v2 .tk-briefing .tk-quadrant-badge {
+  border: 1px solid transparent;
+}
+.v2 .tk-briefing .tk-recs-quadrant--quick .tk-quadrant-badge {
+  color: var(--ax-accent);
+  background: var(--ax-accent-wash);
+  border-color: var(--ax-accent-line);
+}
+.v2 .tk-briefing .tk-recs-quadrant--major .tk-quadrant-badge {
+  color: var(--ax-warn);
+  background: var(--ax-warn-wash);
+  border-color: var(--ax-warn-line);
+}
+.v2 .tk-briefing .tk-recs-quadrant--fill .tk-quadrant-badge {
+  color: var(--ax-ink-3);
+  background: rgba(25, 23, 18, 0.05);
+  border-color: var(--ax-line-2);
+}
+.v2 .tk-briefing .tk-recs-quadrant--hard .tk-quadrant-badge {
+  color: var(--ax-neg);
+  background: var(--ax-neg-wash);
+  border-color: rgba(180, 52, 31, 0.3);
+}
+.v2 .tk-briefing .tk-quadrant-header h3 {
+  /* The badge names the quadrant; the line after it says what the quadrant
+     holds. The explanation steps back. */
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ax-ink-2);
+}
+
+/* ── 06 · the real data feeds ─────────────────────────────────────────────
+ * Six feeds, three across, two rows. Four across left a row of two with
+ * two empty cells beside it, and the box around each feed said nothing the
+ * source line under the title does not already say. */
+.v2 .tk-briefing .tk-data-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 34px;
+}
+.v2 .tk-briefing .tk-data-card {
+  background: none;
+  border: 0;
+  padding: 0;
+  gap: 5px;
+}
+.v2 .tk-briefing .tk-data-card strong {
+  font-size: var(--t-body);
+  letter-spacing: -0.01em;
+}
+.v2 .tk-briefing .tk-data-source {
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+}
+
+/* ── 03 · the six friction points ─────────────────────────────────────────
+ * They are six points, listed — not six tags to be counted. */
+.v2 .tk-briefing .tk-friction-tags {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 28px;
+}
+.v2 .tk-briefing .tk-friction-tag {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: var(--t-label);
+  font-weight: 600;
+  color: var(--ax-ink-2);
+}
+
+/* ── 01 · the hero's two actions ────────────────────────────────────────── */
+.v2 .tk-briefing .tk-hero-actions {
+  gap: 10px;
+}
+
+/* ── 07 · the partner marks ─────────────────────────────────────────────── */
+.v2 .tk-briefing .tk-partner-logos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .v2 .tk-briefing .tk-data-grid,
+  .v2 .tk-briefing .tk-friction-tags {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  /* Two actions that cannot share a line become a deliberate stack: each
+     button takes the width of the row instead of leaving one alone on the
+     last line of a wrap. */
+  .v2 .tk-briefing .tk-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .v2 .tk-briefing .tk-hero-actions .tk-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Four marks fit two by two, so none of them is left alone on a row. */
+  .v2 .tk-briefing .tk-partner-logos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    padding: 18px 20px;
+  }
+
+  /* Three story tabs cannot share a 390px line without hiding the third.
+     They stack, so every story is visible and the strip stays a strip. */
+  .v2 .tk-briefing .tk-causal-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow-x: visible;
+  }
+  .v2 .tk-briefing .tk-causal-tab {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ax-line);
+  }
+  .v2 .tk-briefing .tk-causal-tab.is-active {
+    border-left: 3px solid var(--ax-accent);
+    padding-left: 13px;
+  }
+
+  /* The traceability ledger is three columns of prose. On a phone it
+     becomes a register of claims, each field carrying its own name. */
+  .v2 .tk-briefing .tk-ledger-table-wrap {
+    background: none;
+    border: 0;
+    overflow: visible;
+  }
+  .v2 .tk-briefing .tk-ledger-table,
+  .v2 .tk-briefing .tk-ledger-table tbody,
+  .v2 .tk-briefing .tk-ledger-table tr,
+  .v2 .tk-briefing .tk-ledger-table td {
+    display: block;
+    width: auto;
+  }
+  .v2 .tk-briefing .tk-ledger-table thead { display: none; }
+  .v2 .tk-briefing .tk-ledger-table tbody tr {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--ax-line-2);
+  }
+  .v2 .tk-briefing .tk-ledger-table tbody tr:last-child { border-bottom: none; }
+  .v2 .tk-briefing .tk-ledger-table td {
+    padding: 0 0 10px;
+    border-bottom: none;
+  }
+  .v2 .tk-briefing .tk-ledger-table td:last-child { padding-bottom: 0; }
+  .v2 .tk-briefing .tk-ledger-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: var(--t-micro);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ax-ink-3);
+  }
+}

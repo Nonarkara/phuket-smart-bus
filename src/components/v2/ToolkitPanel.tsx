@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../toolkit/toolkit-panel.css";
 
 /**
  * TOOLKIT tab — Executive Briefing of the USASCP Research & Simulation Engine
@@ -577,9 +578,9 @@ export function ToolkitPanel({
               <tbody>
                 {LEDGER.map((row) => (
                   <tr key={row.surface}>
-                    <td><strong>{row.finding}</strong></td>
-                    <td>{row.model}</td>
-                    <td><span className="tk-code-tag">{row.surface}</span></td>
+                    <td data-label="Field research finding"><strong>{row.finding}</strong></td>
+                    <td data-label="Simulation engine model rule">{row.model}</td>
+                    <td data-label="Where it lives in software"><span className="tk-code-tag">{row.surface}</span></td>
                   </tr>
                 ))}
               </tbody>

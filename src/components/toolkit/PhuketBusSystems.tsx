@@ -219,9 +219,9 @@ export function PhuketBusSystems({ lang = "en" }: { lang?: Lang }) {
           </div>
           {competitors.map((c) => (
             <div className="pb-competitor-row" role="row" key={c.mode}>
-              <strong role="cell">{c.mode}</strong>
-              <span role="cell">{c.cost}</span>
-              <span role="cell">{c.note}</span>
+              <strong role="cell" data-label={tr("pbChMode", lang)}>{c.mode}</strong>
+              <span role="cell" data-label={tr("pbChFare", lang)}>{c.cost}</span>
+              <span role="cell" data-label={tr("pbChWhat", lang)}>{c.note}</span>
             </div>
           ))}
         </div>

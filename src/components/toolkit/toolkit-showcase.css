@@ -184,6 +184,9 @@ html.toolkit-site-mode #root {
 .tk-research > summary:hover { color: var(--tk-red); }
 .tk-research__body { padding: 0 24px 32px; border-top: 1px solid currentColor; }
 .tk-research__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; padding-top: 28px; }
+/* An odd number of figures would leave the last one alone on a row of the
+   strip, so it takes the whole row instead. */
+.tk-research__stats > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .tk-research__stats > div { display: flex; flex-direction: column; gap: 4px; }
 .tk-research__stats strong { font: 700 var(--t-title)/1.1 var(--font-body); }
 .tk-research__stats span { font-size: var(--t-label); font-weight: 700; }
@@ -650,7 +653,9 @@ html.toolkit-site-mode #root {
   grid-template-columns: 110px 1fr;
   gap: 14px;
   font-size: var(--t-label);
-  align-items: baseline;
+  /* Top-aligned: the term is a label for the row, not a second baseline in
+     it, and a baseline match split one row into two. */
+  align-items: start;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--tk-line);
 }
@@ -769,9 +774,11 @@ html.toolkit-site-mode #root {
   grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--tk-ink);
 }
+/* The four headline figures are a ledger on the paper ground, not four white
+   cards. The house idiom is one ruled strip with dividers (see .fc-stats), and
+   a per-cell ground would turn four parallel facts into four boxes. */
 .lp-hero__stats div {
   padding: 20px 22px;
-  background: var(--tk-white);
   border-right: 1px solid var(--tk-ink);
   display: flex;
   flex-direction: column;
@@ -1015,10 +1022,14 @@ html.toolkit-site-mode #root {
 }
 .lp-card:nth-child(2n) { border-right: none; }
 .lp-card:nth-last-child(-n+2) { border-bottom: none; }
+/* The head is a three-part rule, not a bag of things that might wrap: the
+   number, the label, and the evidence chip. A grid cannot break the row, so
+   the chip never strands the label on a line of its own. */
 .lp-card__head {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: 14px;
+  column-gap: 14px;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--tk-line);
@@ -1029,7 +1040,6 @@ html.toolkit-site-mode #root {
   font-variant-numeric: tabular-nums;
   font-size: var(--t-micro);
   letter-spacing: 0.06em;
-  margin-left: auto;
   padding: 3px 6px;
   text-transform: uppercase;
 }
@@ -1122,40 +1132,45 @@ html.toolkit-site-mode #root {
 
 .lp-handover__buttons { display: flex; gap: 24px; flex-wrap: wrap; margin: 32px 0 40px; }
 
+/* The four chapters are a reading path, read 01 → 04, so they are laid out as
+   four columns in order — not as a 2×2 matrix, which says "parallel" when the
+   page means "sequence". The index hangs in the margin of each entry and the
+   name sits above its gloss, so the row cannot break and strand a word. */
 .lp-handover__chapters {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 20px 0 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px 32px;
   border-top: 1px solid var(--tk-ink);
 }
 .lp-handover__chapters li {
   display: grid;
-  grid-template-columns: 60px 1fr;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--tk-ink);
-  align-items: baseline;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 2px 12px;
 }
-.lp-handover__chapters li > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
-.lp-handover__chapters li:nth-child(2n+1) { border-right: 1px solid var(--tk-ink); padding-right: 24px; }
-.lp-handover__chapters li:nth-child(2n) { padding-left: 24px; }
 .lp-handover__chapters span {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   font-variant-numeric: tabular-nums;
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--tk-red);
+  padding-top: 3px;
 }
 .lp-handover__chapters strong {
+  grid-column: 2;
+  grid-row: 1;
   font-family: var(--font-body);
   font-size: var(--t-body);
   letter-spacing: -0.015em;
-  margin-right: 8px;
 }
 .lp-handover__chapters em {
+  grid-column: 2;
+  grid-row: 2;
   font-size: var(--t-label);
   color: var(--tk-muted);
   font-style: normal;
@@ -1182,25 +1197,25 @@ html.toolkit-site-mode #root {
   .lp-ton > div { padding: 56px 20px; }
   .lp-cards { grid-template-columns: 1fr; }
   .lp-signal__chain { grid-template-columns: 1fr; }
-  .lp-signal__chain li { min-height: 0; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.28); }
-  .lp-signal__chain li:last-child { border-bottom: none; }
+  /* The red arrow already carries the step from one handoff to the next. A
+     rule under every step as well would say the same thing twice, and it
+     turns a five-step path into five boxes. */
+  .lp-signal__chain li { min-height: 0; padding-bottom: 30px; border-right: none; }
   .lp-signal__chain b { bottom: -13px; left: 20px; right: auto; top: auto; transform: rotate(90deg); }
   .lp-card { border-right: none; border-bottom: 1px solid var(--tk-ink); }
   .lp-card:nth-child(2n) { border-right: none; }
   .lp-card:nth-last-child(-n+2) { border-bottom: 1px solid var(--tk-ink); }
   .lp-card:last-child { border-bottom: none; }
-  .lp-handover__chapters { grid-template-columns: 1fr; }
-  .lp-handover__chapters li { grid-template-columns: 50px 1fr; }
-  .lp-handover__chapters li:nth-child(2n+1) { border-right: none; padding-right: 0; }
-  .lp-handover__chapters li:nth-child(2n) { padding-left: 0; }
+  .lp-handover__chapters { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
   .lp-hero { padding-top: 48px; }
   .lp-hero__title { font-weight: 700; font-size: var(--t-figure); }
   .lp-hero__status { flex-direction: column; gap: 6px; }
+  .lp-handover__chapters { grid-template-columns: 1fr; }
   .lp-card { padding: 24px 20px; }
-  .lp-card__head { align-items: center; flex-wrap: wrap; }
-  .lp-card__status { margin-left: 0; width: fit-content; }
+  .lp-card__head { align-items: center; }
+  .lp-card__status { width: fit-content; }
 }
 
 /* ===========================================================================
@@ -1398,10 +1413,14 @@ html.toolkit-site-mode #root {
   border: 1px solid #16a574;
 }
 
+/* The comparison is two readings of the same hour: what was missed before,
+   and what is still missed after the buses are added. Two equal cells with a
+   gutter between them; the labels say which is which and the after cell is
+   marked. A third element floating in the gutter would repeat the labels. */
 .abc-results__pair {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
   align-items: stretch;
 }
 .abc-results__cell {
@@ -1426,14 +1445,6 @@ html.toolkit-site-mode #root {
 }
 .abc-results__cell--after { background: rgba(22, 165, 116, 0.06); border-color: #16a574; }
 .abc-results__cell--after strong { color: #16a574; }
-.abc-results__arrow {
-  align-self: center;
-  font-variant-numeric: tabular-nums;
-  font-size: var(--t-title);
-  font-weight: 700;
-  color: var(--tk-muted);
-}
-
 .abc-results__bars { display: flex; flex-direction: column; gap: 10px; }
 .abc-results__bars .tk-kicker { display: block; }
 .abc-bars {
@@ -1506,12 +1517,19 @@ html.toolkit-site-mode #root {
   background: rgba(17, 24, 32, 0.04);
   border-left: 3px solid var(--tk-muted);
 }
-.abc-results__caveat strong { color: var(--tk-ink); }
+/* The caveat is a labelled note, like every other caveat on this site: the
+   label sits above the sentence, so the sentence is the block's content. */
+.abc-results__caveat .tk-kicker { color: var(--tk-muted); margin-bottom: 4px; }
 
 @media (max-width: 560px) {
   .abc-results__pair { grid-template-columns: 1fr; }
-  .abc-results__arrow { transform: rotate(90deg); justify-self: center; }
   .abc-results__totals { grid-template-columns: 1fr; }
+}
+
+/* Four choices on a phone: two columns, so the last pill is never the only
+   one on a line. */
+@media (max-width: 560px) {
+  .vps-pill-group, .pcs-pill-group { display: grid; grid-template-columns: 1fr; }
 }
 
 /* ===========================================================================
@@ -1871,6 +1889,9 @@ html.toolkit-site-mode #root {
   background: #fff;
   display: flex;
   flex-direction: column;
+  /* The label sits at the top of the card and the note at the bottom, so a
+     short card fills its cell instead of leaving space under its text. */
+  justify-content: space-between;
   gap: 2px;
 }
 .vps-kpi__label { font-size: var(--t-micro); color: var(--tk-muted, #5f666d); }
@@ -1955,6 +1976,9 @@ html.toolkit-site-mode #root {
   background: #fff;
   display: flex;
   flex-direction: column;
+  /* Label at the top of the card, note at the bottom: the card fills the
+     row it shares with the taller cards beside it. */
+  justify-content: space-between;
   gap: 2px;
 }
 .pcs-card__label { font-size: var(--t-micro); color: var(--tk-muted, #5f666d); }

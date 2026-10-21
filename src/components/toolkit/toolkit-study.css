@@ -269,11 +269,19 @@
   .tk-whatif-intro, .tk-feasibility__intro { display: block; }
   .tk-whatif-intro h2, .tk-feasibility__intro h2 { margin-top: 24px; }
   .tk-whatif-intro p, .tk-feasibility__intro p { margin-top: 28px; }
-  .tk-whatif__tabs { display: flex; overflow-x: auto; }
-  .tk-whatif__tabs button { flex: 0 0 155px; }
+  /* Five story tabs on a 390px phone: a sideways scroll hid two of them
+     behind the edge. They become two columns instead, and the fifth takes
+     the last row rather than sitting alone on it. */
+  .tk-whatif__tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-x: visible; }
+  .tk-whatif__tabs button { min-width: 0; }
+  .tk-whatif__tabs button:last-child { grid-column: 1 / -1; }
   .tk-whatif__story { grid-template-columns: 1fr; }
   .tk-whatif__story > div { min-height: 220px; border-right: 0; }
-  .tk-feasibility-bridge__rail { margin-right: -20px; }
+  /* The five-step bridge was a 1150px rail scrolled sideways inside a
+     370px column. On a phone the steps stack: each one is read on its own. */
+  .tk-feasibility-bridge__rail { display: grid; grid-template-columns: 1fr; margin-right: 0; }
+  .tk-feasibility-bridge__step { min-height: 200px; }
+  .tk-feasibility-bridge__step > strong { white-space: normal; }
   .tk-finance-lab__controls { grid-template-columns: 1fr; }
   .tk-finance-lab__controls label { grid-template-columns: 1fr; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.4); }
   .tk-finance-bar { grid-template-columns: 1fr 70px; gap: 7px 12px; padding: 12px 0; }
