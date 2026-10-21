@@ -344,7 +344,18 @@ for (const route of ROUTES) {
         }
 
         // 5 · a wrapping row whose last line holds one item
-        if (isFlex && cs.flexWrap === "wrap") {
+        //
+        // A COLUMN flex is a STACK, not a row that broke: every child is on
+        // its own line by design, and `flex-wrap: wrap` in a column wraps on
+        // the HEIGHT, not the width. The live fleet table's route cell is
+        // exactly this — a line badge, a direction, a progress rule — and
+        // reading its last line as a widow fired on every live row of the
+        // operations wall. Seventy-four false findings on one deploy, all
+        // of them the same shape.
+        //
+        // So the rule reads the direction before it reads the wrap.
+        const isRowDirection = cs.flexDirection === "row" || cs.flexDirection === "row-reverse";
+        if (isFlex && cs.flexWrap === "wrap" && isRowDirection) {
           const rowKeys = [...rows.keys()].sort((a, b) => a - b);
           if (rowKeys.length >= 2) {
             const lastRow = rows.get(rowKeys[rowKeys.length - 1]);
