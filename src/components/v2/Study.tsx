@@ -355,12 +355,41 @@ export function Study() {
 
   const dowShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const collectionIsLive = fetchedAt > 0 && Date.now() - fetchedAt < 90_000;
-  // Is the collector itself alive? Read from the archive, not from this page's own fetch.
+  // Is the collector itself alive? Read from the archive, not from this page's
+  // own fetch — and answer for THE RANGE, not for the world.
+  //
+  // The row used to look for today's row and, on a historical anchor, find
+  // none — so it said "no sample" and "Not recording — check the
+  // phuket-smart-bus-collector cron" about a collector that had archived
+  // that day perfectly well. A range that ended last week is a RECORD. A
+  // record does not go stale.
   const todayRow = data?.days.find((d) => d.date === todayBangkokIso());
-  const lastSampleMs = todayRow?.coverage?.lastSampleAt ? Date.parse(todayRow.coverage.lastSampleAt) : null;
-  const collectorAgeMin = lastSampleMs === null ? null : Math.max(0, Math.round((Date.now() - lastSampleMs) / 60_000));
+  const presentDays = (data?.days ?? []).filter((d) => !d.missing && !d.future);
+  const lastPresent = presentDays.length ? presentDays[presentDays.length - 1] : null;
+  const todaySampleMs = todayRow?.coverage?.lastSampleAt ? Date.parse(todayRow.coverage.lastSampleAt) : null;
+  const todayAgeMin = todaySampleMs === null ? null : Math.max(0, Math.round((Date.now() - todaySampleMs) / 60_000));
   const inService = Number(bangkokTimeOf(new Date().toISOString()).slice(0, 2)) >= SERVICE_START_H;
-  const collectorStale = inService && (collectorAgeMin === null || collectorAgeMin > COLLECTOR_STALE_MIN);
+  // Stale means: the range covers today, the collector is in service, and
+  // today's sample is missing or old. A range that ended last week is a
+  // record, and a record is not stale.
+  const collectorStale = Boolean(todayRow) && inService && (todayAgeMin === null || todayAgeMin > COLLECTOR_STALE_MIN);
+  const collectorValue = todayRow
+    ? (todayAgeMin === null
+      ? "no sample"
+      : todayAgeMin < 90
+        ? `${todayAgeMin} min ago`
+        : `${Math.round(todayAgeMin / 60)} h ago`)
+    : (lastPresent?.date ?? "no sample");
+  const collectorNote = todayRow
+    ? (collectorStale ? "Not recording — check the phuket-smart-bus-collector cron" : "last archived fleet sample · cron every 30 s")
+    : (lastPresent ? "last sample in this range · cron every 30 s" : "nothing archived in this range");
+  // An empty range is not a fleet that did nothing. A sum over zero days is
+  // arithmetically 0, but it is not a measurement, and the page must never
+  // print a silent zero where the honest answer is "we saw nothing".
+  const noData = aggregate ? aggregate.daysObserved === 0 : false;
+  // Did a counter EVER read above 0 in this range? If so the page must not
+  // claim the counters are silent here.
+  const countersEverMoved = Boolean(data?.days.find((d) => !d.missing && (d.countersReporting ?? 0) > 0));
   const stateLabel = (state: string, lastSeenAt: string, lost: boolean) =>
     state === "no_fix" ? `${lost ? "lost signal driving" : "no fix"} since ${bangkokTimeOf(lastSeenAt)}`
       : state === "parked_depot" ? "at depot" : state || "—";
@@ -427,8 +456,8 @@ export function Study() {
 
             <div className={`study__kpi${collectorStale ? " study__kpi--alert" : ""}`}>
               <span className="study__kpi-label">Collector</span>
-              <strong className="study__kpi-value">{collectorAgeMin === null ? "no sample" : `${collectorAgeMin} min ago`}</strong>
-              <span className="study__kpi-detail">{collectorStale ? "Not recording — check the phuket-smart-bus-collector cron" : "last archived fleet sample · cron every 30 s"}</span>
+              <strong className="study__kpi-value">{collectorValue}</strong>
+              <span className="study__kpi-detail">{collectorNote}</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Days observed</span>
@@ -437,28 +466,32 @@ export function Study() {
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Tracked km</span>
-              <strong className="study__kpi-value">{fmtN(Math.round(aggregate.totalKm), "")}</strong>
-              <span className="study__kpi-detail">odometer · GPS trace {fmtN(Math.round(aggregate.totalGpsKm), "")} km — the odometer is the bus's own count</span>
+              <strong className="study__kpi-value">{noData ? "no data" : fmtN(Math.round(aggregate.totalKm), "")}</strong>
+              <span className="study__kpi-detail">{noData ? "nothing was recorded in this range" : `odometer · GPS trace ${fmtN(Math.round(aggregate.totalGpsKm), "")} km — the odometer is the bus's own count`}</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Runs · hours moving</span>
-              <strong className="study__kpi-value">{fmtN(aggregate.totalRuns)} · {fmtN(Math.round(aggregate.totalHoursMoving))} h</strong>
-              <span className="study__kpi-detail">{aggregate.busDaysMoved} bus-days moved · a run = leaving a halt of 10+ min</span>
+              <strong className="study__kpi-value">{noData ? "no data" : `${fmtN(aggregate.totalRuns)} · ${fmtN(Math.round(aggregate.totalHoursMoving))} h`}</strong>
+              <span className="study__kpi-detail">{noData ? "no day in this range carries a sample" : `${aggregate.busDaysMoved} bus-days moved · a run = leaving a halt of 10+ min`}</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Counters moved (APC)</span>
-              <strong className="study__kpi-value">{aggregate.countersMovedEver}</strong>
-              <span className="study__kpi-detail">bus-days with a counter reading &gt;0</span>
+              <strong className="study__kpi-value">{noData ? "no data" : aggregate.countersMovedEver}</strong>
+              <span className="study__kpi-detail">{noData ? "no day in this range carries a sample" : "bus-days with a counter reading &gt;0"}</span>
             </div>
             <div className="study__kpi">
               <span className="study__kpi-label">Counted boarders</span>
-              <strong className="study__kpi-value">{aggregate.countersMovedEver > 0 ? fmtN(aggregate.totalCountedPax) : "unknown"}</strong>
-              <span className="study__kpi-detail">{aggregate.countersMovedEver > 0 ? `${fmtThb(aggregate.totalCountedRev)} revenue` : "unknown — no counter reported"}</span>
+              <strong className="study__kpi-value">{noData ? "no data" : aggregate.countersMovedEver > 0 ? fmtN(aggregate.totalCountedPax) : "unknown"}</strong>
+              <span className="study__kpi-detail">{noData ? "no day in this range carries a sample" : aggregate.countersMovedEver > 0 ? `${fmtThb(aggregate.totalCountedRev)} revenue` : "unknown — no counter reported"}</span>
             </div>
             <div className="study__kpi study__kpi--model">
               <span className="study__kpi-label">Airport-line model</span>
               <strong className="study__kpi-value">{fmtN(aggregate.modelledBoarders)}</strong>
-              <span className="study__kpi-detail">modelled boarders, not measured · {aggregate.airportBusDays === 0 ? "no tracked bus reached the airport in range" : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {fmtN(aggregate.modelledFlights)} arrivals modelled</span>
+              <span className="study__kpi-detail">modelled boarders, not measured · {noData
+                ? "no tracked day in this range to check it against"
+                : aggregate.airportBusDays === 0
+                  ? "no tracked bus reached the airport in range"
+                  : `${aggregate.airportBusDays} tracked bus-days reached the airport`} · {fmtN(aggregate.modelledFlights)} arrivals modelled</span>
             </div>
           </section>
 
@@ -466,16 +499,42 @@ export function Study() {
             <h3>What this screen is honest about</h3>
             <ul>
               <li>
-                <strong>Counters are silent.</strong> Every CMSV6 passenger counter on every PKSB bus reads 0 even while the bus is moving — verified {data.days.find((d) => !d.missing && (d.countersReporting ?? 0) > 0) ? "" : "across all observed days"}.
-                So <em>counted boarders</em> is currently null, not ฿0. The page never rounds up.
+                {noData ? (
+                  <>
+                    <strong>Counters are silent.</strong>{" "}
+                    Every CMSV6 passenger counter on every PKSB bus reads 0 even while the bus is moving — verified on the days the archive has samples of.
+                    This range has none, so the measured rows below read “no data” rather than a number.
+                  </>
+                ) : countersEverMoved ? (
+                  <>
+                    <strong>A counter moved in this range.</strong>{" "}
+                    A CMSV6 passenger counter read above 0 on at least one day, so <em>counted boarders</em> below are real readings, not modelled numbers.
+                  </>
+                ) : (
+                  <>
+                    <strong>Counters are silent.</strong>{" "}
+                    Every CMSV6 passenger counter on every PKSB bus reads 0 even while the bus is moving — verified across all observed days in this range.
+                    So <em>counted boarders</em> is currently null, not ฿0. The page never rounds up.
+                  </>
+                )}
               </li>
               <li>
                 <strong>Modelled numbers</strong> use the engine's flight schedule × regional capture rate (SE Asia 7%, Europe 3%, …) × 25-cap queue simulation.
                 They're the demand-side <em>expectation</em>, not a measurement.
               </li>
               <li>
-                <strong>{aggregate.airportBusDays === 0 ? "These are town buses." : "The tracked fleet now includes airport-line buses."}</strong>{" "}
-                {aggregate.airportBusDays === 0 ? "No tracked bus came within 1 km of HKT airport in this range" : `${aggregate.airportBusDays} tracked bus-days reached HKT airport in this range`}. The airport-line model is shown for reference only — it models the whole airport line, not this fleet.
+                <strong>{
+                  noData
+                    ? "Nothing was tracked in this range."
+                    : aggregate.airportBusDays === 0
+                      ? "These are town buses."
+                      : "The tracked fleet now includes airport-line buses."
+                }</strong>{" "}
+                {noData
+                  ? "No day in the range carries a sample, so there is no fleet to describe — not even a town-bus fleet. The measured rows above read “no data” rather than 0."
+                  : aggregate.airportBusDays === 0
+                    ? "No tracked bus came within 1 km of HKT airport in this range"
+                    : `${aggregate.airportBusDays} tracked bus-days reached HKT airport in this range`}. The airport-line model is shown for reference only — it models the whole airport line, not this fleet.
               </li>
               <li>
                 <strong>Runs and hours moving</strong> come from the fixes: a run starts when a bus leaves a halt of 10+ minutes; hours moving count only fix-to-fix steps of 50 m+ taken ≤3 min apart. The feed carries no line or trip, so these are not timetable trips.
