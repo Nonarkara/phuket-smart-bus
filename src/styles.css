@@ -10529,6 +10529,32 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .v2--toolkit .v2-timebar,
 .v2--toolkit .v2-footer { display: none; }
 .v2--toolkit .v2-header { grid-template-rows: 56px; }
+
+/* The toolkit header: one row, and everything that belongs in it.
+   MEASURED 2026-10-21 on the toolkit view at 1440. The header is a grid
+   of `auto 1fr auto` and the data-source group was never placed in it, so
+   the grid dropped it into an implicit second row, under the brand. Two
+   things were wrong with that, and the second was invisible:
+   1. the group was alone in its row — a stranded 397px in a 1440px row;
+   2. because the group sat in COLUMN 1, it set that column's width to
+      397px, so the brand's own 190px of text sat in a 397px track and a
+      207px hole opened beside it. A hole the eye reads as a mistake and
+      nobody can say which rule made it.
+   So the group joins the row, in the last column, where the operations
+   view already puts it — and the brand's column is 190px again.
+   The "Right now" story is the ops wall's live line, not a research
+   page's, and the row cannot hold it and the group at once; it was
+   already hidden below 1700px, so this makes it consistent rather than
+   new. */
+.v2--toolkit .v2-header__story { display: none; }
+@media (min-width: 1360px) {
+  .v2--toolkit .v2-source {
+    grid-column: 5;
+    grid-row: 1;
+    align-self: center;
+    margin-left: 10px;
+  }
+}
 .v2 .tk-inner {
   max-width: none;
   width: 100%;
@@ -13181,4 +13207,16 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
     min-width: 0;
   }
   .v2 .v2-map__layers { max-width: calc(100% - 20px); }
+
+  /* The insights legend is three parallel facts — a reader reads all of
+     them, so they are not a choice and they do not need equal boxes. On a
+     phone they do not fit on one line: 370px of labels in a 342px row.
+     The row broke 2 + 1 and left the third one stranded on a line of its
+     own. A legend reads down on a phone; three stacked lines say the same
+     thing without a widow. */
+  .v2 .v2-insights__legend {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
