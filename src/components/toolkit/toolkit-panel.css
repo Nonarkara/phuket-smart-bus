@@ -1,0 +1,347 @@
+/* ===========================================================================
+ * TOOLKIT PANEL — /v2?view=toolkit
+ *
+ * The v2 toolkit briefing is rendered inside the operations shell, so its
+ * rules live in src/styles.css — a file this pass does not own. This file is
+ * the panel's own layer. Every selector is scoped to `.v2 .v2-toolkit`, so
+ * it outranks the shell's `.v2 .tk-*` rules on specificity (no !important,
+ * no dependency on stylesheet order) and it cannot leak into the operations
+ * wall, the insights bridge or the rider app.
+ *
+ * WHAT CHANGED, AND WHY
+ *
+ * · HERO ACTIONS — a 1px gap put a filled button and an outlined one
+ *   1px apart, which reads as one split control rather than two choices.
+ *   On a phone the flex wrap left the second one alone on its own line at a
+ *   different width. The gap is 12px, and below 560px the two actions stack
+ *   at the same width.
+ *
+ * · PERSONAS — eight white cards, each repeating in a louder chip what its
+ *   own column heading already said, and every word inside set at the same
+ *   13px/800, so the name of the person was no louder than the label on it.
+ *   The cards are now eight rows of a ledger. The name leads; the segment
+ *   colour stays in the heading, where it already did its work.
+ *
+ * · RECOMMENDATIONS — four quadrant boxes, one of which was a 608x106 box
+ *   holding a single line, and the tier colour carried by a decorative
+ *   3px top rule that said nothing. This is now one ranked ledger: fifteen
+ *   rows ordered by the impact score that decided the order, with the
+ *   effort score and the tier on every row, so the ranking can be checked
+ *   rather than taken on trust. Each tier has ONE colour, and it means
+ *   something — green do now, amber needs funding and sequencing, grey
+ *   fill-in, red deprioritise. The old green/green/grey/red carried no
+ *   information at all.
+ *
+ * · DATA FEEDS — six identical grey boxes in a 4+2 grid, whose green
+ *   tracked-caps "SOURCE:" line outshouted the metric it was labelling.
+ *   The boxes are gone, the source line is quiet, and the metric name is
+ *   the loud thing in its entry.
+ *
+ * · TRACEABILITY TABLE — three columns of prose in a table is fine on a
+ *   desk and unreadable on a phone, where the third column was clipped off
+ *   the edge of its own box. Below 720px the table stacks and each cell
+ *   carries a real label element, not a pseudo-element.
+ *
+ * · PARTNER LOGOS — a wrapping flex row left one 52px logo alone on the
+ *   last line at 390. It is a four-column grid now, two columns on a phone,
+ *   and every logo has a home.
+ *
+ * · CAUSAL TABS — three story tabs in a 516px strip inside a 340px box
+ *   meant the third story was off the edge. Below 560px the strip stacks
+ *   and all three are visible.
+ * ========================================================================== */
+
+/* ── 01 · Hero actions ─────────────────────────────────────────────────── */
+
+.v2 .v2-toolkit .tk-hero-actions {
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .v2 .v2-toolkit .tk-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .v2 .v2-toolkit .tk-hero-actions .tk-btn {
+    justify-content: center;
+  }
+}
+
+/* ── 03 · Personas ─────────────────────────────────────────────────────── */
+
+.v2 .v2-toolkit .tk-persona-cards {
+  gap: 22px;
+}
+
+.v2 .v2-toolkit .tk-persona-card {
+  background: none;
+  border: 0;
+  border-left: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 3px;
+}
+
+.v2 .v2-toolkit .tk-persona-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.v2 .v2-toolkit .tk-persona-num {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.v2 .v2-toolkit .tk-persona-name {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ax-ink);
+  line-height: 1.3;
+}
+
+.v2 .v2-toolkit .tk-persona-meta {
+  font-size: var(--t-micro);
+  color: var(--ax-ink-3);
+}
+
+.v2 .v2-toolkit .tk-persona-meta strong {
+  color: var(--ax-ink-2);
+  font-weight: 700;
+}
+
+.v2 .v2-toolkit .tk-persona-need {
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  color: var(--ax-ink-2);
+  margin: 0;
+  max-width: 54ch;
+}
+
+.v2 .v2-toolkit .tk-persona-need strong {
+  color: var(--ax-ink);
+  font-weight: 700;
+}
+
+/* ── 05 · Recommendations — a ranked ledger, not four quadrants ────────── */
+
+.v2 .v2-toolkit .tk-rec-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.v2 .v2-toolkit .tk-rec-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: baseline;
+}
+
+.v2 .v2-toolkit .tk-rec-n {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+  /* The ID was a green chip — fifteen of them, each wearing the colour
+     that means "earned" on a row that earns nothing. It is a row number. */
+  background: none;
+  padding: 0;
+}
+
+.v2 .v2-toolkit .tk-rec-label {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ax-ink);
+  line-height: 1.35;
+}
+
+.v2 .v2-toolkit .tk-rec-facts {
+  display: grid;
+  grid-template-columns: 104px 104px 152px;
+  column-gap: 14px;
+  align-items: baseline;
+}
+
+.v2 .v2-toolkit .tk-rec-score {
+  font-size: var(--t-micro);
+  color: var(--ax-ink-3);
+  white-space: nowrap;
+}
+
+.v2 .v2-toolkit .tk-rec-score b {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ax-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.v2 .v2-toolkit .tk-rec-tier {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* One colour per tier, and each one means something. The old quadrant
+   rules painted quick wins and major projects the SAME green, so the
+   colour never told the reader anything. */
+.v2 .v2-toolkit .tk-rec-tier--quick { color: var(--ax-accent); }
+.v2 .v2-toolkit .tk-rec-tier--major { color: var(--ax-warn); }
+.v2 .v2-toolkit .tk-rec-tier--fill { color: var(--ax-ink-3); }
+.v2 .v2-toolkit .tk-rec-tier--hard { color: var(--ax-neg); }
+
+@media (max-width: 720px) {
+  .v2 .v2-toolkit .tk-rec-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .v2 .v2-toolkit .tk-rec-n { grid-row: 1; grid-column: 1; }
+  .v2 .v2-toolkit .tk-rec-label { grid-row: 1; grid-column: 2; }
+  .v2 .v2-toolkit .tk-rec-facts {
+    grid-row: 2;
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    align-items: baseline;
+  }
+  .v2 .v2-toolkit .tk-rec-tier { text-align: left; }
+}
+
+/* ── 06 · Traceability table ───────────────────────────────────────────── */
+
+/* The label is real text, not a pseudo-element: a screen reader can reach
+   it, and so can the geometry check. */
+.v2 .v2-toolkit .tk-ledger-cell-label { display: none; }
+
+@media (max-width: 720px) {
+  .v2 .v2-toolkit .tk-ledger-table-wrap { overflow: visible; }
+  .v2 .v2-toolkit .tk-ledger-table,
+  .v2 .v2-toolkit .tk-ledger-table tbody,
+  .v2 .v2-toolkit .tk-ledger-table tr,
+  .v2 .v2-toolkit .tk-ledger-table td {
+    display: block;
+    width: auto;
+  }
+  .v2 .v2-toolkit .tk-ledger-table thead { display: none; }
+  .v2 .v2-toolkit .tk-ledger-table tr {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--ax-line);
+  }
+  .v2 .v2-toolkit .tk-ledger-table tr:last-child {
+    border-bottom: none;
+  }
+  .v2 .v2-toolkit .tk-ledger-table td {
+    border-bottom: none;
+    padding: 0 0 10px;
+  }
+  .v2 .v2-toolkit .tk-ledger-table td:last-child { padding-bottom: 0; }
+  .v2 .v2-toolkit .tk-ledger-cell-label {
+    display: block;
+    font-size: var(--t-micro);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ax-ink-3);
+    margin-bottom: 4px;
+  }
+}
+
+/* ── 06 · Data feeds — six entries, no grid of grey boxes ─────────────── */
+
+.v2 .v2-toolkit .tk-data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px 40px;
+  margin-top: 4px;
+}
+
+.v2 .v2-toolkit .tk-data-card {
+  background: none;
+  border: 0;
+  padding: 0;
+  gap: 3px;
+}
+
+.v2 .v2-toolkit .tk-data-card strong {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ax-ink);
+  line-height: 1.3;
+}
+
+/* The source was the loudest thing in the card — green, tracked, capitals —
+   and it was labelling a metric name set one step below it. */
+.v2 .v2-toolkit .tk-data-source {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--ax-ink-3);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.v2 .v2-toolkit .tk-data-card p {
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  color: var(--ax-ink-2);
+  margin: 0;
+  max-width: 46ch;
+}
+
+@media (max-width: 1024px) {
+  .v2 .v2-toolkit .tk-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .v2 .v2-toolkit .tk-data-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── 07 · Partner logos ────────────────────────────────────────────────── */
+
+.v2 .v2-toolkit .tk-partner-logos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  align-items: center;
+  justify-content: stretch;
+}
+
+.v2 .v2-toolkit .tk-partner-logo {
+  height: 48px;
+  width: auto;
+  max-width: min(170px, 100%);
+  justify-self: center;
+}
+
+@media (max-width: 720px) {
+  .v2 .v2-toolkit .tk-partner-logos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── 04 · Causal story tabs ────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  .v2 .v2-toolkit .tk-causal-tabs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
+  }
+  .v2 .v2-toolkit .tk-causal-tab {
+    white-space: normal;
+    text-align: left;
+  }
+}

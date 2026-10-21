@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../toolkit/toolkit-panel.css";
 
 /**
  * TOOLKIT tab — Executive Briefing of the USASCP Research & Simulation Engine
@@ -91,7 +92,9 @@ const THEMES = [
   "Vehicle Cleanliness & Luggage Space",
 ] as const;
 
-const RECS: { n: number; label: string; e: number; i: number; q: "quick" | "major" | "fill" | "hard" }[] = [
+type RecTier = "quick" | "major" | "fill" | "hard";
+
+const RECS: { n: number; label: string; e: number; i: number; q: RecTier }[] = [
   { n: 13, label: "First–last mile feeder connections", e: 9.3, i: 9.7, q: "major" },
   { n: 8, label: "Adjust routes to resort clusters", e: 9.2, i: 9.5, q: "major" },
   { n: 2, label: "Increase frequency during arrival banks", e: 9.7, i: 9.2, q: "major" },
@@ -108,6 +111,13 @@ const RECS: { n: number; label: string; e: number; i: number; q: "quick" | "majo
   { n: 9, label: "Low-floor accessibility retrofits", e: 8.4, i: 6.3, q: "hard" },
   { n: 5, label: "Next-stop digital audio/visual screens", e: 6.5, i: 5.7, q: "fill" },
 ];
+
+const REC_TIER: Record<RecTier, string> = {
+  quick: "Do now",
+  major: "Fund & sequence",
+  fill: "Fill-in",
+  hard: "Deprioritize",
+};
 
 const LEDGER = [
   { finding: "Published PKSB timetable is the supply; no operating subsidy", model: "Supply fixed by schedule both directions; ฿100/boarding is the only revenue", surface: "Accumulator bar & revenue counters" },
@@ -372,16 +382,15 @@ export function ToolkitPanel({
               <h3 className="tk-personas-group-title text-accent">Segment A · Currently Riding (Personas 1–4)</h3>
               <div className="tk-persona-cards">
                 {PERSONAS.filter((p) => p.user).map((p) => (
-                  <div key={p.n} className="tk-persona-card tk-persona-card--user">
-                    <div className="tk-persona-card__head">
-                      <span className="tk-persona-num">#{p.n}</span>
+                  <div key={p.n} className="tk-persona-card">
+                    <span className="tk-persona-num">#{p.n}</span>
+                    <div className="tk-persona-body">
                       <strong className="tk-persona-name">{p.who}</strong>
-                      <span className="tk-persona-badge tk-persona-badge--won">Rides Today</span>
+                      <div className="tk-persona-meta">
+                        <span>Demographic:</span> <strong>{p.split}</strong>
+                      </div>
+                      <p className="tk-persona-need"><strong>Primary Need:</strong> {p.need}</p>
                     </div>
-                    <div className="tk-persona-meta">
-                      <span>Demographic:</span> <strong>{p.split}</strong>
-                    </div>
-                    <p className="tk-persona-need"><strong>Primary Need:</strong> {p.need}</p>
                   </div>
                 ))}
               </div>
@@ -391,16 +400,15 @@ export function ToolkitPanel({
               <h3 className="tk-personas-group-title text-warn">Segment B · Could Ride / Lost to Alternatives (Personas 5–8)</h3>
               <div className="tk-persona-cards">
                 {PERSONAS.filter((p) => !p.user).map((p) => (
-                  <div key={p.n} className="tk-persona-card tk-persona-card--nonuser">
-                    <div className="tk-persona-card__head">
-                      <span className="tk-persona-num">#{p.n}</span>
+                  <div key={p.n} className="tk-persona-card">
+                    <span className="tk-persona-num">#{p.n}</span>
+                    <div className="tk-persona-body">
                       <strong className="tk-persona-name">{p.who}</strong>
-                      <span className="tk-persona-badge tk-persona-badge--opp">Opportunity</span>
+                      <div className="tk-persona-meta">
+                        <span>Demographic:</span> <strong>{p.split}</strong>
+                      </div>
+                      <p className="tk-persona-need"><strong>Primary Need:</strong> {p.need}</p>
                     </div>
-                    <div className="tk-persona-meta">
-                      <span>Demographic:</span> <strong>{p.split}</strong>
-                    </div>
-                    <p className="tk-persona-need"><strong>Primary Need:</strong> {p.need}</p>
                   </div>
                 ))}
               </div>
@@ -488,70 +496,26 @@ export function ToolkitPanel({
             <span className="tk-section-kicker">05 · Action Roadmap</span>
             <h2>Fifteen Ideas Entered. Impact and Effort Decided Who Left First.</h2>
             <p>
-              Stakeholders mapped 15 actionable interventions onto an Impact–Effort quadrant. Cheap wins focus on trust and information; major projects require capital and route reallocation.
+              Stakeholders mapped 15 actionable interventions onto an Impact–Effort quadrant. They are ranked here by the impact score the workshop gave them, with the effort score and the tier it fell into on every row — so the order can be checked rather than taken on trust.
             </p>
           </div>
 
-          <div className="tk-recs-grid">
-            <div className="tk-recs-quadrant tk-recs-quadrant--quick">
-              <div className="tk-quadrant-header">
-                <span className="tk-quadrant-badge">DO NOW</span>
-                <h3>Quick Wins (High Impact · Low Effort)</h3>
+          <div className="tk-rec-ledger">
+            {RECS.map((r) => (
+              <div key={r.n} className="tk-rec-row">
+                <span className="tk-rec-n">#{r.n}</span>
+                <span className="tk-rec-label">{r.label}</span>
+                <span className="tk-rec-facts">
+                  <span className="tk-rec-score">
+                    <b>{r.i.toFixed(1)}</b> impact
+                  </span>
+                  <span className="tk-rec-score">
+                    <b>{r.e.toFixed(1)}</b> effort
+                  </span>
+                  <span className={`tk-rec-tier tk-rec-tier--${r.q}`}>{REC_TIER[r.q]}</span>
+                </span>
               </div>
-              <ul className="tk-recs-list">
-                {RECS.filter((r) => r.q === "quick").map((r) => (
-                  <li key={r.n}>
-                    <span className="tk-rec-n">#{r.n}</span>
-                    <strong>{r.label}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="tk-recs-quadrant tk-recs-quadrant--major">
-              <div className="tk-quadrant-header">
-                <span className="tk-quadrant-badge">FUND &amp; SEQUENCE</span>
-                <h3>Major Projects (High Impact · High Effort)</h3>
-              </div>
-              <ul className="tk-recs-list">
-                {RECS.filter((r) => r.q === "major").map((r) => (
-                  <li key={r.n}>
-                    <span className="tk-rec-n">#{r.n}</span>
-                    <strong>{r.label}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="tk-recs-quadrant tk-recs-quadrant--fill">
-              <div className="tk-quadrant-header">
-                <span className="tk-quadrant-badge">FILL-INS</span>
-                <h3>Secondary Upgrades</h3>
-              </div>
-              <ul className="tk-recs-list">
-                {RECS.filter((r) => r.q === "fill").map((r) => (
-                  <li key={r.n}>
-                    <span className="tk-rec-n">#{r.n}</span>
-                    <strong>{r.label}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="tk-recs-quadrant tk-recs-quadrant--hard">
-              <div className="tk-quadrant-header">
-                <span className="tk-quadrant-badge">DEPRIORITIZE</span>
-                <h3>Hard Slog (Low Impact · High Effort)</h3>
-              </div>
-              <ul className="tk-recs-list">
-                {RECS.filter((r) => r.q === "hard").map((r) => (
-                  <li key={r.n}>
-                    <span className="tk-rec-n">#{r.n}</span>
-                    <strong>{r.label}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            ))}
           </div>
         </section>
 
@@ -569,17 +533,26 @@ export function ToolkitPanel({
             <table className="tk-ledger-table">
               <thead>
                 <tr>
-                  <th>Field Research Finding</th>
-                  <th>Simulation Engine Model Rule</th>
-                  <th>Where It Lives in Software</th>
+                  <th scope="col">Field Research Finding</th>
+                  <th scope="col">Simulation Engine Model Rule</th>
+                  <th scope="col">Where It Lives in Software</th>
                 </tr>
               </thead>
               <tbody>
                 {LEDGER.map((row) => (
                   <tr key={row.surface}>
-                    <td><strong>{row.finding}</strong></td>
-                    <td>{row.model}</td>
-                    <td><span className="tk-code-tag">{row.surface}</span></td>
+                    <td>
+                      <span className="tk-ledger-cell-label">Field research finding</span>
+                      <strong>{row.finding}</strong>
+                    </td>
+                    <td>
+                      <span className="tk-ledger-cell-label">Engine model rule</span>
+                      {row.model}
+                    </td>
+                    <td>
+                      <span className="tk-ledger-cell-label">Where it lives</span>
+                      <span className="tk-code-tag">{row.surface}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -593,9 +566,9 @@ export function ToolkitPanel({
             <div className="tk-data-grid">
               {DATA_WANTED.map((d) => (
                 <div key={d.metric} className="tk-data-card">
-                  <strong>{d.metric}</strong>
-                  <span className="tk-data-source">Source: {d.source}</span>
-                  <p>{d.unlocks}</p>
+                  <strong className="tk-data-metric">{d.metric}</strong>
+                  <span className="tk-data-source">{d.source}</span>
+                  <p className="tk-data-unlocks">{d.unlocks}</p>
                 </div>
               ))}
             </div>
