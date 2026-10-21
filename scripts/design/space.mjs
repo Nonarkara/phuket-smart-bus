@@ -295,6 +295,12 @@ for (const route of ROUTES) {
               if (![...d.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0)) continue;
               colours.add(getComputedStyle(d).color);
             }
+            // A cell can be marked by a coloured RULE as well as by a tinted
+            // ground — the left rule is this product's state marker, and the
+            // scenario cards use it to say gain / even / loss. A mark on the
+            // border is a mark.
+            const kcs2 = getComputedStyle(k);
+            const rules = [kcs2.borderTopColor, kcs2.borderRightColor, kcs2.borderBottomColor, kcs2.borderLeftColor].join("|");
             return {
               k, isBox,
               size: tcs.fontSize,
@@ -302,6 +308,7 @@ for (const route of ROUTES) {
               bg: kcs.backgroundColor,
               color: tcs.color,
               colours: [...colours].sort().join(","),
+              rules,
             };
           });
           const boxed = peers.filter((p) => p.isBox);
@@ -310,7 +317,7 @@ for (const route of ROUTES) {
             // A row where one cell is marked — a tab strip's active tab, a
             // card's accent — HAS a leader. The defect is a row where every
             // cell is identical, so nothing tells the reader where to look.
-            const marks = new Set(boxed.map((p) => `${p.bg}|${p.colours}|${p.weight}`));
+            const marks = new Set(boxed.map((p) => `${p.bg}|${p.colours}|${p.rules}|${p.weight}`));
             if (same.size === 1 && marks.size === 1) {
               // PROMINENCE. A navigation row and a metadata strip are peers
               // BY DESIGN: nothing there is meant to win, because nothing
@@ -454,9 +461,15 @@ for (const route of ROUTES) {
         // The page's OWN scroll is not a trap. A long briefing on a phone is
         // a long briefing. What is a trap is a REGION inside the page that
         // is several screens deep — the fleet table that finished 1,482px
-        // below the fold of a rail the reader was looking at. A scroller
-        // that IS the page's <main>, or contains it, is the page.
-        const isThePage = el.tagName === "MAIN" || !!el.querySelector("main");
+        // below the fold of a rail the reader was looking at.
+        //
+        // A scroller is the PAGE when it is the page's <main> (or holds
+        // one), or when it fills the viewport's height. The operations rail
+        // is 59% of the viewport — a region beside the map — and the fleet
+        // console's shell is 100% of it. One is a hole, the other is the
+        // page.
+        const isThePage = el.tagName === "MAIN" || !!el.querySelector("main") ||
+          el.clientHeight >= window.innerHeight * 0.9;
         if (vScroll && !isThePage && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
           traps.push({
             el: label(el), axis: "vertical",
@@ -473,7 +486,13 @@ for (const route of ROUTES) {
         // the viewport. Leaflet clips it; the box model still counts it. It
         // is the map's business, not the layout's.
         const leafletOverflow = el.querySelector(".leaflet-container");
-        if (hScroll && !tableOverflow && !leafletOverflow && el.scrollWidth > el.clientWidth * HORIZONTAL_TRAP && el.clientWidth > 120) {
+        // A strip that scrolls in ONE axis only was designed that way: the
+        // map's route pills are a swipeable strip, and the author wrote
+        // `overflow-x: auto` and hid the scrollbar on purpose. A region that
+        // scrolls in BOTH axes is a content area that happens to overflow,
+        // and that is the defect.
+        const oneAxisOnly = el.scrollHeight <= el.clientHeight + 4;
+        if (hScroll && !tableOverflow && !leafletOverflow && !oneAxisOnly && el.scrollWidth > el.clientWidth * HORIZONTAL_TRAP && el.clientWidth > 120) {
           traps.push({
             el: label(el), axis: "horizontal",
             ratio: +(el.scrollWidth / el.clientWidth).toFixed(2),
