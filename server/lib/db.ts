@@ -35,12 +35,24 @@ let dbPath: string | null = null;
 try {
   const Database = (await import("better-sqlite3")).default;
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const dataDir = path.resolve(currentDir, "../../data");
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  // The database file can be pointed somewhere else. The test suite needs
+  // that: every test worker used to write into `data/pksb.sqlite3`, and two
+  // files that both use the vehicle id "bus-1" collide inside it —
+  // `driver_monitor_latest` is keyed on vehicle_id with INSERT OR REPLACE,
+  // and app.test.ts's clearRealtimeState() DELETEs the rows the persistence
+  // test wrote a millisecond earlier. "Re-hydrates telemetry, seat, driver,
+  // and passenger-flow data" then failed once in three runs, because it was
+  // reading another file's cleanup.
+  const override = process.env.PKSB_DB_PATH;
+  if (override) {
+    dbPath = override;
+  } else {
+    const dataDir = path.resolve(currentDir, "../../data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    dbPath = path.join(dataDir, "pksb.sqlite3");
   }
-
-  dbPath = path.join(dataDir, "pksb.sqlite3");
   db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
   db.pragma("busy_timeout = 3000");
