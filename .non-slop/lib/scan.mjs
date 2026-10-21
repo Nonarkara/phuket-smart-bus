@@ -11,7 +11,7 @@ const MAX_FILES = 8000;
 
 const KIND = { ".css": "css", ".scss": "css", ".sass": "css", ".less": "css", ".html": "markup", ".htm": "markup", ".vue": "markup", ".svelte": "markup", ".astro": "markup", ".jsx": "markup", ".tsx": "markup", ".js": "script", ".mjs": "script", ".cjs": "script", ".ts": "script" };
 const IMG = /\.(png|jpe?g|gif|webp|avif|bmp|tiff?)$/i, FONT = /\.(woff2?|ttf|otf|eot)$/i;
-const SKIP = new Set(["node_modules", ".git", "dist", "build", "out", ".next", ".nuxt", ".svelte-kit", ".output", "coverage", "vendor", ".turbo", ".vercel", ".cache", ".non-slop", ".wrangler", "__pycache__"]);
+const SKIP = new Set(["node_modules", ".git", "dist", "build", "out", ".next", ".nuxt", ".svelte-kit", ".output", "coverage", "vendor", ".turbo", ".vercel", ".cache", ".non-slop", ".wrangler", "__pycache__", ".mavis"]);
 const EXAMPLES = new Set(["examples", "example", "fixtures", "__fixtures__", "__mocks__", "stories", ".storybook", "test", "tests"]);
 
 function deniedRealpath(real) {
