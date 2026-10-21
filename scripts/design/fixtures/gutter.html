@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>gutter fixture</title>
+<style>
+  body { margin: 0; background: #0a0e14; color: #f3f6f8; font: 14px system-ui, sans-serif; }
+
+  /* The header is a full-bleed band whose CONTENT starts on the page's
+     gutter; the source switcher is a control cluster inside that row, at
+     the right. */
+  .v2-header {
+    padding-left: 104px; height: 57px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .v2-header__brand { width: 190px; height: 19px; }
+  .v2-source { display: inline-flex; height: 32px; }
+
+  .tk-subnav__brand { margin-left: 104px; height: 40px; display: flex; align-items: center; }
+  .tk-briefing { margin-left: 104px; }
+  .tk-hero-block .tk-tag { display: inline-block; padding: 8px; }
+  .tk-section-box .tk-section-kicker { display: block; }
+
+  /* VARIANT band-off: the bands below the header sit on a DIFFERENT left
+     edge — the defect the rule was written for. */
+  html.variant-band-off .tk-subnav__brand,
+  html.variant-band-off .tk-briefing { margin-left: 24px; }
+
+  /* VARIANT cluster-left: the control cluster is pushed LEFT of the page's
+     gutter. It stays in the header's row, so the band rule cannot see it —
+     the cluster rule must. */
+  html.variant-cluster-left .v2-source { position: absolute; left: 0; top: 12px; }
+</style>
+</head>
+<body>
+  <div class="v2-header">
+    <div class="v2-header__brand">BRAND</div>
+    <div class="v2-source">SOURCE</div>
+  </div>
+  <div class="tk-subnav__brand">SUB-NAV</div>
+  <div class="tk-briefing">
+    <div class="tk-hero-block"><span class="tk-tag">TAG</span></div>
+    <div class="tk-section-box"><span class="tk-section-kicker">KICKER</span></div>
+  </div>
+  <script>
+    const v = new URLSearchParams(location.search).get("variant");
+    if (v) document.documentElement.className = "variant-" + v;
+  </script>
+</body>
+</html>
