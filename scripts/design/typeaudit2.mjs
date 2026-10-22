@@ -30,13 +30,19 @@ const BASE_DEFAULT = "https://bus.nonarkara.org";
 // the live site cannot be proven to fail.
 const ALL_ROUTES = [
   "/", "/ops", "/fleet", "/fleet/raw", "/study", "/research", "/capacity",
-  "/toolkit", "/roi", "/driver", "/v2", "/governor", "/info", "/more",
-  "/stops", "/pass", "/ride", "/compare",
+  "/toolkit", "/roi", "/driver", "/v2", "/v2?view=insights", "/v2?view=toolkit",
+  "/governor", "/info", "/more", "/stops", "/pass", "/ride", "/compare",
 ];
 const argv = process.argv.slice(2);
 const baseArg = argv.indexOf("--base");
 const BASE = baseArg === -1 ? (process.env.BASE || BASE_DEFAULT) : argv[baseArg + 1];
-const ROUTES = argv.filter((a, i) => !a.startsWith("--") && i !== baseArg && i !== baseArg + 1);
+const ROUTES = argv.filter((a, i) => {
+  if (a.startsWith("--")) return false;
+  // `--base` takes the NEXT argument. When there is no --base, baseArg is
+  // -1 and baseArg + 1 is 0 — which silently dropped the FIRST route.
+  if (baseArg !== -1 && (i === baseArg || i === baseArg + 1)) return false;
+  return true;
+});
 const ROUTE_LIST = ROUTES.length ? ROUTES : ALL_ROUTES;
 
 const VIEWPORTS = [

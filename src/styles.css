@@ -7969,6 +7969,22 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   background: rgba(224, 162, 67, 0.08);
 }
 
+/* THE RANKING IS THE HIERARCHY. Five identical bordered cards, each with the
+   same type and the same mark, is a wall of equal weight: the reader is
+   expected to choose an hour and nothing in the set helps them choose. The
+   #1 hour IS the answer — it carries the most money — so it leads: a filled
+   badge and a bigger clock. The other four are the alternatives, and they
+   stay peers of each other. */
+.v2 .v2-priority-card.is-lead .v2-priority-rank__num {
+  font-size: var(--t-title);
+  color: var(--ax-paper);
+  background: var(--ax-accent);
+  padding: 0 6px;
+}
+.v2 .v2-priority-card.is-lead .v2-priority-rank__time {
+  font-size: var(--t-title);
+}
+
 .v2 .v2-priority-card__top {
   display: flex;
   justify-content: space-between;
@@ -10466,7 +10482,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .v2-header__live,
   .v2 .v2-header__day,
   .v2 .v2-header__speed { display: none; }
-  .v2 .v2-header__time { font-size: var(--t-label); }
+  /* The clock is the DISPLAY face, and the display face is never below 18px:
+     at --t-label it was 14px of Josefin on the phone, which the type law
+     forbids and which is unreadable at that size anyway. --t-title is 19px
+     here and is already on the ramp, so the fix costs no size. */
+  .v2 .v2-header__time { font-size: var(--t-title); }
   .v2 .v2-timebar__day-sweep { padding-inline: 10px; }
 
   .v2-brief { display: flex; flex-direction: column; }

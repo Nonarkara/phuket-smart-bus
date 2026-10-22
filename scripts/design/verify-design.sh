@@ -57,10 +57,15 @@ run() {
 
 # The routes the type checks cover. Every route the app serves, so a rule
 # that holds on seven of nineteen is not a rule.
+#
+# The two /v2 VIEWS are in the list as well as /v2 itself: the console is one
+# route, but the toolkit briefing and the insights bridge are different
+# surfaces with different geometry, and a check that only ever saw the
+# console had never seen them.
 ROUTES=(
   "/" "/ops" "/fleet" "/fleet/raw" "/study" "/research" "/capacity"
-  "/toolkit" "/roi" "/driver" "/v2" "/governor" "/info" "/more"
-  "/stops" "/pass" "/ride" "/compare"
+  "/toolkit" "/roi" "/driver" "/v2" "/v2?view=insights" "/v2?view=toolkit"
+  "/governor" "/info" "/more" "/stops" "/pass" "/ride" "/compare"
 )
 
 run "type tokens resolve where they are used" \
