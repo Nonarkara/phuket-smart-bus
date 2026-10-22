@@ -102,7 +102,7 @@ export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelec
             return (
               <div
                 key={row.hour}
-                className={`v2-priority-card ${isCurrent ? "is-current" : ""}`}
+                className={`v2-priority-card ${idx === 0 ? "is-lead" : ""} ${isCurrent ? "is-current" : ""}`}
                 role="button"
                 tabIndex={0}
                 title={`Click to inspect ${fmtClock(row.hour)} simulation`}
