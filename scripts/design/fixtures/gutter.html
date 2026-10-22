@@ -50,6 +50,11 @@
      declaration cannot excuse it. */
   html.variant-cluster-moved .v2-source { position: absolute; left: 700px; top: 300px; }
 
+  /* VARIANT overhung: the control cluster still sits in the header's row, so
+     it is still a cluster — but it hangs PAST the right edge of the screen.
+     A cluster is exempt from the gutter, never from the viewport. */
+  html.variant-overhung .v2-source { position: absolute; left: 1400px; top: 12px; }
+
   /* VARIANT insights: the insights bridge's switcher is a BAND on its own
      row, so it must start on the page's gutter. */
   html.variant-insights .v2-source { position: absolute; left: 104px; top: 70px; }

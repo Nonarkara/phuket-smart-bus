@@ -20,6 +20,7 @@
  *   node scripts/design/guttercheck.mjs --base https://bus.nonarkara.org
  */
 import { chromium } from "playwright";
+import { readFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i === -1 ? d : args[i + 1]; };
@@ -33,6 +34,11 @@ const TOL = Number(opt("tolerance", 1.5));
 // on its own row).
 const ROUTE = opt("route", null);
 const SURFACE = opt("surface", null);
+// The surface table can be supplied from a file, so the proof can drive a
+// surface through the REAL instrument that the product does not have — a
+// surface that declares no band, for instance. A rule that can only be
+// exercised on a page that happens to exist cannot be proven to fire.
+const SURFACES_FILE = opt("surfaces", null);
 
 /**
  * The probes are the CONTENT of each band — the thing whose left edge the
@@ -57,7 +63,7 @@ const SURFACE = opt("surface", null);
  * 0.0px from the brand's centre, and the rule above it was written to
  * tolerate a 12px difference.
  */
-const SURFACES = [
+const BUILTIN_SURFACES = [
   {
     id: "toolkit",
     route: "/v2?view=toolkit",
@@ -80,6 +86,15 @@ const SURFACES = [
     ],
   },
 ];
+
+const SURFACES = SURFACES_FILE
+  ? JSON.parse(readFileSync(SURFACES_FILE, "utf8"))
+  : BUILTIN_SURFACES;
+
+if (!SURFACES.length) {
+  console.error("guttercheck: the surface table is empty — an instrument that checks nothing is decoration.");
+  process.exit(2);
+}
 
 const b = await chromium.launch();
 const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });

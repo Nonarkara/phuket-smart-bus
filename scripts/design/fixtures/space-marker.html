@@ -31,7 +31,8 @@
   .case { display: none; }
   html[data-variant="pair-of-markers"]    .case-pair,
   html[data-variant="marker-and-action"]  .case-mixed,
-  html[data-variant="absolute-not-marker"] .case-placed { display: flex; }
+  html[data-variant="absolute-not-marker"] .case-placed,
+  html[data-variant="both-placed"]        .case-both { display: flex; }
 </style>
 </head>
 <body>
@@ -58,6 +59,16 @@
   <div class="fd-corridor-line case case-placed">
     <button class="placed-action" style="left: 82%">action</button>
     <button class="plain">Action</button>
+  </div>
+
+  <!-- VARIANT both-placed: BOTH members are placed by a percentage and neither
+       is a rail marker. The first version of the marker exemption was generic
+       — "any absolutely positioned button placed by a percentage" — and it
+       dropped BOTH members, so this pair was never measured at all. Two
+       placed actions are still two actions. → IS scattered -->
+  <div class="fd-corridor-line case case-both">
+    <button class="placed-action" style="left: 30%">action</button>
+    <button class="placed-action" style="left: 82%">action</button>
   </div>
 </section>
 <script>
