@@ -4,7 +4,7 @@
 # carve-out added when the toolkit's source switcher moved into the header's
 # own row, and the DECLARED ROLES that replaced the geometric guess.
 #
-# A gate that has never failed is a gate that might never work. Five cases:
+# A gate that has never failed is a gate that might never work. Nine cases:
 #
 #   the clean control   → every band on the gutter, the switcher at the
 #                         right of the header's row → must PASS
@@ -18,12 +18,24 @@
 #                         guess excused it → must FAIL
 #   the moved cluster  → a cluster drops to a second row but stays right of
 #                         the gutter, which the old guess called a band and
-#                         failed on → must PASS
+#                         failed on → must FAIL (the declaration only holds
+#                         while the cluster is IN its band)
+#   the insights bridge→ the switcher IS a band on its own row → must PASS
+#                         when it sits on the gutter, FAIL when it does not
+#   the overhung cluster→ a cluster still in the header's row that hangs past
+#                         the right edge of the screen → must FAIL (a cluster
+#                         is exempt from the gutter, never from the viewport)
+#   the bandless surface→ a surface that declares no band at all → must FAIL
+#                         (a rule with nothing to measure must not print a
+#                         pass — and the surface table is supplied from a file
+#                         so the REAL instrument can be driven with it)
 #
 # The fourth case is the hole the geometric guess left open. The fifth is
 # the false positive the same guess produced. Both were found by an
 # independent review; a rule that cannot tell a band from a cluster by its
-# own geometry cannot survive either.
+# own geometry cannot survive either. The last three cases were found by the
+# NEXT independent review, which found the rules working but the PROOF not
+# covering them: a rule that is never exercised cannot be proven.
 #
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -87,6 +99,36 @@ run cluster-moved fail toolkit
 echo "── the insights bridge: a band on its own row ───────────────────────"
 run insights pass insights
 run insights-off fail insights
+
+echo "── a control cluster that hangs past the right edge ───────────────────"
+run overhung fail toolkit
+
+echo "── a surface that declares no band at all ────────────────────────────"
+# The rule "a surface that declares no band FAILS" cannot be exercised on a
+# real surface — every real surface has a band. So the surface table is
+# supplied from a file here, and the REAL instrument runs against it.
+BANDLESS="$(mktemp -t bandless-surfaces).json"
+cat > "$BANDLESS" <<'JSON'
+[
+  {
+    "id": "bandless",
+    "route": "/gutter.html?variant=clean",
+    "label": "a surface that declares no band",
+    "probes": [[".v2-source", "source switcher", "cluster"]]
+  }
+]
+JSON
+OUT=$(node scripts/design/guttercheck.mjs --base "http://127.0.0.1:$PORT" --surfaces "$BANDLESS" 2>&1)
+code=$?
+rm -f "$BANDLESS"
+echo "$OUT" | sed 's/^/  /'
+if echo "$OUT" | grep -q "declares no band" && [ "$code" -ne 0 ]; then
+  echo "  ✓ the bandless case fails, as it must — a rule with nothing to measure cannot pass"
+else
+  echo "  ✗ the bandless case passed — a surface with no gutter printed a pass"
+  fail=1
+fi
+echo
 
 if [ "$fail" -eq 0 ]; then
   echo "gutter instrument: PROVEN — it bites, and it stays quiet."

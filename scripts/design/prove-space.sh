@@ -125,6 +125,15 @@ else
   fail=1
 fi
 
+BOTH=$(node scripts/design/space.mjs "/space-marker.html?variant=both-placed" --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$BOTH" | sed 's/^/  /'
+if echo "$BOTH" | grep -q "SCATTERED actions"; then
+  echo "  ✓ two placed actions are still two actions — the exemption needs BOTH members to be markers"
+else
+  echo "  ✗ a pair of placed actions was excused — the marker exemption dropped both members"
+  fail=1
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "space instrument: PROVEN — it bites, and it stays quiet."
