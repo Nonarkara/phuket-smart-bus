@@ -74,6 +74,12 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
     );
   }
 
+  // The one fact that is written in the reader's own language. It is
+  // filtered on the LABEL, not on the presence of the attention flag: an
+  // empty label would leave a trailing separator on the strip, which is
+  // the exact shape the old string-join could not produce.
+  const driverLabel = getDriverChipLabel(summary, lang);
+
   return (
     <section className={`decision-panel card is-${summary.level}`}>
       <div className="decision-panel__header">
@@ -110,9 +116,7 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
                 lang
               )
             : null,
-          summary.seatAvailability?.driverAttention ? (
-            <span lang={lang}>{getDriverChipLabel(summary, lang)}</span>
-          ) : null,
+          driverLabel ? <span lang={lang}>{driverLabel}</span> : null,
         ] as (string | ReactNode | null | false)[])
           .filter((part): part is string | ReactNode => Boolean(part))
           .map((part, i) => (

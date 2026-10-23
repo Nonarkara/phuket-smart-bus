@@ -20,6 +20,13 @@ cd "$PROJECT_ROOT"
 EXIT_BYTES=2
 EXIT_GATE=1
 
+# EVERY UNHANDLED FAILURE IS A BYTES FAILURE — the same contract as
+# verify-deploy.sh. A command that fails without an explicit `exit` used
+# to end the script with 1, which means "the gate failed", so the deploy
+# would print "the bytes ARE deployed and live" after a check that never
+# finished.
+trap 'echo "error: the verification stopped before the gate — the bytes were not fully checked" >&2; exit "$EXIT_BYTES"' ERR
+
 CUSTOM="${CUSTOM:-https://depa-usdot.nonarkara.org}"
 INDEX="dist/client/index.html"
 
@@ -93,7 +100,13 @@ echo "ok: HSTS, CSP and nosniff are all present"
 # therefore checked by its own deployment URL, so a build input that differs
 # between the two is a failure rather than a coincidence.
 PROJECT="${PAGES_PROJECT:-phuket-smart-bus}"
-HEAD_SHORT="$(git rev-parse --short HEAD)"
+# The commit is a CROSS-CHECK, not the check: the byte graph is what proves
+# the right code is live. A repository that cannot answer the question
+# degrades to "byte check only" instead of stopping the run.
+if ! HEAD_SHORT="$(git rev-parse --short HEAD 2>/dev/null)"; then
+  HEAD_SHORT=""
+  echo "warn: could not read the commit from git; byte check only"
+fi
 BRANCH_NAME="${CUSTOM#https://}"; BRANCH_NAME="${BRANCH_NAME#http://}"; BRANCH_NAME="${BRANCH_NAME%/}"
 DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
 
@@ -102,7 +115,7 @@ DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" -
     br = $4; src = $5; url = $6;
     gsub(/[[:space:]]/, "", br); gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
     if (br == branch && src != "" && url != "" && index(src, sha) == 1) print url
-  }' | sort -u)"
+  }' | sort -u || true)"
 
 CHECKED=0
 while IFS= read -r url; do

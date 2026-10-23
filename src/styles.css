@@ -1261,8 +1261,14 @@ a { color: var(--amber-text); }
 .ops__back:hover { background: rgba(0, 0, 0, 0.08); color: #333; }
 
 /* Floating language on map — sits just under the hero strip, never on top.
-   --hero-below is set on the .map-view container based on visible hero size
-   (default 132px covers next-bus + safety + PM2.5 stacked). */
+   --hero-below is SET ON THE .map-view CONTAINER, by a ResizeObserver on the
+   hero itself (HeroSection.tsx) — the hero's real height, republished every
+   time its content changes. The 132px fallback is only what a browser sees
+   before the first measurement; it is not the layout.
+
+   It used to be a constant, calibrated for three stacked blocks, and the
+   hero grew a fourth. A constant that a component's content can invalidate
+   is a number pretending to be a layout. */
 .map-lang {
   position: absolute;
   top: var(--hero-below, 132px);
@@ -5836,6 +5842,15 @@ a { color: var(--amber-text); }
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+/* The line that names the service serving the frame above. Quiet, under
+   the thing it explains, and it says what the service sees. */
+.governor__powerbi-source {
+  margin: 8px 0 0;
+  font-size: var(--t-micro);
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* Footer */

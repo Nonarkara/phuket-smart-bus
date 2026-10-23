@@ -22,3 +22,20 @@ if (!process.env.PKSB_DB_PATH) {
   const dir = mkdtempSync(join(tmpdir(), "pksb-test-"));
   process.env.PKSB_DB_PATH = join(dir, `pksb-${process.pid}.sqlite3`);
 }
+
+// jsdom has no ResizeObserver, and the hero measures its own height with
+// one — the number that puts the language toggle, the weather pill and the
+// live badge UNDER the hero instead of over it. A stub that does nothing
+// would let the component's production path go untested; this one calls
+// the callback once, the way a real observer does when an element is
+// observed, so the publish path runs in every test that renders the hero.
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    constructor(private callback: ResizeObserverCallback) {}
+    observe(target: Element) {
+      this.callback([{ target } as ResizeObserverEntry], this as unknown as ResizeObserver);
+    }
+    unobserve() {}
+    disconnect() {}
+  };
+}

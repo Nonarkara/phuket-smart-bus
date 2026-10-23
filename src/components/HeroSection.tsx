@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Lang, RouteId, Stop, PriceComparison, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
@@ -55,6 +55,38 @@ function getNextBusEta(
 export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: HeroSectionProps) {
   const [countdown, setCountdown] = useState(0);
   const [destination, setDestination] = useState("Patong");
+  const heroRef = useRef<HTMLDivElement | null>(null);
+
+  // THE HERO'S HEIGHT IS MEASURED, NOT ASSUMED.
+  //
+  // Four things sit under the hero — the language toggle, the weather pill,
+  // the live bus badge and Leaflet's top-right controls — and every one of
+  // them reads `top: var(--hero-below, 132px)`. The stylesheet's comment
+  // claimed the variable was "set on the .map-view container based on
+  // visible hero size"; it was not set at all. 132px was a constant
+  // calibrated for three stacked blocks, and the hero has since grown a
+  // fourth — this disclosure line — so the toggle painted OVER it while
+  // the pill and the badge disappeared BEHIND it. The hero's own height
+  // decides now, and it decides again when the content changes: the
+  // safety strip comes and goes with the data, and the PM2.5 badge only
+  // exists once GISTDA answers.
+  useEffect(() => {
+    const hero = heroRef.current;
+    const host = hero?.parentElement;
+    if (!hero || !host) return;
+    const publish = () => {
+      const h = Math.round(hero.getBoundingClientRect().height);
+      host.style.setProperty("--hero-below", `${h}px`);
+    };
+    publish();
+    // The observer keeps the number current; the measurement above already
+    // published it once, so an environment without the API still gets a
+    // correct first layout rather than a crash.
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(publish);
+    ro.observe(hero);
+    return () => ro.disconnect();
+  }, []);
 
   // Real-time PM2.5 from GISTDA — live air quality at Phuket Airport area
   const [pm25, setPm25] = useState<{ value: number; level: string; color: string } | null>(null);
@@ -123,7 +155,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
   const motorcyclePct = Math.round(THAIRSC_2026_FOREIGNERS.byVehicle.motorcyclePct);
 
   return (
-    <div className="hero-section">
+    <div className="hero-section" ref={heroRef}>
       <div className="hero-section__row">
         <div className="hero-section__col">
           <div className="hero-section__label">{pick(ui.heroNextBus, lang)} · {destination}</div>

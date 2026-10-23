@@ -27,20 +27,28 @@
  *     fixed 30s wait     30004ms   6426px   704 elements   52 stop cards
  *
  *   The page is 6,426px at every wait from two seconds to thirty, and the
- *   stop list is FULL (52 cards) in every one of them. The 9,251px figure
- *   was not this page: it was an earlier BUILD, whose two-column stop
- *   list squeezed the cards (the gate reported 12 CLIPPED CONTENT
- *   findings on `.stop-list__items` that run) and whose literal rider
- *   sizes put ten steps on the ramp. Both were layout defects and both
- *   were fixed by other means; neither was a loading defect, and this
- *   file's old note credited the loading story for them.
+ *   stop list is FULL (52 cards) in every one of them.
+ *
+ *   What the old note claimed, and what is actually known:
+ *   the 9,251px figure came from a DIFFERENT BUILD — one whose stop list
+ *   was different enough for the gate to report 12 CLIPPED CONTENT
+ *   findings on `.stop-list__items` in that run. **That build is not in
+ *   this repository**: the two runs were 39 minutes apart with no commit
+ *   between them, so its contents are recorded nowhere, and an
+ *   explanation of it that cannot be checked is not an explanation. What
+ *   can be checked is the table above, and it is the opposite of the old
+ *   note: the page does not grow when the gate waits longer.
+ *
+ *   So this file does not say what the 9,251px page was. It says what
+ *   today's page is, at four waits, and it says the old figure is not
+ *   today's figure.
  *
  *   The floor is still the right answer, and its proof does not depend on
- *   this page: `scripts/design/prove-settle.sh` measures a FIXTURE whose
- *   content arrives on a timer with no request in flight, and shows that
- *   without the floor the instrument measures that page empty. The
- *   defect was real; the page it was measured on was not the one the old
- *   note named.
+ *   this page at all: `scripts/design/prove-settle.sh` measures a FIXTURE
+ *   whose content arrives on a timer with no request in flight, and shows
+ *   that without the floor the instrument measures that page empty. The
+ *   defect the floor closes is real, and it is real on any page whose
+ *   content arrives on a timer — which is exactly what the fixture is.
  *
  * THE TWO SIGNALS
  *   1. THE NETWORK GOES QUIET. A page that is still waiting for data is

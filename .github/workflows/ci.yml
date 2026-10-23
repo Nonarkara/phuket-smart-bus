@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+  # The project's own flow is commit-to-main → deploy, so the proofs run
+  # there too. A gate that only runs on the pull request is a gate that
+  # does not run on the day the site ships.
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -42,6 +47,8 @@ jobs:
   # between an instrument and a decoration.
   design:
     runs-on: ubuntu-latest
+    # A hung proof must not burn a runner's afternoon.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

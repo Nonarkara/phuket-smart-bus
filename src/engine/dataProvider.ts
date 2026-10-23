@@ -63,9 +63,22 @@ import { getBangkokNowMinutes } from "./time";
 // has to ship its own tile-layer config. All three tile providers are
 // directly browser-fetchable — no server proxy needed.
 //
-// RainViewer requires a fresh timestamp. We cache it client-side for 5 min;
-// on first call it returns null and we omit the precipitation entry — the
-// next render after the fetch resolves picks it up.
+// RainViewer requires a fresh timestamp. We cache it client-side for 5 min.
+//
+// ON FIRST CALL THE TIMESTAMP IS NULL and the precipitation entry is
+// omitted — the fetch is in flight and nothing re-renders to pick it up.
+// The old comment here said "the next render after the fetch resolves
+// picks it up", and no caller performs such a render: getOpsDashboard()
+// in this module is called by nobody in the client (src/api.ts:125 is a
+// different function, and the operations map asks RainViewer for its own
+// frame in V2LiveMap). So this block is UNREACHABLE from the page, and
+// the comment said otherwise.
+//
+// It is left in place rather than deleted, because the payload it builds
+// is part of the server contract (src/api.ts still returns the shape) and
+// deleting a layer from a data structure is a bigger change than saying
+// what is true about it. What it must not do is fetch a third party for a
+// picture nobody sees — which is why the module-load kick is gone.
 // ---------------------------------------------------------------------------
 
 let rainViewerTimestamp: number | null = null;

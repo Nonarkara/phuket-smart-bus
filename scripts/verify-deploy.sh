@@ -59,6 +59,19 @@ cd "$PROJECT_ROOT"
 EXIT_BYTES=2
 EXIT_GATE=1
 
+# EVERY UNHANDLED FAILURE IS A BYTES FAILURE.
+#
+# The contract is "2 = the bytes did not reach the host, 1 = the gate
+# failed", and the explicit checks below all say which they are. But a
+# command that fails without an explicit `exit` — a `sort` that errors, a
+# `git rev-parse` outside a repository, a curl that cannot connect — used
+# to end the script with 1, and 1 means "the gate failed", so the deploy
+# would print "the bytes ARE deployed and live" after a check that never
+# finished. The trap makes the implicit paths explicit: anything that
+# stops the script before the gate is a bytes failure, which is what it
+# actually is.
+trap 'echo "error: the verification stopped before the gate — the bytes were not fully checked" >&2; exit "$EXIT_BYTES"' ERR
+
 CANONICAL="${CANONICAL:-https://phuket-smart-bus.pages.dev}"
 CUSTOM="${CUSTOM:-https://bus.nonarkara.org}"
 PROJECT="${PAGES_PROJECT:-phuket-smart-bus}"
@@ -70,8 +83,16 @@ if [ ! -f "$INDEX" ]; then
 fi
 
 # ── the commit we are shipping ────────────────────────────────────────────
-HEAD_SHA="$(git rev-parse HEAD)"
-HEAD_SHORT="$(git rev-parse --short HEAD)"
+# The commit is a CROSS-CHECK, not the check: the byte graph above is what
+# proves the right code is live. So a repository that cannot answer the
+# question degrades to "byte check only" — the same way the wrangler
+# lookup does — instead of stopping the run.
+if HEAD_SHORT="$(git rev-parse --short HEAD 2>/dev/null)"; then
+  :
+else
+  HEAD_SHORT=""
+  echo "warn: could not read the commit from git; byte check only"
+fi
 
 # ── the whole asset graph, on both hosts ─────────────────────────────────
 BASE_URL="$CANONICAL" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
@@ -99,12 +120,18 @@ fi
 # The alias may be owned by either, so the alias check above can degenerate
 # into a self-comparison. Each deployment of the commit is therefore checked
 # by its own deployment URL.
+# A pipe that cannot be read is not a reason to stop: the list is a
+# CROSS-CHECK on top of the byte graph, and an unreadable list means the
+# cross-check is unavailable, not that the bytes failed. It says so.
 DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" '
   {
     src = $5; url = $6;
     gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
     if (src != "" && url != "" && index(src, sha) == 1) print url
-  }' | sort -u)"
+  }' | sort -u || true)"
+if [ -z "$DEPLOY_URLS" ]; then
+  echo "warn: no deployment list for this commit could be read; byte check only"
+fi
 
 CHECKED=0
 while IFS= read -r url; do

@@ -341,6 +341,14 @@ export function GovernorDashboard() {
             allowFullScreen
           />
         </div>
+        {/* THE THIRD PARTY, NAMED. The frame above is a Microsoft Power BI
+            document: loading it sends the reader's request — and so their IP
+            address — to app.powerbi.com. The page names ThaiRSC, which is
+            the DATA, and not the service that serves it. One line, under
+            the frame, says which service it is. */}
+        <p className="governor__powerbi-source">
+          Served by Microsoft Power BI — that service sees your request and your IP address.
+        </p>
       </section>
 
       {/* ── Footer ── */}

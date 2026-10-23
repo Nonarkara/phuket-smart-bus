@@ -105,8 +105,10 @@ function servedRoutes() {
     // derivation that only read `startsWith` would never see it. A route
     // nobody measures is the whole failure this check exists for, so it
     // has to read every way the app names one.
-    for (const m of txt.matchAll(/===\s*"(\/[a-z0-9][a-z0-9\/_-]*)"/g)) {
-      code.add(m[1].replace(/\/+$/, "") || "/");
+    for (const m of txt.matchAll(/===\s*"(\/[a-z0-9][a-z0-9\/_-]*)?"/g)) {
+      // `*` and not `+`: the root route is `pathname === "/"`, and a
+      // pattern that needs a character after the slash cannot see it.
+      code.add((m[1] || "/").replace(/\/+$/, "") || "/");
     }
   }
   if (existsSync(red)) {
@@ -154,21 +156,33 @@ const DISCLOSURE_WORDS = [
 // notice that answers it is the site's own — it has to NAME the service,
 // because "your data may be shared" is not a disclosure of anything.
 //
-// The list is the law's list of third parties the site actually uses. The
-// keys are SUBSTRINGS of the host, because these services serve from
+// The keys are SUBSTRINGS of the host, because these services serve from
 // several hosts: OpenStreetMap from a.tile/b.tile/c.tile…, GISTDA from
 // both api-gateway.gistda.or.th and pm25.gistda.or.th, RainViewer from
 // api.rainviewer.com and tilecache.rainviewer.com.
 //   · OpenStreetMap — map tiles
 //   · GISTDA        — weather, air quality, satellite and incident tiles
 //   · RainViewer    — radar
+//   · Power BI      — the governor's ThaiRSC road-safety dashboard, which
+//     is a Microsoft document embedded in an iframe. The page names the
+//     DATA (ThaiRSC); it has to name the SERVICE too, because the frame
+//     carries the reader's address to Microsoft.
 //   · api.airplanes.live — the aircraft overlay (now relayed by this
 //     site's own edge, so the browser should never reach it — the entry
 //     stays as the guard against that changing back)
+//
+// Is this list EXHAUSTIVE? It cannot be — a new embed or a new SDK would
+// not be on it. What it is is the list of the third parties this site
+// makes requests to, and every one of them is either named on the page
+// that contacts it or reported as a finding. The check that keeps it
+// honest is the one below: it RECORDS every contact the page makes, and
+// prints it, so a contact that is not on this list still shows up in the
+// log as a service this site does not know about.
 const THIRD_PARTY = [
   { host: "tile.openstreetmap.org", name: "OpenStreetMap" },
   { host: "gistda.or.th", name: "GISTDA" },
   { host: "rainviewer.com", name: "RainViewer" },
+  { host: "app.powerbi.com", name: "Power BI" },
   { host: "airplanes.live", name: "api.airplanes.live" },
 ];
 
@@ -476,9 +490,22 @@ async function browserChecks() {
       // so the audit follows the link's own route when there is one.
       const named = await p.evaluate(() => (document.body.innerText || "").toLowerCase());
       const contacted = [...new Set(thirdPartyHits)];
+      // THE CONTACTS ARE RECORDED, NOT ONLY THE FAILURES. A check that
+      // prints nothing when it passes cannot be re-derived from the log: a
+      // run that saw two contacts and a run that saw none read the same.
+      // The number the commit claims has to be a number the next run
+      // prints.
+      if (contacted.length) {
+        notes.push(`${route}: contacted ${contacted.join(", ")}`);
+      }
       for (const name of contacted) {
         const key = name.toLowerCase();
-        if (named.includes(key) || named.includes(key.replace(".live", ""))) continue;
+        // A page may name the service the way a person would — "Airplanes
+        // live", not "api.airplanes.live" — so the API prefix is dropped
+        // before the text is searched. The disclosure must be TEXT: a
+        // service named only in an image or a title attribute is not a
+        // disclosure the reader can read.
+        if (named.includes(key) || named.includes(key.replace("api.", ""))) continue;
         F(
           "third-party",
           route,
