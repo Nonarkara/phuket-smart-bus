@@ -26,8 +26,51 @@ import * as sim from "./engine/dataProvider";
 
 const USE_LIVE = true;
 
+/**
+ * Is there a backend at all?
+ *
+ * THE PROBLEM THIS SOLVES
+ *   `USE_LIVE` was hard-coded true, so every call tried the Express API
+ *   first and fell back to the engine when it failed. On the STATIC site
+ *   there is no Express server — the Pages deployment serves the bundle and
+ *   the Functions tree, and /api/routes, /api/health, /api/environment,
+ *   /api/compare and every /api/routes/<id>/{stops,vehicles,advisories}
+ *   answered 404.
+ *
+ *   The fallback worked, so the page rendered. But the page paid for
+ *   TWENTY-TWO round-trips that could not succeed, on every route, before
+ *   the real data appeared — and every one of them printed a red line in
+ *   the console. scripts/design/shipaudit.mjs counted 176 dead-endpoint
+ *   calls across sixteen routes of the live site.
+ *
+ * THE FIX
+ *   One question, asked once per session, to an endpoint that EXISTS on
+ *   every deployment: /api/capabilities. The static Pages Function answers
+ *   `backend: false`; the Express server answers `backend: true`.
+ *
+ *   The answer is a property of the DEPLOYMENT, not a constant in the
+ *   source. When the real device telemetry arrives and the server is
+ *   deployed behind the same origin, the app switches to the live API by
+ *   itself — no source change, no constant to remember to flip. That is
+ *   what the probe is for; a boolean in the source would have been a
+ *   promise somebody has to keep.
+ */
+let backendProbe: Promise<boolean> | null = null;
+
+function hasBackend(): Promise<boolean> {
+  if (!backendProbe) {
+    backendProbe = api
+      .getCapabilities()
+      .then((caps) => caps.backend === true)
+      .catch(() => false);
+  }
+  return backendProbe;
+}
+
 async function withFallback<T>(live: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
   if (!USE_LIVE) return fallback();
+  // The probe decides once. Everything after it is free.
+  if (!(await hasBackend())) return fallback();
   try {
     return await live();
   } catch {

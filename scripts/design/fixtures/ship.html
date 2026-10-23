@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shipability fixture</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; }
+  .notice { border: 1px solid #333; padding: 0.5rem; }
+</style>
+</head>
+<body>
+<h1>Shipability fixture</h1>
+<p id="marker">This page is a fixture for the shipability instrument.</p>
+
+<script>
+  // The variant is chosen by the query string, so ONE file can hold every
+  // case and the proof drives the REAL instrument against each of them.
+  const variant = new URLSearchParams(location.search).get("variant") || "clean";
+
+  if (variant === "console") {
+    // An uncaught exception: the page throws after load.
+    setTimeout(() => { throw new Error("fixture: an uncaught exception"); }, 50);
+  }
+
+  if (variant === "collector") {
+    // A visitor collector. The instrument aborts the request rather than
+    // making it, so the proof never sends anything anywhere.
+    fetch("https://script.google.com/macros/s/AKfixture/exec", { mode: "no-cors" }).catch(() => {});
+  }
+
+  if (variant === "no-disclosure") {
+    // Same collector, and the page says NOTHING about it. This is the case
+    // the disclosure check exists for.
+    fetch("https://script.google.com/macros/s/AKfixture/exec", { mode: "no-cors" }).catch(() => {});
+  }
+
+  if (variant === "dead-endpoint") {
+    // A same-origin call to an endpoint that does not exist.
+    fetch("/api/does-not-exist").catch(() => {});
+  }
+</script>
+
+<script>
+  // The disclosure text lives on the page only when the variant asks for
+  // it — so "a collector with a notice" and "a collector without one" are
+  // two different pages and the check has to tell them apart.
+  if (new URLSearchParams(location.search).get("variant") === "collector") {
+    const n = document.createElement("p");
+    n.className = "notice";
+    n.textContent = "Privacy. This site records one anonymous-session ping: your IP address.";
+    document.body.appendChild(n);
+  }
+</script>
+</body>
+</html>

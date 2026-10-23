@@ -4,29 +4,26 @@ import App from "./App";
 import "./styles.css";
 import "leaflet/dist/leaflet.css";
 
-// NON visitor tracker — fire-and-forget, one ping per session
-(function () {
-  if (sessionStorage.getItem("non_v")) return;
-  sessionStorage.setItem("non_v", "1");
-  const SH =
-    "https://script.google.com/macros/s/AKfycbwzTwBNOseKkvkkjD-LH6B3GWrsFcwS6MTDbn7W5eb3zHxA-swtlHYuwJ3w5PAVXDhU7Q/exec";
-  const b: Record<string, string> = {
-    dashboard: "BUS",
-    hostname: location.hostname,
-    page: location.href,
-    referrer: document.referrer || "Direct",
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    screen: `${screen.width}x${screen.height}`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  };
-  const send = (p: object) =>
-    fetch(SH, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(p) }).catch(() => {});
-  fetch("https://ipapi.co/json/")
-    .then((r) => r.json())
-    .then((d) => { b.ip = d.ip; b.country = d.country_name; b.region = d.region; b.city = d.city; send(b); })
-    .catch(() => send(b));
-})();
+// The visitor tracker that used to live here has been REMOVED.
+//
+// It sent one ping per session — IP address, city, country, region,
+// hostname, page, referrer, user agent, language, screen size, time zone —
+// to a personal spreadsheet, after looking the IP up on ipapi.co. That is
+// personal data under Thailand's PDPA, it went to a third party, and the
+// disclosure that described it appeared on two routes out of seventeen.
+//
+// The sheet it wrote to is locked now, so the pings stopped recording —
+// but the IP still left the visitor's browser to ipapi.co, which does not
+// need the sheet. A tracker that records nothing and still leaks is worse
+// than one that is honestly described.
+//
+// What replaces it: nothing. The site keeps Cloudflare's own first-party
+// beacon (in index.html), which is disclosed on the pages that ship it —
+// see components/VisitorPrivacyNotice.tsx.
+//
+// scripts/design/shipaudit.mjs proves this stays gone: it aborts every
+// request to a known collector host, so running the audit cannot itself
+// leak, and it reports any route that tries.
 
 // A deploy replaces the hashed chunks; a tab opened before it 404s on its next
 // lazy import and goes blank. Reload once to pick up the new build.

@@ -38,6 +38,27 @@ async function fetchJson<T>(url: string) {
   }
 }
 
+/**
+ * Is there an Express backend behind this origin?
+ *
+ * The static deployment answers this at /api/capabilities with
+ * `{ backend: false }` — the Pages Function says so, and it answers 200, so
+ * the question costs one clean request. The Express server answers the same
+ * path with `{ backend: true }`. The client reads it and never has to
+ * discover the answer by making a call that fails.
+ */
+export type BackendCapabilities = {
+  backend: boolean;
+  mode?: string;
+  engine?: string;
+};
+
+export async function getCapabilities(): Promise<BackendCapabilities> {
+  const response = await fetch("/api/capabilities", { signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  return (await response.json()) as BackendCapabilities;
+}
+
 export function getHealth() {
   return fetchJson<HealthPayload>("/api/health");
 }

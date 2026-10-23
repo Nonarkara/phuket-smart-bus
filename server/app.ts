@@ -469,6 +469,19 @@ export function createApp() {
     });
   });
 
+  // The capability probe. The static Pages deployment answers this path
+  // with `backend: false` (functions/api/capabilities.ts); this server
+  // answers it with `backend: true`, and the client switches from the
+  // in-browser engine to the live API on its own. See src/dataProvider.ts.
+  app.get("/api/capabilities", (_request, response) => {
+    response.json({
+      backend: true,
+      mode: process.env.DATA_MODE ?? "demo",
+      engine: "server",
+      builtAt: new Date().toISOString(),
+    });
+  });
+
   app.get(
     "/api/health",
     asyncRoute(async (_request, response) => {

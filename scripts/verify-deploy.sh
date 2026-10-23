@@ -142,3 +142,20 @@ if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
     echo "warn: playwright is not installed — the design gate did not run"
   fi
 fi
+
+# ── the shipability audit ──────────────────────────────────────────────────
+# The gate measures the LAYOUT. This measures whether the thing can be
+# HANDED OVER: no page throws, no page reports the visitor to a third
+# party, no page calls an API that does not exist, no secret is in the
+# tree, and every route the app serves is one the gate measures.
+#
+# It also scans the git HISTORY, because a token that was removed is not
+# removed — and that scan is slow, so it runs on the DEPLOY rather than on
+# every local check.
+if [ "${SKIP_SHIPABILITY:-0}" != "1" ]; then
+  if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
+    node scripts/design/shipaudit.mjs --base "$CUSTOM" --history
+  else
+    echo "warn: playwright is not installed — the shipability audit did not run"
+  fi
+fi

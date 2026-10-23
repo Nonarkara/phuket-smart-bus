@@ -25,7 +25,6 @@ export type AdsbSnapshot = {
 };
 
 const HKT = { lat: 7.8804, lon: 98.3923 };
-const RADIUS_NM = 80;
 const CACHE_KEY = "pksb:last-good-adsb-hkt";
 const POLL_MS = 45_000;
 
@@ -85,11 +84,27 @@ function normalize(ac: Record<string, unknown>): AdsbAircraft | null {
 
 /** One-shot fetch. Safe to call from UI effects. */
 export async function fetchAdsbAroundHkt(signal?: AbortSignal): Promise<AdsbSnapshot> {
-  const url = `https://api.airplanes.live/v2/point/${HKT.lat}/${HKT.lon}/${RADIUS_NM}`;
+  // Through the EDGE, not straight to airplanes.live. The upstream is
+  // invitation-only and answers 403 to everyone who has not arranged a key,
+  // and the browser's own request was blocked by CORS — so every page that
+  // draws the operations map printed a red error while the overlay quietly
+  // showed its schedule beads anyway. functions/api/adsb.ts asks once and
+  // always answers 200; the overlay still degrades to the beads, but
+  // nothing breaks and nothing turns red. Measured on both live hosts.
+  const url = "/api/adsb";
   try {
     const res = await fetch(url, { signal, headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(`adsb ${res.status}`);
-    const data = (await res.json()) as { ac?: Record<string, unknown>[] };
+    const data = (await res.json()) as { ac?: Record<string, unknown>[]; status?: string };
+    if (data.status === "unavailable") {
+      // No live feed — keep the last good positions if there are any, and
+      // never invent them.
+      const fallback = memoryLast ?? readStorage();
+      if (fallback && fallback.aircraft.length > 0) {
+        return { ...fallback, status: "stale" };
+      }
+      return { aircraft: [], updatedAt: new Date().toISOString(), status: "empty" };
+    }
     const aircraft = (data.ac ?? [])
       .map(normalize)
       .filter((a): a is AdsbAircraft => a != null)

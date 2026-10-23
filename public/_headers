@@ -9,6 +9,13 @@
 # violations appear only in each browser's console. The hosts are the ones the
 # client requests; the script hash is index.html's one inline script — rebuild it
 # if that script changes. Enforce once a week of use shows no violations.
+#
+# connect-src, 2026-10-23: https://script.google.com and https://ipapi.co were
+# REMOVED. They were there for the visitor tracker — a Google Sheet ping and an
+# ipapi.co IP lookup — and the tracker is gone (src/main.tsx). Leaving the hosts
+# in the policy would have left a collector's escape route open in a document
+# whose whole point is to close it. scripts/design/shipaudit.mjs now aborts
+# requests to both hosts and reports any route that tries.
 
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
@@ -16,4 +23,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   Content-Security-Policy: frame-ancestors 'self' https://depa-usdot.nonarkara.org
-  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-ZML5YxVKV7K+QNY5ZeL17DzSRM1lD8PVjTdp8UkPTl4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org https://tilecache.rainviewer.com https://api-gateway.gistda.or.th https://ocean.gistda.or.th https://gibs.earthdata.nasa.gov; connect-src 'self' https://cloudflareinsights.com https://script.google.com https://ipapi.co https://api.rainviewer.com https://pm25.gistda.or.th https://api.airplanes.live; frame-src https://bus.nonarkara.org https://app.powerbi.com; worker-src 'self'
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-ZML5YxVKV7K+QNY5ZeL17DzSRM1lD8PVjTdp8UkPTl4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org https://tilecache.rainviewer.com https://api-gateway.gistda.or.th https://ocean.gistda.or.th https://gibs.earthdata.nasa.gov; connect-src 'self' https://cloudflareinsights.com https://api.rainviewer.com https://pm25.gistda.or.th https://api.airplanes.live; frame-src https://bus.nonarkara.org https://app.powerbi.com; worker-src 'self'

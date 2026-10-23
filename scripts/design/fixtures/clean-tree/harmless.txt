@@ -1,0 +1,5 @@
+// A declaration is not a secret: it NAMES the variable and points at the
+// environment. The scanner must not read this as a leaked value.
+export const SMARTBUS_BEARER_TOKEN = process.env.SMARTBUS_BEARER_TOKEN ?? null;
+export const TICK_TOKEN = "";
+export const INGEST_TOKEN = null;
