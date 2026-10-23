@@ -95,8 +95,40 @@ else
 fi
 
 # ── the whole asset graph, on both hosts ─────────────────────────────────
-BASE_URL="$CANONICAL" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
-BASE_URL="$CUSTOM" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
+#
+# AND IT WAITS FOR THE EDGE TO CATCH UP.
+#
+# The upload and the check are seconds apart, and Cloudflare's edge takes a
+# little longer than that to serve the new deployment on the custom domain.
+# Measured 2026-10-23: the check ran while the alias was still serving the
+# PREVIOUS deployment's chunks, reported "the live host does not serve
+# them", and the deploy said the upload had failed — for a deployment that
+# had landed and was live a minute later.
+#
+# "The bytes are not live YET" and "the bytes are not live" are different
+# facts, and the first one is not a failure. So the check waits: it retries
+# for a couple of minutes before it says anything, and what it says
+# afterwards is which of the two it found.
+verify_bytes() {
+  local url="$1" label="$2"
+  local attempts="${BYTES_ATTEMPTS:-8}" delay="${BYTES_DELAY:-15}"
+  local i=1
+  while [ "$i" -le "$attempts" ]; do
+    if BASE_URL="$url" node scripts/verify-assets.mjs; then
+      return 0
+    fi
+    if [ "$i" -lt "$attempts" ]; then
+      echo "… $label does not serve this build yet (attempt $i/$attempts) — the edge may still be propagating; waiting ${delay}s"
+      sleep "$delay"
+    fi
+    i=$((i + 1))
+  done
+  echo "error: $label does not serve this build after $((attempts * delay))s — the deployment did not reach it" >&2
+  return 1
+}
+
+verify_bytes "$CANONICAL" "$CANONICAL" || exit "$EXIT_BYTES"
+verify_bytes "$CUSTOM" "$CUSTOM" || exit "$EXIT_BYTES"
 
 # ── the production deployment must carry the commit we are shipping ───────
 DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
@@ -140,7 +172,7 @@ while IFS= read -r url; do
     "$CANONICAL" | "$CUSTOM") continue ;; # already compared above
   esac
   echo "→ comparing deployment $url"
-  BASE_URL="$url" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
+  verify_bytes "$url" "$url" || exit "$EXIT_BYTES"
   CHECKED=$((CHECKED + 1))
 done <<< "$DEPLOY_URLS"
 

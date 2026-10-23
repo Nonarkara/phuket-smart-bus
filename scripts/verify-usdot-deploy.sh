@@ -53,7 +53,29 @@ echo "→ the whole asset graph on ${CUSTOM}"
 # — entry, every lazy chunk, every lazy stylesheet and what they reference
 # — and compares all of it, byte for byte, with the content hashes
 # normalised away.
-BASE_URL="$CUSTOM" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
+# AND IT WAITS FOR THE EDGE TO CATCH UP — the same contract as
+# verify-deploy.sh. The upload and the check are seconds apart, and the
+# edge takes a little longer to serve the new deployment on the published
+# domain. "The bytes are not live YET" is not "the bytes are not live".
+verify_bytes() {
+  local url="$1" label="$2"
+  local attempts="${BYTES_ATTEMPTS:-8}" delay="${BYTES_DELAY:-15}"
+  local i=1
+  while [ "$i" -le "$attempts" ]; do
+    if BASE_URL="$url" node scripts/verify-assets.mjs; then
+      return 0
+    fi
+    if [ "$i" -lt "$attempts" ]; then
+      echo "… $label does not serve this build yet (attempt $i/$attempts) — the edge may still be propagating; waiting ${delay}s"
+      sleep "$delay"
+    fi
+    i=$((i + 1))
+  done
+  echo "error: $label does not serve this build after $((attempts * delay))s — the deployment did not reach it" >&2
+  return 1
+}
+
+verify_bytes "$CUSTOM" "$CUSTOM" || exit "$EXIT_BYTES"
 
 echo "→ deep links return the app, not a 404"
 for route in / /toolkit /ops /study; do
@@ -121,7 +143,7 @@ CHECKED=0
 while IFS= read -r url; do
   [ -n "$url" ] || continue
   echo "→ comparing deployment $url"
-  BASE_URL="$url" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
+  verify_bytes "$url" "$url" || exit "$EXIT_BYTES"
   CHECKED=$((CHECKED + 1))
 done <<< "$DEPLOY_URLS"
 
