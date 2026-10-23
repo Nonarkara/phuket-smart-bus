@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { LatLngTuple, OperationalRouteId } from "@shared/types";
 import { getDirectionPolyline, getStopsForRoute } from "../../engine/routes";
@@ -56,7 +56,43 @@ function ActualRoutes() {
 }
 
 function StopDots() {
+  const map = useMap();
   const corridorStops = getStopsForRoute("rawai-airport");
+  // A PERMANENT TOOLTIP OPENS TO THE RIGHT OF ITS MARKER. On a phone the
+  // map is 350px wide and a marker near the right edge pushed its label
+  // off the canvas — the label was not cut by the map, it ran past the
+  // edge of it, and nothing on the screen said so. The map knows where the
+  // marker is; the direction follows it.
+  const [sides, setSides] = useState<Record<string, "left" | "right">>({});
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const size = map.getSize();
+        if (!size.x) return;
+        const next: Record<string, "left" | "right"> = {};
+        for (const stop of KEY_STOPS) {
+          const point = map.latLngToContainerPoint(stop.coordinates);
+          next[stop.name] = point.x > size.x / 2 ? "left" : "right";
+        }
+        setSides((prev) => {
+          const changed = KEY_STOPS.some((s) => prev[s.name] !== next[s.name]);
+          return changed ? next : prev;
+        });
+      });
+    };
+    update();
+    map.on("resize", update);
+    map.on("zoomend", update);
+    map.on("moveend", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      map.off("resize", update);
+      map.off("zoomend", update);
+      map.off("moveend", update);
+    };
+  }, [map]);
   return (
     <>
       {corridorStops.map((stop) => (
@@ -69,16 +105,19 @@ function StopDots() {
           <Tooltip>{stop.name.en}</Tooltip>
         </CircleMarker>
       ))}
-      {KEY_STOPS.map((stop) => (
-        <CircleMarker
-          key={stop.name}
-          center={stop.coordinates}
-          radius={stop.kind === "airport" ? 7 : 5}
-          pathOptions={{ color: "#fff", fillColor: stop.kind === "airport" ? "#111820" : "#ef442f", fillOpacity: 1, weight: 2 }}
-        >
-          <Tooltip permanent direction="right" offset={[8, 0]}>{stop.name}</Tooltip>
-        </CircleMarker>
-      ))}
+      {KEY_STOPS.map((stop) => {
+        const side = sides[stop.name] ?? "right";
+        return (
+          <CircleMarker
+            key={stop.name}
+            center={stop.coordinates}
+            radius={stop.kind === "airport" ? 7 : 5}
+            pathOptions={{ color: "#fff", fillColor: stop.kind === "airport" ? "#111820" : "#ef442f", fillOpacity: 1, weight: 2 }}
+          >
+            <Tooltip permanent direction={side} offset={side === "left" ? [-8, 0] : [8, 0]}>{stop.name}</Tooltip>
+          </CircleMarker>
+        );
+      })}
     </>
   );
 }
@@ -86,11 +125,21 @@ function StopDots() {
 function RepairMapSize() {
   const map = useMap();
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
+    // The map fits its bounds ONCE, on mount. A window resize — a phone
+    // turned sideways, a browser dragged narrower — left the old fit in
+    // place, so the map kept showing the extent it had at the old size and
+    // the permanent stop labels ended up outside the canvas. The fit has to
+    // follow the box.
+    const fit = () => {
       map.invalidateSize();
       map.fitBounds([[7.74, 98.23], [8.15, 98.49]], { padding: [24, 24] });
-    });
-    return () => cancelAnimationFrame(frame);
+    };
+    const frame = requestAnimationFrame(fit);
+    map.on("resize", fit);
+    return () => {
+      cancelAnimationFrame(frame);
+      map.off("resize", fit);
+    };
   }, [map]);
   return null;
 }

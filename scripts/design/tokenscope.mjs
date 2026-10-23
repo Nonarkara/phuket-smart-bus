@@ -51,6 +51,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { settle } from "./settle.mjs";
 import { parseCss, definedTokens, tokenNames, sizeDecl, readStylesheets } from "./cssrules.mjs";
 
 const args = process.argv.slice(2);
@@ -168,7 +169,7 @@ if (RENDER) {
 
   for (const route of ROUTES) {
     await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
-    await p.waitForTimeout(4000);
+    await settle(p);
     if (!rules.length) continue;
 
     const dead = await p.evaluate(async (rules) => {

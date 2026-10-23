@@ -151,7 +151,7 @@ a { color: var(--amber-text); }
   place-items: center;
   background: #0a0e14;
   color: rgba(255, 255, 255, 0.72);
-  font: 700 12px/1 var(--font-body); font-variant-numeric: tabular-nums;
+  font: 700 var(--t-label)/1 var(--font-body); font-variant-numeric: tabular-nums;
   letter-spacing: 0; }
 
 button, input, a { font: inherit; }
@@ -213,7 +213,7 @@ a { color: var(--amber-text); }
   justify-content: center;
   width: 28px;
   height: 28px;
-  font: 700 11px/1 var(--font-body);
+  font: 700 var(--t-label)/1 var(--font-body);
   letter-spacing: 0.04em;
   color: #fff;
   background: var(--ink, #191712);
@@ -224,11 +224,11 @@ a { color: var(--amber-text); }
   line-height: 1.2;
 }
 .desktop-rider__brand-text strong {
-  font: 700 14px/1.1 var(--font-body);
+  font: 700 var(--t-body)/1.1 var(--font-body);
   letter-spacing: -0.01em;
 }
 .desktop-rider__brand-text small {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--ink-2, rgba(0, 0, 0, 0.6));
   margin-top: 2px;
 }
@@ -248,7 +248,7 @@ a { color: var(--amber-text); }
 }
 .desktop-rider__nav a {
   padding: 10px 12px;
-  font: 700 11px/1 var(--font-body);
+  font: 700 var(--t-label)/1 var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
@@ -528,6 +528,22 @@ a { color: var(--amber-text); }
 
 /* ===== App Shell ===== */
 .app-shell {
+  /* The rider's type scale. Eight names, this surface's values — a phone in
+     sunlight is not an editorial publication and should not pretend to be.
+     The top has ONE voice: the verdict and the countdown shared a weight
+     (200) and two sizes 2px apart, which is false hierarchy, so they now
+     share a size too. The bottom starts at 13px: the labels that tell a
+     rider what a number means are the last thing that may get small. */
+  --t-display: 36px;   /* the verdict, the countdown, the fare */
+  --t-hero:    24px;   /* second display level — the sheet's next-bus time */
+  --t-figure:  22px;   /* data values: temperature, AQI, rain, occupancy */
+  --t-title:   22px;   /* the name of the thing: the stop, the pass */
+  --t-lead:    17px;   /* the base copy */
+  --t-body:    15px;   /* running copy */
+  --t-label:   13px;   /* labels, meta, actions — the floor a phone can read */
+  --t-micro:   13px;   /* eyebrows and the language toggle */
+
+  font-size: var(--t-lead);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -582,7 +598,7 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__title {
   margin: 0;
-  font-size: 26px;
+  font-size: var(--t-hero);
   font-weight: 200;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -590,7 +606,7 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__subtitle {
   margin: 2px 0 0;
-  font-size: 14px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
   font-weight: 400;
 }
@@ -614,14 +630,14 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__minutes {
-  font-size: 36px;
+  font-size: var(--t-display);
   font-weight: 200;
   color: var(--tint);
   line-height: 1;
 }
 
 .welcome-sheet__min-label {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -634,13 +650,13 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__bus-label {
-  font-size: 11px;
+  font-size: var(--t-label);
   font-weight: 600;
   letter-spacing: 0; color: var(--text-tertiary);
 }
 
 .welcome-sheet__seats {
-  font-size: 12px;
+  font-size: var(--t-label);
   color: var(--green);
   font-weight: 500;
 }
@@ -671,7 +687,7 @@ a { color: var(--amber-text); }
   border: 1.5px solid var(--separator);
   border-radius: var(--radius-md);
   background: var(--bg);
-  font-size: 15px;
+  font-size: var(--t-body);
   color: var(--text-primary);
   outline: none;
   transition: border-color 0.15s;
@@ -709,7 +725,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-pill);
   background: var(--bg-elevated);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -739,20 +755,20 @@ a { color: var(--amber-text); }
   border-radius: 50%;
   background: var(--green);
   color: #fff;
-  font-size: 16px;
+  font-size: var(--t-body);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .welcome-sheet__result-title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-weight: 600;
 }
 
 .welcome-sheet__result-route {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
@@ -766,7 +782,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-md);
   background: var(--green);
   color: #fff;
-  font-size: 17px;
+  font-size: var(--t-lead);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -789,7 +805,7 @@ a { color: var(--amber-text); }
   border-radius: 50%;
   background: var(--green);
   color: #fff;
-  font-size: 22px;
+  font-size: var(--t-title);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -798,14 +814,14 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__booked-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--t-figure);
   font-weight: 600;
   color: var(--green);
 }
 
 .welcome-sheet__booked-dest {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
@@ -817,7 +833,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-sm);
   background: rgba(255, 149, 0, 0.08);
   border-left: 3px solid var(--orange);
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
   line-height: 1.4;
   text-align: left;
@@ -832,7 +848,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--tint);
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 500;
   cursor: pointer;
 }
@@ -849,13 +865,13 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__fare-amount {
-  font-size: 28px;
+  font-size: var(--t-hero);
   font-weight: 200;
   color: var(--green);
 }
 
 .welcome-sheet__fare-label {
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
 }
 
@@ -868,7 +884,7 @@ a { color: var(--amber-text); }
   border: 0;
   background: transparent;
   color: var(--tint);
-  font-size: 13px;
+  font-size: var(--t-label);
   font-weight: 500;
   text-align: center;
   cursor: pointer;
@@ -899,19 +915,19 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__fare-mode {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
 .welcome-sheet__fare-price {
-  font-size: 20px;
+  font-size: var(--t-figure);
   font-weight: 500;
   color: var(--green);
 }
 
 .welcome-sheet__fare-price--other {
   color: var(--text-tertiary);
-  font-size: 15px;
+  font-size: var(--t-body);
   text-decoration: line-through;
 }
 
@@ -942,7 +958,7 @@ a { color: var(--amber-text); }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
@@ -955,14 +971,14 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__pass-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--t-figure);
   font-weight: 600;
   text-align: center;
 }
 
 .welcome-sheet__pass-desc {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
@@ -973,7 +989,7 @@ a { color: var(--amber-text); }
   border: 1.5px solid var(--separator);
   border-radius: var(--radius-md);
   background: var(--bg);
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-family: var(--font-code);
   text-align: center;
   letter-spacing: 0.1em;
@@ -995,7 +1011,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-pill);
   background: var(--green);
   color: #fff;
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 600;
 }
 
@@ -1006,19 +1022,19 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__pass-days {
-  font-size: 48px;
+  font-size: var(--t-display);
   font-weight: 200;
   color: var(--tint);
 }
 
 .welcome-sheet__pass-days-label {
-  font-size: 14px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
 .welcome-sheet__pass-note {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
   text-align: center;
 }
@@ -1037,7 +1053,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-pill);
   background: var(--tint);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-float);
@@ -1081,7 +1097,7 @@ a { color: var(--amber-text); }
   color: var(--amber-text);
   min-width: 1.6rem;
   padding: 0.2rem 0.3rem;
-  font-size: 11px;
+  font-size: var(--t-micro);
   font-weight: 600;
   cursor: pointer;
   line-height: 1;
@@ -1143,7 +1159,7 @@ a { color: var(--amber-text); }
 }
 
 .bottom-nav__label {
-  font-size: 11px;
+  font-size: var(--t-label);
   font-weight: 600;
   letter-spacing: 0;
   color: var(--amber-text);
@@ -1178,7 +1194,7 @@ a { color: var(--amber-text); }
   background: var(--translucent);
   border: 0.5px solid var(--separator);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
 }
 .map-sea-pill { margin-left: 6px; white-space: nowrap; }
@@ -1198,7 +1214,7 @@ a { color: var(--amber-text); }
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: var(--t-label);
   font-weight: 500;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1261,7 +1277,7 @@ a { color: var(--amber-text); }
   border-radius: 0;
   background: var(--translucent);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1293,7 +1309,7 @@ a { color: var(--amber-text); }
 
 .map-pill__count {
   opacity: 0.5;
-  font-size: 11px;
+  font-size: var(--t-label);
 }
 
 /* Live count badge — translucent white */
@@ -1310,7 +1326,7 @@ a { color: var(--amber-text); }
   background: var(--translucent);
   border: 0.5px solid var(--separator);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
 }
 
@@ -1423,7 +1439,7 @@ a { color: var(--amber-text); }
   box-shadow: var(--shadow-card);
   color: var(--text-primary);
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: var(--t-body);
   outline: none;
   transition: box-shadow 0.2s ease;
 }
@@ -1441,7 +1457,7 @@ a { color: var(--amber-text); }
   overflow: hidden;
 }
 
-.stop-list__empty { margin: 16px 0; color: var(--text-secondary); font-size: 15px; }
+.stop-list__empty { margin: 16px 0; color: var(--text-secondary); font-size: var(--t-body); }
 
 .stop-card {
   border: 0;
@@ -1485,13 +1501,13 @@ a { color: var(--amber-text); }
   gap: 8px;
 }
 
-.stop-card__heading span { color: var(--tint); font-weight: 600; font-size: 15px; }
+.stop-card__heading span { color: var(--tint); font-weight: 600; font-size: var(--t-body); }
 
 .stop-card__direction,
 .stop-card__meta {
   margin: 3px 0 0;
   line-height: 1.35;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
@@ -1501,7 +1517,7 @@ a { color: var(--amber-text); }
   align-items: center;
   gap: 8px;
   padding: 0 0 12px;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
@@ -1536,34 +1552,27 @@ a { color: var(--amber-text); }
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--t-label);
   letter-spacing: 0; }
 
 .decision-panel__label { color: var(--panel-accent); font-weight: 600; }
 .decision-panel__update { color: var(--text-tertiary); }
 
-.decision-panel__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.decision-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 0;
-  border: 0;
-  background: rgba(0, 0, 0, 0.04);
+/* The status strip used to be five grey boxes. They carried no colour
+   meaning — one rule, no variants — so the boxes were decoration around
+   five unrelated numbers, and at 440px they wrapped with one box alone on
+   the last line. It is one line of text now, separated by a middot: every
+   fact kept, no box, no orphan, and it wraps as prose at any width. */
+.decision-panel__status {
+  margin: 8px 0 0;
+  font-size: var(--t-label);
+  line-height: 1.5;
   color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 500;
 }
 
 .decision-panel__headline {
   margin: 8px 0 0;
-  font-size: 34px;
+  font-size: var(--t-display);
   font-weight: 200;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -1574,7 +1583,7 @@ a { color: var(--amber-text); }
   max-width: 24rem;
   color: var(--text-secondary);
   line-height: 1.4;
-  font-size: 15px;
+  font-size: var(--t-body);
 }
 
 .decision-panel__next-bus {
@@ -1591,13 +1600,13 @@ a { color: var(--amber-text); }
 
 .decision-panel__minutes {
   color: var(--panel-accent);
-  font-size: 36px;
+  font-size: var(--t-display);
   line-height: 1;
   letter-spacing: -0.03em;
   font-weight: 200;
 }
 
-.decision-panel__next-bus p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.decision-panel__next-bus p { margin: 2px 0 0; color: var(--text-secondary); font-size: var(--t-label); }
 
 /* Environment stats row.
    Three parallel facts: air temperature, AQI, chance of rain. They were three
@@ -1622,14 +1631,14 @@ a { color: var(--amber-text); }
 
 .decision-panel__env-stat span {
   display: block;
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
 .decision-panel__env-stat strong {
   display: block;
   margin-top: 2px;
-  font-size: 20px;
+  font-size: var(--t-figure);
   font-weight: 600;
 }
 
@@ -1639,7 +1648,7 @@ a { color: var(--amber-text); }
 
 .decision-panel__env-stat small {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
   margin-top: 1px;
 }
@@ -1654,7 +1663,7 @@ a { color: var(--amber-text); }
 }
 
 .decision-panel__occupancy-label {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
   letter-spacing: 0; }
 
@@ -1676,7 +1685,7 @@ a { color: var(--amber-text); }
 .decision-panel__occupancy-fill.is-full { background: var(--red); }
 
 .decision-panel__occupancy-text {
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
@@ -1694,7 +1703,7 @@ a { color: var(--amber-text); }
 
 .decision-panel__advantages-title {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-label);
   font-weight: 600;
   letter-spacing: 0; color: var(--green);
   margin-bottom: 6px;
@@ -1709,7 +1718,7 @@ a { color: var(--amber-text); }
 }
 
 .decision-panel__advantages-list li {
-  font-size: 13px;
+  font-size: var(--t-label);
   line-height: 1.4;
   color: var(--text-primary);
   padding-left: 12px;
@@ -1739,7 +1748,7 @@ a { color: var(--amber-text); }
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--t-label);
 }
 
 .decision-panel__timetable-row span { color: var(--text-secondary); }
@@ -1758,7 +1767,7 @@ a { color: var(--amber-text); }
   padding-left: 12px;
   color: var(--text-secondary);
   line-height: 1.4;
-  font-size: 13px;
+  font-size: var(--t-label);
 }
 
 .decision-panel__reasons li::before {
@@ -1789,7 +1798,7 @@ a { color: var(--amber-text); }
 
 .spotlight__copy h3 {
   margin: 4px 0 0;
-  font-size: 22px;
+  font-size: var(--t-title);
   font-weight: 400;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -1799,13 +1808,13 @@ a { color: var(--amber-text); }
   margin: 4px 0 0;
   color: var(--text-secondary);
   line-height: 1.4;
-  font-size: 15px;
+  font-size: var(--t-body);
 }
 
 .hero__eyebrow {
   display: inline-flex;
   color: var(--text-tertiary);
-  letter-spacing: 0; font-size: 11px;
+  letter-spacing: 0; font-size: var(--t-label);
   font-weight: 600;
 }
 
@@ -1823,9 +1832,9 @@ a { color: var(--amber-text); }
 }
 
 .spotlight-stat span, .spotlight-stat small { display: block; color: var(--text-secondary); }
-.spotlight-stat span { font-size: 11px; letter-spacing: 0; }
-.spotlight-stat strong { display: block; margin-top: 3px; font-size: 17px; font-weight: 400; letter-spacing: -0.02em; }
-.spotlight-stat small { margin-top: 3px; line-height: 1.3; font-size: 12px; }
+.spotlight-stat span { font-size: var(--t-label); letter-spacing: 0; }
+.spotlight-stat strong { display: block; margin-top: 3px; font-size: var(--t-lead); font-weight: 400; letter-spacing: -0.02em; }
+.spotlight-stat small { margin-top: 3px; line-height: 1.3; font-size: var(--t-label); }
 
 .spotlight__footer {
   display: flex;
@@ -1835,7 +1844,7 @@ a { color: var(--amber-text); }
 }
 
 .spotlight__meta strong { display: block; font-weight: 500; }
-.spotlight__meta p { margin: 3px 0 0; color: var(--text-secondary); font-size: 13px; }
+.spotlight__meta p { margin: 3px 0 0; color: var(--text-secondary); font-size: var(--t-label); }
 
 .spotlight__action {
   display: inline-flex;
@@ -1848,7 +1857,7 @@ a { color: var(--amber-text); }
   color: #fff;
   text-decoration: none;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 .spotlight__timetable {
@@ -1865,7 +1874,7 @@ a { color: var(--amber-text); }
   align-items: center;
 }
 
-.spotlight__timetable-head a { text-decoration: none; color: var(--tint); font-weight: 500; font-size: 14px; }
+.spotlight__timetable-head a { text-decoration: none; color: var(--tint); font-weight: 500; font-size: var(--t-label); }
 
 .spotlight__timetable-grid {
   display: grid;
@@ -1880,11 +1889,11 @@ a { color: var(--amber-text); }
   background: rgba(0, 0, 0, 0.03);
 }
 
-.spotlight-timetable-card span { display: block; color: var(--text-secondary); font-size: 11px; letter-spacing: 0; }
-.spotlight-timetable-card strong { display: block; margin-top: 3px; line-height: 1.3; font-size: 14px; font-weight: 400; }
+.spotlight-timetable-card span { display: block; color: var(--text-secondary); font-size: var(--t-label); letter-spacing: 0; }
+.spotlight-timetable-card strong { display: block; margin-top: 3px; line-height: 1.3; font-size: var(--t-label); font-weight: 400; }
 
 .spotlight__timetable-list,
-.spotlight__timetable-meta { margin: 0; color: var(--text-secondary); line-height: 1.4; font-size: 13px; }
+.spotlight__timetable-meta { margin: 0; color: var(--text-secondary); line-height: 1.4; font-size: var(--t-label); }
 
 /* ===== Advisory ===== */
 .advisory-stack {
@@ -1913,7 +1922,7 @@ a { color: var(--amber-text); }
   align-items: center;
   margin-bottom: 6px;
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: var(--t-label);
   letter-spacing: 0; }
 
 .advisory-badge {
@@ -1923,15 +1932,15 @@ a { color: var(--amber-text); }
   border-radius: 0;
   font-weight: 600;
   color: #fff;
-  font-size: 11px;
+  font-size: var(--t-label);
 }
 
 .advisory-badge.is-warning { background: var(--red); }
 .advisory-badge.is-caution { background: var(--orange); }
 .advisory-badge.is-info { background: var(--info); }
 
-.advisory-card h3 { margin: 0; font-size: 15px; font-weight: 500; }
-.advisory-card p, .advisory-card strong { display: block; margin-top: 4px; line-height: 1.4; font-size: 13px; }
+.advisory-card h3 { margin: 0; font-size: var(--t-body); font-weight: 500; }
+.advisory-card p, .advisory-card strong { display: block; margin-top: 4px; line-height: 1.4; font-size: var(--t-label); }
 .advisory-card p { color: var(--text-secondary); }
 
 /* ===== Pass View & Panel ===== */
@@ -1946,8 +1955,8 @@ a { color: var(--amber-text); }
   margin-bottom: 6px;
 }
 
-.section-heading h3 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; }
-.section-heading p { margin: 0; color: var(--text-secondary); line-height: 1.3; font-size: 14px; }
+.section-heading h3 { margin: 0; font-size: var(--t-title); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; }
+.section-heading p { margin: 0; color: var(--text-secondary); line-height: 1.3; font-size: var(--t-label); }
 
 .pass-switch { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
 
@@ -1959,7 +1968,7 @@ a { color: var(--amber-text); }
   box-shadow: var(--shadow-interactive);
   color: var(--text-secondary);
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--t-label);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
@@ -2000,7 +2009,7 @@ a { color: var(--amber-text); }
   border-radius: 0;
   background: rgba(0, 0, 0, 0.04);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--t-label);
   font-weight: 500;
 }
 
@@ -2009,12 +2018,12 @@ a { color: var(--amber-text); }
    nothing extra. */
 .pass-ticket__status { color: var(--green); }
 
-.pass-ticket__name { font-size: 22px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; }
+.pass-ticket__name { font-size: var(--t-title); font-weight: 200; line-height: 1; letter-spacing: -0.02em; }
 
 .pass-ticket__countdown { display: grid; gap: 2px; }
-.pass-ticket__countdown span { color: var(--text-tertiary); font-size: 11px; letter-spacing: 0; }
-.pass-ticket__countdown strong { font-size: 34px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.pass-ticket__countdown small { color: var(--text-secondary); line-height: 1.3; font-size: 13px; }
+.pass-ticket__countdown span { color: var(--text-tertiary); font-size: var(--t-label); letter-spacing: 0; }
+.pass-ticket__countdown strong { font-size: var(--t-display); font-weight: 200; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.pass-ticket__countdown small { color: var(--text-secondary); line-height: 1.3; font-size: var(--t-label); }
 
 .pass-ticket__meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 
@@ -2027,8 +2036,8 @@ a { color: var(--amber-text); }
   background: rgba(0, 0, 0, 0.03);
 }
 
-.pass-ticket__meta-card span { color: var(--text-tertiary); font-size: 11px; letter-spacing: 0; }
-.pass-ticket__meta-card strong { font-size: 14px; font-weight: 400; line-height: 1.3; }
+.pass-ticket__meta-card span { color: var(--text-tertiary); font-size: var(--t-label); letter-spacing: 0; }
+.pass-ticket__meta-card strong { font-size: var(--t-label); font-weight: 400; line-height: 1.3; }
 
 .pass-qr-card {
   display: grid;
@@ -2054,9 +2063,9 @@ a { color: var(--amber-text); }
 }
 
 .pass-qr-card__copy { display: grid; gap: 2px; text-align: center; }
-.pass-qr-card__copy strong { font-size: 15px; font-weight: 500; line-height: 1.25; }
-.pass-qr-card__copy p, .pass-qr-card__copy small { margin: 0; color: var(--text-secondary); line-height: 1.4; font-size: 13px; }
-.pass-qr-card__copy small { font-size: 11px; letter-spacing: 0.04em; }
+.pass-qr-card__copy strong { font-size: var(--t-body); font-weight: 500; line-height: 1.25; }
+.pass-qr-card__copy p, .pass-qr-card__copy small { margin: 0; color: var(--text-secondary); line-height: 1.4; font-size: var(--t-label); }
+.pass-qr-card__copy small { font-size: var(--t-label); letter-spacing: 0.04em; }
 
 /* ===== Compare View ===== */
 
@@ -2138,7 +2147,7 @@ a { color: var(--amber-text); }
   box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(255,59,48,0.15);
   color: var(--red);
   line-height: 1.4;
-  font-size: 14px;
+  font-size: var(--t-label);
 }
 
 /* ===== Skeleton Loading ===== */
@@ -2177,8 +2186,24 @@ a { color: var(--amber-text); }
     align-items: start;
   }
 
+  /* BUT NOT IN THE PHONE FRAME. On a desktop the rider app is a 440px
+     phone mockup (`width: min(440px, 100%)`), and this two-column rule was
+     written for the 1000px shell the same media query sets up. Applied to
+     the frame it left the stop list 108px wide and cut every stop card's
+     name, time and map link off at the edge — 12 clipped elements on one
+     route. A track must be allowed to shrink, but a track that shrinks to
+     nothing is not a track. */
+  .desktop-rider__app .stops-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .stops-section { grid-column: 1; }
   .detail-section { grid-column: 2; }
+
+  /* One column means one column: the detail panel follows the list down
+     the frame instead of being placed in a second track that no longer
+     exists. */
+  .desktop-rider__app .detail-section { grid-column: 1; }
 
   .pass-panel {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 1fr);
@@ -2637,19 +2662,19 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__next-label {
-  font-size: 13px;
+  font-size: var(--t-label);
   color: var(--text-secondary);
 }
 
 .welcome-sheet__next-time {
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: var(--t-title);
   font-weight: 700;
   color: #0f766e;
 }
 
 .welcome-sheet__peek-fare {
-  font-size: 12px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
   padding: 3px 8px;
   background: var(--card-muted);
@@ -2659,7 +2684,7 @@ a { color: var(--amber-text); }
 /* Pill with time */
 .welcome-sheet__pill-time {
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
+  font-size: var(--t-label);
   color: #0f766e;
   font-weight: 600;
 }
@@ -2964,7 +2989,7 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__next-label {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -2972,7 +2997,7 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__next-time {
   
-  font-size: 28px;
+  font-size: var(--t-hero);
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.02em;
@@ -2981,12 +3006,12 @@ a { color: var(--amber-text); }
 
 .welcome-sheet__next-time--dim {
   color: var(--text-tertiary);
-  font-size: 18px;
+  font-size: var(--t-lead);
 }
 
 .welcome-sheet__next-time--scheduled {
   font-variant-numeric: tabular-nums;
-  font-size: 24px;
+  font-size: var(--t-hero);
   color: var(--text-primary);
 }
 
@@ -2998,13 +3023,13 @@ a { color: var(--amber-text); }
 }
 
 .welcome-sheet__peek-fare {
-  font-size: 15px;
+  font-size: var(--t-body);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .welcome-sheet__peek-hint {
-  font-size: 11px;
+  font-size: var(--t-label);
   color: var(--text-tertiary);
 }
 
@@ -3071,7 +3096,7 @@ a { color: var(--amber-text); }
 
 /* ── Map badge — premium ── */
 .map-badge {
-  font-size: 11px;
+  font-size: var(--t-label);
   font-weight: 500;
   letter-spacing: 0.02em;
   padding: 7px 12px;
@@ -5327,7 +5352,7 @@ a { color: var(--amber-text); }
      Use a dark amber text on a pale amber background for WCAG AA contrast. */
   background: rgba(255, 149, 0, 0.10);
   border-top: 1px solid rgba(255, 149, 0, 0.35);
-  font-size: 11px;
+  font-size: var(--t-label);
   line-height: 1.4;
   color: #7a3a00;   /* dark amber — contrast ratio >7:1 on the pale bg */
 }
@@ -5335,7 +5360,7 @@ a { color: var(--amber-text); }
 .hero-section__safety-icon {
   flex-shrink: 0;
   color: #c05000;  /* dark orange, readable on white/amber */
-  font-size: 12px;
+  font-size: var(--t-label);
   margin-top: 1px;
 }
 
@@ -5835,6 +5860,10 @@ a { color: var(--amber-text); }
   min-width: 0;
   flex: 1;
 }
+/* The PM2.5 band is shared with the ops console, which keeps its own floor.
+   On the rider's phone the badge is the only thing that says whether the air
+   is safe to breathe, so it is set to the rider's label step, not to 11px. */
+.app-shell .hero-pm25 { font-size: var(--t-label); }
 
 /* ============================================================================
  * Digital Operations Health strip — visible signal that this is a connected
@@ -7059,6 +7088,10 @@ html .leaflet-container .leaflet-control-attribution { font-family: var(--font-b
    floor and gave the wall a ninth size. It is set to the wall's micro step so
    it belongs to the scale instead of sitting under it. */
 .v2--operations .leaflet-control-attribution { font-size: var(--t-micro); }
+/* The same trick on the rider surface: Leaflet's attribution arrives at
+   12px, under the rider's 13px floor, and it is the one piece of third-party
+   type on the page. */
+.app-shell .leaflet-control-attribution { font-size: var(--t-micro); }
 html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line-height: 1; }
 
 .v2 .v2-map__canvas .v2-basemap-tile {
@@ -10526,14 +10559,14 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 }
 .welcome-sheet--collapsed .welcome-sheet__handle { padding: 7px 0 3px; }
 .welcome-sheet--collapsed .welcome-sheet__peek { padding: 1px 0; }
-.welcome-sheet--collapsed .welcome-sheet__next-time { font-size: 24px; }
-.welcome-sheet--collapsed .welcome-sheet__next-time--dim { font-size: 15px; }
+.welcome-sheet--collapsed .welcome-sheet__next-time { font-size: var(--t-hero); }
+.welcome-sheet--collapsed .welcome-sheet__next-time--dim { font-size: var(--t-body); }
 .map-pills { bottom: 78px; }
 .map-lang--compact { opacity: 0.95; transform: none; }
 .map-lang--compact .lang-toggle__button {
   min-width: 30px;
   min-height: 28px;
-  font-size: 11px;
+  font-size: var(--t-micro);
 }
 
 /* Laptop landing: make the product architecture legible, not a list of
@@ -13318,3 +13351,9 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .study__kpi { grid-template-columns: minmax(0, 1fr); }
   .study__kpi-detail { grid-column: 1 / -1; }
 }
+
+/* The status chips used to be a wrapping flex row, and on a phone the last
+   chip fell onto a line of its own. That was worked around with a two-column
+   grid — which treated the symptom. The chips are gone: the strip is one
+   line of text now, so it wraps as prose and needs no grid. */
+

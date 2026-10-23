@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hash route must be a fresh document</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+</style>
+</head>
+<body>
+<script>
+  // A page whose HEIGHT is decided by its own fragment, and which sets that
+  // height when it LOADS. The instrument reports the page's height, so:
+  //
+  //   a fresh document  → "#two" renders 2000px tall
+  //   the same document → "#two" scrolls to a fragment and nothing reloads,
+  //                      so the height stays at the "#one" value of 1000px
+  //
+  // `goto` to the same URL with a different fragment is a SAME-DOCUMENT
+  // navigation. Nothing reloads, nothing re-measures, and a page that
+  // fitted itself to the viewport at mount keeps the old fit at the new
+  // width. The instrument measured a 1440-projected map inside a 348px box
+  // and called a tooltip clipped.
+  const heights = { "#one": 1000, "#two": 2000, "#three": 3000 };
+  const h = heights[location.hash] || 1000;
+  const p = document.createElement("p");
+  p.textContent = "Fragment " + location.hash + " renders this document " + h + "px tall.";
+  document.body.appendChild(p);
+  document.body.style.height = h + "px";
+</script>
+</body>
+</html>

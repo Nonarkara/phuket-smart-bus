@@ -41,6 +41,22 @@ createServer(async (req, res) => {
     return;
   }
 
+  // A SLOW ANSWER. The fixture that proves "a page measured before it has
+  // loaded is not the page" needs its content to arrive LATE, and a late
+  // arrival that the instrument cannot see is one the instrument would
+  // miss. A timer in the page would not do it — the instrument waits for
+  // the network to go quiet, and a page that is sitting on a timer looks
+  // quiet. Content that arrives over the wire is content the instrument
+  // can wait for.
+  if (path === "/slow-content") {
+    const ms = Math.min(20_000, Number(new URL(req.url, "http://x").searchParams.get("ms")) || 7000);
+    setTimeout(() => {
+      res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ lines: Array.from({ length: 40 }, (_, i) => `Stop ${i + 1} · Bus to Airport · 12 min`) }));
+    }, ms);
+    return;
+  }
+
   const rel = normalize(path).replace(/^[/\\]+/, "");
   if (!rel || rel.startsWith("..")) {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });

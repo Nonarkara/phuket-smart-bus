@@ -9,9 +9,17 @@
 //
 //   BASE=https://bus.nonarkara.org node scripts/design/scalemap.mjs
 //   BASE=https://bus.nonarkara.org node scripts/design/scalemap.mjs /toolkit /roi
+//   WIDTH=390 BASE=… node scripts/design/scalemap.mjs /stops
+//
+// WIDTH exists because the rider surface is a PHONE: a ramp that is legal at
+// 1440 can be different at 390, because the desktop shell's chrome is gone
+// there and the app's own labels take its place. An instrument that can only
+// measure the desktop reads a page the rider never sees.
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE || "https://bus.nonarkara.org";
+const WIDTH = Number(process.env.WIDTH || 1440);
+const HEIGHT = Number(process.env.HEIGHT || (WIDTH === 1440 ? 900 : 844));
 const ALL = [
   "/", "/ops", "/fleet", "/fleet/raw", "/study", "/research", "/capacity",
   "/toolkit", "/roi", "/driver", "/v2", "/governor", "/info", "/more",
@@ -21,7 +29,7 @@ const routes = process.argv.slice(2).length ? process.argv.slice(2) : ALL;
 
 const b = await chromium.launch();
 const c = await b.newContext({
-  viewport: { width: 1440, height: 900 },
+  viewport: { width: WIDTH, height: HEIGHT },
   serviceWorkers: "block"
 });
 const p = await c.newPage();

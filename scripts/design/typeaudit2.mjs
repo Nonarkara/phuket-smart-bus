@@ -21,6 +21,7 @@
 //   any other face                 -> must be Source Sans 3 / IBM Plex Sans Thai
 import { chromium } from "playwright";
 
+import { settle } from "./settle.mjs";
 const BASE_DEFAULT = "https://bus.nonarkara.org";
 // EVERY route the app serves. A type rule that only holds on seven of
 // thirteen routes is not a rule.
@@ -30,7 +31,9 @@ const BASE_DEFAULT = "https://bus.nonarkara.org";
 // the live site cannot be proven to fail.
 const ALL_ROUTES = [
   "/", "/ops", "/fleet", "/fleet/raw", "/study", "/research", "/capacity",
-  "/toolkit", "/roi", "/driver", "/v2", "/v2?view=insights", "/v2?view=toolkit",
+  "/toolkit", "/toolkit#phuket", "/toolkit#evidence", "/toolkit#build",
+  "/toolkit#fieldnotes",
+  "/roi", "/driver", "/v2", "/v2?view=insights", "/v2?view=toolkit",
   "/governor", "/info", "/more", "/stops", "/pass", "/ride", "/compare",
 ];
 const argv = process.argv.slice(2);
@@ -130,7 +133,7 @@ for (const vp of VIEWPORTS) {
   await p.setViewportSize({ width: vp.width, height: vp.height });
   for (const r of ROUTE_LIST) {
     await p.goto(BASE + r, { waitUntil: "load", timeout: 30000 });
-    await p.waitForTimeout(2500);
+    await settle(p);
     report[`${r} @${vp.label}`] = await p.evaluate(INVENTORY);
   }
 }

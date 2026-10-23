@@ -359,7 +359,7 @@
   .pb-competitor-row [role="cell"] + [role="cell"] { margin-top: 10px; }
 }
 .pb-competitor-row--head { font: 700 var(--t-micro)/1.2 var(--font-body); text-transform: uppercase; color: var(--tk-muted); border-bottom: 1px solid var(--tk-ink); }
-.pb-regulatory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: var(--tk-line); }
+.pb-regulatory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: var(--tk-line); align-items: start; }
 .pb-reg-layer { padding: 20px; background: var(--tk-white); }
 .pb-reg-layer--national { border-left: 4px solid var(--tk-red); }
 .pb-reg-layer--provincial { border-left: 4px solid var(--tk-blue); }
@@ -391,8 +391,25 @@
 .lf-risk-bearer--public { background: var(--tk-blue); color: #fff; }
 .lf-risk-bearer--private { background: var(--tk-red); color: #fff; }
 .lf-risk-bearer--shared { background: var(--tk-yellow); color: var(--tk-ink); }
-.lf-contract-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.lf-contract-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: start; }
 .lf-contract-card { border: 1px solid var(--tk-ink); padding: 20px; }
+/* The study's own pick. Four contract cards that all read the same, with
+   the recommendation written in a sentence ABOVE the grid, is a page that
+   states its answer where the reader is not looking — and four identical
+   cards are peers, so nothing tells the reader which one to read. The
+   house treatment for an answer is the yellow ground (.lf-ledger--answer),
+   and the badge says it in words as well as colour. */
+.lf-contract-card.is-recommended { background: var(--tk-yellow); }
+.lf-contract-badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 9px;
+  background: var(--tk-ink);
+  color: var(--tk-yellow);
+  font: 700 var(--t-micro)/1 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 .lf-pathway-step { display: grid; grid-template-columns: 50px 1fr; gap: 20px; padding: 20px 0; border-top: 1px solid var(--tk-line); }
 .lf-pathway-step__num { display: grid; width: 36px; height: 36px; place-items: center; background: var(--tk-red); color: #fff; font: 700 var(--t-label)/1 var(--font-body); }
 
@@ -1269,3 +1286,28 @@ html.high-contrast-mode .toolkit-site .abc-controls {
    label on the scale's micro step and the map's own cartography stops
    adding sizes to the page. */
 .toolkit-site svg text { font-size: var(--t-micro); }
+
+/* ── the phone is a ledger, not a stack of boxes ───────────────────────────
+   The five "seats at the table" and the eight lessons were bordered cells
+   each on a phone — a hairline grid drawn with a shared background and a
+   1px gap. Five identical cells are PEERS: nothing in them tells the
+   reader where to look. The repo's own rule is "space or one hairline
+   between items over a box around each", so on a phone the grid gives up
+   its boxes and becomes a ledger. The desktop keeps its grid, where it is a
+   grid. */
+@media (max-width: 760px) {
+  .fc-roles ol,
+  .fc-lessons ol {
+    grid-template-columns: 1fr;
+    gap: 0;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--tk-line);
+  }
+  .fc-roles li,
+  .fc-lessons li {
+    padding: 20px 0;
+    background: transparent;
+    border-bottom: 1px solid var(--tk-line);
+  }
+}

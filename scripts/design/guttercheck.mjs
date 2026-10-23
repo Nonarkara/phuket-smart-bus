@@ -20,6 +20,7 @@
  *   node scripts/design/guttercheck.mjs --base https://bus.nonarkara.org
  */
 import { chromium } from "playwright";
+import { settle } from "./settle.mjs";
 import { readFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
@@ -106,7 +107,7 @@ for (const surface of SURFACES) {
   if (SURFACE && surface.id !== SURFACE) continue;
   const route = ROUTE ?? surface.route;
   await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
-  await p.waitForTimeout(5000);
+  await settle(p);
 
   const measured = await p.evaluate((probes) => {
     const out = [];

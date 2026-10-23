@@ -201,7 +201,12 @@ const CONTRACT_TYPES = [
     structure: "Operator finances, builds, owns and operates for a fixed term, then transfers. Revenue from fares + public payment.",
     pros: "Maximum private capital at risk. Strongest incentive to perform.",
     cons: "Complex to structure. Requires stable political and regulatory environment.",
-    fit: "The structure this feasibility study proposes — phased, outcome-paid, with an 8-year term."
+    fit: "The structure this feasibility study proposes — phased, outcome-paid, with an 8-year term.",
+    // This is the structure the study proposes, and the note above the grid
+    // says so. Four cards that all read the same, with the recommendation
+    // visible only in a sentence ABOVE them, is a page that states its
+    // answer where the reader is not looking. The card now carries it.
+    recommended: true
   }
 ];
 
@@ -304,7 +309,8 @@ export function LegalFramework() {
         </p>
         <div className="lf-contract-grid">
           {CONTRACT_TYPES.map((c) => (
-            <article key={c.type} className="lf-contract-card">
+            <article key={c.type} className={c.recommended ? "lf-contract-card is-recommended" : "lf-contract-card"}>
+              {c.recommended ? <span className="lf-contract-badge">This study's pick</span> : null}
               <h4>{c.type}</h4>
               <p className="lf-contract-structure">{c.structure}</p>
               <div className="lf-contract-pros">

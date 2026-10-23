@@ -50,6 +50,7 @@
  *   node scripts/design/space.mjs /v2?view=toolkit /ops --base https://bus.nonarkara.org
  */
 import { chromium } from "playwright";
+import { settle } from "./settle.mjs";
 
 const args = process.argv.slice(2);
 const bi = args.indexOf("--base");
@@ -104,8 +105,7 @@ const freshPage = async () => {
   }
 };
 
-const open = async (route, vp) => {
-  // The path the gate ASKED for. `goto` follows redirects and reports the
+const open = async (route, vp) => {  // The path the gate ASKED for. `goto` follows redirects and reports the
   // final status, so a 302 that lands on the homepage answers 200 — and the
   // gate would measure the homepage and call it the route it wanted.
   const wanted = new URL(BASE + route, BASE).pathname.replace(/\/+$/, "") || "/";
@@ -113,6 +113,17 @@ const open = async (route, vp) => {
     try {
       if (p.isClosed()) p = await freshPage();
       await p.setViewportSize({ width: vp.width, height: vp.height });
+      // A HASH IS NOT A NEW DOCUMENT. `goto` to the same URL with a
+      // different fragment is a SAME-DOCUMENT navigation, so the page kept
+      // everything it had measured at the previous width: the map's fit,
+      // its tooltips, its canvas geometry. The toolkit's system map fits its
+      // bounds once, on mount — so at 390 the instrument was measuring a
+      // 1440-projected map squeezed into a 348px box, and reported a
+      // tooltip 8px past an edge it had never been near.
+      //
+      // A page measured at two widths is TWO PAGES. The document is reset
+      // before each one, so nothing carries over.
+      if (route.includes("#")) await p.goto("about:blank");
       const res = await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
       // A ROUTE THAT IS NOT THERE is not a clean route. The instrument
       // measures whatever HTML came back, so a 404 — or a typo in the route
@@ -128,7 +139,7 @@ const open = async (route, vp) => {
         console.error(`  (${route} @${vp.label} ended on ${landed} — a different page than the one that was asked for)`);
         return false;
       }
-      await p.waitForTimeout(5000);
+      await settle(p);
       return true;
     } catch (e) {
       console.error(`  (the browser dropped the page on ${route} @${vp.label}; retrying)`);
@@ -201,16 +212,43 @@ for (const route of ROUTES) {
           pcs.display === "flex" || pcs.display === "inline-flex"
         );
         if (!stretched) continue;
+        // A CELL WITH AN EXPLICIT HEIGHT IS SIZED ON PURPOSE. The pain map
+        // draws each country's score as a red bar whose height IS the
+        // score (`style="height: 90%"`); the empty space under the "5/5"
+        // label is the bar's length, not the leftover of a taller sibling.
+        // The rule measured it as 140px of dead space on five bars — five
+        // findings that were the DATA, read as waste. An inline height is
+        // the author's decision about the box's size; a stretched cell is
+        // the grid's decision, and only the second one is a defect.
+        const inline = el.getAttribute("style") || "";
+        if (/(^|;)\s*height\s*:/.test(inline)) continue;
         // the last visible content inside the box
         let last = -Infinity;
         let lastEl = null;
+        const consider = (bottom, node) => {
+          if (bottom > last) { last = bottom; lastEl = node; }
+        };
         for (const d of el.querySelectorAll("*")) {
           if (!visible(d)) continue;
           const owns = [...d.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
           const leaf = d.children.length === 0;
           if (!owns && !leaf) continue;
-          const dr = d.getBoundingClientRect();
-          if (dr.bottom > last) { last = dr.bottom; lastEl = d; }
+          consider(d.getBoundingClientRect().bottom, d);
+        }
+        // TEXT CAN LIVE IN A BARE TEXT NODE. The credit-memo paragraphs open
+        // with an inline <strong> and carry the rest as plain text, so the
+        // last ELEMENT inside them sat on the first line — and the two
+        // lines after it were measured as 54px and 80px of dead space
+        // under a paragraph that had none. The last line of a box is a
+        // range over its last text, not the bottom of its last element.
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (!node.textContent || !node.textContent.trim()) continue;
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const rect = range.getBoundingClientRect();
+          if (rect.height > 0) consider(rect.bottom, node.parentElement);
         }
         if (last === -Infinity) continue;
         // Padding is a DECISION — the box's own, and the padding of every box
@@ -237,32 +275,29 @@ for (const route of ROUTES) {
         const kids = [...el.children].filter(visible);
         if (kids.length < 2) continue;
         const r = el.getBoundingClientRect();
-        // A ROW is a line of items, not a set of identical tops. Items in one
-        // flex line sit at different baselines — a pill is vertically
-        // centred, a chip is not — and a 3px difference used to split one
-        // line into two, so a pill beside its chips read as "alone on the
-        // last line". Cluster the tops with a tolerance.
+        // A ROW is a line of items, and two items are in the SAME line when
+        // their boxes overlap vertically — however different their heights or
+        // their tops. A 12px label centred against a 52px pair of bars sits
+        // 18px lower, and a test that compared TOPS read that as two lines
+        // and called the label an orphan in a row of its own. The overlap
+        // has to be at least half the shorter box, so two genuinely stacked
+        // lines never merge.
+        const ordered = kids
+          .map((k) => ({ k, r: k.getBoundingClientRect() }))
+          .sort((a, b) => a.r.top - b.r.top);
+        const bands = [];
+        for (const it of ordered) {
+          const band = bands.find((b) => {
+            const top = Math.min(...b.items.map((x) => x.r.top));
+            const bottom = Math.max(...b.items.map((x) => x.r.bottom));
+            const overlap = Math.min(it.r.bottom, bottom) - Math.max(it.r.top, top);
+            return overlap > 0 && overlap >= Math.min(it.r.height, bottom - top) * 0.5;
+          });
+          if (band) band.items.push(it);
+          else bands.push({ items: [it] });
+        }
         const rows = new Map();
-        const tops = [];
-        for (const k of kids) tops.push(Math.round(k.getBoundingClientRect().top));
-        tops.sort((a, b) => a - b);
-        const rowKeys = [];
-        for (const t of tops) {
-          const last = rowKeys[rowKeys.length - 1];
-          if (last !== undefined && t - last <= ROW_TOLERANCE) continue;
-          rowKeys.push(t);
-        }
-        const keyFor = (top) => {
-          let best = rowKeys[0];
-          for (const k of rowKeys) if (Math.abs(top - k) <= ROW_TOLERANCE) best = k;
-          return best;
-        };
-        for (const k of kids) {
-          const kr = k.getBoundingClientRect();
-          const key = keyFor(Math.round(kr.top));
-          if (!rows.has(key)) rows.set(key, []);
-          rows.get(key).push({ k, r: kr });
-        }
+        bands.forEach((b, i) => rows.set(i, b.items));
 
         // 2 · an orphan in the last row
         //
@@ -278,6 +313,15 @@ for (const route of ROUTES) {
           const lastRow = rows.get(rowKeys[rowKeys.length - 1]);
           if (cols >= 2 && lastRow && lastRow.length === 1) {
             const item = lastRow[0];
+            // AN ITEM WITH AN EXPLICIT WIDTH IS SIZED BY THE DATA. The
+            // finance bars draw a fill whose width IS the amount — a 46%
+            // cash bar in a 292px row is a measurement, not a stranded
+            // item, and the space beside it is the rest of the money. The
+            // same argument as the explicit-height rule: a size the author
+            // set is a decision, and only a size the GRID chose is a
+            // leftover.
+            const itemStyle = item.k.getAttribute("style") || "";
+            if (/(^|;)\s*width\s*:/.test(itemStyle)) continue;
             const w = item.r.width;
             const contentRight = r.right - (parseFloat(cs.paddingRight) || 0);
             const emptyRight = Math.max(0, contentRight - item.r.right);
@@ -356,8 +400,17 @@ for (const route of ROUTES) {
         if (kids.length >= 3) {
           const peers = kids.map((k) => {
             const kcs = getComputedStyle(k);
-            const isBox = kcs.borderTopWidth !== "0px" || kcs.borderBottomWidth !== "0px" ||
-              (kcs.backgroundColor !== "rgba(0, 0, 0, 0)" && kcs.backgroundColor !== "transparent");
+            // A BOX is a border AROUND the cell — two sides or more, or a
+            // ground of its own. A single hairline RULE under a row is not a
+            // box: the repo's own ledger on /study is one row per record
+            // with a rule between them, and the anti-slop law says to prefer
+            // "space or one hairline between items over a box around each".
+            // Counting a rule as a box flagged every ledger whose rows sit in
+            // a grid — which is the opposite of what the rule is for.
+            const sides = [kcs.borderTopWidth, kcs.borderRightWidth, kcs.borderBottomWidth, kcs.borderLeftWidth]
+              .filter((w) => parseFloat(w) > 0).length;
+            const ownGround = kcs.backgroundColor !== "rgba(0, 0, 0, 0)" && kcs.backgroundColor !== "transparent";
+            const isBox = sides >= 2 || ownGround;
             // The TYPE a cell presents is the type of the text inside it, not
             // the size the cell happens to inherit.
             let textEl = null;
@@ -466,7 +519,14 @@ for (const route of ROUTES) {
         if (!clipper) continue;
         const cr = clipper.getBoundingClientRect();
         const ccs = getComputedStyle(clipper);
-        const limit = cr.right - (parseFloat(ccs.paddingRight) || 0);
+        // `overflow: hidden` clips at the PADDING box, not the content box.
+        // Measuring against the content edge reported a legal layout as
+        // clipped: the debt-service chart's dashed "lender gate" line
+        // deliberately overhangs the three columns by a few percent, which
+        // put it inside the container's 10% horizontal padding — 75px
+        // "past the edge" of a box it was never cut by. The limit is where
+        // the content actually disappears.
+        const limit = cr.right - (parseFloat(ccs.borderRightWidth) || 0);
         if (r.right > limit + 1) {
           clipped.push({
             el: label(el),
@@ -560,7 +620,24 @@ for (const route of ROUTES) {
         // page.
         const isThePage = el.tagName === "MAIN" || !!el.querySelector("main") ||
           el.clientHeight >= window.innerHeight * 0.9;
-        if (vScroll && !isThePage && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
+        // A SCROLLER THAT FILLS ITS OWN SCROLL CONTAINER IS THAT
+        // CONTAINER'S SCROLL. The rider app is a 440px phone frame on a
+        // desktop; the frame's app-content is 849px tall and the stops list
+        // inside it is 809px — the list IS the app's page, and it missed
+        // the viewport test by one pixel (809 against a 810 threshold).
+        //
+        // The nearest scrollable ancestor is the right yardstick: a scroller
+        // that fills 90% of the thing that scrolls it is not a hole inside
+        // it. The operations rail is 59% of the viewport — a region beside
+        // the map — and stays a trap.
+        let nearestScroller = null;
+        for (let a = el.parentElement; a; a = a.parentElement) {
+          const acs = getComputedStyle(a);
+          if (acs.overflowY === "auto" || acs.overflowY === "scroll") { nearestScroller = a; break; }
+        }
+        const fillsItsContainer = nearestScroller &&
+          el.clientHeight >= nearestScroller.clientHeight * 0.9;
+        if (vScroll && !isThePage && !fillsItsContainer && el.scrollHeight > el.clientHeight * VERTICAL_TRAP && el.clientHeight > 200) {
           traps.push({
             el: label(el), axis: "vertical",
             screens: +(el.scrollHeight / el.clientHeight).toFixed(1),

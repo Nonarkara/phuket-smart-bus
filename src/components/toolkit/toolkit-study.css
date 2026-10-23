@@ -304,3 +304,33 @@
 @media (prefers-reduced-motion: reduce) {
   .tk-hero__photo-stack img { transition: none; }
 }
+
+/* ── the phone is a ledger, not a stack of boxes ───────────────────────────
+   Five delivery phases and five source links were five bordered cells each
+   on a phone, and five identical cells are PEERS: nothing in them tells the
+   reader where to look. The repo's own rule is "space or one hairline
+   between items over a box around each" — so on a phone the grid gives up
+   its boxes and becomes a ledger: one rule between the rows, nothing around
+   them. The desktop keeps its columns, where they are columns. */
+@media (max-width: 760px) {
+  .tk-delivery-plan { grid-template-columns: 1fr; border-left: 0; }
+  .tk-delivery-plan > div {
+    min-height: 0;
+    padding: 22px 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  }
+  .tk-delivery-plan b { margin-top: 20px; }
+  .tk-feasibility__sources { grid-template-columns: 1fr; border-left: 0; }
+  .tk-feasibility__sources a {
+    min-height: 0;
+    padding: 18px 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  }
+  /* The two thesis columns carried a min-height so they would read as a
+     matched pair side by side. Stacked on a phone there is nothing to
+     match, and the min-height became 64px and 80px of nothing under two
+     paragraphs of text. */
+  .tk-credit-memo__thesis p { min-height: 0; }
+}

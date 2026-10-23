@@ -79,33 +79,29 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           {formatUpdateTime(summary.updatedAt, lang)}
         </span>
       </div>
-      <div className="decision-panel__chips" aria-label="Status summary">
-        <span className="decision-chip" lang={lang}>{getLiveChipLabel(summary.liveVehicles, lang)}</span>
-        <span className="decision-chip" lang={lang}>{getAlertChipLabel(alertCount, lang)}</span>
-        <span className="decision-chip" lang={lang}>{getBasisLabel(summary, lang)}</span>
-        {summary.seatAvailability && summary.seatAvailability.seatsLeft != null ? (
-          <span className="decision-chip">
-            {getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)}
-          </span>
-        ) : null}
-        {summary.seatAvailability && summary.seatAvailability.occupiedSeats != null ? (
-          <span className="decision-chip">
-            {getOccupancyChipLabel(summary.seatAvailability.occupiedSeats, lang)}
-          </span>
-        ) : null}
-        {summary.seatAvailability?.passengerFlow ? (
-          <span className="decision-chip">
-            {getFlowChipLabel(
-              summary.seatAvailability.passengerFlow.boardingsRecent,
-              summary.seatAvailability.passengerFlow.alightingsRecent,
-              lang
-            )}
-          </span>
-        ) : null}
-        {getDriverChipLabel(summary, lang) ? (
-          <span className="decision-chip">{getDriverChipLabel(summary, lang)}</span>
-        ) : null}
-      </div>
+      <p className="decision-panel__status" lang={lang}>
+        {[
+          getLiveChipLabel(summary.liveVehicles, lang),
+          getAlertChipLabel(alertCount, lang),
+          getBasisLabel(summary, lang),
+          summary.seatAvailability && summary.seatAvailability.seatsLeft != null
+            ? getSeatChipLabel(summary.seatAvailability.seatsLeft, lang)
+            : null,
+          summary.seatAvailability && summary.seatAvailability.occupiedSeats != null
+            ? getOccupancyChipLabel(summary.seatAvailability.occupiedSeats, lang)
+            : null,
+          summary.seatAvailability?.passengerFlow
+            ? getFlowChipLabel(
+                summary.seatAvailability.passengerFlow.boardingsRecent,
+                summary.seatAvailability.passengerFlow.alightingsRecent,
+                lang
+              )
+            : null,
+          getDriverChipLabel(summary, lang),
+        ]
+          .filter((part): part is string => Boolean(part))
+          .join(" · ")}
+      </p>
       <h2 className="decision-panel__headline">{pick(summary.headline, lang)}</h2>
       <p className="decision-panel__summary">{pick(summary.summary, lang)}</p>
       <div className="decision-panel__next-bus">

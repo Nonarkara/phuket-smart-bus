@@ -2001,3 +2001,76 @@ html.toolkit-site-mode #root {
   color: var(--tk-ink, #111820);
 }
 
+
+/* ── the phone is a ledger, not a stack of boxes ───────────────────────────
+   Six framework tests and five research cards were bordered cells each on a
+   phone, and six identical cells are PEERS: nothing in them tells the
+   reader where to look. The repo's own rule is "space or one hairline
+   between items over a box around each" — so on a phone the grid gives up
+   its boxes and becomes a ledger. The desktop keeps its columns, where they
+   are columns. */
+@media (max-width: 760px) {
+  /* The scenario pills were a wrapping flex row, and on a phone the last
+     pill fell onto a line of its own — a row that breaks where it runs out
+     of room. A two-column grid pairs them, and an odd one out takes the
+     whole row rather than sitting alone in half of it. */
+  .vps-pill-group,
+  .pcs-pill-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .vps-pill-group > :last-child:nth-child(odd),
+  .pcs-pill-group > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+  .tk-abcdef__flow { grid-template-columns: 1fr; border-left: 0; }
+  .tk-abcdef__flow article {
+    min-height: 0;
+    padding: 22px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--tk-ink);
+  }
+  .tk-abcdef__flow h3 { margin-top: 10px; }
+  .tk-research-cards {
+    grid-template-columns: 1fr;
+    gap: 0;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--tk-line);
+  }
+  /* A LEDGER, NOT A GRID OF CARDS. The personas are eight cards and four
+     of them were identical yellow boxes — peers, with nothing in them to
+     tell the reader where to look. On a phone each row is one rule and its
+     content, and the four "Rides today" rows keep their mark as the
+     house's own marker idiom: a thicker rule on the leading edge. */
+  .tk-research-cards > article {
+    padding: 18px 0 18px 16px;
+    background: transparent;
+    border-left: 1px solid var(--tk-line);
+  }
+  .tk-research-cards > article.is-user {
+    background: transparent;
+    border-left: 3px solid var(--tk-yellow);
+  }
+  /* The dark sections give their cards a ground of their own — and that
+     ground is exactly what makes a cell a BOX. The compound selectors are
+     more specific than the rule above, so the phone ledger has to name
+     them too or the cards stay boxes. */
+  .tk-deal .tk-research-cards,
+  .tk-feasibility .tk-research-cards {
+    background: transparent;
+    border-color: transparent;
+    border-top-color: rgba(255, 255, 255, 0.35);
+  }
+  .tk-deal .tk-research-cards > article,
+  .tk-feasibility .tk-research-cards > article {
+    padding: 18px 0 18px 16px;
+    background: transparent;
+    border-left: 1px solid rgba(255, 255, 255, 0.35);
+  }
+  .tk-deal .tk-research-cards > article.is-user,
+  .tk-feasibility .tk-research-cards > article.is-user {
+    background: transparent;
+    border-left: 3px solid var(--tk-yellow);
+  }
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>a page that loads its content late</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<p>The stop list is empty while it loads.</p>
+<script>
+  // A page whose CONTENT arrives after the load event, over the wire. The
+  // gate used to wait five seconds and call that a page — so the legacy
+  // consumer chain, which retries a missing API after three seconds, was
+  // measured with an EMPTY stop list, and five routes reported "0
+  // findings" on a page that turned out to be 9,251px tall once the data
+  // arrived.
+  //
+  // The instrument must wait for the page to FINISH, not for a number of
+  // seconds. The content comes from the network on purpose: a page sitting
+  // on a timer looks quiet to a network, and a quiet network is not the
+  // same thing as a finished page.
+  fetch("/slow-content?ms=7000")
+    .then((r) => r.json())
+    .then((data) => {
+      const block = document.createElement("div");
+      for (const line of data.lines) {
+        const p = document.createElement("p");
+        p.textContent = line + " · Nearby landmark and a walk.";
+        block.appendChild(p);
+      }
+      document.body.appendChild(block);
+      document.body.style.height = "9000px";
+    });
+</script>
+</body>
+</html>

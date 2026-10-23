@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>permitted layouts — must report nothing</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; border-bottom: 1px solid #d9d2c4; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+
+  /* A · A BAR WHOSE HEIGHT IS THE DATA.
+     The pain map draws each score as a bar whose height IS the score. The
+     empty space under the label is the bar's length — the author's
+     decision about the box's size, not the grid's leftover. */
+  .bars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: end; min-height: 220px; }
+  .bars article { display: grid; grid-template-rows: auto 1fr; }
+  .bar { position: relative; background: #b3402f; }
+  .bar b { position: absolute; top: 8px; right: 8px; color: #fff; font-size: 12px; }
+
+  /* B · A PARAGRAPH THAT ENDS IN BARE TEXT.
+     The credit-memo paragraphs open with an inline <strong> and carry the
+     rest as plain text. The last ELEMENT inside them sits on the first
+     line; the lines after it are text, and the last line of a box is a
+     range over its text, not the bottom of its last element. */
+  .memo { display: grid; grid-template-columns: 1fr 1fr; }
+  .memo p { padding: 24px; border-right: 1px solid #d9d2c4; }
+
+  /* C · CONTENT IN THE CLIPPER'S PADDING.
+     `overflow: hidden` clips at the PADDING box. A dashed threshold line
+     that overhangs the columns by a few percent sits inside the
+     container's padding and is not cut off by anything. */
+  .plot { position: relative; overflow: hidden; padding: 40px 10% 24px; border: 1px solid #d9d2c4; background: #fff; }
+  .plot .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; height: 160px; align-items: end; }
+  .plot .cols i { display: block; width: 60px; justify-self: center; background: #b3402f; }
+  .plot .gate { position: absolute; left: 4%; right: 4%; bottom: 40%; border-top: 2px dashed #b8860b; color: #b8860b; font-size: 12px; font-weight: 700; }
+
+  /* D · A BAR WHOSE WIDTH IS THE VALUE.
+     The finance rows draw a fill whose width IS the amount. A 46% cash bar
+     in a 292px row is a measurement, and the space beside it is the rest
+     of the money — not an item stranded in a row of its own. */
+  .ledger { display: grid; grid-template-columns: 1fr 70px; gap: 6px 12px; }
+  .ledger > span { grid-column: 1; }
+  .ledger > i { grid-column: 1 / -1; grid-row: 2; display: block; height: 20px; background: #b3402f; }
+  .ledger > strong { grid-column: 2; grid-row: 1; text-align: right; }
+</style>
+</head>
+<body>
+  <section>
+    <h2>A · a bar whose height is the data</h2>
+    <div class="bars">
+      <article>
+        <p>Thailand</p>
+        <div class="bar" style="height: 90%"><b>5/5</b></div>
+      </article>
+      <article>
+        <p>Indonesia</p>
+        <div class="bar" style="height: 60%"><b>3/5</b></div>
+      </article>
+      <article>
+        <p>Malaysia</p>
+        <div class="bar" style="height: 30%"><b>2/5</b></div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>B · a paragraph that ends in bare text</h2>
+    <div class="memo">
+      <p><strong>The opportunity:</strong> Phuket has airport scale, an operating bus chain and a national programme behind it. This is the first line of the paragraph and the second, and the third.</p>
+      <p><strong>The problem:</strong> the simulator's demand is not collateral. Instructions say so, and the evidence is thinner than the ambition. Here are two more lines of plain text after the inline element.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>C · content in the clipper's padding</h2>
+    <div class="plot">
+      <div class="cols"><i style="height: 80%"></i><i style="height: 55%"></i><i style="height: 30%"></i></div>
+      <div class="gate">1.30× lender gate</div>
+    </div>
+  </section>
+  <section>
+    <h2>D · a bar whose width is the value</h2>
+    <div class="ledger">
+      <span>Cash from fares</span>
+      <strong>฿1.84m</strong>
+      <i style="width: 46%"></i>
+    </div>
+  </section>
+</body>
+</html>

@@ -28,6 +28,7 @@
  */
 import { chromium } from "playwright";
 
+import { settle } from "./settle.mjs";
 const args = process.argv.slice(2);
 const bi = args.indexOf("--base");
 const BASE = bi === -1 ? "http://127.0.0.1:4173" : args[bi + 1];
@@ -59,7 +60,7 @@ const open = async (route, vp) => {
       if (p.isClosed()) p = await c.newPage();
       await p.setViewportSize({ width: vp.width, height: vp.height });
       await p.goto(BASE + route, { waitUntil: "load", timeout: 60000 });
-      await p.waitForTimeout(6000);
+      await settle(p);
       return true;
     } catch (e) {
       console.error(`  (the browser dropped the page on ${route} @${vp.label}; retrying — ${String(e).split("\n")[0]})`);
