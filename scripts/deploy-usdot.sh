@@ -71,7 +71,13 @@ npx --yes wrangler deploy -c wrangler.toolkit.jsonc
 
 echo
 echo "→ verify"
-bash scripts/verify-usdot-deploy.sh
-
-echo
-echo "✓ toolkit deployed and verified"
+if bash scripts/verify-usdot-deploy.sh; then
+  echo
+  echo "✓ toolkit deployed and verified"
+else
+  echo
+  echo "✗ the bytes ARE deployed and live — the upload worked."
+  echo "  What failed is the gate above, and a failed gate is not a failed upload:"
+  echo "  read the finding, fix the finding, deploy again."
+  exit 1
+fi

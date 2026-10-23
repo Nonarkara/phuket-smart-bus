@@ -158,4 +158,12 @@ if [ "${SKIP_SHIPABILITY:-0}" != "1" ]; then
   else
     echo "warn: playwright is not installed — the shipability audit did not run"
   fi
+else
+  # A silent skip is the one thing a gate must never be. The escape hatch
+  # exists for the owner, who may be mid-decision on a finding only they can
+  # clear — but the hatch has to announce itself, in the deploy log, every
+  # time it is used.
+  echo "warn: THE SHIPABILITY AUDIT WAS SKIPPED (SKIP_SHIPABILITY=1)."
+  echo "warn: this deploy was NOT checked for hand-over. Do not hand it over."
 fi
+
