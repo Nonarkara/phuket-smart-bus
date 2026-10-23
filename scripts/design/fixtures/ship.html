@@ -39,6 +39,19 @@
     // A same-origin call to an endpoint that does not exist.
     fetch("/api/does-not-exist").catch(() => {});
   }
+
+  if (variant === "third-party") {
+    // A THIRD PARTY, not a collector. The instrument does NOT abort this:
+    // a map tile is not a collector, and aborting it would change the
+    // measurement of every page that draws a map. What it checks is whether
+    // the page TELLS the reader that the request happened.
+    fetch("https://tile.openstreetmap.org/0/0/0.png", { mode: "no-cors" }).catch(() => {});
+  }
+
+  if (variant === "third-party-notice") {
+    // The same third party, on a page that names it.
+    fetch("https://tile.openstreetmap.org/0/0/0.png", { mode: "no-cors" }).catch(() => {});
+  }
 </script>
 
 <script>
@@ -49,6 +62,12 @@
     const n = document.createElement("p");
     n.className = "notice";
     n.textContent = "Privacy. This site records one anonymous-session ping: your IP address.";
+    document.body.appendChild(n);
+  }
+  if (new URLSearchParams(location.search).get("variant") === "third-party-notice") {
+    const n = document.createElement("p");
+    n.className = "notice";
+    n.textContent = "Map tiles come from OpenStreetMap, so that service sees your request and your IP address.";
     document.body.appendChild(n);
   }
 </script>

@@ -16,6 +16,7 @@
 // there and the app's own labels take its place. An instrument that can only
 // measure the desktop reads a page the rider never sees.
 import { chromium } from "playwright";
+import { settle } from "./settle.mjs";
 
 const BASE = process.env.BASE || "https://bus.nonarkara.org";
 const WIDTH = Number(process.env.WIDTH || 1440);
@@ -36,7 +37,12 @@ const p = await c.newPage();
 
 for (const r of routes) {
   await p.goto(BASE + r, { waitUntil: "load", timeout: 45000 });
-  await p.waitForTimeout(3000);
+  // The SAME wait every gate instrument uses. This one used a fixed three
+  // seconds, which is the very thing the shared settle was built to
+  // replace — an instrument that quotes a ramp must quote the ramp of a
+  // FINISHED page, or the number it publishes is the ramp of whatever
+  // happened to have arrived by then.
+  await settle(p);
   const map = await p.evaluate(() => {
     const bySize = new Map();
     for (const e of document.querySelectorAll("*")) {

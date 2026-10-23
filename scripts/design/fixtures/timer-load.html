@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>a page that loads its content on a timer</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<p>The stop list is empty while it loads.</p>
+<script>
+  // A page whose CONTENT arrives on a TIMER — no request in flight, no
+  // network activity at all while it waits.
+  //
+  // This is the case the legacy consumer chain actually had: its first call
+  // 404s in about 200ms, the network goes quiet at ~1s, and the retry is
+  // scheduled three seconds later. A page waiting on a timer is perfectly
+  // stable — the document does not change, because the content has not
+  // arrived yet. The first version of the settle had no floor and returned
+  // at ~2.0s, measuring the page before its content had arrived.
+  //
+  // The network-signal fixture (late-load.html) cannot catch this: its
+  // request is IN FLIGHT for seven seconds, so the network is never quiet
+  // and the settle waits correctly. Here there is no request at all.
+  //
+  // THE DELAY IS 4000ms, and the number is load-bearing for the PROOF.
+  //   · the settle's floor is 5,000ms, so the content must arrive INSIDE
+  //     the floor — a timer later than 5s would let the floor's stability
+  //     check finish before the content landed, and the case would measure
+  //     an empty page and fail for the wrong reason;
+  //   · the settle WITHOUT the floor returns at ~2.0s, so the timer must
+  //     be comfortably AFTER that — at 3s the margin was one second, which
+  //     a single slow `page.evaluate` under CPU contention could eat, and
+  //     the proof would report "the floor is not load-bearing" when the
+  //     floor was fine and the machine was busy.
+  // Four seconds sits in the middle of the two windows: two seconds of
+  // margin on each side.
+  setTimeout(() => {
+    const block = document.createElement("div");
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement("p");
+      p.textContent = "Stop " + (i + 1) + " · Nearby landmark and a walk.";
+      block.appendChild(p);
+    }
+    document.body.appendChild(block);
+    document.body.style.height = "9000px";
+    document.body.dataset.late = "arrived";
+  }, 4000);
+</script>
+</body>
+</html>

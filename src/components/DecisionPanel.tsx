@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { DecisionSummary, Lang } from "@shared/types";
 import { formatUpdateTime, pick, ui } from "@/lib/i18n";
 
@@ -37,7 +38,9 @@ function getOccupancyChipLabel(count: number, lang: Lang) {
 }
 
 function getFlowChipLabel(boardings: number, alightings: number, lang: Lang) {
-  return lang === "th" ? `ขึ้น ${boardings} · ลง ${alightings}` : `${boardings} on · ${alightings} off`;
+  // A slash, not a middot: the strip separates its facts with " · ", and a
+  // fact that used the same mark inside itself would read as two facts.
+  return lang === "th" ? `ขึ้น ${boardings} / ลง ${alightings}` : `${boardings} on / ${alightings} off`;
 }
 
 function getDriverChipLabel(summary: DecisionSummary, lang: Lang) {
@@ -79,8 +82,18 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
           {formatUpdateTime(summary.updatedAt, lang)}
         </span>
       </div>
-      <p className="decision-panel__status" lang={lang}>
-        {[
+      {/* The strip's language is the language it is WRITTEN in. Four of the
+          five facts are English in every language except Thai; marking the
+          whole line as German would have a screen reader announce English
+          facts in a German voice, and the old markup got that wrong for
+          three of the five.
+
+          The driver chip is the exception: it comes from the seat camera's
+          own label, which IS translated, so it carries its own `lang`. One
+          strip, one line, one treatment — and the one fact that is written
+          in the reader's language says so. */}
+      <p className="decision-panel__status" lang={lang === "th" ? "th" : "en"}>
+        {([
           getLiveChipLabel(summary.liveVehicles, lang),
           getAlertChipLabel(alertCount, lang),
           getBasisLabel(summary, lang),
@@ -97,10 +110,17 @@ export function DecisionPanel({ lang, summary, alertCount, loading, errorMessage
                 lang
               )
             : null,
-          getDriverChipLabel(summary, lang),
-        ]
-          .filter((part): part is string => Boolean(part))
-          .join(" · ")}
+          summary.seatAvailability?.driverAttention ? (
+            <span lang={lang}>{getDriverChipLabel(summary, lang)}</span>
+          ) : null,
+        ] as (string | ReactNode | null | false)[])
+          .filter((part): part is string | ReactNode => Boolean(part))
+          .map((part, i) => (
+            <span key={i}>
+              {i > 0 ? " · " : null}
+              {part}
+            </span>
+          ))}
       </p>
       <h2 className="decision-panel__headline">{pick(summary.headline, lang)}</h2>
       <p className="decision-panel__summary">{pick(summary.summary, lang)}</p>

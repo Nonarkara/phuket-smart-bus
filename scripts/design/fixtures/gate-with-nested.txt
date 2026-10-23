@@ -1,0 +1,10 @@
+# The same gate, but it DOES measure the nested route — and every route the
+# fake app serves. The coverage check must stay quiet here: a check that
+# fires on a route the gate measures is crying wolf.
+ROUTES=(
+  "/" "/ops" "/fleet" "/fleet/raw" "/fleet/export" "/study" "/research" "/capacity"
+  "/toolkit" "/toolkit#phuket" "/toolkit#evidence" "/toolkit#build"
+  "/toolkit#fieldnotes"
+  "/roi" "/driver" "/v2" "/v2?view=insights" "/v2?view=toolkit"
+  "/governor" "/info" "/more" "/stops" "/pass" "/ride" "/compare"
+)

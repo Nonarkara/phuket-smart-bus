@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>the same grid, without the spanning item</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+
+  /* THE SAME GRID, WITHOUT THE SPAN — the control for space-tall-item.html.
+     The three items are identical; the first one simply does not span.
+     Now the second row holds ONE item with the rest of the row empty, and
+     that is an orphan — the thing the instrument exists to catch.
+
+     Only the tall cell's height differs between the two files, and the
+     verdict must differ with it. A proof where both files report the same
+     thing would prove nothing. */
+  .span-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 900px; }
+  .span-grid > div { background: #eef3f0; border: 1px solid #cfd9d3; padding: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <section>
+    <h2>the same grid, without the spanning item</h2>
+    <div class="span-grid">
+      <div>First cell, not tall. It occupies the first row only, so the second row's first column is empty.</div>
+      <div>First row, second column.</div>
+      <div>Second row, first column.</div>
+    </div>
+  </section>
+</body>
+</html>

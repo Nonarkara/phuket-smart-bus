@@ -91,6 +91,20 @@ const INVENTORY = () => {
     if (ownsText && size < 11) {
       offenders.push({ rule: "text below the 11px floor", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
     }
+    // THE RIDER'S FLOOR — 13px. The rider's phone is smaller than the
+    // operations wall and its labels are read outdoors, so the labels that
+    // say what a number means ("Next bus", "Temperature", "Map") start at
+    // 13px there. The 11px floor above is the global one; this one is the
+    // surface's, and it is checked rather than hoped for: a floor that
+    // lives only in a stylesheet is a number.
+    //
+    // The scope names EVERY surface that renders rider type, including the
+    // desktop rider shell — which is a SIBLING of the app shell, not a
+    // child of it, so `.app-shell` alone would leave the shell outside the
+    // floor it was just given the rider's tokens for.
+    if (ownsText && size < 13 && e.closest(".app-shell, .pa-shell, .desktop-rider")) {
+      offenders.push({ rule: "text below the rider's 13px floor", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
+    }
     if (isDisplay) {
       if (size < 18) offenders.push({ rule: "display face below 18px", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
       else if (size < 40 && w >= 600) offenders.push({ rule: "display face 600+ below 40px", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });

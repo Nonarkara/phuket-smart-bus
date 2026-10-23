@@ -161,6 +161,20 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
           </span>
         </div>
       )}
+      {/* THE THIRD-PARTY DISCLOSURE.
+          The air quality above is GISTDA's, and the map's tiles are
+          OpenStreetMap's. A request from this browser carries the reader's
+          IP address to both of them, and under Thailand's PDPA an IP address
+          is personal data. The reader is entitled to know that.
+
+          It sits HERE, under the badge, because that is where a third
+          party's data enters the page. A disclosure parked on a route the
+          reader has to find is a disclosure nobody reads — and this one is
+          one line, with no box around it, because it is a note and not a
+          panel. */}
+      <p className="hero-section__sources">
+        Air quality GISTDA · map tiles OpenStreetMap — both see your request.
+      </p>
     </div>
   );
 }

@@ -76,13 +76,29 @@ npx --yes wrangler deploy -c wrangler.research.toml
 
 echo
 echo "→ verify deployed bytes and live API"
-if bash scripts/verify-deploy.sh; then
+# `set -e` would exit on the failure before the code could be read, so the
+# call is made safe explicitly and the code is captured.
+VERIFY_CODE=0
+bash scripts/verify-deploy.sh || VERIFY_CODE=$?
+if [ "$VERIFY_CODE" -eq 0 ]; then
   echo
   echo "✓ deployed and verified"
-else
-  echo
+  exit 0
+fi
+echo
+if [ "$VERIFY_CODE" -eq 1 ]; then
+  # Exit 1 = the GATE failed. The bytes above were verified as live and
+  # identical to this build, so the upload worked and the finding is the
+  # thing to fix.
   echo "✗ the bytes ARE deployed and live — the upload worked."
   echo "  What failed is the gate above, and a failed gate is not a failed upload:"
   echo "  read the finding, fix the finding, deploy again."
-  exit 1
+else
+  # Exit 2 = the BYTES did not reach the host. Saying "the upload worked"
+  # here would be the exact opposite of the truth, and the site would stay
+  # on the old build while the log claimed it shipped.
+  echo "✗ the deploy did NOT reach the host — the upload failed."
+  echo "  The bytes were not verified live. Fix the upload and deploy again;"
+  echo "  do not read the finding above as a layout problem."
 fi
+exit 1

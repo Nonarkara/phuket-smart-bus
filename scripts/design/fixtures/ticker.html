@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>a page whose network never goes quiet</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<p>A live ticker never stops talking.</p>
+<script>
+  // A page whose network NEVER goes quiet. The settle must still return:
+  // "never quiet" is not a reason to measure nothing, and a gate that
+  // hangs is a gate that stops being one.
+  let n = 0;
+  setInterval(() => {
+    n += 1;
+    fetch("/slow-content?ms=1").catch(() => {});
+  }, 300);
+</script>
+</body>
+</html>

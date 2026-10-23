@@ -20,3 +20,40 @@ jobs:
         run: npm run typecheck
       - name: Test
         run: npm test
+
+  # THE PROOFS RUN HERE, NOT ONLY ON SOMEONE'S MACHINE.
+  #
+  # A rule that is checked only when a human remembers to check it is a
+  # number, not a rule. The three instruments below each carry a proof that
+  # the instrument CAN fail and CAN stay quiet — and the proof suites are
+  # the only thing standing between a green light and a check that has
+  # quietly stopped checking anything:
+  #
+  #   prove-settle  — the shared wait every gate instrument stands on. If it
+  #                   returns early, every instrument measures a page that
+  #                   is not there.
+  #   prove-ship    — the shipability audit, and the debt routing that
+  #                   decides whether a finding blocks a deploy.
+  #   prove-space   — the spatial-hallucination instrument and its six
+  #                   failure modes.
+  #
+  # They need a browser, so the browser is installed here rather than
+  # assumed. They are quick — a few minutes — and they are the difference
+  # between an instrument and a decoration.
+  design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+      - name: The settle waits for a finished page
+        run: bash scripts/design/prove-settle.sh
+      - name: The shipability audit bites, and stays quiet
+        run: bash scripts/design/prove-ship.sh
+      - name: The spatial instrument bites, and stays quiet
+        run: bash scripts/design/prove-space.sh

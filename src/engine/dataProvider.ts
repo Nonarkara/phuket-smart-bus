@@ -95,11 +95,24 @@ function refreshRainViewerTimestamp(): Promise<void> {
   return rainViewerFetchInflight;
 }
 
-// Kick off the fetch on module load; the second call to getOpsDashboard
-// (1 s later) will have the timestamp and include the precipitation layer.
-if (typeof fetch !== "undefined") {
-  void refreshRainViewerTimestamp();
-}
+// THE RAINVIEWER TIMESTAMP IS NOT FETCHED AT MODULE LOAD — and it used to
+// be. The kick at the bottom of this block ran on EVERY page of the site:
+// the tourist app, the study, the research pages, the rider's phone. It
+// fetched a radar timestamp from a third party, on every route, for a tile
+// layer that nothing in the client renders.
+//
+// The operations map draws the radar itself (V2LiveMap asks RainViewer for
+// the latest frame), so the timestamp here was a leftover: the payload
+// built by getOpsDashboard carries the precipitation layer, and the client
+// that consumed that payload was replaced years of design ago.
+//
+// And it was not free. A third party's request carries the visitor's IP
+// address, so every reader of every page was being reported to a weather
+// service for a picture none of them saw. Under Thailand's PDPA an IP
+// address is personal data. The fix was not a longer privacy notice — it
+// was to stop asking.
+//
+// The fetch now happens where the layer is built, and only there.
 
 function buildSimTileLayers(): OpsMapTileLayer[] {
   const layers: OpsMapTileLayer[] = [

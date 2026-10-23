@@ -133,6 +133,66 @@ else
 fi
 
 echo
+echo "── a scroller that fills its own container is that container's scroll ──"
+# The rider app's stops list is 809px inside an 849px app-content — 95%. It
+# IS the app's page, and the rule that says so was a silent exemption with
+# no case of its own: delete it, or widen it to 50%, and nothing failed.
+# A scroller at 92% must report nothing; the same scroller at 30% must
+# still be caught, because the operations rail is 59% of the viewport and
+# stays a trap.
+FULL=$(node scripts/design/space.mjs /space-scroller-full.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$FULL" | sed 's/^/  /'
+if echo "$FULL" | grep -q "total spatial-hallucination findings: 0"; then
+  echo "  ✓ a scroller filling 92% of its container reports nothing"
+else
+  echo "  ✗ a scroller filling its own container was reported — the exemption does not work"
+  fail=1
+fi
+
+PARTIAL=$(node scripts/design/space.mjs /space-scroller-partial.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$PARTIAL" | sed 's/^/  /'
+if echo "$PARTIAL" | grep -q "SCROLL TRAP"; then
+  echo "  ✓ the same scroller at 30% is still caught — the exemption is bounded"
+else
+  echo "  ✗ a scroller at 30% was excused — the exemption is too wide"
+  fail=1
+fi
+
+echo
+echo "── a grid whose first item spans two rows ────────────────────────────"
+# The instrument bands a grid's items by vertical overlap. An item that
+# spans two rows overlaps the item below it, so the two rows become ONE
+# band — and the "last row" the orphan rule examines is then not the last
+# row the reader sees. The threshold is defensible; the case was untested,
+# and an untested case is a rule nobody can rely on.
+#
+# These two files are the A/B: the same three items, the same grid, and the
+# only difference is whether the first cell spans. With the span, the
+# second row is FULL — the tall cell still occupies its first column — and
+# there is no orphan to report. Without it, the second row holds one narrow
+# item with the rest of the row empty, and that IS an orphan.
+#
+# Only the span differs, so only the span can decide the verdict. A proof
+# where both files reported the same thing would prove nothing.
+TALL=$(node scripts/design/space.mjs /space-tall-item.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$TALL" | sed 's/^/  /'
+if echo "$TALL" | grep -q "total spatial-hallucination findings: 0"; then
+  echo "  ✓ a grid whose first cell spans two rows reports nothing — the row is not stranded"
+else
+  echo "  ✗ a spanning cell was reported as a stranded row — the band merged the wrong way"
+  fail=1
+fi
+
+NOTALL=$(node scripts/design/space.mjs /space-tall-item-no-span.html --base "http://127.0.0.1:$PORT" 2>&1)
+echo "$NOTALL" | sed 's/^/  /'
+if echo "$NOTALL" | grep -q "ORPHAN"; then
+  echo "  ✓ the same grid without the span is still caught — the span is what decides"
+else
+  echo "  ✗ the same grid without the span was excused — the exemption is too wide"
+  fail=1
+fi
+
+echo
 echo "── a route that is not there must not read as a clean route ──────────"
 GONE=$(node scripts/design/space.mjs /no-such-route.html --base "http://127.0.0.1:$PORT" 2>&1)
 echo "$GONE" | sed 's/^/  /'

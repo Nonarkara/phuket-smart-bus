@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>a scroller that does not fill its container — must be caught</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+  .outer { height: 1000px; overflow-y: auto; }
+  .inner { height: 300px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="outer">
+  <div class="inner">
+    <!-- The SAME shape as the permitted one, at 30% of its container, with
+         the same 1,600px of content. A region that is several screens deep
+         inside a rail the reader is looking at IS a trap — the operations
+         rail is 59% of the viewport and stays one. The exemption is
+         bounded: 90% or more is the container's own scroll, and less than
+         that is a hole. -->
+    <p>Stop 1 · Bus to Airport · 12 min</p>
+    <p>Stop 2 · Bus to Airport · 14 min</p>
+    <p>Stop 3 · Bus to Airport · 16 min</p>
+    <p>Stop 4 · Bus to Airport · 18 min</p>
+    <p>Stop 5 · Bus to Airport · 20 min</p>
+    <p>Stop 6 · Bus to Airport · 22 min</p>
+    <p>Stop 7 · Bus to Airport · 24 min</p>
+    <p>Stop 8 · Bus to Airport · 26 min</p>
+    <p>Stop 9 · Bus to Airport · 28 min</p>
+    <p>Stop 10 · Bus to Airport · 30 min</p>
+    <p>Stop 11 · Bus to Airport · 32 min</p>
+    <p>Stop 12 · Bus to Airport · 34 min</p>
+    <p>Stop 13 · Bus to Airport · 36 min</p>
+    <p>Stop 14 · Bus to Airport · 38 min</p>
+    <p>Stop 15 · Bus to Airport · 40 min</p>
+    <p>Stop 16 · Bus to Airport · 42 min</p>
+    <p>Stop 17 · Bus to Airport · 44 min</p>
+    <p>Stop 18 · Bus to Airport · 46 min</p>
+    <p>Stop 19 · Bus to Airport · 48 min</p>
+    <p>Stop 20 · Bus to Airport · 50 min</p>
+    <p>Stop 21 · Bus to Airport · 52 min</p>
+    <p>Stop 22 · Bus to Airport · 54 min</p>
+    <p>Stop 23 · Bus to Airport · 56 min</p>
+    <p>Stop 24 · Bus to Airport · 58 min</p>
+    <p>Stop 25 · Bus to Airport · 60 min</p>
+    <p>Stop 26 · Bus to Airport · 62 min</p>
+    <p>Stop 27 · Bus to Airport · 64 min</p>
+    <p>Stop 28 · Bus to Airport · 66 min</p>
+    <p>Stop 29 · Bus to Airport · 68 min</p>
+    <p>Stop 30 · Bus to Airport · 70 min</p>
+    <p>Stop 31 · Bus to Airport · 72 min</p>
+    <p>Stop 32 · Bus to Airport · 74 min</p>
+    <p>Stop 33 · Bus to Airport · 76 min</p>
+    <p>Stop 34 · Bus to Airport · 78 min</p>
+    <p>Stop 35 · Bus to Airport · 80 min</p>
+    <p>Stop 36 · Bus to Airport · 82 min</p>
+    <p>Stop 37 · Bus to Airport · 84 min</p>
+    <p>Stop 38 · Bus to Airport · 86 min</p>
+    <p>Stop 39 · Bus to Airport · 88 min</p>
+    <p>Stop 40 · Bus to Airport · 90 min</p>
+    <p>Stop 41 · Bus to Airport · 92 min</p>
+    <p>Stop 42 · Bus to Airport · 94 min</p>
+    <p>Stop 43 · Bus to Airport · 96 min</p>
+    <p>Stop 44 · Bus to Airport · 98 min</p>
+    <p>Stop 45 · Bus to Airport · 100 min</p>
+    <p>Stop 46 · Bus to Airport · 102 min</p>
+    <p>Stop 47 · Bus to Airport · 104 min</p>
+    <p>Stop 48 · Bus to Airport · 106 min</p>
+    <p>Stop 49 · Bus to Airport · 108 min</p>
+    <p>Stop 50 · Bus to Airport · 110 min</p>
+  </div>
+</div>
+</body>
+</html>

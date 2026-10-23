@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>a grid whose first item spans two rows</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", system-ui, sans-serif; color: #12211a; background: #faf7f0; }
+  section { padding: 24px; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+
+  /* THE TALL ITEM — a grid cell that spans two rows.
+     The reader sees two rows, and the second one is FULL: the tall cell
+     still occupies the first column of it. Nothing is stranded.
+
+     The instrument bands items by vertical overlap, so the tall cell
+     overlaps the item below it and the two rows become ONE band. That is
+     the right answer here — and it is the case that was untested.
+     Without the tall cell, the same three items land in three bands and
+     the last one holds a single narrow item with the rest of the row
+     empty: a real orphan, and one the instrument must report.
+
+     These two files are the A/B. Only the tall cell's height differs, and
+     the verdict must differ with it. */
+  .span-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 900px; }
+  .span-grid > div { background: #eef3f0; border: 1px solid #cfd9d3; padding: 10px; font-size: 13px; }
+  .span-grid > .tall { grid-row: span 2; }
+</style>
+</head>
+<body>
+  <section>
+    <h2>a grid whose first item spans two rows</h2>
+    <div class="span-grid">
+      <div class="tall">Tall cell, spanning both rows. It still occupies the first column of the second row, so that row is not empty.</div>
+      <div>First row, second column.</div>
+      <div>Second row, second column.</div>
+    </div>
+  </section>
+</body>
+</html>

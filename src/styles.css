@@ -151,6 +151,10 @@ a { color: var(--amber-text); }
   place-items: center;
   background: #0a0e14;
   color: rgba(255, 255, 255, 0.72);
+  /* The one declaration that is NOT the rider's surface: this is the
+     Suspense fallback for EVERY route, the operations wall included, so it
+     reads the root scope. 12px was under the ops wall's own 13px floor, and
+     --t-label is 13px everywhere the root scope applies. */
   font: 700 var(--t-label)/1 var(--font-body); font-variant-numeric: tabular-nums;
   letter-spacing: 0; }
 
@@ -190,6 +194,19 @@ a { color: var(--amber-text); }
   background: var(--paper, #fafaf7);
   color: var(--ink, #191712);
   font-family: var(--font-body);
+  /* The desktop shell is a SIBLING of the app shell, and it renders rider
+     type — so it declares the same scale. A token that resolves against
+     the root scope in a surface that means something else is a token
+     carrying the wrong promise, and the wrong promise is invisible until
+     someone reads the computed value. */
+  --t-display: 36px;
+  --t-hero:    24px;
+  --t-figure:  22px;
+  --t-title:   22px;
+  --t-lead:    17px;
+  --t-body:    15px;
+  --t-label:   13px;
+  --t-micro:   13px;
 }
 .desktop-rider__brand {
   position: absolute;
@@ -549,6 +566,10 @@ a { color: var(--amber-text); }
   height: 100%;
   overflow: hidden;
 }
+
+/* The desktop shell's type scale is declared with the shell's own layout
+   rule — one rule per selector, and the tokens are part of what the shell
+   IS, not a separate concern. */
 
 .app-content {
   flex: 1 1 0;
@@ -3740,6 +3761,17 @@ a { color: var(--amber-text); }
   pointer-events: auto;
 }
 
+/* The third-party disclosure — the line that says which services see the
+   reader's request. It is a NOTE, not a panel: no box, no rule, no fill.
+   One line at the micro step, sitting under the air-quality badge it
+   explains. */
+.hero-section__sources {
+  margin: 6px 0 0;
+  font-size: var(--t-micro);
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
 /* Hide Leaflet's default zoom buttons on the tourist map — pinch-to-zoom on
    mobile, scroll-wheel on desktop. The hero overlay needs that real estate
    for the countdown timer. */
@@ -4408,12 +4440,19 @@ a { color: var(--amber-text); }
 
 .roi-page {
   /* Type scale — the eight names, this surface's values. Every font-size in
-     the roi-* rules is one of these. See STYLE.md, "The type scale". */
+     the roi-* rules is one of these. See STYLE.md, "The type scale".
+
+     The order is the order of the names: a bigger size never maps to a
+     smaller step than a smaller size does. This scope had --t-lead at 22px
+     ABOVE --t-title at 18px, which inverted the law — and the reason was a
+     naming error, not a design: the 22px step is a large DATA value and the
+     18px step is a card title. So the 22px step is --t-figure, and the
+     rule that used it says so. */
   --t-display:   36px;
-  --t-hero:      26px;
-  --t-figure:    24px;
-  --t-lead:      22px;
+  --t-hero:      24px;
+  --t-figure:    22px;
   --t-title:     18px;
+  --t-lead:      17px;
   --t-body:      16px;
   --t-label:     14px;
   --t-micro:     11px;
@@ -5112,7 +5151,7 @@ a { color: var(--amber-text); }
 
 .roi-real-card__value {
   font-variant-numeric: tabular-nums;
-  font-size: var(--t-lead);
+  font-size: var(--t-figure);
   font-weight: 700;
 }
 
@@ -5832,7 +5871,14 @@ a { color: var(--amber-text); }
   align-items: center;
   gap: 6px;
   padding: 4px 6px 4px 4px;
-  font-size: 11px;
+  /* The badge is the only thing that says whether the air is safe to
+     breathe, so it is set to the LABEL step — in whatever scope it
+     renders. It used to be 11px here and 13px only where a HIGHER-
+     specificity rule overrode it, which meant the moment the badge
+     rendered outside that scope it dropped to 11px — and the 13px audit
+     rule, which keys on the scope, would not have caught it either. A
+     rule that only holds inside one scope is a rule waiting to break. */
+  font-size: var(--t-label);
   font-weight: 600;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
@@ -5860,10 +5906,9 @@ a { color: var(--amber-text); }
   min-width: 0;
   flex: 1;
 }
-/* The PM2.5 band is shared with the ops console, which keeps its own floor.
-   On the rider's phone the badge is the only thing that says whether the air
-   is safe to breathe, so it is set to the rider's label step, not to 11px. */
-.app-shell .hero-pm25 { font-size: var(--t-label); }
+/* The PM2.5 band renders in the tourist HeroSection, which is inside the
+   rider's scope — and the base rule above now names the token, so the size
+   does not depend on where the badge happens to be rendered. */
 
 /* ============================================================================
  * Digital Operations Health strip — visible signal that this is a connected

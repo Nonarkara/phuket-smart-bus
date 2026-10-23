@@ -12,10 +12,16 @@
 #
 # connect-src, 2026-10-23: https://script.google.com and https://ipapi.co were
 # REMOVED. They were there for the visitor tracker — a Google Sheet ping and an
-# ipapi.co IP lookup — and the tracker is gone (src/main.tsx). Leaving the hosts
-# in the policy would have left a collector's escape route open in a document
-# whose whole point is to close it. scripts/design/shipaudit.mjs now aborts
-# requests to both hosts and reports any route that tries.
+# ipapi.co IP lookup — and the tracker is gone (src/main.tsx).
+#
+# What removing them actually does, stated plainly: this policy is
+# REPORT-ONLY, so it does not block anything. Removing those hosts takes them
+# out of the report and out of the policy that will eventually be enforced —
+# it does not, by itself, close the route a collector would have used. What
+# closes it TODAY is scripts/design/shipaudit.mjs: it aborts every request to
+# those hosts and fails the deploy if any route still tries. The policy and
+# the audit are two different jobs — the policy is the rule, the audit is the
+# gate — and neither one is the other's job.
 
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains

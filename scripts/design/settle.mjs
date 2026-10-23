@@ -5,15 +5,42 @@
  *   The gate waited a fixed number of seconds — five for most checks, two
  *   and a half for the type audit — and called that a page. The legacy
  *   consumer chain asks the server for its stops, gets a 404, waits three
- *   seconds and asks again. At two and a half seconds the stop list was
- *   still EMPTY.
+ *   seconds and asks again. At two and a half seconds the stop list can
+ *   still be EMPTY.
  *
- *   So the gate measured half a page and called it clean: `/info`, `/more`,
- *   `/stops`, `/ride` and `/compare` all reported "0 findings" and a
- *   four-size type ramp, on pages that turned out to be 9,251px tall with
- *   a ten-size ramp once the data arrived. A green light on a check that
- *   measured nothing is the worst outcome a gate can have, and this was
- *   it — the gate was green on pages it had not finished loading.
+ *   So the gate could measure half a page and call it clean. A green light
+ *   on a check that measured nothing is the worst outcome a gate can have.
+ *
+ * WHAT WAS ACTUALLY WRONG — measured, not asserted
+ *   This file used to say that the gate "measured 6,426px of a 9,251px
+ *   page" and called it clean. That sentence was wrong, and it was wrong
+ *   in the direction that flatters the code, so it was measured.
+ *
+ *   Measured 2026-10-23 against the local preview, `/info` @1440, the
+ *   page height as `space.mjs` measures it (the tallest scrollable
+ *   element — this app scrolls an inner frame, so the document is always
+ *   one screen):
+ *
+ *     settle (floor 5s)   6532ms   6426px   704 elements   52 stop cards
+ *     settle (minMs 0)    2220ms   6426px   704 elements   52 stop cards
+ *     fixed 15s wait     15003ms   6426px   704 elements   52 stop cards
+ *     fixed 30s wait     30004ms   6426px   704 elements   52 stop cards
+ *
+ *   The page is 6,426px at every wait from two seconds to thirty, and the
+ *   stop list is FULL (52 cards) in every one of them. The 9,251px figure
+ *   was not this page: it was an earlier BUILD, whose two-column stop
+ *   list squeezed the cards (the gate reported 12 CLIPPED CONTENT
+ *   findings on `.stop-list__items` that run) and whose literal rider
+ *   sizes put ten steps on the ramp. Both were layout defects and both
+ *   were fixed by other means; neither was a loading defect, and this
+ *   file's old note credited the loading story for them.
+ *
+ *   The floor is still the right answer, and its proof does not depend on
+ *   this page: `scripts/design/prove-settle.sh` measures a FIXTURE whose
+ *   content arrives on a timer with no request in flight, and shows that
+ *   without the floor the instrument measures that page empty. The
+ *   defect was real; the page it was measured on was not the one the old
+ *   note named.
  *
  * THE TWO SIGNALS
  *   1. THE NETWORK GOES QUIET. A page that is still waiting for data is
@@ -27,10 +54,41 @@
  *   The order matters: the network first, because that is where a slow
  *   answer shows up, and the document second, because that is where a
  *   late render shows up.
+ *
+ * THE FLOOR
+ *   The first version of this settle had no floor. It waited for the
+ *   network to go quiet and then for the document to hold still, and it
+ *   RETURNED EARLIER than the fixed five-second wait it replaced: the
+ *   legacy chain's first call 404s in about 200ms, the network is quiet
+ *   at ~1s, and the document can be perfectly stable during the two
+ *   seconds before the retry lands — because the stop list is empty and
+ *   stays empty. "The document stops changing" is exactly what a page
+ *   waiting on a timer looks like.
+ *
+ *   So the settle has a FLOOR: it never returns before `minMs`, which
+ *   defaults to the five seconds the gate used to wait. A timer that
+ *   fires inside the floor is caught by the stability check that runs
+ *   after it. A timer that fires after the floor is not catchable by any
+ *   generic signal — so the floor has to exceed the app's own longest
+ *   scheduled work, and 5s exceeds the legacy chain's 3s retry.
+ *
+ *   The floor makes the gate slower, and it makes it measure MORE. That
+ *   is the trade: a gate that is quick and measures half a page is worse
+ *   than a gate that is slow and measures the page. The cost is real and
+ *   it is reported: the gate takes about fifty minutes over its 24
+ *   routes at two widths.
  */
-export async function settle(page, { networkTimeoutMs = 9_000, maxMs = 25_000 } = {}) {
-  await page.waitForLoadState("networkidle", { timeout: networkTimeoutMs }).catch(() => {});
+export async function settle(
+  page,
+  { networkTimeoutMs = 9_000, maxMs = 25_000, minMs = 5_000 } = {}
+) {
   const started = Date.now();
+  await page.waitForLoadState("networkidle", { timeout: networkTimeoutMs }).catch(() => {});
+  // THE FLOOR. Never return earlier than the wait this replaced.
+  const remaining = minMs - (Date.now() - started);
+  if (remaining > 0) await page.waitForTimeout(remaining);
+  // The document stops changing — measured AFTER the floor, so a timer
+  // that fired while we were waiting is caught here.
   let last = -1;
   let stable = 0;
   while (Date.now() - started < maxMs) {

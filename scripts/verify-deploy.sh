@@ -42,6 +42,23 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# TWO FAILURES, TWO EXIT CODES.
+#   2 — the BYTES did not reach the host. The build is missing, the live
+#       asset graph is not the local build, the production deployment
+#       carries another commit, the edge function is not answering, or the
+#       two hosts disagree. Nothing is live that was meant to be.
+#   1 — the GATE failed. The bytes are live and correct; the design gate or
+#       the shipability audit found something.
+#
+# Why the difference matters: the deploy script reports the outcome to a
+# human, and there are exactly two things it can say. "The upload worked and
+# the gate failed" sends the operator to fix a finding. "The upload worked"
+# — said when the upload did NOT work — sends them nowhere, and the site
+# stays on the old build while the log says it shipped. A message that
+# cannot be false is worth two exit codes.
+EXIT_BYTES=2
+EXIT_GATE=1
+
 CANONICAL="${CANONICAL:-https://phuket-smart-bus.pages.dev}"
 CUSTOM="${CUSTOM:-https://bus.nonarkara.org}"
 PROJECT="${PAGES_PROJECT:-phuket-smart-bus}"
@@ -49,7 +66,7 @@ INDEX="dist/client/index.html"
 
 if [ ! -f "$INDEX" ]; then
   echo "error: $INDEX is missing; build before verification" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 
 # ── the commit we are shipping ────────────────────────────────────────────
@@ -57,8 +74,8 @@ HEAD_SHA="$(git rev-parse HEAD)"
 HEAD_SHORT="$(git rev-parse --short HEAD)"
 
 # ── the whole asset graph, on both hosts ─────────────────────────────────
-BASE_URL="$CANONICAL" node scripts/verify-assets.mjs
-BASE_URL="$CUSTOM" node scripts/verify-assets.mjs
+BASE_URL="$CANONICAL" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
+BASE_URL="$CUSTOM" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
 
 # ── the production deployment must carry the commit we are shipping ───────
 DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
@@ -70,7 +87,7 @@ if [ -n "$PROD_SHA" ]; then
       ;;
     *)
       echo "error: the production deployment carries ${PROD_SHA}, not ${HEAD_SHORT}" >&2
-      exit 1
+      exit "$EXIT_BYTES"
       ;;
   esac
 else
@@ -96,7 +113,7 @@ while IFS= read -r url; do
     "$CANONICAL" | "$CUSTOM") continue ;; # already compared above
   esac
   echo "→ comparing deployment $url"
-  BASE_URL="$url" node scripts/verify-assets.mjs
+  BASE_URL="$url" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
   CHECKED=$((CHECKED + 1))
 done <<< "$DEPLOY_URLS"
 
@@ -106,7 +123,10 @@ else
   echo "warn: no further deployment of ${HEAD_SHORT} was found to compare"
 fi
 
-curl -fsS --max-time 20 "$CUSTOM/api/live-buses?probe=$(date +%s)" | grep -q '"status":"live"'
+curl -fsS --max-time 20 "$CUSTOM/api/live-buses?probe=$(date +%s)" | grep -q '"status":"live"' || {
+  echo "error: the live-bus edge function did not answer live JSON" >&2
+  exit "$EXIT_BYTES"
+}
 echo "ok: live-bus edge function returned live JSON"
 
 # ── the two hosts must answer an unknown path the same way ────────────────
@@ -122,11 +142,11 @@ custom_status="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$CUSTOM/$
 custom_type="$(curl -s -o /dev/null -w '%{content_type}' --max-time 20 "$CUSTOM/$INV")"
 if [ "$canon_status" != "$custom_status" ]; then
   echo "error: an unknown path answers ${canon_status} on the alias and ${custom_status} on the host — the two builds of this commit disagree" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 if [ "${custom_type%%;*}" != "text/html" ]; then
   echo "error: an unknown path answers ${custom_type}, not the app shell" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 echo "ok: an unknown path answers ${custom_status} with the app shell on both hosts"
 
@@ -137,7 +157,7 @@ echo "ok: an unknown path answers ${custom_status} with the app shell on both ho
 # they have shipped before. The gate runs against the site that is LIVE.
 if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
   if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
-    bash scripts/design/verify-design.sh "$CUSTOM"
+    bash scripts/design/verify-design.sh "$CUSTOM" || exit "$EXIT_GATE"
   else
     echo "warn: playwright is not installed — the design gate did not run"
   fi
@@ -154,7 +174,7 @@ fi
 # every local check.
 if [ "${SKIP_SHIPABILITY:-0}" != "1" ]; then
   if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
-    node scripts/design/shipaudit.mjs --base "$CUSTOM" --history
+    node scripts/design/shipaudit.mjs --base "$CUSTOM" --history || exit "$EXIT_GATE"
   else
     echo "warn: playwright is not installed — the shipability audit did not run"
   fi

@@ -11,12 +11,21 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# TWO FAILURES, TWO EXIT CODES — the same contract as verify-deploy.sh.
+#   2 — the BYTES did not reach the host.
+#   1 — the GATE failed.
+# The deploy script has exactly two things to say, and "the upload worked"
+# said when the upload did NOT work sends the operator nowhere while the
+# site stays on the old build.
+EXIT_BYTES=2
+EXIT_GATE=1
+
 CUSTOM="${CUSTOM:-https://depa-usdot.nonarkara.org}"
 INDEX="dist/client/index.html"
 
 if [ ! -f "$INDEX" ]; then
   echo "error: $INDEX is missing; build before verification" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
@@ -28,7 +37,7 @@ CSS_PATH="$(asset_path 's@.*href="(/assets/[^\"]+\.css)".*@\1@p')"
 
 if [ -z "$JS_PATH" ] || [ -z "$CSS_PATH" ]; then
   echo "error: could not resolve built JS/CSS from $INDEX" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 
 echo "→ the whole asset graph on ${CUSTOM}"
@@ -37,14 +46,14 @@ echo "→ the whole asset graph on ${CUSTOM}"
 # — entry, every lazy chunk, every lazy stylesheet and what they reference
 # — and compares all of it, byte for byte, with the content hashes
 # normalised away.
-BASE_URL="$CUSTOM" node scripts/verify-assets.mjs
+BASE_URL="$CUSTOM" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
 
 echo "→ deep links return the app, not a 404"
 for route in / /toolkit /ops /study; do
   code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${CUSTOM}${route}")"
   if [ "$code" != "200" ]; then
     echo "error: ${CUSTOM}${route} returned ${code}, expected 200" >&2
-    exit 1
+    exit "$EXIT_BYTES"
   fi
   echo "ok: ${CUSTOM}${route} -> 200"
 done
@@ -54,7 +63,7 @@ real_type="$(curl -s -o /dev/null -w '%{content_type}' --max-time 20 "${CUSTOM}$
 fake_type="$(curl -s -o /dev/null -w '%{content_type}' --max-time 20 "${CUSTOM}/assets/INVENTED-NAME.js")"
 if [ "$real_type" = "$fake_type" ]; then
   echo "error: ${JS_PATH} and an invented path answer identically (${real_type}) — both are the SPA fallback" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 echo "ok: ${JS_PATH} is ${real_type}, the invented path is ${fake_type}"
 
@@ -62,7 +71,7 @@ echo "→ the live API is reachable through the domain"
 api_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "${CUSTOM}/api/live-buses")"
 if [ "$api_code" != "200" ]; then
   echo "error: ${CUSTOM}/api/live-buses returned ${api_code}, expected 200" >&2
-  exit 1
+  exit "$EXIT_BYTES"
 fi
 echo "ok: ${CUSTOM}/api/live-buses -> 200"
 
@@ -71,7 +80,7 @@ headers="$(curl -sI --max-time 20 "${CUSTOM}/" || true)"
 for want in strict-transport-security content-security-policy x-content-type-options; do
   if ! printf '%s' "$headers" | grep -qi "$want"; then
     echo "error: ${CUSTOM}/ is missing ${want}" >&2
-    exit 1
+    exit "$EXIT_BYTES"
   fi
 done
 echo "ok: HSTS, CSP and nosniff are all present"
@@ -99,7 +108,7 @@ CHECKED=0
 while IFS= read -r url; do
   [ -n "$url" ] || continue
   echo "→ comparing deployment $url"
-  BASE_URL="$url" node scripts/verify-assets.mjs
+  BASE_URL="$url" node scripts/verify-assets.mjs || exit "$EXIT_BYTES"
   CHECKED=$((CHECKED + 1))
 done <<< "$DEPLOY_URLS"
 
@@ -119,7 +128,7 @@ echo "✓ toolkit deploy verified"
 # it needs the gate too.
 if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
   if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
-    bash scripts/design/verify-design.sh "$CUSTOM"
+    bash scripts/design/verify-design.sh "$CUSTOM" || exit "$EXIT_GATE"
   else
     echo "warn: playwright is not installed — the design gate did not run"
   fi
