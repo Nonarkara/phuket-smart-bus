@@ -1222,23 +1222,44 @@ html.toolkit-site-mode #root {
   padding: 24px 28px;
   background: var(--tk-subtle, #f8fafc);
   border: 1px solid var(--tk-line, #e2e8f0);
-  border-left: 4px solid var(--tk-red, #ef4444);
   display: flex;
   flex-direction: column;
   gap: 10px;
   transition: all 0.15s ease;
 }
+.lp-myth-card--danger {
+  border-left: 4px solid var(--tk-red, #ef4444);
+}
+.lp-myth-card--danger .lp-myth-card__tag {
+  color: var(--tk-red, #ef4444);
+}
+.lp-myth-card--warning {
+  border-left: 4px solid var(--tk-yellow, #f59e0b);
+}
+.lp-myth-card--warning .lp-myth-card__tag {
+  color: #b45309;
+}
+.lp-myth-card--info {
+  border-left: 4px solid var(--tk-blue, #0284c7);
+}
+.lp-myth-card--info .lp-myth-card__tag {
+  color: var(--tk-blue, #0284c7);
+}
+.lp-myth-card--success {
+  border-left: 4px solid var(--tk-green, #10b981);
+}
+.lp-myth-card--success .lp-myth-card__tag {
+  color: #047857;
+}
 .lp-myth-card:hover {
   background: #ffffff;
   border-color: var(--tk-ink, #0f172a);
-  border-left: 4px solid var(--tk-red, #ef4444);
 }
 .lp-myth-card__tag {
   font-size: var(--t-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--tk-red, #ef4444);
 }
 .lp-myth-card__myth {
   font-family: var(--font-display);

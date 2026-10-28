@@ -146,21 +146,29 @@ const SIGNAL_CHAIN = [
 
 const MYTHS_VS_FACTS = [
   {
+    theme: "danger",
+    kicker: "Critical Risk · 73% of Road Deaths",
     myth: "Why buses? Phuket tourists just rent motorbikes anyway.",
-    fact: "WHO ranks Thailand 9th globally for road fatalities; 92.7% of Phuket accidents involve a motorbike. Travelers only rent motorbikes when no safe, predictable transit exists. A ฿100 coastal bus eliminates lethal road risk.",
+    fact: "WHO ranks Thailand 9th globally for road fatalities; 92.7% of Phuket tourist accidents involve a motorbike. Travelers only rent motorbikes when no safe, predictable transit exists. A ฿100 coastal bus eliminates lethal road risk.",
     tag: "Safety & Lives"
   },
   {
+    theme: "warning",
+    kicker: "Market Lock-in · Unregulated Fares",
     myth: "Just subsidize Grab or Bolt — it requires zero public capex.",
     fact: "Subsidizing private ride-hailing permanently locks the island into an unregulated monopoly. Once public right-of-way and corridor rights lapse, the public will pay ฿800 per ride forever.",
     tag: "Public Right-of-Way"
   },
   {
+    theme: "info",
+    kicker: "Proven Transit · Vegas Case",
     myth: "A world-class island needs a $1B light rail or monorail.",
     fact: "Las Vegas spent US$650M on a 3.9-mile monorail that went bankrupt twice. On that exact same road, double-decker express buses generated US$6M annual net profit. Transit that uses existing pavement wins.",
     tag: "Proven Economics"
   },
   {
+    theme: "success",
+    kicker: "Bankability · Zero Public Debt",
     myth: "The local government doesn't have the budget to buy a fleet.",
     fact: "The government doesn't buy the buses. A private operator finances the fleet under a performance-concession agreement. Farebox cashflow backed by capped milestone payments comfortably achieves 1.30× debt service coverage.",
     tag: "Bankability"
@@ -311,8 +319,8 @@ export function LandingPage() {
         </div>
         <div className="lp-myths__grid">
           {MYTHS_VS_FACTS.map((item) => (
-            <article key={item.myth} className="lp-myth-card">
-              <span className="lp-myth-card__tag">{item.tag}</span>
+            <article key={item.myth} className={`lp-myth-card lp-myth-card--${item.theme}`}>
+              <span className="lp-myth-card__tag">{item.kicker}</span>
               <h3 className="lp-myth-card__myth">“{item.myth}”</h3>
               <p className="lp-myth-card__fact">{item.fact}</p>
             </article>
