@@ -71,7 +71,18 @@ verify_bytes() {
     fi
     i=$((i + 1))
   done
-  echo "error: $label does not serve this build after $((attempts * delay))s — the deployment did not reach it" >&2
+  # The wait is (attempts - 1) sleeps, not attempts: the LAST attempt is the
+  # one that reports, so the number printed has to be the time actually
+  # waited. The old number was 20s too high and read as a fact about the
+  # wait that was never true.
+  local waited=$(( (attempts > 1 ? attempts - 1 : 0) * delay ))
+  # WHAT WAS MEASURED is that the host is not serving this build. WHAT CAUSED
+  # IT is not knowable from here: the upload may never have landed, or the
+  # edge may still be propagating — MEASURED 2026-10-23, an upload that
+  # reported success, an alias that passed, and a custom domain still
+  # serving the PREVIOUS deployment's chunks. So the message states the fact
+  # and names both causes, and does NOT conclude that the upload failed.
+  echo "error: $label does not serve this build after ${waited}s — the edge may still be propagating, or the upload did not land; check the deployment list before re-uploading" >&2
   return 1
 }
 
@@ -132,11 +143,16 @@ fi
 BRANCH_NAME="${CUSTOM#https://}"; BRANCH_NAME="${BRANCH_NAME#http://}"; BRANCH_NAME="${BRANCH_NAME%/}"
 DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
 
+# AND AN UNKNOWN COMMIT MATCHES NOTHING. The empty sha widens this filter
+# instead of narrowing it — index(src, "") is 1 for EVERY src — so without
+# the guard every deployment the project has ever made would be compared
+# against this build. The guard is in the filter itself, so it holds
+# wherever the filter is called from.
 DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" -v branch="$BRANCH_NAME" '
   {
     br = $4; src = $5; url = $6;
     gsub(/[[:space:]]/, "", br); gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
-    if (br == branch && src != "" && url != "" && index(src, sha) == 1) print url
+    if (sha != "" && br == branch && src != "" && url != "" && index(src, sha) == 1) print url
   }' | sort -u || true)"
 
 CHECKED=0
@@ -149,7 +165,7 @@ done <<< "$DEPLOY_URLS"
 
 if [ "$CHECKED" -gt 0 ]; then
   echo "ok: $CHECKED further deployment(s) of ${HEAD_SHORT} serve identical bytes"
-else
+elif [ -n "$HEAD_SHORT" ]; then
   echo "warn: no further deployment of ${HEAD_SHORT} was found to compare"
 fi
 

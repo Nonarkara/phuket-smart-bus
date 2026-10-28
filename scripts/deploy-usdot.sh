@@ -88,9 +88,19 @@ if [ "$VERIFY_CODE" -eq 1 ]; then
   echo "  What failed is the gate above, and a failed gate is not a failed upload:"
   echo "  read the finding, fix the finding, deploy again."
 else
-  # Exit 2 = the BYTES did not reach the host.
-  echo "✗ the deploy did NOT reach the host — the upload failed."
-  echo "  The bytes were not verified live. Fix the upload and deploy again;"
-  echo "  do not read the finding above as a layout problem."
+  # Exit 2 = the BYTES were not verified live inside the wait window. That
+  # is the fact, and it is the only fact: the check cannot tell an upload
+  # that never landed from an edge that has not caught up, and MEASURED
+  # 2026-10-23 the second one happened — the upload reported success, the
+  # alias passed, and the custom domain was still serving the previous
+  # deployment's chunks a minute later. So this message does NOT say the
+  # upload failed, because that is not what was measured. The operator has
+  # to check the deployment list and the edge before re-uploading.
+  echo "✗ the bytes were not verified live within the wait window."
+  echo "  What was measured is that the host did not serve this build in time."
+  echo "  That does NOT mean the upload failed: the edge may still be propagating,"
+  echo "  or the upload may not have landed. Check the deployment list for this"
+  echo "  commit, and whether the edge has caught up, before re-uploading; and do"
+  echo "  not read the finding above as a layout problem."
 fi
 exit 1

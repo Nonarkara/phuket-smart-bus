@@ -161,6 +161,25 @@ const localAssets = await crawl(localIndex, localRead, resolveLocal);
 const liveRoot = new URL("/", BASE).href;
 const liveAssets = await crawl(liveRoot, liveRead, resolveLive);
 
+// A FLOOR UNDER THE COMPARISON.
+//
+// The success condition of this script is "no problems", and with nothing
+// to compare there are no problems to find: a document that references no
+// script and no style yields an empty local set, an empty live set, and
+// zero differences — so the run printed "ok: … 0 assets compared … bytes
+// identical" and exited 0. That is a green light on a check that compared
+// nothing, and a message that cannot be false is worth more than the
+// green light. So the floor is explicit: if the local build names no
+// assets, there is nothing to prove, and the run fails.
+//
+// The live side needs no floor of its own: an empty live set with a
+// non-empty local set is already reported below, one missing asset at a
+// time.
+if (!localAssets.size) {
+  console.error(`error: the local build references no assets — nothing was compared`);
+  process.exit(1);
+}
+
 const byLogical = (assets) => {
   const m = new Map();
   for (const [file, info] of assets) m.set(info.logical, { file, ...info });

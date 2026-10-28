@@ -123,7 +123,18 @@ verify_bytes() {
     fi
     i=$((i + 1))
   done
-  echo "error: $label does not serve this build after $((attempts * delay))s — the deployment did not reach it" >&2
+  # The wait is (attempts - 1) sleeps, not attempts: the LAST attempt is the
+  # one that reports, so the number printed has to be the time actually
+  # waited. The old number was 20s too high and read as a fact about the
+  # wait that was never true.
+  local waited=$(( (attempts > 1 ? attempts - 1 : 0) * delay ))
+  # WHAT WAS MEASURED is that the host is not serving this build. WHAT CAUSED
+  # IT is not knowable from here: the upload may never have landed, or the
+  # edge may still be propagating — MEASURED 2026-10-23, an upload that
+  # reported success, an alias that passed, and a custom domain still
+  # serving the PREVIOUS deployment's chunks. So the message states the fact
+  # and names both causes, and does NOT conclude that the upload failed.
+  echo "error: $label does not serve this build after ${waited}s — the edge may still be propagating, or the upload did not land; check the deployment list before re-uploading" >&2
   return 1
 }
 
@@ -133,7 +144,14 @@ verify_bytes "$CUSTOM" "$CUSTOM" || exit "$EXIT_BYTES"
 # ── the production deployment must carry the commit we are shipping ───────
 DEPLOY_ROWS="$(npx --yes wrangler pages deployment list --project-name "$PROJECT" 2>/dev/null || true)"
 PROD_SHA="$(echo "$DEPLOY_ROWS" | awk -F'│' '/Production/ {gsub(/[[:space:]]/, "", $5); print $5; exit}')"
-if [ -n "$PROD_SHA" ]; then
+# THE CROSS-CHECK NEEDS BOTH SIDES. With no commit to compare against, the
+# pattern "$HEAD_SHORT"* is the pattern "*", which matches every sha there
+# is — so the check would have printed "ok: the production deployment
+# carries commit " and meant NOTHING. An unknown commit is not a match; it
+# is the absence of the cross-check, and it says so instead of passing.
+if [ -z "$HEAD_SHORT" ]; then
+  echo "warn: the commit could not be read from git — the production-commit cross-check did not run; byte check only"
+elif [ -n "$PROD_SHA" ]; then
   case "$PROD_SHA" in
     "$HEAD_SHORT"*)
       echo "ok: the production deployment carries commit ${HEAD_SHORT}"
@@ -155,14 +173,24 @@ fi
 # A pipe that cannot be read is not a reason to stop: the list is a
 # CROSS-CHECK on top of the byte graph, and an unreadable list means the
 # cross-check is unavailable, not that the bytes failed. It says so.
+#
+# AND AN UNKNOWN COMMIT MATCHES NOTHING. The empty sha widens this filter
+# instead of narrowing it — index(src, "") is 1 for EVERY src — so without
+# the guard every deployment the project has ever made would be compared
+# against this build. The guard is in the filter itself, so it holds
+# wherever the filter is called from.
 DEPLOY_URLS="$(printf '%s\n' "$DEPLOY_ROWS" | awk -F'│' -v sha="$HEAD_SHORT" '
   {
     src = $5; url = $6;
     gsub(/[[:space:]]/, "", src); gsub(/[[:space:]]/, "", url);
-    if (src != "" && url != "" && index(src, sha) == 1) print url
+    if (sha != "" && src != "" && url != "" && index(src, sha) == 1) print url
   }' | sort -u || true)"
 if [ -z "$DEPLOY_URLS" ]; then
-  echo "warn: no deployment list for this commit could be read; byte check only"
+  if [ -n "$HEAD_SHORT" ]; then
+    echo "warn: no deployment list for this commit could be read; byte check only"
+  else
+    echo "warn: the commit could not be read from git — no deployment could be matched to it; byte check only"
+  fi
 fi
 
 CHECKED=0
@@ -178,7 +206,7 @@ done <<< "$DEPLOY_URLS"
 
 if [ "$CHECKED" -gt 0 ]; then
   echo "ok: $CHECKED further deployment(s) of ${HEAD_SHORT} serve identical bytes"
-else
+elif [ -n "$HEAD_SHORT" ]; then
   echo "warn: no further deployment of ${HEAD_SHORT} was found to compare"
 fi
 

@@ -24,6 +24,8 @@
 #   the dirty tree         → must report the secret, and exit non-zero
 #   the gate missing a
 #     route                → must report the coverage gap, and exit non-zero
+#   the third-party page   → must RECORD the contact it made, not only
+#                            the failure it caused
 #   the clean control      → must report nothing, and exit zero
 #
 set -uo pipefail
@@ -243,6 +245,29 @@ if echo "$OUT" | grep -q "GATE COVERAGE"; then
   fail=1
 else
   echo "  ✓ a nested route the gate measures is not called ungated"
+fi
+
+echo
+echo "── THIRD PARTY: the contacts must be RECORDED, not only the failures ──"
+# A check that prints nothing when it passes cannot be re-derived from the
+# log: a run that saw two contacts and a run that saw none read the same.
+# The audit therefore RECORDS every contact each route made — and that
+# recording was unprotected, because nothing here asserted on it. Deleting
+# the recording line left every other case green, which is exactly what a
+# proof case that would also pass with the rule deleted looks like.
+#
+# The assertion is on the RECORDED LINE, not on the service name: the
+# finding that names the same service says "the page contacts
+# OpenStreetMap", and the record says "contacted OpenStreetMap". A grep
+# for the service alone would pass on the finding and prove nothing.
+OUT=$(node scripts/design/shipaudit.mjs --base "$BASE" --routes "/ship.html?variant=third-party" 2>&1)
+code=$?
+echo "$OUT" | grep -E "^===|^  /ship|^total shipability" | sed 's/^/  /'
+if echo "$OUT" | grep -q "contacted OpenStreetMap"; then
+  echo "  ✓ the contact the page made is recorded, with the service it made it to"
+else
+  echo "  ✗ the contact was not recorded — a run that saw a contact and a run that saw none read the same"
+  fail=1
 fi
 
 echo
