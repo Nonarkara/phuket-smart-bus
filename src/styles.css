@@ -6827,6 +6827,86 @@ a { color: var(--amber-text); }
   border-top: 1px solid var(--ax-line);
 }
 
+/* ── What the service did: the plan against the record ─────────────────────
+   A block, not a card in the 2×2 story grid: this is a COMPARISON (what the
+   timetable said, what the record holds), and a comparison needs a heading
+   and rows under it — one card would have to carry two directions and two
+   numbers each, and would read as four unrelated figures. */
+.v2-service {
+  flex-shrink: 0;
+  background: var(--ax-panel);
+  border-bottom: 1px solid var(--ax-line);
+  padding: 10px 18px 12px;
+}
+.v2-service__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.v2-service__head > span:first-child {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ax-ink-2);
+  white-space: nowrap;
+}
+/* The counts on the right: they are the answer to "how much service ran",
+   so they carry the weight, and the plan that sits beside them is context. */
+.v2-service__head-meta {
+  font-size: var(--t-micro);
+  color: var(--ax-ink-3);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 0;
+}
+.v2-service__rows {
+  margin-top: 8px;
+}
+.v2-service__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 14px;
+  padding: 5px 0;
+  border-top: 1px solid var(--ax-line);
+}
+.v2-service__row:first-child { border-top: 0; }
+.v2-service__dir {
+  font-size: var(--t-label);
+  color: var(--ax-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v2-service__ran,
+.v2-service__trip {
+  font-size: var(--t-label);
+  color: var(--ax-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.v2-service__ran b { color: var(--ax-ink); font-weight: 700; }
+.v2-service__trip em { font-style: normal; color: var(--ax-ink-3); }
+/* The rule about the record, in the block itself: a count of recorded trips
+   is a count of what the record holds, and the reader has to be told that
+   here rather than infer it from a footnote elsewhere. */
+.v2-service__foot {
+  margin: 8px 0 0;
+  font-size: var(--t-micro);
+  line-height: 1.45;
+  color: var(--ax-ink-3);
+  max-width: 62ch;
+}
+.v2-service__empty {
+  margin: 6px 0 0;
+  font-size: var(--t-label);
+  color: var(--ax-ink-3);
+}
+
 /* ── The rail's first screen ───────────────────────────────────────────────
    Three questions, three answers, all above the fold: how much did we lose
    today (the headline), what do I do about it now (the equation), which bus

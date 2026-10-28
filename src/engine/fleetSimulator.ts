@@ -446,6 +446,38 @@ export function getPublishedAirportboundTrips(): AirportboundTrip[] {
     .sort((a, b) => a.originDepMin - b.originDepMin);
 }
 
+/** One published trip: when it left, when it arrived, and how long it took. */
+export type PublishedTrip = { departMin: number; arriveMin: number; minutes: number };
+
+/**
+ * The published Airport-line plan, both directions, read from the official
+ * PKSB timetable — the same files the map and the rider countdown use, so
+ * "what was scheduled" is one source and not a number written down twice.
+ *
+ * The end-to-end minutes are FORWARD differences: a trip that leaves the
+ * airport at 23:30 and reaches Rawai at 00:57 ran 87 minutes, not −1293.
+ * That distinction is not cosmetic — the published end-to-end on this
+ * corridor is 120–147 minutes, and a naive subtraction would report three
+ * late-night trips as negative and pull the median down by an hour.
+ */
+export function getPublishedAirportTrips(): { southbound: PublishedTrip[]; northbound: PublishedTrip[] } {
+  const read = (timetable: DetailedTimetable): PublishedTrip[] =>
+    timetable.departures
+      .map((dep) => {
+        const times = dep.times.map(parseTimeToMinutes);
+        const first = times.find((t) => t !== null);
+        const last = [...times].reverse().find((t) => t !== null);
+        if (first == null || last == null) return null;
+        return { departMin: first, arriveMin: last, minutes: forwardDiff(first, last) };
+      })
+      .filter((t): t is PublishedTrip => t !== null)
+      .sort((a, b) => a.departMin - b.departMin);
+  return {
+    southbound: read(airportToRawaiTimetable as DetailedTimetable),
+    northbound: read(rawaiToAirportTimetable as DetailedTimetable),
+  };
+}
+
 // ── airport-line supply: as the real buses ran, or as published ──────────
 /** One recorded day of the Airport line, as the trackers saw it. */
 export type MeasuredAirportSupply = {
@@ -469,15 +501,67 @@ export function getSupplyVersion(): number {
   return supplyVersion;
 }
 export function getMeasuredAirportSupply(dow = getSimulationDay()): MeasuredAirportSupply | null {
+  const live = liveSupplyFor(dow);
+  if (live) {
+    return { date: live.date, southbound: live.southbound, northbound: live.northbound, medianTripMin: live.medianTripMin };
+  }
   return measuredByDow[dow] ?? null;
 }
 
-/** Airport → Rawai departures the simulation runs: measured for that weekday when recorded, else published. */
+// ── airport-line supply as it ran TODAY, from the record ──────────────────
+//
+// The measured supply above is keyed by weekday, because the simulation
+// replays a DAY: the latest recorded Wednesday stands in for every Wednesday.
+// The live wall is not a replay — it is today, and today's service is in the
+// record while it happens. So the live supply is its own slot, carrying the
+// departures the trackers actually recorded, and it applies ONLY while the
+// real clock is in force. Leaving LIVE hands the replay clock back, and the
+// recorded weekday goes back with it: the two supplies never mix.
+
+/** The Airport line's service on one real date, as the trackers recorded it. */
+export type LiveAirportSupply = {
+  /** Bangkok date the departures belong to. */
+  date: string;
+  /** Day of week that date is (0 = SUN). */
+  dow: number;
+  /** Airport → Rawai departure minutes. */
+  southbound: number[];
+  /** Rawai → Airport trips: when it left, when it reached the curb. */
+  northbound: AirportboundTrip[];
+  /** Median end-to-end minutes of the recorded trips. */
+  medianTripMin: number | null;
+};
+
+let liveAirportSupply: LiveAirportSupply | null = null;
+
+/** Install (or remove with `null`) today's recorded service. */
+export function setLiveAirportSupply(supply: LiveAirportSupply | null): void {
+  liveAirportSupply = supply;
+  supplyVersion += 1;
+}
+export function getLiveAirportSupply(): LiveAirportSupply | null {
+  return liveAirportSupply;
+}
+
+/**
+ * The live supply, but only while the real clock is in force (LIVE mode).
+ *
+ * There is no day-of-week test here, on purpose. LIVE is one day — today —
+ * and the record names that day by date, not by weekday: at 01:00 the service
+ * being run is the one that began yesterday at 03:00, and its weekday is not
+ * the weekday the demand model is running. The mode decides, not the label.
+ */
+function liveSupplyFor(dow: number): LiveAirportSupply | null {
+  if (!clockOverride.fn) return null; // a replay is running: the recorded weekday stands in
+  return liveAirportSupply;
+}
+
+/** Airport → Rawai departures the simulation runs: live service, else measured, else published. */
 export function getAirportDepartures(dow = getSimulationDay()): number[] {
-  return measuredByDow[dow]?.southbound ?? getPublishedAirportDepartures();
+  return getMeasuredAirportSupply(dow)?.southbound ?? getPublishedAirportDepartures();
 }
 export function getAirportboundTrips(dow = getSimulationDay()): AirportboundTrip[] {
-  return measuredByDow[dow]?.northbound ?? getPublishedAirportboundTrips();
+  return getMeasuredAirportSupply(dow)?.northbound ?? getPublishedAirportboundTrips();
 }
 
 /** The direction profiles with the airport line's departures swapped for the supply in force. */

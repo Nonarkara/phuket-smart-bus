@@ -36,6 +36,8 @@ import {
 import { measuredSupplyByDow } from "./engine/measuredSupply";
 import type { SlimDay } from "@shared/insights";
 import { bangkokDow, getLiveFeedState, getLiveMapVehicles, startLiveFeed, subscribeLiveFeed } from "./engine/liveOps";
+import { setLiveAirportSupply } from "./engine/fleetSimulator";
+import { getLiveServiceState, startLiveService, subscribeLiveService } from "./engine/liveService";
 import { getBangkokNowFractionalMinutes } from "./engine/time";
 import {
   buildFlightHourBuckets,
@@ -63,6 +65,7 @@ import { TelemetryStatusModal } from "./components/v2/TelemetryStatusModal";
 import { DayReportModal } from "./components/v2/DayReportModal";
 import { LiveFleetPanel } from "./components/v2/LiveFleetPanel";
 import { LiveFeedBar } from "./components/v2/LiveFeedBar";
+import { LiveServiceBlock } from "./components/v2/LiveServiceBlock";
 import { appPath } from "./lib/paths";
 
 type ViewMode = "operations" | "insights" | "toolkit" | "live";
@@ -271,11 +274,30 @@ export default function DashboardV2() {
     const tick = setInterval(refresh, 1000); // "feed 6s old", "seen 40s" tick
     return () => { stop(); unsubscribe(); clearInterval(tick); };
   }, []);
+  // The day's SERVICE, from the record: which trips the buses ran, how long
+  // they took, what is still due. The tracker says where the buses are; this
+  // says what the service did. Polled on its own, slower cadence — the record
+  // does not change by the second.
+  const [service, setService] = useState(() => getLiveServiceState());
+  useEffect(() => {
+    const stop = startLiveService();
+    const refresh = () => setService(getLiveServiceState());
+    const unsubscribe = subscribeLiveService(refresh);
+    return () => { stop(); unsubscribe(); };
+  }, []);
   const liveAvailable = live.summary.busesReporting > 0 && live.feedAgeSec !== null && live.feedAgeSec < 120;
   const source: OpsSource = sourcePref === "auto" ? (liveAvailable ? "live" : "sim") : sourcePref;
   const sourceRef = useRef(source);
   sourceRef.current = source;
   const liveSummary = live.summary;
+  // The day's record: the trips the buses ran, counted for the whole fleet and
+  // for the airport line on its own. Null until the record answers, and the
+  // wall says "observed since" instead of claiming a day it has not seen.
+  const recordTrips = service.day ? service.day.lines.reduce((sum, l) => sum + l.trips.length, 0) : null;
+  const recordAirportTrips = service.day
+    ? service.day.lines.find((l) => l.routeId === "rawai-airport")?.trips.length ?? 0
+    : 0;
+  const recordKm = service.day?.fleet?.km ?? null;
 
   const chooseSource = (next: OpsSource) => {
     setSourcePref(next);
@@ -296,6 +318,9 @@ export default function DashboardV2() {
     setState(computeSimState());
     return () => {
       setClockOverride(null);
+      // The recorded service goes with the live clock: a replay must run on
+      // the recorded weekday, never on today's service.
+      setLiveAirportSupply(null);
       resetClockAnchor();
       setState(computeSimState());
       setClockState(getClockState());
@@ -678,10 +703,14 @@ export default function DashboardV2() {
                   </span>
                 </div>
                 <div className="v2-side-rail__story-card">
-                  <span className="v2-side-rail__story-label">Trips completed</span>
-                  <strong className="v2-side-rail__story-value">{liveSummary.tripsCompleted.toLocaleString()}</strong>
+                  <span className="v2-side-rail__story-label">{recordTrips === null ? "Trips completed" : "Trips recorded today"}</span>
+                  <strong className="v2-side-rail__story-value">
+                    {(recordTrips ?? liveSummary.tripsCompleted).toLocaleString()}
+                  </strong>
                   <span className="v2-side-rail__story-detail">
-                    {liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · {liveSummary.kmDriven.toLocaleString()} km
+                    {recordTrips === null
+                      ? `${liveSummary.observedSinceMin !== null ? `observed since ${hhmm(liveSummary.observedSinceMin)}` : "none observed yet"} · ${liveSummary.kmDriven.toLocaleString()} km`
+                      : `${recordAirportTrips} airport line · ${recordTrips - recordAirportTrips} other lines`}
                   </span>
                 </div>
                 <div className="v2-side-rail__story-card v2-side-rail__story-card--earned">
@@ -720,7 +749,15 @@ export default function DashboardV2() {
                 The hour-by-hour analysis used to sit BETWEEN the headline and
                 the fleet table, which put 1,652px of content in a 527px rail
                 and the fleet table 1,482px below the fold. */}
-              <OperatingEquation rows={hourlyBalance} simMinutes={state.simMinutes} flights={dailyFlights} />
+              <OperatingEquation
+                rows={hourlyBalance}
+                simMinutes={state.simMinutes}
+                flights={dailyFlights}
+                supplyBasis={source === "live" && service.service ? "recorded departures + still due" : undefined}
+              />
+              {source === "live" && (
+                <LiveServiceBlock service={service.service ?? null} status={service.status} error={service.error} />
+              )}
               {source === "live"
                 ? <LiveFleetPanel summary={liveSummary} status={live.status} detail={live.detail} />
                 : <OperatorFleetPanel rows={operatorRows} waitingAtCurb={state.paxAtAirport} nextDepartureMin={state.nextDeparture} />}
@@ -744,12 +781,12 @@ export default function DashboardV2() {
             <span className="v2-accum__label">Buses Reporting</span>
           </div>
           <div className="v2-accum__item">
-            <span className="v2-accum__val">{liveSummary.tripsCompleted.toLocaleString()}</span>
-            <span className="v2-accum__label">Trips Today · GPS</span>
+            <span className="v2-accum__val">{recordTrips ?? liveSummary.tripsCompleted.toLocaleString()}</span>
+            <span className="v2-accum__label">{recordTrips === null ? "Trips Today · GPS" : "Trips Today · record"}</span>
           </div>
           <div className="v2-accum__item">
-            <span className="v2-accum__val">{liveSummary.kmDriven.toLocaleString()}</span>
-            <span className="v2-accum__label">Km Today · GPS</span>
+            <span className="v2-accum__val">{(recordKm ?? liveSummary.kmDriven).toLocaleString()}</span>
+            <span className="v2-accum__label">Km Today · {recordKm === null ? "GPS" : "record"}</span>
           </div>
           <div className="v2-accum__item v2-accum__item--accent">
             <span className="v2-accum__val">{liveSummary.riders > 0 ? liveSummary.riders.toLocaleString() : "—"}</span>

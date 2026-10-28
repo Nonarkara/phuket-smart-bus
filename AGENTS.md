@@ -16,19 +16,21 @@ A **hybrid research prototype shaped to become an operator system**. Today the p
 
 ## The Vision: Simulation → Production Pipeline
 
-### Phase 1: NOW — Live Fleet + Modelled Demand (Cloudflare Pages)
+### Phase 1: NOW — Live Fleet, Live Service + Modelled Demand (Cloudflare Pages)
 - Pages Functions relay public tracker fixes; KV and D1 keep daily summaries and the fix record
 - The client-side engine computes demand, queues, recommendations, fares and CO₂ from published timetables + `new Date()`
-- LIVE means fresh fleet telemetry only. It does not promote modelled demand or ridership to observed data.
+- LIVE means fresh fleet telemetry AND the day's recorded service. It does not promote modelled demand or ridership to observed data.
 - 30× time acceleration so a visitor sees a full day unfold in minutes
 - Every number on screen traces back to the demand-supply chain: flights land → passengers arrive → buses collect them → revenue earned → CO₂ saved
+- **The day's service is read from the record, not from the browser's memory** (2026-10-28): `GET /api/research/service?date=` projects the research analysis to the trips (departure minute, arrival minute, duration) — 4.7 kB for a 26,000-fix day — and `src/engine/liveService.ts` sets that service as the supply in force while the real clock is in force. The wall's SERVICE block shows the published plan against the record, and says the rule that makes the count what it is: a trip whose tracker goes quiet leaves no trip, so the recorded count undercounts the service.
 
-### Phase 2: NEXT — GPS Integration
-When the bus company provides GPS connectivity:
-- Replace `fleetSimulator.ts` with real GPS telemetry from devices on buses
+### Phase 2: NEXT — Direct GPS Integration
+The public tracker already supplies fleet telemetry. What remains is the bus company's own device feed:
+- Replace the relay's upstream with the company's device API — `fleetSimulator.ts` then reads real telemetry from the buses themselves
 - The `VehiclePosition` type already has `telemetrySource: "public_tracker" | "direct_gps" | "schedule_mock"`
 - The `dataProvider.ts` layer swaps from engine to API calls — UI code doesn't change
 - The ingest endpoints already exist in `server/app.ts`: `/api/integrations/vehicle-telemetry`
+- The passenger counter is the open item on this phase: no APC has ever read above zero, so riders and fares are unknown rather than measured
 
 ### Phase 3: FUTURE — Camera + On-Demand Intelligence
 - Seat cameras → real occupancy data (the `SeatAvailability` type is ready)
@@ -180,18 +182,20 @@ Buses follow the **actual road polyline geometry** (3,944 points for the Airport
 
 ### Bus Timetable (Official PKSB, effective 18 Jan 2025)
 
-**Rawai Beach → Phuket Airport (northbound)**: 20 departures/day, first 05:30, last 19:30, ~95 min trip. The first two of them start at Kata Palm, not Rawai Beach. This is the corridor the return-leg engine uses — departing pax who must reach the airport 1h before takeoff bid onto these buses in reverse deadline order.
+**Rawai Beach → Phuket Airport (northbound)**: 20 departures/day, first 05:30, last 19:30, ~142 min trip. The first two of them start at Kata Palm, not Rawai Beach. This is the corridor the return-leg engine uses — departing pax who must reach the airport 1h before takeoff bid onto these buses in reverse deadline order.
 
-**Phuket Airport → Rawai Beach (southbound)**: 20 departures/day, first 08:15, last 23:30, ~95 min trip. This is the corridor the inbound queue uses — arriving pax board FIFO from the curb.
+**Phuket Airport → Rawai Beach (southbound)**: 20 departures/day, first 08:15, last 23:30, ~130 min trip. This is the corridor the inbound queue uses — arriving pax board FIFO from the curb.
 
 The same 10 vehicles (กข 1001–1010) rotate through both directions; the duty cycle is ~210 min per bus (95 min trip + 95 min layover + 20 min buffer at the airport curb).
+
+**The published end-to-end on this corridor is 120–147 min, not 95** (measured 2026-10-28 from `src/data/timetables/*.json` — the timetable's own first-stop→last-stop times: 120–133 min southbound, 102–147 min northbound). The recorded trips run 105–140 min southbound and 122–199 min northbound. The 95-minute figure in `config.ts` is the passenger-facing comparison number in the taxi-vs-bus table, not the timetable's, and it must not be quoted as the running time.
 
 Real travel times (from official timetable):
 - Airport → Patong: **100 min** (1h40m via Surin/Kamala)
 - Airport → Phuket Old Town: **56 min**
 - Patong → Old Town: **35 min**
 - Patong → Promthep Cape: **48 min**
-- Airport → Rawai (full route): **95 min**
+- Airport → Rawai (full route): **~130 min** on the published timetable (the 95 min in the comparison table is not the timetable's running time)
 
 ### Ferry Schedules (from phi-phi.com + pier websites)
 

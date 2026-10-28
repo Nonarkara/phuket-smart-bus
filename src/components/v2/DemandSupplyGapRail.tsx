@@ -7,6 +7,13 @@ type Props = {
   rows: HourlyBalance[];
   simMinutes: number;
   flights: OpsFlight[];
+  /**
+   * Where the SEATS came from, when that is not the published timetable.
+   * In LIVE the supply in force is today's recorded departures plus what is
+   * still due — so the number says so, rather than passing for a timetable
+   * figure it is not.
+   */
+  supplyBasis?: string;
 };
 
 function hourLabel(hour: number) {
@@ -52,7 +59,7 @@ function derive(rows: HourlyBalance[], simMinutes: number, flights: OpsFlight[])
  * finished 1,482px below the fold. Nothing on the surface said it was down
  * there.
  */
-export function OperatingEquation({ rows, simMinutes, flights }: Props) {
+export function OperatingEquation({ rows, simMinutes, flights, supplyBasis }: Props) {
   const d = derive(rows, simMinutes, flights);
   if (!d) return null;
   const { hour, now, demand, seats, arrivals, departures } = d;
@@ -75,7 +82,7 @@ export function OperatingEquation({ rows, simMinutes, flights }: Props) {
           <span className="v2-equation__step">02 · Supply</span>
           <strong>{seats}</strong>
           <p>{now.busSeats} seats out<br />{now.outSeats} seats back</p>
-          <small>{scheduledBuses} scheduled bus departures</small>
+          <small>{supplyBasis ? `${scheduledBuses} bus departures · ${supplyBasis}` : `${scheduledBuses} scheduled bus departures`}</small>
         </section>
         <span className="v2-equation__operator" aria-hidden="true">=</span>
         <section className={`v2-equation__term v2-equation__term--gap ${now.busesToAdd > 0 ? "is-short" : "is-covered"}`}>

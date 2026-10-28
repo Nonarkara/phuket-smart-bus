@@ -3,6 +3,26 @@ import { text } from "./i18n";
 
 export const BANGKOK_TIME_ZONE = "Asia/Bangkok";
 
+/** Bangkok calendar date (yyyy-mm-dd) for an instant. */
+export function bangkokDate(ms: number): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: BANGKOK_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
+}
+
+/** Bangkok day of week (0 = Sunday). */
+export function bangkokDow(ms: number): number {
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: BANGKOK_TIME_ZONE, weekday: "short" }).format(new Date(ms));
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd);
+}
+
+/**
+ * The service day a Bangkok instant belongs to. A service day runs 03:00 →
+ * 03:00, so 01:00 on Wednesday is still Tuesday's service day — the same
+ * frame shared/research.ts reads the fixes in.
+ */
+export function bangkokServiceDate(ms: number): string {
+  return new Date(ms + 7 * 3_600_000 - 3 * 3_600_000).toISOString().slice(0, 10);
+}
+
 type TimetableMetadata = {
   label: LocalizedText;
   url: string;

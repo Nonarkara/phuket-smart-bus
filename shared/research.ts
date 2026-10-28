@@ -88,9 +88,13 @@ export function serviceDayWindow(date: string): [number, number] | null {
 }
 
 /** Minutes since Bangkok midnight of the service day (past midnight runs on: 24.5 h = 00:30). */
-function dayMinute(ms: number, dayStartMs: number): number {
+export function serviceMinute(ms: number, dayStartMs: number): number {
   const midnight = dayStartMs - SERVICE_DAY_START_H * 3_600_000;
   return Math.round(((ms - midnight) / 60_000) * 10) / 10;
+}
+
+function dayMinute(ms: number, dayStartMs: number): number {
+  return serviceMinute(ms, dayStartMs);
 }
 
 function pickLine(fixes: ResearchFix[]): Line | null {
@@ -299,4 +303,79 @@ export function analyzeDay(date: string, rows: ResearchFix[]): ResearchDay {
     day.trips.sort((a, b) => a.departMs - b.departMs);
   }
   return { date, fixes: rows.length, lines: [...lines.values()], unassigned: unassigned.sort((a, b) => a.plate.localeCompare(b.plate)) };
+}
+
+// ── the service day, in the shape an operations wall needs ─────────────────
+//
+// A research day carries the time–distance trace of every bus on every line:
+// that is what the Marey diagram is drawn from, and it is far more than an
+// operations wall needs. The wall asks a different question — which trips ran,
+// when did each one leave, when did it arrive — so this projection keeps the
+// trips and drops the traces. It is the same analysis, read for a different
+// reader, and the minute convention is the one the timetable already uses:
+// minutes since Bangkok midnight of the service day (03:00 → 180, and a
+// 00:30 arrival the next morning → 1470).
+
+export type ServiceTrip = {
+  plate: string;
+  /** "fwd" = line.from → line.to; "rev" the other way; "lap" on a loop. */
+  dir: "fwd" | "rev" | "lap";
+  /** Minute of the service day the trip left its origin terminal. */
+  departMin: number;
+  /** Minute of the service day it reached the other terminal. */
+  arriveMin: number;
+  /** End-to-end minutes, as measured between the two terminal arrivals. */
+  minutes: number;
+};
+
+export type ServiceLine = {
+  routeId: string;
+  name: string;
+  from: string;
+  to: string;
+  loop: boolean;
+  lengthM: number;
+  /** Buses that reported on this line that day. */
+  buses: number;
+  trips: ServiceTrip[];
+};
+
+export type ServiceDay = {
+  date: string;
+  /** True once the service day is over and the analysis can no longer change. */
+  finished: boolean;
+  computedAt: string;
+  /** Fixes in the record for the day. */
+  fixes: number;
+  lines: ServiceLine[];
+  /** Buses on no PKSB line (the town fleet) — reported, never forced onto one. */
+  unassigned: number;
+};
+
+/** The trips of one service day, without the traces. */
+export function serviceDayFrom(day: ResearchDay, finished: boolean, computedAt: string): ServiceDay {
+  const dayStartMs = serviceDayWindow(day.date)?.[0] ?? 0;
+  return {
+    date: day.date,
+    finished,
+    computedAt,
+    fixes: day.fixes,
+    lines: day.lines.map((line) => ({
+      routeId: line.routeId,
+      name: line.name,
+      from: line.from,
+      to: line.to,
+      loop: line.loop,
+      lengthM: Math.round(line.lengthM),
+      buses: line.buses.length,
+      trips: line.trips.map((trip) => ({
+        plate: trip.plate,
+        dir: trip.dir,
+        departMin: serviceMinute(trip.departMs, dayStartMs),
+        arriveMin: serviceMinute(trip.arriveMs, dayStartMs),
+        minutes: trip.minutes,
+      })),
+    })),
+    unassigned: day.unassigned.length,
+  };
 }

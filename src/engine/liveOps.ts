@@ -27,7 +27,7 @@ import { getDayModelFor, BUS_CAPACITY, FARE_THB } from "./demandSupplyEngine";
 import { getLocalLineTripEstimate, type SimState } from "./simulation";
 import { getDirectionPolyline } from "./routes";
 import { haversineDistanceMeters } from "./geo";
-import { getBangkokNowFractionalMinutes, BANGKOK_TIME_ZONE } from "./time";
+import { getBangkokNowFractionalMinutes, BANGKOK_TIME_ZONE, bangkokDate, bangkokDow } from "./time";
 import { ROI_CONSTANTS } from "./roi";
 import { appPath } from "../lib/paths";
 
@@ -175,14 +175,10 @@ export type LiveLedger = {
 };
 
 // ── Bangkok calendar helpers ───────────────────────────────────────────────
-export function bangkokDate(ms: number): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: BANGKOK_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
-}
-
-export function bangkokDow(ms: number): number {
-  const wd = new Intl.DateTimeFormat("en-US", { timeZone: BANGKOK_TIME_ZONE, weekday: "short" }).format(new Date(ms));
-  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd);
-}
+// They live in time.ts now (one home for "what time is it in Phuket"), and are
+// re-exported here because this module has always been where the console
+// looked for them.
+export { bangkokDate, bangkokDow } from "./time";
 
 export function emptyLedger(nowMs: number): LiveLedger {
   return { date: bangkokDate(nowMs), dow: bangkokDow(nowMs), firstFixMs: null, vehicles: {}, trips: [] };

@@ -38,7 +38,8 @@ export function LiveFeedBar({ status, detail, feedAgeSec, busesReporting, observ
           basis gives way instead of the line. */}
       <span className="v2-livebar__foot">
         <span className="v2-livebar__basis">
-          Fleet, trips &amp; km: GPS · Demand, queues and dispatch: model · Riders: {countersOnline ? "counted where available, otherwise modelled" : "modelled load per run"}
+          Fleet &amp; positions: GPS · Service: the day&rsquo;s record · Demand, queues &amp; dispatch: model · Riders:{" "}
+          {countersOnline ? "counted where available, else modelled" : "modelled — no counter reports"}
         </span>
         <button type="button" className="v2-timebar__speed" onClick={onOpenDevices} title="Direct GPS device ingest console">
           DEVICES
