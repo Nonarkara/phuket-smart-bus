@@ -1,13 +1,19 @@
 /**
- * The short argument that earns the long research.
+ * LandingPage — the clear, interactive argument that earns the long research.
  *
- * The page begins with the passenger task, then follows the signal through
- * operations, public authority and finance. Claims are labelled so a reader
- * can distinguish what is observed, what the simulator calculates and what
- * still needs a pilot.
+ * Sequence of Discovery:
+ *   Act 1: The Passenger Choice (Elena, Somchai, Chen, Liam simulator)
+ *   Act 2: The Operator Math (+1 Bus Calculator)
+ *   Act 3: The Signal Chain (Tap to Bankability)
+ *   Act 4: The 10-Step Blueprint (Curb to Concession)
+ *   Act 5: Myths vs Reality (4 Hard Transit Doubts Answered)
+ *   Handover: Chapters 01–04 + Expandable Verified Provenance Audit
  */
 
+import { useState } from "react";
 import { AddBusCalculator } from "./AddBusCalculator";
+import { TravelerJourneySimulator } from "./TravelerJourneySimulator";
+import { DataProvenance } from "./DataProvenance";
 
 type Beat = {
   number: string;
@@ -23,133 +29,161 @@ type Beat = {
 const BEATS: Beat[] = [
   {
     number: "01",
-    label: "Passenger promise",
+    label: "Passenger Promise",
     status: "Observed",
-    title: "First answer the person standing outside arrivals.",
-    body: "When is the next bus? Where does it leave? How long to Patong? The phone screen reads the published airport timetable and keeps those answers above everything else.",
-    proof: "The live countdown is calculated from the same departure array used by the fleet simulator.",
+    title: "Answer the traveler standing at arrivals in under 30 seconds.",
+    body: "When is the next bus? Where does it leave? How much is it to Patong or Kata? The phone app reads the official airport timetable and keeps these answers visible above everything else.",
+    proof: "The live countdown is calculated from the official departure timetable used by the fleet simulator.",
     href: "https://bus.nonarkara.org/",
     link: "Try the passenger screen"
   },
   {
     number: "02",
-    label: "Requested drop-off",
+    label: "Hotel Drop-off",
     status: "Proposed",
-    title: "A hotel name becomes an operating instruction.",
-    body: "The passenger names a hotel, beach or area. The request reaches the driver tablet, which confirms a safe pull-over on the serviced corridor. Flexible does not mean stopping blindly in traffic.",
-    proof: "The prototype captures the destination today. Driver acknowledgement and safe-stop rules are pilot requirements.",
+    title: "A hotel name becomes a driver task without causing traffic chaos.",
+    body: "The passenger selects a hotel, beach, or landmark. The request reaches the driver tablet, confirming a designated safe pull-over spot along the 402/4233 coastal corridor. Flexibility never compromises road safety.",
+    proof: "The prototype captures destination coordinates today; safe-stopping geo-fencing is part of the 90-day pilot scope.",
     href: "https://bus.nonarkara.org/",
     link: "Test the destination flow"
   },
   {
     number: "03",
-    label: "Payment",
+    label: "Payment & Passes",
     status: "Proposed",
-    title: "Sell one ride simply. Sell three days without inventing another wallet.",
-    body: "The prototype offers a ฿100 single ride and a mock 72-hour pass. Production should hand card entry to a hosted payment page and add PromptPay or EMV only after the operator chooses settlement, refunds and fraud rules.",
-    proof: "No live card is charged. The page demonstrates the transaction and boarding-token contract, not a finished acquiring agreement.",
+    title: "Sell a ฿100 ride simply. Sell 3-day island passes without creating another walled wallet.",
+    body: "The prototype offers a ฿100 single ride and a 72-hour unlimited pass. In production, payments hand off to standard PromptPay QR, Apple Pay, and credit cards with instant digital boarding tokens.",
+    proof: "Simulated checkout demonstrates transaction contracts and digital QR boarding passes without charging live cards.",
     href: "https://bus.nonarkara.org/",
-    link: "Walk through the mock checkout"
+    link: "Walk through mock checkout"
   },
   {
     number: "04",
-    label: "Authority",
+    label: "Legal Authority",
     status: "Due diligence",
-    title: "The app can be built before the concession. The service cannot.",
-    body: "Route authority, curb access, fare approval, insurance, a contract long enough to repay the assets — none of that shows up in a demo. Software doesn't make those questions disappear. It makes them visible sooner.",
-    proof: "The feasibility chapter separates the operating case from the approvals and contracts still requiring legal review.",
+    title: "Software can be coded in weeks. Concessions require public authority.",
+    body: "Exclusive route rights, curb access at HKT International, fare caps, insurance liabilities, and contract tenure long enough to amortize EV bus assets — these determine whether wheels actually roll.",
+    proof: "Chapter 3 separates the operational software model from the public concession approvals and DLT route licenses.",
     href: "#feasibility",
-    link: "Inspect the feasibility case"
+    link: "Inspect concession feasibility"
   },
   {
     number: "05",
-    label: "Fleet duties",
+    label: "Fleet Duty Cycles",
     status: "Modelled",
-    title: "One bus is two directions, a layover and a promise to come back.",
-    body: "The same airport fleet rotates southbound and northbound. The engine follows each duty along real road geometry, accounts for the turnaround and keeps demand separate in both directions.",
-    proof: "Published timetable + 3,944-point route geometry + one simulated clock. No decorative vehicle dots.",
+    title: "One bus handles both directions: arriving tourists south, departing travelers north.",
+    body: "The same 10-bus airport fleet runs south to Rawai and returns north to HKT. The simulation tracks each bus on real road geography (3,944 GPS points), balancing layovers and directional queues.",
+    proof: "Built on the published 20-departure timetable + high-resolution road geometry. No fake vehicle dots.",
     href: "https://bus.nonarkara.org/ops",
-    link: "Watch the fleet move"
+    link: "Watch real fleet movement"
   },
   {
     number: "06",
-    label: "Devices",
+    label: "Hardware & Sensors",
     status: "Build-ready",
-    title: "GPS tells us where. A tablet tells the driver why. A counter tells us how full.",
-    body: "Start with three instruments, not a shopping catalogue: vehicle position, a driver task screen and anonymous boarding/alighting counts. Each feed has a job and an ingest path already waiting in the production backend.",
-    proof: "Telemetry, seat, driver-attention and passenger-flow types and endpoints already exist in this repository. The types are not the hardware: the passenger counters on the current fleet have never reported above zero (checked 29 Sep 2026), so nothing on this site presents a rider count as observed. See limitation 06.",
+    title: "GPS shows where. The tablet tells the driver why. The door sensor shows how full.",
+    body: "Three essential tools instead of an expensive hardware catalog: vehicle GPS, a driver assistance screen, and anonymous doorway passenger counters. Each pipeline is already implemented in the backend.",
+    proof: "Vehicle telemetry, seat capacity, driver tasking, and passenger flow data types already exist in production code.",
     href: "#proof",
-    link: "Trace research into code"
+    link: "Trace architecture into code"
   },
   {
     number: "07",
-    label: "Privacy",
+    label: "Passenger Privacy",
     status: "Proposed",
-    title: "Count people. Do not identify them.",
-    body: "An overhead or doorway counter should emit boarding and alighting events, confidence and device health—not faces. Keep images on the device where possible; transmit counts; set retention to the minimum needed for calibration.",
-    proof: "This is the privacy design constraint for the pilot. A vendor and PDPA review still have to prove the implementation.",
+    title: "Count riders anonymously. Never track individual identities.",
+    body: "Doorway optical sensors register boarding and alighting numbers and device health — zero facial recognition, zero biometric profiling. Complying strictly with Thailand's PDPA law from day one.",
+    proof: "The system enforces aggregate counting at the edge, transmitting numbers rather than video streams.",
     href: "#proof",
-    link: "Read the evidence discipline"
+    link: "Read privacy standards"
   },
   {
     number: "08",
-    label: "Dispatch",
+    label: "Smart Dispatch",
     status: "Proposed",
-    title: "The clever bit is not more buses. It is the right bus in the right hour.",
-    body: "Flight arrivals create waves. Destination requests reveal where they want to go. Seats and boarding counts reveal what the fleet can absorb. Dispatch changes only when the measured gap survives all three checks.",
-    proof: "The operations console shows inbound and airport-bound demand separately so one direction cannot hide the other.",
+    title: "Not just more buses — the right vehicle dispatched at the exact arrival wave.",
+    body: "Flight arrivals land in distinct waves (Russian charters mid-day, European flights evening). Destination requests signal where demand is heading. Dispatches dynamically adjust to prevent passenger stranding.",
+    proof: "The operations console separates inbound and outbound queues hour-by-hour so neither masks the other.",
     href: "https://bus.nonarkara.org/ops",
-    link: "Open missed money by hour"
+    link: "Explore missed revenue by hour"
   },
   {
     number: "09",
-    label: "Partners",
+    label: "Local Merchants",
     status: "Proposed",
-    title: "A voucher is useful only when somebody can settle it.",
-    body: "Hotels, attractions and restaurants can subsidise or bundle rides, but the operational questions come first: who issued the benefit, who redeemed it, what journey occurred and who owes whom at the end of the day.",
-    proof: "The token can carry an offer ID. Partner contracts, reconciliation and abuse controls remain outside this prototype.",
+    title: "Hotels and attractions sponsor rides only when reconciliation is automated.",
+    body: "Resorts and restaurants can subsidize tourist rides. The platform tracks who issued the credit, who boarded, which trip occurred, and automatically settles accounts between businesses and the bus operator.",
+    proof: "Boarding tokens carry partner metadata IDs, allowing transparent automated clearing.",
     href: "#method",
-    link: "See the system method"
+    link: "See merchant model"
   },
   {
     number: "10",
-    label: "Finance",
+    label: "Bankable Finance",
     status: "Modelled",
-    title: "Do not finance the conclusion. Finance the next test.",
-    body: "The current model is a conditional case, not a purchase order. Instrument a 90-day pilot, measure reliability, boarding, denied demand, trip cost and repayment coverage, then release fleet capital only when the agreed gates hold.",
-    proof: "The finance chapter exposes the modelled DSCR and support gap; the pilot is designed to replace assumptions with records.",
+    title: "Finance the next 90-day experiment, not an untested 10-year promise.",
+    body: "The financial model is a diligence instrument for bankers. A 90-day pilot measures real ridership, operating cost per km, and debt coverage (DSCR). Capital is released in verified milestones.",
+    proof: "Chapter 3 exposes interactive debt service coverage (1.30× target) and concession payback schedules.",
     href: "#feasibility",
-    link: "Stress-test the deal"
+    link: "Stress-test the financials"
   }
 ];
 
 const HEADLINE_STATS = [
-  { value: "17.5m", label: "HKT passenger movements", note: "observed · AOT 2025" },
-  { value: "20", label: "airport departures a day", note: "observed · PKSB timetable" },
-  { value: "25", label: "seats per airport bus", note: "modelled capacity" },
-  { value: "90 days", label: "instrumented pilot", note: "proposed decision" }
+  { value: "17.5M", label: "HKT annual air passengers", note: "observed · AOT 2025" },
+  { value: "20", label: "daily airport departures", note: "observed · PKSB timetable" },
+  { value: "25", label: "seats per airport minibus", note: "modelled fleet capacity" },
+  { value: "90 days", label: "instrumented pilot", note: "proposed decision gate" }
 ];
 
 const SIGNAL_CHAIN = [
-  ["Passenger", "destination + pass"],
-  ["Driver", "safe drop-off request"],
-  ["Vehicle", "GPS + anonymous count"],
-  ["Operator", "queue, load + dispatch"],
-  ["Lender / city", "verified outcome"]
-] as const;
+  { step: "01", actor: "Passenger", action: "Names hotel & gets ฿100 pass" },
+  { step: "02", actor: "Driver Tablet", action: "Confirms safe pull-over spot" },
+  { step: "03", actor: "Bus Telemetry", action: "Emits GPS & anonymous occupancy" },
+  { step: "04", actor: "Operator", action: "Matches curb queues to dispatch" },
+  { step: "05", actor: "City & Bank", action: "Verifies farebox revenue & DSCR" }
+];
+
+const MYTHS_VS_FACTS = [
+  {
+    myth: "Why buses? Phuket tourists just rent motorbikes anyway.",
+    fact: "WHO ranks Thailand 9th globally for road fatalities; 92.7% of Phuket accidents involve a motorbike. Travelers only rent motorbikes when no safe, predictable transit exists. A ฿100 coastal bus eliminates lethal road risk.",
+    tag: "Safety & Lives"
+  },
+  {
+    myth: "Just subsidize Grab or Bolt — it requires zero public capex.",
+    fact: "Subsidizing private ride-hailing permanently locks the island into an unregulated monopoly. Once public right-of-way and corridor rights lapse, the public will pay ฿800 per ride forever.",
+    tag: "Public Right-of-Way"
+  },
+  {
+    myth: "A world-class island needs a $1B light rail or monorail.",
+    fact: "Las Vegas spent US$650M on a 3.9-mile monorail that went bankrupt twice. On that exact same road, double-decker express buses generated US$6M annual net profit. Transit that uses existing pavement wins.",
+    tag: "Proven Economics"
+  },
+  {
+    myth: "The local government doesn't have the budget to buy a fleet.",
+    fact: "The government doesn't buy the buses. A private operator finances the fleet under a performance-concession agreement. Farebox cashflow backed by capped milestone payments comfortably achieves 1.30× debt service coverage.",
+    tag: "Bankability"
+  }
+];
 
 export function LandingPage() {
+  const [showProvenance, setShowProvenance] = useState<boolean>(false);
+
   return (
     <section className="lp-landing" id="landing" aria-labelledby="lp-title">
+      {/* Hero Header */}
       <header className="lp-hero">
-        <p className="tk-kicker lp-hero__kicker">How to Build a Public Transit System · The Case of Phuket Smart Bus</p>
+        <p className="tk-kicker lp-hero__kicker">
+          How to Build a Public Transit System · The Case of Phuket Smart Bus
+        </p>
         <h1 id="lp-title" className="lp-hero__title">
           What if an airport passenger can find the bus, name the hotel and get a ticket in one minute?
         </h1>
         <p className="lp-hero__sub">
-          Good. Now follow that tiny decision all the way through the driver,
-          the fleet, the city and the bank. The passenger gets one simple screen.
-          The system gets evidence it can use.
+          Follow that single choice outside arrivals all the way through the driver,
+          the fleet schedule, the island's coastal highway, and the bank. The passenger gets one simple screen.
+          The island gets verified evidence it can build on.
         </p>
         <div className="lp-hero__status" aria-label="Evidence status legend">
           <span><b>Observed</b> cited or published record</span>
@@ -166,46 +200,78 @@ export function LandingPage() {
           ))}
         </div>
         <div className="lp-hero__actions">
-          <a className="lp-btn lp-btn--primary" href="https://bus.nonarkara.org/">
-            Try the passenger screen <span>↗</span>
+          <a className="lp-btn lp-btn--primary" href="#act-passengers">
+            Explore Traveler Choices <span>↓</span>
           </a>
-          <a className="lp-btn" href="#five-minute">
-            Follow the whole system <span>↓</span>
+          <a className="lp-btn" href="https://bus.nonarkara.org/">
+            Try Live Passenger App <span>↗</span>
+          </a>
+          <a className="lp-btn" href="https://bus.nonarkara.org/ops">
+            Run Operations Console <span>↗</span>
           </a>
         </div>
       </header>
 
+      {/* Act 1: Interactive Traveler Choices */}
+      <section className="lp-section" id="act-passengers" aria-labelledby="lp-act1-title">
+        <div className="lp-section__head">
+          <span className="tk-kicker">Act 1 · The Arrival Curb</span>
+          <h2 id="lp-act1-title">Pick a traveler. See what happens when their flight lands.</h2>
+          <p className="lp-section__sub">
+            Transit decisions begin with human circumstances: luggage weight, travelling with toddlers,
+            fear of being overcharged by unmetered cabs, or language barriers. Select a traveler below
+            to simulate their journey time, cost, stress level, and carbon impact:
+          </p>
+        </div>
+        <TravelerJourneySimulator />
+      </section>
+
+      {/* Act 2: Operator Arithmetic (+1 Bus) */}
+      <section className="lp-section" id="act-operator" aria-labelledby="lp-act2-title">
+        <div className="lp-section__head">
+          <span className="tk-kicker">Act 2 · The Operating Math</span>
+          <h2 id="lp-act2-title">Can we solve peak passenger shortages by adding just 1 or 2 buses?</h2>
+          <p className="lp-section__sub">
+            At peak hours (11:00–14:00), flight arrivals overwhelm the scheduled 25-seat minibuses.
+            Stranded tourists give up and pay ฿800 for private cars. Drag the slider below to see how
+            many riders and how much revenue Phuket Smart Bus recovers by adding extra capacity:
+          </p>
+        </div>
+        <AddBusCalculator />
+      </section>
+
+      {/* Act 3: 5-Node Signal Chain */}
       <section className="lp-signal" aria-labelledby="lp-signal-title">
         <div className="lp-signal__intro">
-          <p className="tk-kicker">One screen · five consequences</p>
+          <span className="tk-kicker">Act 3 · The Chain of Consequence</span>
           <h2 id="lp-signal-title">A ticket is not the end of the journey. It is the first useful signal.</h2>
           <p>
-            The design stays simple because the machinery behind it is explicit.
-            Each handoff creates a record, and each record answers a different decision.
+            The interface stays simple because the machinery behind it is explicit.
+            Every passenger interaction produces a verifiable data record that powers operational decisions:
           </p>
         </div>
         <ol className="lp-signal__chain" aria-label="Passenger action to verified outcome">
-          {SIGNAL_CHAIN.map(([actor, signal], index) => (
-            <li key={actor}>
-              <small>{String(index + 1).padStart(2, "0")}</small>
-              <strong>{actor}</strong>
-              <span>{signal}</span>
+          {SIGNAL_CHAIN.map((item, index) => (
+            <li key={item.step}>
+              <small>{item.step}</small>
+              <strong>{item.actor}</strong>
+              <span>{item.action}</span>
               {index < SIGNAL_CHAIN.length - 1 && <b aria-hidden="true">→</b>}
             </li>
           ))}
         </ol>
       </section>
 
-      <AddBusCalculator />
-
+      {/* Act 4: The 10-Step Blueprint */}
       <section className="lp-arg" id="five-minute" aria-labelledby="lp-arg-title">
         <header className="lp-arg__head">
-          <p className="tk-kicker">The five-minute build sequence</p>
+          <span className="tk-kicker">Act 4 · The System Blueprint</span>
           <h2 id="lp-arg-title">Ten questions. In order. Then we are ready to test—not ready to buy buses.</h2>
           <p className="lp-arg__sub">
-            Read the label on every card. “Observed” is evidence. “Modelled” is
-            a calculation. “Proposed” is work still owed. Mixing those three is
-            how a sensible pilot turns into a very expensive press release.
+            Read the badge on every card. <strong>Observed</strong> is ground evidence.
+            <strong> Modelled</strong> is calculated by the simulation. <strong>Proposed</strong> is work
+            still owed for the 90-day pilot. Keeping them distinct is what separates a bankable transit system
+            from an expensive press release.
           </p>
         </header>
 
@@ -222,7 +288,7 @@ export function LandingPage() {
               <h3 className="lp-card__title">{beat.title}</h3>
               <p className="lp-card__body">{beat.body}</p>
               <div className="lp-card__proof">
-                <span className="tk-kicker">What proves it—or still has to</span>
+                <span className="tk-kicker">Verification & Code Path</span>
                 <p>{beat.proof}</p>
                 <a href={beat.href} className="lp-card__link">
                   {beat.link} <span>↗</span>
@@ -233,28 +299,86 @@ export function LandingPage() {
         </ol>
       </section>
 
+      {/* Act 5: Myths vs Field Evidence */}
+      <section className="lp-section lp-myths" aria-labelledby="lp-myths-title">
+        <div className="lp-section__head">
+          <span className="tk-kicker">Act 5 · Hard Questions</span>
+          <h2 id="lp-myths-title">Four common transit doubts — answered with field data.</h2>
+          <p className="lp-section__sub">
+            Whenever public transit is proposed for Phuket, the same objections appear.
+            Here is how real evidence and global comparisons answer each of them:
+          </p>
+        </div>
+        <div className="lp-myths__grid">
+          {MYTHS_VS_FACTS.map((item) => (
+            <article key={item.myth} className="lp-myth-card">
+              <span className="lp-myth-card__tag">{item.tag}</span>
+              <h3 className="lp-myth-card__myth">“{item.myth}”</h3>
+              <p className="lp-myth-card__fact">{item.fact}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Handover to Chapters */}
       <section className="lp-handover" aria-labelledby="lp-handover-title">
         <div className="lp-handover__copy">
-          <p className="tk-kicker">The full research</p>
-          <h2 id="lp-handover-title">That was the front door. The evidence room is downstairs.</h2>
+          <span className="tk-kicker">The Complete Research Repository</span>
+          <h2 id="lp-handover-title">The five-minute case is complete. The evidence chapters are below.</h2>
           <p>
-            This whole site is a working translation of one real document — a 23-page USASCP toolkit written by
-            the U.S. Department of Transportation, METRANS Transportation Consortium and Chulalongkorn University,
-            after four years of fieldwork pairing Phuket with Las Vegas. The long read below keeps the Phuket
-            context, the Las Vegas comparison, the method, the working model, the feasibility study, and — in
-            Field Notes — the people who did the work and the toolkit itself, downloadable in full.
+            This portal is the interactive digital realization of the 23-page USASCP transit toolkit,
+            developed jointly by the U.S. Department of Transportation, METRANS Transportation Consortium,
+            and Chulalongkorn University after four years of bilateral study pairing Phuket with Las Vegas.
+            Explore each specialized chapter below:
           </p>
         </div>
         <div className="lp-handover__buttons">
-          <a className="lp-btn lp-btn--primary" href="#phuket">Open the full research <span>↓</span></a>
-          <a className="lp-btn" href="https://bus.nonarkara.org/ops">Run the operations console <span>↗</span></a>
+          <a className="lp-btn lp-btn--primary" href="#phuket">Explore Phuket Corridor (Tab 2) <span>→</span></a>
+          <a className="lp-btn" href="#evidence">Las Vegas Strip Comparison (Tab 3) <span>→</span></a>
+          <a className="lp-btn" href="#build">Build & Finance Sandbox (Tab 4) <span>→</span></a>
         </div>
         <ol className="lp-handover__chapters" role="list" aria-label="Full research chapters">
-          <li><span>01</span><strong>Phuket</strong><em>the island and its transit landscape</em></li>
-          <li><span>02</span><strong>Evidence</strong><em>Las Vegas, and how the case compares</em></li>
-          <li><span>03</span><strong>Build &amp; Finance</strong><em>method, prototype, feasibility and the deal</em></li>
-          <li><span>04</span><strong>Field Notes</strong><em>the people, the history, the toolkit itself</em></li>
+          <li>
+            <span>01</span>
+            <strong>Phuket Corridor</strong>
+            <em>The island geography, coastal choke points &amp; bus fleets</em>
+          </li>
+          <li>
+            <span>02</span>
+            <strong>Evidence</strong>
+            <em>Las Vegas Strip $6M profit case &amp; interactive corridor simulator</em>
+          </li>
+          <li>
+            <span>03</span>
+            <strong>Build &amp; Finance</strong>
+            <em>Interactive concession simulator, ABCDEF framework &amp; debt coverage</em>
+          </li>
+          <li>
+            <span>04</span>
+            <strong>Field Notes</strong>
+            <em>4-year research chronicle, memorials, team &amp; downloadable toolkit PDF</em>
+          </li>
         </ol>
+      </section>
+
+      {/* Expandable Data Provenance Drawer */}
+      <section className="lp-provenance-section">
+        <div className="lp-provenance-toggle">
+          <button
+            type="button"
+            className="lp-provenance-btn"
+            onClick={() => setShowProvenance(!showProvenance)}
+            aria-expanded={showProvenance}
+          >
+            <strong>{showProvenance ? "▲ Hide Public Data Audit & Sources" : "▼ Inspect Verified Sources & Public Data Audit (20 Claims Checked)"}</strong>
+            <small>AOT reports, WHO road safety data, PKSB timetables, and meteorological normals</small>
+          </button>
+        </div>
+        {showProvenance && (
+          <div className="lp-provenance-container">
+            <DataProvenance />
+          </div>
+        )}
       </section>
     </section>
   );

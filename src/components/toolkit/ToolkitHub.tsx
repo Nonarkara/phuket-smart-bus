@@ -18,6 +18,7 @@ import { LandingPage } from "./LandingPage";
 import { PhuketContext } from "./PhuketContext";
 import { PhuketBusSystems } from "./PhuketBusSystems";
 import { VegasDemandCase } from "./VegasDemandCase";
+import { VegasPhuketSimulator } from "./VegasPhuketSimulator";
 import { ComparativeResearch } from "./ComparativeResearch";
 import { FieldChronicle } from "./FieldChronicle";
 import { LegalFramework } from "./LegalFramework";
@@ -29,7 +30,6 @@ import { DataProvenance } from "./DataProvenance";
 import { CriticalReading } from "./CriticalReading";
 import { Glossary } from "./Glossary";
 import { RejectedAlternatives } from "./RejectedAlternatives";
-import { TravelerJourneySimulator } from "./TravelerJourneySimulator";
 import { PolicyConcessionSandbox } from "./PolicyConcessionSandbox";
 import "./toolkit-showcase.css";
 import "./toolkit-study.css";
@@ -228,8 +228,6 @@ function OverviewTab() {
   return (
     <>
       <LandingPage />
-      <DataProvenance />
-      <CriticalReading />
       <section className="hub-section hub-section--intro">
         <div className="hub-section__intro-pad">
           <p className="tk-kicker">Start here · use the tabs above to go deeper</p>
@@ -255,7 +253,6 @@ function OverviewTab() {
 function PhuketTab() {
   return (
     <>
-      <TravelerJourneySimulator />
       <PhuketContext />
       <PhuketBusSystems />
     </>
@@ -266,6 +263,7 @@ function PhuketTab() {
 function EvidenceTab() {
   return (
     <>
+      <VegasPhuketSimulator />
       <VegasDemandCase />
       <ComparativeResearch />
     </>
@@ -303,6 +301,8 @@ function FieldNotesTab() {
   return (
     <>
       <FieldChronicle />
+      <CriticalReading />
+      <DataProvenance />
       <Glossary />
       <ReferencesTab />
     </>

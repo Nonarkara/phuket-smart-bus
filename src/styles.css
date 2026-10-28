@@ -89,12 +89,12 @@
   --t-micro:   11px;
 
   /* Typography stack. Two families, not three.
-     There was a monospace here for "numerics" — JetBrains Mono. It rendered
-     "4 min" at 44px on the rider's phone like a developer console, which is
-     what it is: a code editor face. Columns still align because every figure
-     that needs to lines up is set in `tabular-nums`. Banned 2026-10-19. */
-  --font-display: "Josefin Sans", "Helvetica Neue", system-ui, sans-serif;
-  --font-body: "Source Sans 3", "Helvetica Neue", system-ui, sans-serif;
+     Display & headings: Public Sans (USWDS civic standard, zero AI-slop quirks).
+     Body: Source Sans 3 (warm, humanist, legible at 17px in sunlight).
+     Thai: IBM Plex Sans Thai (non-looped).
+     Tabular figures: every numeric column aligns with `tabular-nums`. */
+  --font-display: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-thai: "IBM Plex Sans Thai", "Noto Sans Thai", "Source Sans 3", sans-serif;
   /* Code only: ticket numbers, field names, raw tracker JSON. The platform's
      own monospace — nothing is downloaded for this. A monospace is correct

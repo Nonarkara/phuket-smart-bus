@@ -8,7 +8,7 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 
 ## Type
 
-- Display: **Josefin Sans**. Geometric, high x-height, drawn-on-a-device feel. Used for the few display moments only.
+- Display: **Public Sans** (official USWDS federal transit standard, clean, authoritative civic voice, zero AI-template quirks; Josefin Sans kept as legacy alias).
 - Body: **Source Sans 3**. Humanist, warm, legible at 17px on a phone in sunlight. Thai: **IBM Plex Sans Thai** (non-looped — Sarabun is banned). Chinese: Simplified, falls back to the system CJK face.
 - **No third family. There is no monospace UI face.** JetBrains Mono was removed 2026-10-19: it set "4 min" in a code-editor face at 44px on the rider's phone and read as a developer console, which is what it is. Figures that must line up use `font-variant-numeric: tabular-nums` in the body face. Do not reintroduce a monospace as a typographic voice — weight and colour do that job.
 - A monospace is allowed in exactly one place, via `--font-code` (the platform's face, never a download): `<pre>`/`<code>`, raw tracker JSON, ticket numbers. Braces and indentation have to line up there and nowhere else.

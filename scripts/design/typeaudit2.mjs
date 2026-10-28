@@ -77,8 +77,8 @@ const INVENTORY = () => {
     if (ownsText) sizes.add(sizeKey);
 
     // THE RULE
-    const isDisplay = /Josefin/.test(fam);
-    const isBody = /Source Sans|Plex Sans Thai/i.test(fam);
+    const isDisplay = /Public Sans|Josefin/i.test(fam);
+    const isBody = /Source Sans|Plex Sans Thai|Public Sans/i.test(fam);
     const label = e.tagName.toLowerCase() + (e.className && typeof e.className === "string" ? "." + e.className.trim().split(/\s+/).slice(0, 2).join(".") : "");
     // THE FLOOR. The smallest text a reader can be asked to read is 11px.
     // The rider phone app's rule has said so since 2026-10-21 ("the smallest
