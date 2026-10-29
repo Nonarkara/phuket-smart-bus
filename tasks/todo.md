@@ -121,7 +121,7 @@ were leaking; this pass closes the sharpest holes.
 - [x] MiniMax's uncommitted departures change did not compile and its parser dropped `departures`; finished (research + endpoint cache v3 + liveService + tests) — 4c3e4b3
 - [x] "95 min" was the taxi-comparison figure written down as the timetable's in six modules. Official timetable: 130 min down / 147 up. `/research`'s headline "only 3% make the timetable" is **92%**. Duty cycle 297 min, not 210. One module (`publishedRunning.ts`) now — 6c198ea, fd9adf6, lesson 14, vault lesson captured
 - [x] Rider phone (production, 390×844): page was 4.85 screens and the map started at 2,160 px. Order is now board → map → decision → tickets. Decision card no longer invents "35 min", the airport timetable no longer shows at Rawai, the made-up +฿38,000/+64,000 / CO₂ panel is a link to the real console. Standing at a terminal reads "Waiting · At Rawai" — 55304b2, f691982
-- [x] CSP sweep gate (`scripts/design/cspsweep.mjs`) + proof, in CI — a97b2b5-era commit a92cdc5
+- [x] CSP sweep gate (`scripts/design/cspsweep.mjs`) + proof, in CI — a92cdc5
 - [x] Full suite 334/334 before each deploy
 
 ### Decided not to do (owner's call)
