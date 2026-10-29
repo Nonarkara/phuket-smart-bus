@@ -63,11 +63,11 @@ function useNow(ms: number) {
 }
 
 const minutes = (a: Arrival) =>
-  a.etaMin === 0 ? "At the stop"
+  a.etaMin === 0 ? "At stop"
   // A null ETA on a stopped bus is not "unknown" in the vague sense — we know
   // exactly why: it is not moving, so no pace can be applied to it.
-  : a.etaMin === null ? (a.state === "standing" ? "Stopped" : "—")
-  : a.etaMin < 1 ? "Under 1 min" : `${Math.round(a.etaMin)} min`;
+  : a.etaMin === null ? (a.state === "standing" ? "Standing" : "—")
+  : a.etaMin < 1 ? "<1 min" : `${Math.round(a.etaMin)} min`;
 const kmText = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
 
 export function LiveArrivals({
@@ -170,10 +170,10 @@ export function LiveArrivals({
                 <ol>
                   {rows.map((a) => (
                     <li key={a.plate} className="pa-live__row">
-                      <strong className="pa-live__eta">{minutes(a)}</strong>
+                      <strong className={`pa-live__eta${a.etaMin === null ? " is-none" : ""}`}>{minutes(a)}</strong>
                       <span className="pa-live__bus">
-                        Bus {a.plate} · {kmText(a.awayM)} away
-                        <small>{a.state === "late" ? `late signal, last seen ${bkkClock(a.fixMs)}` : `seen ${ago(a.fixMs, now)}`}{a.state === "standing" ? " · standing" : ""}</small>
+                        Bus {a.plate}
+                        <small>{kmText(a.awayM)} away · {a.state === "late" ? `late signal, last seen ${bkkClock(a.fixMs)}` : `seen ${ago(a.fixMs, now)}`}</small>
                       </span>
                     </li>
                   ))}
@@ -184,15 +184,8 @@ export function LiveArrivals({
         })}
       </div>
 
-      <RiderDecisionCard
-        currentStopRef={ref}
-        stopName={stop.name}
-        liveEtaMin={bestEtaMin}
-        timetableNextStr={timetableNext}
-      >
-        {children}
-      </RiderDecisionCard>
-
+      {/* The map answers the board's own question — where are they — so it follows
+          the board directly. The bus-or-Grab decision and the tickets come after. */}
       <Suspense fallback={<div className="pa-map pa-map--loading">Loading the map…</div>}>
         <RiderMap buses={buses} onLine={onLine} line={line} stop={stop} now={now} />
       </Suspense>
@@ -202,6 +195,15 @@ export function LiveArrivals({
         {trips > 0 ? ` ${trips.toLocaleString("en-US")} trips recorded${since ? ` since ${since}` : ""}` : " recorded trips (loading)"}; traffic can change them.
         Town buses don't report a line, so they show on the map but not on this board.
       </p>
+
+      <RiderDecisionCard
+        currentStopRef={ref}
+        stopName={stop.name}
+        liveEtaMin={bestEtaMin}
+        timetableNextStr={timetableNext}
+      >
+        {children}
+      </RiderDecisionCard>
     </section>
   );
 }

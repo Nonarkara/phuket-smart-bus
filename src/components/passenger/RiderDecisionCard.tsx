@@ -10,9 +10,17 @@
  */
 
 import type React from "react";
-import { useState } from "react";
 import type { StopRef } from "./arrivals";
 import { appPath } from "../../lib/paths";
+import { getBangkokNowMinutes } from "../../engine/time";
+
+/** Minutes from now (Bangkok clock) to an "HH:MM" departure; tomorrow's when today's has gone. */
+function minutesUntil(hhmm: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  if (!m) return null;
+  const d = Number(m[1]) * 60 + Number(m[2]) - getBangkokNowMinutes();
+  return d < 0 ? d + 1440 : d;
+}
 
 interface RiderDecisionCardProps {
   currentStopRef: StopRef;
@@ -23,48 +31,34 @@ interface RiderDecisionCardProps {
 }
 
 export function RiderDecisionCard({
+  currentStopRef,
   stopName,
   liveEtaMin,
   timetableNextStr,
   children
 }: RiderDecisionCardProps) {
-  const [extraBuses, setExtraBuses] = useState<number>(0);
+  // The wait, and where it comes from. A live bus beats the timetable; the
+  // timetable's next departure is only the answer at the airport, where the
+  // airport timetable is the one that applies. Anywhere else with no live bus
+  // there is no wait to state — the card used to invent "35 minutes" there.
+  const atAirport = currentStopRef.routeId === "rawai-airport" && currentStopRef.index === 0;
+  const scheduledMin = !atAirport || !timetableNextStr ? null : minutesUntil(timetableNextStr);
+  const wait: { min: number; live: boolean } | null =
+    liveEtaMin !== null && liveEtaMin >= 0 ? { min: Math.round(liveEtaMin), live: true }
+    : scheduledMin !== null ? { min: scheduledMin, live: false }
+    : null;
 
-  // Determine bus wait minutes
-  const busWaitMin = liveEtaMin !== null && liveEtaMin >= 0
-    ? Math.round(liveEtaMin)
-    : 35; // default reasonable waiting time if timetable only
-
-  // Grounded pricing: ฿100 bus vs ฿750 Grab/taxi
+  // Fares from the pricing table in CLAUDE.md: bus ฿100, Grab ฿400–1,000 by
+  // destination, ฿750 the corridor average. Grab's dispatch time is not
+  // measured anywhere, so it is not stated.
   const busFare = 100;
   const taxiFare = 750;
-  const taxiWaitMin = 4;
   const savingsThb = taxiFare - busFare;
 
-  // Decision logic
-  const isQuickWait = busWaitMin <= 20;
-  const isModerateWait = busWaitMin > 20 && busWaitMin <= 35;
-  const isLongWait = busWaitMin > 35;
-
-  // Simulation what-if calculations
-  // Adding buses reduces headway: 10 buses = ~40m headway, 12 buses = ~20m, 14 buses = ~12m
-  const simulatedWaitMin = extraBuses === 0
-    ? busWaitMin
-    : extraBuses === 2
-      ? Math.max(8, Math.round(busWaitMin * 0.45))
-      : Math.max(5, Math.round(busWaitMin * 0.28));
-
-  const additionalDailyRevenue = extraBuses === 0
-    ? 0
-    : extraBuses === 2
-      ? 38000
-      : 64000;
-
-  const co2SavedKg = extraBuses === 0
-    ? 0
-    : extraBuses === 2
-      ? 1600
-      : 2900;
+  const isQuickWait = wait !== null && wait.min <= 20;
+  const isModerateWait = wait !== null && wait.min > 20 && wait.min <= 35;
+  const kind = wait === null ? "is-neutral" : isQuickWait ? "is-recommended" : isModerateWait ? "is-neutral" : "is-warning";
+  const source = wait?.live ? "from the bus's live GPS" : "on the timetable";
 
   return (
     <section className="pa-decision" aria-labelledby="pa-decision-title">
@@ -84,14 +78,10 @@ export function RiderDecisionCard({
           </div>
           <div className="pa-decision__wait">
             <span className="pa-decision__metric">
-              {liveEtaMin !== null
-                ? `${busWaitMin} min`
-                : timetableNextStr
-                  ? `Next: ${timetableNextStr}`
-                  : `~${busWaitMin} min`}
+              {wait === null ? "No bus yet" : wait.live ? `${wait.min} min` : `Next ${timetableNextStr}`}
             </span>
             <small className="pa-decision__caption">
-              {liveEtaMin !== null ? "live GPS pace" : "scheduled departure"}
+              {wait === null ? "none reported toward this stop" : wait.live ? "live GPS pace" : `scheduled · in ${wait.min} min`}
             </small>
           </div>
           <ul className="pa-decision__perks">
@@ -109,8 +99,8 @@ export function RiderDecisionCard({
             <span className="pa-decision__unit">avg corridor fare</span>
           </div>
           <div className="pa-decision__wait">
-            <span className="pa-decision__metric">~{taxiWaitMin} min</span>
-            <small className="pa-decision__caption">immediate dispatch</small>
+            <span className="pa-decision__metric">On request</span>
+            <small className="pa-decision__caption">no timetable to wait for</small>
           </div>
           <ul className="pa-decision__perks">
             <li>Private vehicle</li>
@@ -121,90 +111,38 @@ export function RiderDecisionCard({
       </div>
 
       {/* The Verdict Banner */}
-      <div className={`pa-decision__verdict ${isQuickWait ? "is-recommended" : isModerateWait ? "is-neutral" : "is-warning"}`}>
+      <div className={`pa-decision__verdict ${kind}`}>
         <div className="pa-decision__verdict-title">
-          {isQuickWait ? (
-            <strong>Recommendation: Take the Bus · Save ฿{savingsThb}</strong>
+          {wait === null ? (
+            <strong>No bus is on its way to {stopName} right now</strong>
+          ) : isQuickWait ? (
+            <strong>Take the bus · save ฿{savingsThb}</strong>
           ) : isModerateWait ? (
-            <strong>Worth the Wait: Save ฿{savingsThb} with a {busWaitMin}m wait</strong>
+            <strong>Worth the wait: save ฿{savingsThb} for {wait.min} min</strong>
           ) : (
-            <strong>Tight Schedule? Grab departs immediately</strong>
+            <strong>Short on time? Grab leaves when you do</strong>
           )}
         </div>
         <p className="pa-decision__verdict-text">
-          {isQuickWait
-            ? `The bus arrives in approximately ${busWaitMin} minutes. Taking the bus saves you ฿${savingsThb} compared to a private taxi or Grab.`
-            : isModerateWait
-              ? `Waiting ~${busWaitMin} minutes saves ฿${savingsThb}. If you have comfortable time before your check-in, the bus offers an easy, air-conditioned ride.`
-              : `The next bus is ~${busWaitMin} minutes away. If you have a flight to catch or a tight reservation, take Grab (~฿${taxiFare}). Otherwise, relax and save ฿${savingsThb}.`}
+          {wait === null
+            ? `Grab is about ฿${taxiFare}; the bus is ฿${busFare} when one comes. The board above updates every few seconds.`
+            : isQuickWait
+              ? `The bus is about ${wait.min} min away ${source}. It saves ฿${savingsThb} over a Grab.`
+              : isModerateWait
+                ? `About ${wait.min} min ${source}, and ฿${savingsThb} saved. If you have time before check-in, the bus is an easy, air-conditioned ride.`
+                : `The next bus is about ${wait.min} min away ${source}. With a flight to catch, take a Grab (about ฿${taxiFare}); otherwise the bus saves ฿${savingsThb}.`}
         </p>
       </div>
 
       {/* Ticket Action Cards (Directly attached to the decision) */}
       {children}
 
-      {/* The Second Highlight: Interactive Simulation Teaser */}
-      <div className="pa-sim-bridge">
-        <div className="pa-sim-bridge__head">
-          <div>
-            <span className="pa-sim-bridge__tag">Second Highlight · Fleet Simulation</span>
-            <h3 className="pa-sim-bridge__title">Why do buses come every ~45 minutes?</h3>
-          </div>
-          <a href={appPath("/ops")} className="pa-sim-bridge__cta">
-            Open 30× Ops Simulator ↗
-          </a>
-        </div>
-        <p className="pa-sim-bridge__copy">
-          Phuket's airport line operates 10 buses across a 50 km coastal corridor. See how adding buses directly fixes passenger wait times and unlocks operator revenue:
-        </p>
-
-        {/* Interactive toggle */}
-        <div className="pa-sim-bridge__controls" role="group" aria-label="Simulate fleet size">
-          <button
-            type="button"
-            className={`pa-sim-bridge__btn ${extraBuses === 0 ? "is-active" : ""}`}
-            onClick={() => setExtraBuses(0)}
-          >
-            Current (10 buses)
-          </button>
-          <button
-            type="button"
-            className={`pa-sim-bridge__btn ${extraBuses === 2 ? "is-active" : ""}`}
-            onClick={() => setExtraBuses(2)}
-          >
-            +2 Buses (12 buses)
-          </button>
-          <button
-            type="button"
-            className={`pa-sim-bridge__btn ${extraBuses === 4 ? "is-active" : ""}`}
-            onClick={() => setExtraBuses(4)}
-          >
-            +4 Buses (14 buses)
-          </button>
-        </div>
-
-        {/* Live dynamic impact numbers */}
-        <div className="pa-sim-bridge__stats">
-          <div className="pa-sim-bridge__stat">
-            <span className="pa-sim-bridge__stat-label">Estimated Wait</span>
-            <strong className={`pa-sim-bridge__stat-value ${extraBuses > 0 ? "is-improved" : ""}`}>
-              {simulatedWaitMin} min
-            </strong>
-          </div>
-          <div className="pa-sim-bridge__stat">
-            <span className="pa-sim-bridge__stat-label">Daily Revenue Gain</span>
-            <strong className="pa-sim-bridge__stat-value">
-              {extraBuses === 0 ? "Baseline" : `+฿${additionalDailyRevenue.toLocaleString()}`}
-            </strong>
-          </div>
-          <div className="pa-sim-bridge__stat">
-            <span className="pa-sim-bridge__stat-label">Daily CO₂ Saved</span>
-            <strong className="pa-sim-bridge__stat-value">
-              {extraBuses === 0 ? "Baseline" : `+${co2SavedKg.toLocaleString()} kg`}
-            </strong>
-          </div>
-        </div>
-      </div>
+      {/* The what-if lives where it is real: the operations console runs the
+          fleet-size comparison on the recorded service. Here it was a toggle
+          over hard-coded revenue and CO₂ figures that no model produced. */}
+      <p className="pa-decision__ops">
+        Why do buses come so rarely? <a href={appPath("/ops")}>See what more buses would carry</a>
+      </p>
     </section>
   );
 }

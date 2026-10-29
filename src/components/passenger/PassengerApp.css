@@ -182,10 +182,12 @@ body.passenger-site-mode #root {
   color: var(--pa-ink);
 }
 .pa-live__dir ol { margin: 0; padding: 0; list-style: none; }
-.pa-live__row { display: grid; grid-template-columns: 7.5em 1fr; align-items: baseline; gap: 10px; padding: 8px 0; }
+.pa-live__row { display: grid; grid-template-columns: 5.5em 1fr; align-items: baseline; gap: 10px; padding: 8px 0; }
 .pa-live__row + .pa-live__row { border-top: 1px solid var(--pa-line); }
 .pa-live__eta {  font-size: var(--t-hero); line-height: 1; font-variant-numeric: tabular-nums; color: var(--pa-ink); }
-.pa-live__row:first-child .pa-live__eta { color: var(--pa-red); }
+.pa-live__row:first-child .pa-live__eta:not(.is-none) { color: var(--pa-red); }
+/* No minutes is a fact about the bus, not a headline: it stays in the row, quiet. */
+.pa-live__eta.is-none { font-weight: 400; color: var(--pa-muted); }
 .pa-live__bus { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pa-live__bus small { font-size: var(--t-label); color: var(--pa-muted); }
 .pa-live__none { margin: 0; color: var(--pa-muted); }
@@ -1246,89 +1248,5 @@ body.passenger-site-mode #root {
   color: var(--pa-ink);
 }
 
-/* Simulation Bridge */
-.pa-sim-bridge {
-  margin-top: 8px;
-  padding: 16px;
-  border: 1px solid var(--pa-line);
-  background: #fcfcf9;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.pa-sim-bridge__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-.pa-sim-bridge__tag {
-  font-size: var(--t-label);
-  font-weight: 700;
-  color: var(--pa-blue);
-  display: block;
-}
-.pa-sim-bridge__title {
-  margin: 2px 0 0;
-  font-size: var(--t-title);
-  font-weight: 600;
-  color: var(--pa-ink);
-}
-.pa-sim-bridge__cta {
-  font-size: var(--t-label);
-  font-weight: 700;
-  color: var(--pa-red);
-  white-space: nowrap;
-}
-.pa-sim-bridge__copy {
-  margin: 0;
-  font-size: var(--t-body);
-  line-height: 1.45;
-  color: var(--pa-muted);
-}
-.pa-sim-bridge__controls {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-.pa-sim-bridge__btn {
-  padding: 8px 4px;
-  font-size: var(--t-label);
-  font-weight: 600;
-  background: #fff;
-  border: 1px solid var(--pa-line);
-  color: var(--pa-ink);
-  cursor: pointer;
-  text-align: center;
-}
-.pa-sim-bridge__btn.is-active {
-  background: var(--pa-blue);
-  color: #fff;
-  border-color: var(--pa-blue);
-}
-.pa-sim-bridge__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--pa-line);
-}
-.pa-sim-bridge__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.pa-sim-bridge__stat-label {
-  font-size: var(--t-micro);
-  color: var(--pa-muted);
-}
-.pa-sim-bridge__stat-value {
-  font-size: var(--t-figure);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  color: var(--pa-ink);
-}
-.pa-sim-bridge__stat-value.is-improved {
-  color: var(--pa-green);
-}
-
+/* The rider's pointer to the operations simulator: one line, not a panel. */
+.pa-decision__ops { margin: 0; font-size: var(--t-body); color: var(--pa-muted); }
