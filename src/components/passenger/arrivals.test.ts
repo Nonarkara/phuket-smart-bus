@@ -1,6 +1,6 @@
 import type { LiveBus } from "@shared/pksbFeed";
 import { LINES } from "../v2/fleetRows";
-import { arrivalsAt, buildPace, directionOf, minPerKm, nearestStop, placeBuses } from "./arrivals";
+import { arrivalsAt, buildPace, directionOf, feedFreshness, minPerKm, nearestStop, placeBuses } from "./arrivals";
 
 const airport = LINES.find((l) => l.routeId === "rawai-airport")!;
 const NOW = Date.parse("2026-10-16T05:00:00Z"); // 12:00 Bangkok
@@ -134,5 +134,27 @@ describe("a standing bus at a terminal is waiting there, not stuck", () => {
     ], stop, pace, NOW).rev;
     expect(out.find((r) => r.plate === "m1")!.terminal).toBeNull();
     expect(out.find((r) => r.plate === "m2")!.terminal).toBeNull();
+  });
+});
+
+describe("the board says how current the DATA is, not how current the relay is", () => {
+  const NOW = Date.parse("2026-10-29T03:00:00Z");
+
+  it("counts the buses that are reporting and says how old the freshest fix is", () => {
+    const s = feedFreshness(6, NOW - 12_000, NOW);
+    expect(s).toContain("6 buses reporting");
+    expect(s).toContain("last fix just now");
+  });
+
+  it("when no bus is reporting, it says the trackers have gone quiet — and when", () => {
+    // The relay can answer in a second while every bus on it has stopped
+    // reporting. "updated just now" there would be a claim about the server.
+    const s = feedFreshness(0, NOW - 57 * 60_000, NOW);
+    expect(s).toBe("No bus reporting · trackers last spoke 57 min ago");
+    expect(s).not.toMatch(/updated just now/);
+  });
+
+  it("says so when there has been no fix at all", () => {
+    expect(feedFreshness(0, null, NOW)).toBe("No bus reporting · no tracker fix yet");
   });
 });

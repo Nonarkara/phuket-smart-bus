@@ -14,7 +14,7 @@ describe("RiderDecisionCard never states a wait it does not have", () => {
     expect(screen.getByText("12 min")).toBeInTheDocument();
     expect(screen.getByText("live GPS pace")).toBeInTheDocument();
     expect(screen.getByText(/Take the bus/)).toBeInTheDocument();
-    expect(screen.getByText(/from the bus's live GPS/)).toBeInTheDocument();
+    expect(screen.getByText(/the estimate is the bus's own live GPS/)).toBeInTheDocument();
   });
 
   it("at the airport with no live bus, the answer is the timetable's, in real minutes", () => {

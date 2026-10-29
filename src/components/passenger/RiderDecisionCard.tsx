@@ -58,7 +58,9 @@ export function RiderDecisionCard({
   const isQuickWait = wait !== null && wait.min <= 20;
   const isModerateWait = wait !== null && wait.min > 20 && wait.min <= 35;
   const kind = wait === null ? "is-neutral" : isQuickWait ? "is-recommended" : isModerateWait ? "is-neutral" : "is-warning";
-  const source = wait?.live ? "from the bus's live GPS" : "on the timetable";
+  // Where the number comes from, as a clause of its own. Welded onto the
+  // noun it read as the bus being 85 minutes away FROM its own GPS.
+  const basis = wait?.live ? "the estimate is the bus's own live GPS" : "the estimate is the published timetable";
 
   return (
     <section className="pa-decision" aria-labelledby="pa-decision-title">
@@ -85,10 +87,10 @@ export function RiderDecisionCard({
           {wait === null
             ? `Grab is about ฿${taxiFare}; the bus is ฿${busFare} when one comes. The board above updates every few seconds.`
             : isQuickWait
-              ? `The bus is about ${wait.min} min away ${source}. It saves ฿${savingsThb} over a Grab.`
+              ? `The bus is about ${wait.min} min away — ${basis}. It saves ฿${savingsThb} over a Grab.`
               : isModerateWait
-                ? `About ${wait.min} min ${source}, and ฿${savingsThb} saved. If you have time before check-in, the bus is an easy, air-conditioned ride.`
-                : `The next bus is about ${wait.min} min away ${source}. With a flight to catch, take a Grab (about ฿${taxiFare}); otherwise the bus saves ฿${savingsThb}.`}
+                ? `About ${wait.min} min — ${basis} — and ฿${savingsThb} saved. If you have time before check-in, the bus is an easy, air-conditioned ride.`
+                : `The next bus is about ${wait.min} min away — ${basis}. With a flight to catch, take a Grab (about ฿${taxiFare}); otherwise the bus saves ฿${savingsThb}.`}
         </p>
       </div>
 

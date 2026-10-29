@@ -10,7 +10,7 @@ import type { SlimDay } from "@shared/insights";
 import { getLiveBusesRaw, getLiveFeedState, getLiveLedgerSnapshot, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
 import { LINES, ago, bkkClock, isOut, readRow } from "../v2/fleetRows";
-import { arrivalsAt, buildPace, nearestStop, placeBuses, towardLabel, type Arrival, type Dir, type Pace, type StopRef } from "./arrivals";
+import { arrivalsAt, buildPace, feedFreshness, nearestStop, placeBuses, towardLabel, type Arrival, type Dir, type Pace, type StopRef } from "./arrivals";
 import { RiderDecisionCard } from "./RiderDecisionCard";
 
 const RiderMap = lazy(() => import("./RiderMap").then((m) => ({ default: m.RiderMap })));
@@ -106,6 +106,22 @@ export function LiveArrivals({
     if (fwdEta !== null && revEta !== null) return Math.min(fwdEta, revEta);
     return fwdEta !== null ? fwdEta : revEta;
   }, [board]);
+  // The age of the freshest fix we hold — the age of the DATA.
+  //
+  // The relay can answer perfectly while every bus on it has gone quiet: at
+  // 03:00 the feed was fetched in a second and the freshest fix it carried
+  // was an hour old. "updated just now" is then a claim about the relay, and
+  // a rider reads it as a claim about the buses. The number of buses
+  // reporting is already the honest one (a bus that has gone quiet is not
+  // counted); this is the other half of the same sentence.
+  const newestFixMs = useMemo(() => {
+    let newest = 0;
+    for (const b of buses) {
+      const t = Date.parse(b.updatedAt);
+      if (Number.isFinite(t) && t > newest) newest = t;
+    }
+    return newest || null;
+  }, [buses]);
   const onLine = useMemo(() => new Set(placed.filter((p) => p.line.routeId === ref.routeId).map((p) => p.bus.plate)), [placed, ref.routeId]);
   const reporting = buses.filter((b) => isOut(readRow(b, now))).length;
   const live = feed.status === "live" || feed.status === "quiet";
@@ -132,7 +148,7 @@ export function LiveArrivals({
         <h2 id="pa-live-title">Next buses</h2>
         <span className={`pa-live__feed${live ? " is-live" : ""}`} role="status">
           {live
-            ? `${reporting} bus${reporting === 1 ? "" : "es"} reporting · updated ${feed.lastOkMs ? ago(feed.lastOkMs, now) : "—"}`
+            ? feedFreshness(reporting, newestFixMs, now)
             : feed.status === "connecting" ? "Connecting to live trackers…" : "Live trackers unavailable · timetable shown"}
         </span>
       </header>

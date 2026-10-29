@@ -17,7 +17,7 @@ import type { LiveBus } from "@shared/pksbFeed";
 import type { SlimDay } from "@shared/insights";
 import { quantile } from "@shared/insights";
 import { projectOnLine } from "@shared/research";
-import { LINES, ON_LINE_M, TERMINAL_ZONE_M, stateOf, type Line, type State } from "../v2/fleetRows";
+import { LINES, ON_LINE_M, TERMINAL_ZONE_M, ago, stateOf, type Line, type State } from "../v2/fleetRows";
 
 export type Dir = "fwd" | "rev";
 export type Stop = Line["stops"][number];
@@ -155,6 +155,25 @@ export function arrivalsAt(placed: BusOnLine[], ref: StopRef, pace: Pace, nowMs:
 export function towardLabel(line: Line, dir: Dir): string {
   if (line.loop) return dir === "fwd" ? "Loop, one way" : "Loop, other way";
   return `Toward ${dir === "fwd" ? line.to : line.from}`;
+}
+
+/**
+ * What the board says about how current the information is.
+ *
+ * The relay can answer perfectly while every bus on it has gone quiet: at
+ * 03:00 the feed was fetched in a second and the freshest fix it carried was
+ * an hour old. The count of buses reporting is already honest about that on
+ * its own — a bus that has gone quiet is not counted — and this is the other
+ * half of the same sentence: the age of the freshest fix we hold.
+ *
+ * "updated just now" has to mean the BUSES, not the server that fetched them.
+ */
+export function feedFreshness(reporting: number, newestFixMs: number | null, nowMs: number): string {
+  const age = newestFixMs !== null ? ago(newestFixMs, nowMs) : null;
+  if (reporting > 0) {
+    return `${reporting} bus${reporting === 1 ? "" : "es"} reporting${age ? ` · last fix ${age}` : ""}`;
+  }
+  return age ? `No bus reporting · trackers last spoke ${age}` : "No bus reporting · no tracker fix yet";
 }
 
 export function nearestStop(lat: number, lng: number): StopRef & { km: number } {
