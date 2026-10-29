@@ -625,7 +625,7 @@ export default function DashboardV2() {
           />
           <section className="v2-insights-main">
             <InsightsTimeline points={queueTimeline} simMinutes={state.simMinutes} />
-            <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} mode="priority" />
+            <HourlyBalanceChart rows={hourlyBalance} simMinutes={state.simMinutes} mode="priority" supplyBasis={source === "live" && service.service ? "recorded departures + still due" : undefined} />
           </section>
         </main>
       ) : isCompact ? (

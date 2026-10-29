@@ -10,6 +10,12 @@ interface HourlyBalanceChartProps {
   /** Hour currently shown to operators. When the user clicks a row we
    *  scrub the simulation to that hour so the map follows along. */
   onHourSelect?: (hour: number) => void;
+  /**
+   * Where the SEATS came from, when it is not the published timetable. In
+   * LIVE the supply in force is today's recorded service, so a tooltip that
+   * says "scheduled seats" would be naming the wrong thing.
+   */
+  supplyBasis?: string;
 }
 
 const STATUS_LABEL: Record<HourlyBalanceStatus, string> = {
@@ -47,7 +53,7 @@ function fmtThb(n: number): string {
  * demand outran the fixed schedule. Gray LIGHT hours are seats flying
  * past nobody. The footer totals answer the operator's four questions.
  */
-export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelect }: HourlyBalanceChartProps) {
+export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelect, supplyBasis }: HourlyBalanceChartProps) {
   const currentHour = Math.floor(simMinutes / 60) % 24;
   const max = useMemo(
     () => Math.max(1, ...rows.map((r) => Math.max(r.busEligiblePax, r.outEligiblePax, r.busSeats + r.outSeats))),
@@ -217,7 +223,7 @@ export function HourlyBalanceChart({ rows, simMinutes, mode = "all", onHourSelec
                   <div
                     className="v2-hourly__fill v2-hourly__fill--seats"
                     style={{ width: w(totalSeats) }}
-                    title={`${totalSeats} scheduled seats (${row.busSeats} out of airport · ${row.outSeats} toward airport)`}
+                    title={`${totalSeats} ${supplyBasis ? "seats today" : "scheduled seats"} (${row.busSeats} out of airport · ${row.outSeats} toward airport)`}
                   />
                   <span className="v2-hourly__fill-label">{totalSeats}</span>
                 </div>

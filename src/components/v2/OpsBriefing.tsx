@@ -72,9 +72,13 @@ export function OpsBriefing({
         <p>
           {hasQueue
             ? `${waiting.toLocaleString()} modelled arrivals are waiting. At 25 seats each, ${standbyBuses} additional buses would clear the queue.`
-            : `${currentBusDemand.toLocaleString()} modelled riders meet ${currentSupplySeats.toLocaleString()} scheduled seats this hour.`}
+            : `${currentBusDemand.toLocaleString()} modelled riders meet ${currentSupplySeats.toLocaleString()} ${live ? "seats on today's service" : "scheduled seats"} this hour.`}
         </p>
-        {nextDeparture !== null && <span className="v2-brief__next">Next scheduled departure in {nextDeparture} min</span>}
+        {nextDeparture !== null && (
+          <span className="v2-brief__next">
+            Next {live ? "departure" : "scheduled departure"} in {nextDeparture} min
+          </span>
+        )}
       </section>
 
       <PhuketConditionsStrip />
@@ -107,7 +111,7 @@ export function OpsBriefing({
         <ol className="v2-brief__chain">
           <li><span>Flight passengers this hour</span><strong>{currentDemandPax.toLocaleString()}</strong></li>
           <li><span>Likely bus riders</span><strong>{currentBusDemand.toLocaleString()}</strong></li>
-          <li><span>Seats on the timetable</span><strong>{currentSupplySeats.toLocaleString()}</strong></li>
+          <li><span>{live ? "Seats offered today" : "Seats on the timetable"}</span><strong>{currentSupplySeats.toLocaleString()}</strong></li>
           <li><span>Queue right now</span><strong>{waiting.toLocaleString()}</strong></li>
         </ol>
       </section>
