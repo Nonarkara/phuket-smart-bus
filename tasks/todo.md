@@ -113,3 +113,21 @@ were leaking; this pass closes the sharpest holes.
 - Rider ETA ignores dwell and the turnaround leg (per-stop medians next)
 - Simulated map buses still move at timetable speed under AS RAN
 - Items from 2026-10-16 (token rotation, settings literals, tracker/PDPA, airplanes.live, CSP) unchanged
+
+---
+
+## 2026-10-29 · Finish MiniMax's work, audit, MSH, ship
+
+- [x] MiniMax's uncommitted departures change did not compile and its parser dropped `departures`; finished (research + endpoint cache v3 + liveService + tests) — 4c3e4b3
+- [x] "95 min" was the taxi-comparison figure written down as the timetable's in six modules. Official timetable: 130 min down / 147 up. `/research`'s headline "only 3% make the timetable" is **92%**. Duty cycle 297 min, not 210. One module (`publishedRunning.ts`) now — 6c198ea, fd9adf6, lesson 14, vault lesson captured
+- [x] Rider phone (production, 390×844): page was 4.85 screens and the map started at 2,160 px. Order is now board → map → decision → tickets. Decision card no longer invents "35 min", the airport timetable no longer shows at Rawai, the made-up +฿38,000/+64,000 / CO₂ panel is a link to the real console. Standing at a terminal reads "Waiting · At Rawai" — 55304b2, f691982
+- [x] CSP sweep gate (`scripts/design/cspsweep.mjs`) + proof, in CI — a97b2b5-era commit a92cdc5
+- [x] Full suite 334/334 before each deploy
+
+### Decided not to do (owner's call)
+- `origin/overhaul/usdot` NOT merged: it swaps the product-wide display face to Public Sans, rewrites STYLE.md and the type-audit instrument to accept it, and replaces the toolkit palette with Tailwind defaults (#0f172a, #ef4444, #0284c7, #10b981, #f8fafc, #e2e8f0) against STYLE.md's paper/ink/red. Branch left in place (deleting a remote branch was refused by the permission classifier).
+
+### Still open
+- /ops left column: dense small text (rule 7) — structural
+- Rider ETA still ignores dwell at intermediate stops (per-stop medians from `Trip.stopMin`)
+- Dr Non: PKSB token rotation, `.claude/settings.local.json` literals, CSP enforcement (see below)
