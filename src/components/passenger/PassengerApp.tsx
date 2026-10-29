@@ -249,6 +249,7 @@ export function PassengerApp() {
   const simMinutes = useBangkokMinute();
   const countdown = useNextBusCountdown(simMinutes);
   const operator = useOperatorMetrics();
+  const liveGps = isLiveGpsActive();
   const [step, setStep] = useState<Step>("home");
   const [passType, setPassType] = useState<"single" | "3day" | null>(null);
   const [destination, setDestination] = useState<string>("");
@@ -431,7 +432,10 @@ export function PassengerApp() {
             <span>{operator.clockLabel} ICT</span>
           </span>
           <span className="pa-status-chip">
-            <span>{operator.fleet.movingBuses}/{operator.fleet.totalBuses} buses active</span>
+            <span>
+              {operator.fleet.movingBuses}/{operator.fleet.totalBuses}{" "}
+              {liveGps ? "tracker buses active" : "timetable buses modelled"}
+            </span>
           </span>
           {env && (
             <span className={`pa-status-chip pa-status-chip--marine is-${env.maritimeFlag || "green"}`}>
@@ -469,7 +473,7 @@ export function PassengerApp() {
         <aside className="pa-stage" aria-label="Phuket Island Live Transit Stage">
           <div className="pa-stage__banner">
             <div className="pa-stage__banner-info">
-              <strong>Phuket Coastal Corridor — {isLiveGpsActive() ? "Live GPS" : "Timetable simulation"}</strong>
+              <strong>Phuket Coastal Corridor — {liveGps ? "Live GPS" : "Timetable simulation"}</strong>
               <span>{operator.clockLabel} ICT · published duties on 3,944-point road geometry · GPS-ready</span>
             </div>
             <div className="pa-stage__banner-badges">
@@ -487,7 +491,10 @@ export function PassengerApp() {
 
           <div className="pa-stage__footer">
             <div className="pa-stage__stats">
-              <span><strong>{operator.fleet.movingBuses}</strong> buses moving</span>
+              <span>
+                <strong>{operator.fleet.movingBuses}</strong>{" "}
+                {liveGps ? "tracker buses moving" : "timetable buses modelled"}
+              </span>
               <span className="pa-sep">·</span>
               <span><strong>{operator.today.paxDelivered.toLocaleString()}</strong> modelled riders</span>
               <span className="pa-sep">·</span>

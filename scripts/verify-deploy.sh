@@ -250,6 +250,24 @@ if [ "${SKIP_DESIGN_GATE:-0}" != "1" ]; then
   fi
 fi
 
+# ── the CSP sweep ───────────────────────────────────────────────────────────
+#
+# The Content-Security-Policy is ENFORCED (public/_headers, since 2026-10-29).
+# An enforced policy that blocks a tile layer or a font fails SILENTLY — the
+# page renders, it just looks wrong — so the sweep is what says it does not:
+# every route, both widths, in a real browser, counting the violations the
+# browser reports.
+#
+# It runs against the site that is LIVE, after the deploy, because that is
+# the only place the new build exists.
+if [ "${SKIP_CSP_SWEEP:-0}" != "1" ]; then
+  if command -v node >/dev/null 2>&1 && [ -d node_modules/playwright ]; then
+    node scripts/design/cspsweep.mjs --base "$CUSTOM" || exit "$EXIT_GATE"
+  else
+    echo "warn: playwright is not installed — the CSP sweep did not run"
+  fi
+fi
+
 # ── the shipability audit ──────────────────────────────────────────────────
 # The gate measures the LAYOUT. This measures whether the thing can be
 # HANDED OVER: no page throws, no page reports the visitor to a third

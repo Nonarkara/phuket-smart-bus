@@ -287,12 +287,21 @@ a { color: var(--amber-text); }
    never collides with the brand pill or with the phone column itself. */
 @media (max-width: 1280px) {
   .desktop-rider__nav {
-    top: auto;
-    bottom: 16px;
-    left: 18px;
-    right: auto;
-    max-width: calc(100vw - 36px);
-    flex-wrap: wrap;
+    top: 88px;
+    bottom: auto;
+    left: auto;
+    right: 18px;
+    width: min(260px, calc((100vw - 440px) / 2 - 36px));
+    max-width: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .desktop-rider__nav a {
+    min-height: 44px;
+    padding: 10px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--hairline, rgba(0, 0, 0, 0.08));
   }
   .desktop-rider__brand small { display: none; }
 }
@@ -1307,6 +1316,7 @@ a { color: var(--amber-text); }
   font-size: var(--t-label);
   font-weight: 500;
   cursor: pointer;
+  min-height: 44px;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.2s ease;
@@ -10737,9 +10747,27 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
 .map-pills { bottom: 78px; }
 .map-lang--compact { opacity: 0.95; transform: none; }
 .map-lang--compact .lang-toggle__button {
-  min-width: 30px;
-  min-height: 28px;
+  min-width: 44px;
+  min-height: 44px;
   font-size: var(--t-micro);
+}
+
+@media (max-width: 720px) {
+  .map-lang--compact {
+    right: 0.5rem;
+    max-width: calc(100% - 1rem);
+    overflow-x: auto;
+  }
+  .map-weather {
+    top: calc(var(--hero-below, 132px) + 48px);
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    text-align: left;
+  }
+  .map-badge {
+    top: calc(var(--hero-below, 132px) + 84px);
+  }
 }
 
 /* Laptop landing: make the product architecture legible, not a list of

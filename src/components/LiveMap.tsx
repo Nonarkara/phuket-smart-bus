@@ -123,7 +123,7 @@ function VehicleLayer({ routeColorById, routeColorSignature, highlightVehicleId,
       const icon = isFerry
         ? buildFerryIcon(vehicle, color, highlighted)
         : buildVehicleIcon(vehicle, color, highlighted);
-      const marker = L.marker(vehicle.coordinates, { icon }).addTo(map);
+      const marker = L.marker(vehicle.coordinates, { icon, keyboard: false }).addTo(map);
       marker.bindTooltip(vehicle.licensePlate);
       markersRef.current.set(key, marker);
       return marker;
@@ -361,7 +361,7 @@ export function LiveMap({
 
   return (
     <div className="map-frame" data-testid={testId}>
-      <MapContainer center={center} zoom={11} zoomSnap={0.1} zoomDelta={0.25} scrollWheelZoom={false} className="map-canvas" minZoom={10} maxZoom={16} worldCopyJump={false}>
+      <MapContainer aria-label="Live Phuket bus and ferry map" center={center} zoom={11} zoomSnap={0.1} zoomDelta={0.25} scrollWheelZoom={false} className="map-canvas" minZoom={10} maxZoom={16} worldCopyJump={false}>
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -384,7 +384,8 @@ export function LiveMap({
                 color: route.color,
                 weight: FERRY_ROUTE_IDS.has(route.id) ? 3 : 5,
                 opacity: 0.92,
-                dashArray: FERRY_ROUTE_IDS.has(route.id) ? "8 6" : undefined
+                dashArray: FERRY_ROUTE_IDS.has(route.id) ? "8 6" : undefined,
+                interactive: false
               }}
             />
           ))
@@ -401,7 +402,8 @@ export function LiveMap({
                 color: isHighlighted ? "#ffffff" : "#d9f7ff",
                 fillColor: isHighlighted ? "#ff8a3d" : routeColorById[stop.routeId] ?? "#0d1b2a",
                 fillOpacity: 1,
-                weight: isHighlighted ? 3 : 2
+                weight: isHighlighted ? 3 : 2,
+                interactive: false
               }}
             >
               <Tooltip>{pick(stop.name, lang)}</Tooltip>
@@ -420,7 +422,8 @@ export function LiveMap({
                     color: "rgba(22, 184, 176, 0.42)",
                     fillColor: "rgba(22, 184, 176, 0.14)",
                     fillOpacity: 0.3,
-                    weight: 2
+                    weight: 2,
+                    interactive: false
                   }}
                 />
               ))
@@ -440,7 +443,8 @@ export function LiveMap({
               color: "#101418",
               fillColor: "#ffffff",
               fillOpacity: 1,
-              weight: 3
+              weight: 3,
+              interactive: false
             }}
           >
             <Tooltip>{pick(ui.locationYouAreHere, lang)}</Tooltip>
@@ -456,7 +460,8 @@ export function LiveMap({
               color: m.color,
               fillColor: m.color,
               fillOpacity: m.fillOpacity ?? 0.3,
-              weight: 2
+              weight: 2,
+              interactive: false
             }}
           >
             <Tooltip>{m.label}</Tooltip>

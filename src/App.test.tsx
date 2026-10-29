@@ -124,38 +124,48 @@ describe("App", () => {
     expect(screen.getByRole("tab", { name: /Field Notes/i })).toBeInTheDocument();
   }, 30_000);
 
-  it("shows the desktop passenger shell — not the bare mobile app or the toolkit hub — for a desktop visitor on the rider domain", async () => {
-    // Regression test: isRiderDomain used to short-circuit to the bare
-    // mobile PassengerApp (or fall into the toolkit hub) for EVERY visitor
-    // to bus.nonarkara.org, desktop included. A desktop visitor must reach
-    // a real intro page, not a phone-frame on a satellite backdrop. The
-    // new shell is `.desktop-rider` — a centered phone column with brand
-    // top-left and a top-right nav pointing at the other surfaces.
+  it("shows the PassengerApp desktop portal — not the legacy tourist shell or toolkit — on the rider domain", async () => {
+    // PassengerApp now owns both rider-domain viewports: the single-task
+    // phone view and a desktop portal that keeps the rider board beside the
+    // live corridor. The old mobile-only host gate silently sent laptops to
+    // the legacy /tourist shell even after this portal existed.
     const originalLocation = window.location;
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { ...originalLocation, hostname: "bus.nonarkara.org", pathname: "/" }
     });
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 1400 });
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("min-width: 960px"),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    })) as typeof window.matchMedia;
     window.dispatchEvent(new Event("resize"));
     window.history.replaceState({}, "", "/");
 
     try {
       render(<App />);
 
-      // Brand top-left
-      expect(await screen.findByText(/Phuket Smart Bus/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /^OPS$/i })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /^TOOLKIT$/i })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /^FLEET$/i })).toBeInTheDocument();
-      // TouristApp mounted inside the phone column — the mobile map is the
-      // positive signal that the rider app is on screen, not the toolkit.
-      expect(await screen.findByTestId("live-map")).toBeInTheDocument();
+      expect(await screen.findByRole(
+        "link",
+        { name: /Ops Console/i },
+        { timeout: 15_000 }
+      )).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Preview phone/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Next real buses/i })).toBeInTheDocument();
+      expect(screen.getByRole("complementary", { name: /Phuket Island Live Transit Stage/i })).toBeInTheDocument();
       // Toolkit hub heading must NOT appear at / on the rider domain.
       expect(
         screen.queryByRole("heading", { name: /what if an airport passenger can find the bus/i })
       ).not.toBeInTheDocument();
     } finally {
+      window.matchMedia = originalMatchMedia;
       Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
     }
   });

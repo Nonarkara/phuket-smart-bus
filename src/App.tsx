@@ -263,17 +263,16 @@ export default function App() {
     return <Suspense fallback={<RouteLoading />}><Capacity /></Suspense>;
   }
 
-  // bus.nonarkara.org is the passenger front door — the only screen a
-  // rider sees on a phone. The operator console lives at /ops.
-  // isMobile-gated: without it, EVERY visitor to bus.nonarkara.org — desktop
-  // included — got the bare mobile PassengerApp stretched full-width with no
-  // phone frame, no hero background, no Operator Console sidebar. Desktop
-  // visitors must still fall through to the desktop-shell below.
+  // bus.nonarkara.org is the passenger front door. PassengerApp owns both
+  // sides of that front door: the single-task phone view and its deliberate
+  // desktop portal with the live corridor beside it. The old isMobile gate
+  // predated that desktop portal and silently routed laptop visitors into the
+  // legacy /tourist shell instead.
   const isRiderDomain =
     typeof window !== "undefined" &&
     (window.location.hostname === "bus.nonarkara.org" ||
       window.location.hostname.startsWith("bus."));
-  if (isRiderDomain && isMobile && (pathname === "/" || pathname === "")) {
+  if (isRiderDomain && (pathname === "/" || pathname === "")) {
     return <Suspense fallback={<RouteLoading />}><PassengerApp /></Suspense>;
   }
 
@@ -809,6 +808,7 @@ function TouristApp({ onToggle }: { onToggle: () => void }) {
             {/* Welcome bottom sheet — outside map-container, inside map-view */}
             <WelcomeSheet
               lang={lang}
+              routeId={selectedRouteId}
               vehicles={allVehicles}
               allStops={Object.values(routeStopsById).flat() as Stop[]}
               onNavigateToStop={(stopId) => {

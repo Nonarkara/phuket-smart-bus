@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Lang, RouteId, Stop, PriceComparison, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
-import { getScheduledServices } from "../engine/scheduleService";
+import { getNextRiderDeparture } from "../engine/riderDeparture";
 import { getInjuriesForLocale, THAIRSC_2026_FOREIGNERS } from "../engine/safetyData";
 
 interface HeroSectionProps {
@@ -15,41 +15,11 @@ interface HeroSectionProps {
 
 function getNextBusEta(
   routeId: RouteId | null,
-  stops: Stop[],
-  vehicles: VehiclePosition[]
+  _stops: Stop[],
+  _vehicles: VehiclePosition[]
 ): { minutes: number; destination: string } | null {
-  if (!routeId || stops.length === 0) return null;
-  const moving = vehicles.filter((v) => v.routeId === routeId && v.status === "moving");
-  if (moving.length === 0) {
-    const services = getScheduledServices(routeId);
-    if (services.length > 0) {
-      const nowMin = getBangkokNowFractionalMinutes();
-      let nextDeparture = Infinity;
-      let nextDirection = "destination";
-      for (const svc of services) {
-        for (const depMin of svc.departures) {
-          if (depMin > nowMin && depMin < nextDeparture) {
-            nextDeparture = depMin;
-            nextDirection = svc.directionLabel || "destination";
-          }
-        }
-      }
-      if (nextDeparture < Infinity) {
-        return {
-          minutes: Math.ceil(nextDeparture - nowMin),
-          destination: nextDirection
-        };
-      }
-    }
-    return null;
-  }
-  const sorted = [...moving].sort((a, b) => (a.stopsAway ?? 999) - (b.stopsAway ?? 999));
-  const nextVehicle = sorted[0];
-  const estimatedMin = nextVehicle.stopsAway ? Math.ceil(nextVehicle.stopsAway * 2) : 8;
-  return {
-    minutes: estimatedMin,
-    destination: nextVehicle.destination?.en || "destination"
-  };
+  const next = getNextRiderDeparture(routeId, getBangkokNowFractionalMinutes());
+  return next ? { minutes: next.waitMin, destination: next.destination } : null;
 }
 
 export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: HeroSectionProps) {
@@ -124,9 +94,7 @@ export function HeroSection({ routeId, stops, lang, comparisons, vehicles }: Her
     function updateCountdown() {
       const eta = getNextBusEta(routeId, stops, vehicles);
       if (eta) {
-        const fracMin = getBangkokNowFractionalMinutes();
-        const fracEta = eta.minutes - (fracMin % 1);
-        setCountdown(Math.max(0, Math.ceil(fracEta * 60)));
+        setCountdown(Math.max(0, Math.ceil(eta.minutes * 60)));
         setDestination(shortDest(eta.destination));
       } else {
         setCountdown(0);

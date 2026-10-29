@@ -79,3 +79,16 @@ jobs:
           npx playwright install --with-deps chromium
           sleep 20
           bash scripts/design/verify-design.sh https://bus.nonarkara.org
+
+      # The policy is ENFORCED (public/_headers, since 2026-10-29), and an
+      # enforced policy that blocks a tile layer or a font fails SILENTLY: the
+      # page still renders, it just looks wrong, and nothing in the console
+      # says why. The sweep is the check that says it does not — every route,
+      # both widths, against the site that is LIVE, after the deploy.
+      #
+      # It is here, after the deploy, because that is the only place the NEW
+      # build exists: a sweep in the pull request measures the old build, and
+      # the old build is the one that is already known to be clean.
+      - name: CSP sweep
+        run: |
+          node scripts/design/cspsweep.mjs --base https://bus.nonarkara.org

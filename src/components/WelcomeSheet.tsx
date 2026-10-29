@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { Lang, PriceComparison, Stop, VehiclePosition } from "@shared/types";
+import type { Lang, PriceComparison, RouteId, Stop, VehiclePosition } from "@shared/types";
 import { ui, pick } from "../lib/i18n";
 import { getNextPublishedStopArrival } from "../engine/fleetSimulator";
 import { getBangkokNowFractionalMinutes } from "../engine/time";
+import { getNextRiderDeparture } from "../engine/riderDeparture";
 
 type SheetStep = "ask" | "result" | "booked" | "pass";
 
@@ -99,6 +100,7 @@ function BarcodeGraphic({ code }: { code: string }) {
 
 interface WelcomeSheetProps {
   lang: Lang;
+  routeId: RouteId | null;
   vehicles: VehiclePosition[];
   allStops: Stop[];
   onNavigateToStop: (stopId: string) => void;
@@ -110,7 +112,7 @@ function getNextBusMin(dest: string): number | null {
   return next ? Math.round(next.waitMin) : null;
 }
 
-export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNavigateToStop }: WelcomeSheetProps) {
+export function WelcomeSheet({ lang, routeId, vehicles: _vehiclesProp, allStops, onNavigateToStop }: WelcomeSheetProps) {
   const [step, setStep] = useState<SheetStep>("ask");
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
@@ -174,18 +176,14 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
   useEffect(() => {
     function refresh() {
       const nowMin = getBangkokNowFractionalMinutes();
-      const pNext = getNextPublishedStopArrival("Patong", nowMin);
-      const aNext = getNextPublishedStopArrival("Airport", nowMin);
-      const pDiff = pNext?.waitMin ?? null;
-      const aDiff = aNext?.waitMin ?? null;
-      const preferPatong = pDiff !== null && (aDiff === null || pDiff <= aDiff);
-      const diff = preferPatong ? pDiff : aDiff;
-      const dest = preferPatong ? "Patong" : "Airport";
+      const next = getNextRiderDeparture(routeId, nowMin);
+      const diff = next?.waitMin ?? null;
+      const dest = next?.destination ?? "Airport line";
 
       if (diff === null) {
         setTickingDisplay({ text: "Resumes 06:00", dest, cls: "welcome-sheet__next-time--dim" });
       } else {
-        const totalSec = Math.max(0, Math.round(diff * 60));
+        const totalSec = Math.max(0, Math.ceil(diff * 60));
         const mm = Math.floor(totalSec / 60);
         const ss = totalSec % 60;
         setTickingDisplay({
@@ -198,7 +196,7 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
     refresh();
     const id = setInterval(refresh, 200); // 5fps for smooth seconds
     return () => clearInterval(id);
-  }, []);
+  }, [routeId]);
 
   if (step === "ask") {
     if (!expanded) {
@@ -213,7 +211,7 @@ export function WelcomeSheet({ lang, vehicles: _vehiclesProp, allStops, onNaviga
           <div className="welcome-sheet__handle"><div className="welcome-sheet__bar" /></div>
           <div className="welcome-sheet__peek">
             <span className="welcome-sheet__next-bus">
-              <span className="welcome-sheet__next-label">Next bus to {tickingDisplay.dest}</span>
+              <span className="welcome-sheet__next-label">Next scheduled departure · {tickingDisplay.dest}</span>
               <strong className={`welcome-sheet__next-time ${tickingDisplay.cls}`}>{tickingDisplay.text}</strong>
             </span>
             <span className="welcome-sheet__peek-right">

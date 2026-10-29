@@ -20,12 +20,13 @@ test("rider front door labels modelled figures honestly", async ({ page }) => {
   await open(page, "/");
 
   if ((page.viewportSize()?.width ?? 0) < 768) {
-    await expect(page.getByRole("heading", { name: /Phuket Smart Bus tickets/i })).toBeVisible();
-    await expect(page.getByText(/live timetable simulation · no real payment/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /where the buses are and when the next one reaches your stop/i })).toBeVisible();
+    await expect(page.getByText(/Next scheduled bus leaves in/i)).toBeVisible();
+    await expect(page.getByText(/prototype does not charge a card/i)).toBeVisible();
   } else {
-    await expect(page.getByRole("button", { name: /Operator Console/i })).toBeVisible();
-    await expect(page.getByText("Modelled riders today")).toBeVisible();
-    await expect(page.getByText(/published timetable \+ demand simulation/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /Ops Console/i })).toBeVisible();
+    await expect(page.getByText(/modelled riders/i)).toBeVisible();
+    await expect(page.getByText(/published duties on 3,944-point road geometry/i)).toBeVisible();
   }
 });
 
@@ -34,7 +35,7 @@ test("legacy tourist shell keeps the map and info flow intact", async ({ page })
 
   await expect(page.getByRole("button", { name: "Map" })).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toBeVisible();
-  await expect(page.getByText("Next Bus · Airport", { exact: true })).toBeVisible();
+  await expect(page.getByText("Next scheduled departure · Patong & Rawai", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: /Plan a trip/i }).click();
 
