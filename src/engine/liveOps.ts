@@ -30,6 +30,7 @@ import { haversineDistanceMeters } from "./geo";
 import { getBangkokNowFractionalMinutes, BANGKOK_TIME_ZONE, bangkokDate, bangkokDow } from "./time";
 import { ROI_CONSTANTS } from "./roi";
 import { appPath } from "../lib/paths";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 
 // ── tuning knobs (each one line, each one reason) ──────────────────────────
 export const POLL_INTERVAL_MS = 15_000;
@@ -64,7 +65,7 @@ const LINE_VOTES = 2;
 const MAX_BOARD_STEP = 40;
 /** An airport-line trip within this of a scheduled run IS that run. */
 const RUN_MATCH_MIN = 30;
-const AIRPORT_TRIP_MINUTES = 95;
+const AIRPORT_TRIP_MINUTES = AIRPORT_PUBLISHED.line;
 const CO2_KG_PER_PAX_KM_SAVED = ROI_CONSTANTS.co2KgPerPaxKmCar - ROI_CONSTANTS.co2KgPerPaxKmBus;
 
 // ── line geometry ──────────────────────────────────────────────────────────

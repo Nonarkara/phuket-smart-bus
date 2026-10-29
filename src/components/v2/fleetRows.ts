@@ -9,6 +9,7 @@ import type { LiveBus } from "@shared/pksbFeed";
 import geometry from "@shared/lineGeometry.json";
 import { projectOnLine } from "@shared/research";
 import { appPath } from "../../lib/paths";
+import { AIRPORT_PUBLISHED } from "../../engine/publishedRunning";
 
 // ── what a bus is doing ────────────────────────────────────────────────────
 export type State = "driving" | "standing" | "late" | "quiet" | "off";
@@ -21,8 +22,13 @@ export const BUNCH_M = 1_200;
 export const TERMINAL_ZONE_M = 1_000;
 /** Where each fleet sleeps (from the parked positions in the feed). */
 export const DEPOTS: [number, number][] = [[7.8814, 98.4093], [7.8930, 98.3622]];
-/** Published PKSB end-to-end running time (timetable effective 18 Jan 2025). Only the Airport line is published. */
-export const TIMETABLE_MIN: Record<string, number> = { "rawai-airport": 95 };
+/**
+ * Published PKSB end-to-end running time (timetable effective 18 Jan 2025), read
+ * from the timetable itself — 130 min Airport → Rawai, 147 min the other way.
+ * Only the Airport line publishes per-trip times. (This said 95 until 2026-10-29:
+ * the taxi-vs-bus comparison figure, not the timetable's.)
+ */
+export const TIMETABLE_MIN: Record<string, number> = { "rawai-airport": AIRPORT_PUBLISHED.line };
 
 export const STATE_WORD: Record<State, string> = {
   driving: "Driving", standing: "Standing", late: "Late signal", quiet: "No signal", off: "Not out today",

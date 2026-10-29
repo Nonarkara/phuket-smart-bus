@@ -33,6 +33,7 @@ import {
   BUS_CAPACITY
 } from "./demandSupplyEngine";
 import { ROI_CONSTANTS } from "./roi";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 
 // ---------------------------------------------------------------------------
 // Hourly Demand-Supply Balance — the chart that makes over/under-supply obvious
@@ -169,7 +170,7 @@ export type OperatorFleetRow = {
 };
 
 const NOMINAL_TRIP_MIN: Record<string, number> = {
-  "rawai-airport": 95,
+  "rawai-airport": AIRPORT_PUBLISHED.line,
   "patong-old-bus-station": 35,
   "dragon-line": 50
 };
@@ -237,7 +238,12 @@ export function getOperatorFleet(): OperatorFleetRow[] {
       const loadPct = Math.round((load / cap) * 100);
       const tripStart = v.tripStartMin ?? null;
       const ageMin = tripStart != null ? nowMin - tripStart : null;
-      const tripDuration = NOMINAL_TRIP_MIN[v.routeId] ?? 95;
+      // Each Airport-line direction has its own published running time; a bus
+      // judged against the wrong one flips to LAYOVER while still on the road.
+      const towardAirport = /airport/i.test(v.directionLabel ?? "");
+      const tripDuration = v.routeId === "rawai-airport"
+        ? (towardAirport ? AIRPORT_PUBLISHED.rev : AIRPORT_PUBLISHED.fwd)
+        : NOMINAL_TRIP_MIN[v.routeId] ?? AIRPORT_PUBLISHED.line;
       const tripProgressPct = tripStart != null && ageMin != null
         ? Math.max(0, Math.min(100, Math.round((ageMin / tripDuration) * 100)))
         : null;
@@ -366,9 +372,9 @@ export function getHourPeaks(): HourPeak {
 
 /** ฿ per bus per service hour (฿800k ÷ 365 days ÷ 16 service hours ≈ ฿137). */
 export const HOURLY_OPEX_PER_BUS_THB = ROI_CONSTANTS.operatingCostPerBusYear / 365 / 16;
-/** One Airport↔Rawai trip is 95 min on the published timetable. */
-const TRIP_MIN = 95;
-/** Opex of one extra 95-min trip (both directions are separate trips). */
+/** One Airport↔Rawai trip is ~135 min on the published timetable (130 down, 147 up). */
+const TRIP_MIN = AIRPORT_PUBLISHED.line;
+/** Opex of one extra trip (both directions are separate trips). */
 export const TRIP_OPEX_THB = Math.round(HOURLY_OPEX_PER_BUS_THB * TRIP_MIN / 60);
 /** Opex of one extra bus for a full 16-hour service day. */
 export const DAILY_OPEX_PER_BUS_THB = Math.round(HOURLY_OPEX_PER_BUS_THB * 16);

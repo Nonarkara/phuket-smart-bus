@@ -27,7 +27,7 @@ const BUS_CITATIONS: Citation[] = [
   {
     text: "Phuket Smart Bus — official PKSB timetable (effective 18 Jan 2025),",
 
-    meta: "Rawai Beach ↔ Phuket Airport: 20 departures a day each direction. From the airport 08:15 to 23:30; to it 05:30 to 19:30 — the first two northbound trips start at Kata Palm, not Rawai. ~95 min trip, ฿100 flat fare.",
+    meta: "Rawai Beach ↔ Phuket Airport: 20 departures a day each direction. From the airport 08:15 to 23:30; to it 05:30 to 19:30 — the first two northbound trips start at Kata Palm, not Rawai. End to end about 2 h 10 (2 h 27 on the way up), ฿100 flat fare.",
     href: "https://bus.nonarkara.org/"
   },
   {

@@ -26,6 +26,7 @@ import {
 } from "./opsFlightSchedule";
 import { getAirportDepartures, getAirportboundTrips, getMeasuredAirportSupply, getSupplyVersion, type AirportboundTrip } from "./fleetSimulator";
 import { captureRateFor, CHECK_IN_LEAD_MIN, MAX_EARLY_ARRIVAL_MIN } from "./travelBehavior";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 
 // ---------------------------------------------------------------------------
 // Model constants — each one sourced, none decorative
@@ -344,9 +345,11 @@ function buildOutbound(departures: OpsFlight[], schedule: AirportboundTrip[]): O
 // ---------------------------------------------------------------------------
 
 /** One physical extra bus = a duty cycle, not a single departure.
- *  Airport → Rawai is 95 min; with layover and the return leg the same
- *  vehicle is back at the airport curb every ~210 min. */
-const DUTY_CYCLE_MIN = 210;
+ *  Airport → Rawai is 130 min and Rawai → Airport 147 min on the official
+ *  timetable; with a 20 min turnaround the same vehicle is back at the
+ *  airport curb every ~297 min. (This was 210 — built on 95-min trips, which
+ *  is the taxi-comparison figure — and overstated what an added bus could carry by 40%.) */
+const DUTY_CYCLE_MIN = AIRPORT_PUBLISHED.fwd + AIRPORT_PUBLISHED.rev + 20;
 
 function dutyCycleDepartures(startMin: number): number[] {
   const deps: number[] = [];
@@ -747,8 +750,8 @@ export function getFleetScenario(deltaBuses: number): FleetScenario {
     southbound = plan.departures;
     // …and the same physical buses run northbound half a duty cycle later.
     const HALF_CYCLE = Math.round(DUTY_CYCLE_MIN / 2);
-    // An added bus runs as long as that day's real trips took (published: 95).
-    const TRIP_MIN = Math.round(getMeasuredAirportSupply(dow)?.medianTripMin ?? 95);
+    // An added bus runs as long as that day's real trips took (published: 147 up).
+    const TRIP_MIN = Math.round(getMeasuredAirportSupply(dow)?.medianTripMin ?? AIRPORT_PUBLISHED.rev);
     for (const start of plan.startedAt) {
       for (let t = start + HALF_CYCLE; t < DAY_MIN; t += DUTY_CYCLE_MIN) {
         northbound = [...northbound, { originDepMin: t, airportArriveMin: t + TRIP_MIN }];

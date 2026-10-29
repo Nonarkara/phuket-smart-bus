@@ -5,14 +5,15 @@
  */
 import { getLiveTotals } from "./simulation";
 import { getAirportboundTrips, getPublishedAirportDepartures } from "./fleetSimulator";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 
 describe("getLiveTotals — bus trips and bus-km", () => {
   it("at midnight every leg that has arrived is a trip, both directions", () => {
     const t = getLiveTotals(1439.9);
-    const south = getPublishedAirportDepartures().filter((d) => d + 95 <= 1439.9).length;
+    const south = getPublishedAirportDepartures().filter((d) => d + AIRPORT_PUBLISHED.fwd <= 1439.9).length;
     const north = getAirportboundTrips().filter((x) => x.airportArriveMin <= 1439.9).length;
     expect(t.tripsCompleted).toBe(south + north);
-    expect(t.tripsCompleted).toBeGreaterThan(30);
+    expect(t.tripsCompleted).toBeGreaterThan(25); // 20 up + the southbound legs that finished before midnight
   });
 
   it("a completed trip is the whole ~54 km line", () => {

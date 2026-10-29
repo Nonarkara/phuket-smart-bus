@@ -118,7 +118,7 @@ const MODE_LENS = [
   ["A", "Accessibility", "Can a first-time visitor find it, understand it and board it without borrowing local knowledge?"],
   ["B", "Budget", "Does the price make sense beside the taxi, rental car and all the costs people forget to count?"],
   ["C", "Comfort", "Air-con, luggage space, a clean seat and a driver you trust. Basic is not the same as optional."],
-  ["D", "Duration", "Not merely fast: predictable. A known 95 minutes can beat an unknown 60."],
+  ["D", "Duration", "Not merely fast: predictable. A known 100 minutes can beat an unknown 60."],
   ["E", "Experience", "The trip can be part of the holiday, not the administrative punishment before it."],
   ["F", "Freedom", "No parking hunt, rental deposit, fuel stop, damage argument or unfamiliar road in the rain."],
 ] as const;

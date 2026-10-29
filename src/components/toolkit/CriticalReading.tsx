@@ -27,7 +27,7 @@ const LIMITATIONS: Limitation[] = [
   {
     number: "01",
     what: "The simulator does not model the in-vehicle experience.",
-    why: "Time, cost, and safety are captured. The way a passenger actually feels about a 95-minute ride — comfortable seats, working air-con, polite driver — is not in any of the model inputs. It is, however, in the re-ride decision.",
+    why: "Time, cost, and safety are captured. The way a passenger actually feels about a two-hour ride — comfortable seats, working air-con, polite driver — is not in any of the model inputs. It is, however, in the re-ride decision.",
     what_changes_it: "A 90-day instrumented pilot that records repeat-boarding rate per customer, not just first-boarding count."
   },
   {

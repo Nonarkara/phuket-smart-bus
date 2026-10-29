@@ -18,6 +18,7 @@
  * all-day record (/api/research/day, /api/collect/week) for trips and km.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { publishedRunningByDir } from "../../engine/publishedRunning";
 import L from "leaflet";
 import type { LiveBus } from "@shared/pksbFeed";
 import { getLiveBusesRaw, getLiveFeedState, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
@@ -382,7 +383,7 @@ function RecordCard() {
     return () => { alive = false; };
   }, []);
   if (!days) return null;
-  const said = LINES.map((l) => ({ l, ins: lineInsight(days, l.routeId, { from: l.from, to: l.to, loop: l.loop, timetableMin: TIMETABLE_MIN[l.routeId] ?? null }) }))
+  const said = LINES.map((l) => ({ l, ins: lineInsight(days, l.routeId, { from: l.from, to: l.to, loop: l.loop, timetableMin: TIMETABLE_MIN[l.routeId] ?? null, timetableMinByDir: publishedRunningByDir(l.routeId) }) }))
     .filter((x) => x.ins && x.ins.days >= 3);
   if (said.length === 0) return null;
   return (

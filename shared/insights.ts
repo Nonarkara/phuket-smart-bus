@@ -10,7 +10,13 @@
 
 export type SlimTrip = { plate: string; dir: string; departMs: number; arriveMs: number; minutes: number };
 export type SlimDay = { date: string; lines: { routeId: string; trips: SlimTrip[] }[] };
-export type LineNames = { from: string; to: string; loop: boolean; timetableMin: number | null };
+export type LineNames = {
+  from: string; to: string; loop: boolean;
+  /** The line's published running time, pooled over both directions. */
+  timetableMin: number | null;
+  /** …and per direction, when the two differ (Airport line: 130 down, 147 up). A trip is judged against its own way. */
+  timetableMinByDir?: { fwd: number; rev: number } | null;
+};
 
 /** A long gap: over 1.5× the line's usual gap in that direction, and never under an hour —
  *  Patong and Dragon run hourly by design, so "over an hour" alone would flag every gap. */
@@ -75,7 +81,9 @@ export function lineInsight(days: SlimDay[], routeId: string, names: LineNames):
   for (const dir of dirs) medianByDir[dir] = quantile(all.filter((t) => t.dir === dir).map((t) => t.minutes), 0.5);
 
   const tt = names.timetableMin;
-  const onTimetable = tt === null ? null : { made: all.filter((t) => t.minutes <= tt + 10).length, total: all.length };
+  // A trip is judged against the timetable for its own direction when there is one.
+  const ttOf = (dir: string) => (dir === "fwd" || dir === "rev" ? names.timetableMinByDir?.[dir] : undefined) ?? tt;
+  const onTimetable = tt === null ? null : { made: all.filter((t) => t.minutes <= ttOf(t.dir)! + 10).length, total: all.length };
 
   const isWeekend = (date: string) => [0, 6].includes(weekday(date));
   const weekdayMedian = quantile(all.filter((t) => !isWeekend(t.date)).map((t) => t.minutes), 0.5);
@@ -122,7 +130,9 @@ export function lineInsight(days: SlimDay[], routeId: string, names: LineNames):
   const s: string[] = [];
   const overall = quantile(all.map((t) => t.minutes), 0.5)!;
   if (tt !== null && onTimetable) {
-    s.push(`Over ${n} days, ${all.length} ${word}s took a median ${dur(overall)} against the timetable's ${dur(tt)}. Only ${onTimetable.made} of ${onTimetable.total} (${Math.round((onTimetable.made / onTimetable.total) * 100)}%) came within 10 minutes of it.`);
+    const pct = Math.round((onTimetable.made / onTimetable.total) * 100);
+    // "Only" is a verdict; say it only when the share is low.
+    s.push(`Over ${n} days, ${all.length} ${word}s took a median ${dur(overall)} against the timetable's ${names.timetableMinByDir ? `${dur(names.timetableMinByDir.fwd)} one way and ${dur(names.timetableMinByDir.rev)} the other` : dur(tt)}. ${pct < 50 ? "Only " : ""}${onTimetable.made} of ${onTimetable.total} (${pct}%) came within 10 minutes of it.`);
   } else {
     s.push(`Over ${n} days, ${all.length} ${word}s took a median ${dur(overall)}.`);
   }

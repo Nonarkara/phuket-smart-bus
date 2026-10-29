@@ -156,7 +156,7 @@ const DEMAND_STATS: Stat[] = [
 const ROAD_STATS: Stat[] = [
   { value: "25.4 / 100k", label: "Thailand road-death rate (WHO 2023)", note: "9th highest of 175 countries" },
   { value: "92.7%", label: "of Phuket accidents involve motorcycles", note: "ThaiRSC 2025" },
-  { value: "₿ 850", label: "typical HKT → Patong Grab fare", note: "vs. ฿100 bus, 95 min trip" }
+  { value: "₿ 850", label: "typical HKT → Patong Grab fare", note: "vs. ฿100 bus, about 100 min to Patong" }
 ];
 
 /* -------------------------------------------------------------------------

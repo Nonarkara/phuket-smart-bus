@@ -95,7 +95,7 @@ const CLAIMS: Claim[] = [
   },
   {
     number: "PKSB Airport Line timetable",
-    figure: "20 departures a day from the airport (08:15–23:30) · 20 a day to it (05:30–19:30) · ~95 min trip. The model runs on exactly these trips, transcribed into src/data/timetables/, and the recorded fleet ran 13–20 complete trips each way on 2–16 Oct.",
+    figure: "20 departures a day from the airport (08:15–23:30) · 20 a day to it (05:30–19:30) · end to end about 2 h 10 down and 2 h 27 up by the timetable (95 min is the taxi-comparison figure, not the running time). The model runs on exactly these trips, transcribed into src/data/timetables/, and the recorded fleet ran 13–20 complete trips each way on 2–16 Oct.",
     source: "Phuket Smart Bus Co. (PKSB) · official schedule",
     sourceHref: "https://www.pkbsbus.com/",
     verified: "2026-07-15",

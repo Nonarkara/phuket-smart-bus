@@ -16,6 +16,7 @@
  * with the screen, and charts draw at true pixel size in the same units.
  */
 import { useEffect, useMemo, useState } from "react";
+import { AIRPORT_PUBLISHED, publishedRunningByDir } from "../../engine/publishedRunning";
 import { appPath } from "../../lib/paths";
 import { dirLabel, lineInsight, type SlimDay } from "@shared/insights";
 import "./research.css";
@@ -55,7 +56,7 @@ type DayResponse = {
 
 const BKK_OFFSET_MS = 7 * 3_600_000;
 /** Published PKSB end-to-end running time (timetable effective 18 Jan 2025). Only the Airport line is published. */
-const TIMETABLE_MIN: Record<string, number> = { "rawai-airport": 95 };
+const TIMETABLE_MIN: Record<string, number> = { "rawai-airport": AIRPORT_PUBLISHED.line };
 /** A trace breaks where the tracker was silent this long — never drawn across. */
 const TRACE_GAP_MIN = 5;
 /** The running time 85% of real trips made — the usual schedule-setting rule. */
@@ -450,7 +451,7 @@ function PeriodView({ routeId, name, from, to, loop }: { routeId: string; name: 
     void fetch(appPath("/api/research/period")).then((r) => r.json()).then((j) => { if (alive && j?.ok) setPeriod({ days: j.days, pending: j.pending ?? [] }); }).catch(() => {});
     return () => { alive = false; };
   }, []);
-  const names = { from, to, loop, timetableMin: TIMETABLE_MIN[routeId] ?? null };
+  const names = { from, to, loop, timetableMin: TIMETABLE_MIN[routeId] ?? null, timetableMinByDir: publishedRunningByDir(routeId) };
   const ins = useMemo(() => (period ? lineInsight(period.days, routeId, names) : null), [period, routeId]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ins || ins.days < 3) return null;
   const word = loop ? "lap" : "trip";

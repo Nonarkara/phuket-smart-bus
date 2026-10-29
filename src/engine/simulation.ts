@@ -24,8 +24,8 @@ import lineGeometry from "@shared/lineGeometry.json";
 
 /** Airport ↔ Rawai road length, from the official GIS line (~54 km). A bus trip covers all of it. */
 const AIRPORT_LINE_KM = (lineGeometry.find((l) => l.routeId === "rawai-airport")?.lengthM ?? 54_252) / 1000;
-/** Published end-to-end running time (PKSB timetable, 18 Jan 2025). */
-const PUBLISHED_TRIP_MIN = 95;
+/** Published Airport → Rawai running time: the timetable's own end-to-end median (130 min; 95 is the taxi-comparison figure). */
+const PUBLISHED_TRIP_MIN = AIRPORT_PUBLISHED.fwd;
 import {
   atMinute,
   getDayModel,
@@ -186,6 +186,7 @@ const HOURLY_OPEX_PER_BUS_THB = 800_000 / 365 / 16;
 // and the /roi investor pitch can never disagree by a few kg. Re-exported
 // here as names so the getLiveTotals math reads like its source.
 import { ROI_CONSTANTS } from "./roi";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 const CO2_KG_PER_PAX_KM_CAR = ROI_CONSTANTS.co2KgPerPaxKmCar; // 0.21
 const CO2_KG_PER_PAX_KM_BUS = ROI_CONSTANTS.co2KgPerPaxKmBus; // 0.06
 const CO2_KG_PER_PAX_KM_SAVED = CO2_KG_PER_PAX_KM_CAR - CO2_KG_PER_PAX_KM_BUS; // 0.15
@@ -310,7 +311,7 @@ export function getLiveTotals(nowMin: number): LiveTotals {
   const co2BusKg = Math.round(paxDelivered * AVG_TRIP_KM * CO2_KG_PER_PAX_KM_BUS);
   // Bus trips and bus-km, BOTH directions. A trip runs the whole line
   // (AIRPORT_LINE_KM) and takes that day's measured median when the simulation
-  // runs on recorded departures, else the published 95 min. A bus still on the
+  // runs on recorded departures, else the published timetable's (130 min). A bus still on the
   // road counts the share of the line it has covered. (Passenger-km — the 28 km
   // average ride — is a different quantity and only feeds CO₂.)
   const tripMin = getMeasuredAirportSupply()?.medianTripMin ?? PUBLISHED_TRIP_MIN;

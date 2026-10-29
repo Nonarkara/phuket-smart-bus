@@ -128,7 +128,7 @@ const BENCHMARKS: CityBenchmark[] = [
   {
     city: "Phuket, Thailand",
     annual_visitors: "17.5M HKT pax (2025)",
-    transit_mode: "PKSB Airport Line (฿100, 95 min) + Orange Line 8411",
+    transit_mode: "PKSB Airport Line (฿100, about 2 h end to end) + Orange Line 8411",
     fare: "฿100 ($2.80) flat",
     farebox_recovery: "Unknown — pilot requirement",
     profit_years: "Not yet demonstrated",
