@@ -67,50 +67,8 @@ export function RiderDecisionCard({
         <h2 id="pa-decision-title">Should you wait for the bus?</h2>
       </header>
 
-      {/* Side-by-side mode comparison */}
-      <div className="pa-decision__grid">
-        {/* Smart Bus Option */}
-        <div className="pa-decision__option pa-decision__option--bus">
-          <div className="pa-decision__badge">Smart Bus</div>
-          <div className="pa-decision__cost">
-            <span className="pa-decision__amount">฿{busFare}</span>
-            <span className="pa-decision__unit">flat fare</span>
-          </div>
-          <div className="pa-decision__wait">
-            <span className="pa-decision__metric">
-              {wait === null ? "No bus yet" : wait.live ? `${wait.min} min` : `Next ${timetableNextStr}`}
-            </span>
-            <small className="pa-decision__caption">
-              {wait === null ? "none reported toward this stop" : wait.live ? "live GPS pace" : `scheduled · in ${wait.min} min`}
-            </small>
-          </div>
-          <ul className="pa-decision__perks">
-            <li>Air-conditioned</li>
-            <li>Dedicated luggage space</li>
-            <li>Pay driver cash or PromptPay</li>
-          </ul>
-        </div>
-
-        {/* Taxi / Grab Option */}
-        <div className="pa-decision__option pa-decision__option--taxi">
-          <div className="pa-decision__badge pa-decision__badge--muted">Grab / Taxi</div>
-          <div className="pa-decision__cost">
-            <span className="pa-decision__amount">~฿{taxiFare}</span>
-            <span className="pa-decision__unit">avg corridor fare</span>
-          </div>
-          <div className="pa-decision__wait">
-            <span className="pa-decision__metric">On request</span>
-            <small className="pa-decision__caption">no timetable to wait for</small>
-          </div>
-          <ul className="pa-decision__perks">
-            <li>Private vehicle</li>
-            <li>Direct door-to-door</li>
-            <li>Subject to surge pricing</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* The Verdict Banner */}
+      {/* Answer the question before asking a traveller to read two comparison
+          records. The supporting arithmetic remains one disclosure away. */}
       <div className={`pa-decision__verdict ${kind}`}>
         <div className="pa-decision__verdict-title">
           {wait === null ? (
@@ -136,6 +94,49 @@ export function RiderDecisionCard({
 
       {/* Ticket Action Cards (Directly attached to the decision) */}
       {children}
+
+      <details className="pa-decision__detail">
+        <summary>Compare bus and Grab</summary>
+        <div className="pa-decision__grid">
+          <div className="pa-decision__option pa-decision__option--bus">
+            <div className="pa-decision__badge">Smart Bus</div>
+            <div className="pa-decision__cost">
+              <span className="pa-decision__amount">฿{busFare}</span>
+              <span className="pa-decision__unit">flat fare</span>
+            </div>
+            <div className="pa-decision__wait">
+              <span className="pa-decision__metric">
+                {wait === null ? "No bus yet" : wait.live ? `${wait.min} min` : `Next ${timetableNextStr}`}
+              </span>
+              <small className="pa-decision__caption">
+                {wait === null ? "none reported toward this stop" : wait.live ? "live GPS pace" : `scheduled · in ${wait.min} min`}
+              </small>
+            </div>
+            <ul className="pa-decision__perks">
+              <li>Air-conditioned</li>
+              <li>Dedicated luggage space</li>
+              <li>Pay driver cash or PromptPay</li>
+            </ul>
+          </div>
+
+          <div className="pa-decision__option pa-decision__option--taxi">
+            <div className="pa-decision__badge pa-decision__badge--muted">Grab / Taxi</div>
+            <div className="pa-decision__cost">
+              <span className="pa-decision__amount">~฿{taxiFare}</span>
+              <span className="pa-decision__unit">avg corridor fare</span>
+            </div>
+            <div className="pa-decision__wait">
+              <span className="pa-decision__metric">On request</span>
+              <small className="pa-decision__caption">no timetable to wait for</small>
+            </div>
+            <ul className="pa-decision__perks">
+              <li>Private vehicle</li>
+              <li>Direct door-to-door</li>
+              <li>Subject to surge pricing</li>
+            </ul>
+          </div>
+        </div>
+      </details>
 
       {/* The what-if lives where it is real: the operations console runs the
           fleet-size comparison on the recorded service. Here it was a toggle

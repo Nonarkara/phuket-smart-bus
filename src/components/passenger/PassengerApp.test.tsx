@@ -56,7 +56,7 @@ describe("PassengerApp", () => {
   it("shows the timetable-based passenger decision before the ticket choices", () => {
     render(<PassengerApp />);
 
-    expect(screen.getByRole("heading", { name: "Next real buses" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Next buses" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Toward Rawai" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Should you wait for the bus?" })).toBeInTheDocument();
     expect(screen.getByText("Smart Bus")).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe("PassengerApp", () => {
     // the fleet-size what-if is the console's, not a toggle over made-up figures on the phone
     expect(screen.getByRole("link", { name: /See what more buses would carry/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Buses \(1[24] buses\)/ })).toBeNull();
-    expect(screen.getByText("Connecting to the bus trackers…")).toBeInTheDocument();
+    expect(screen.getByText("Connecting to live trackers…")).toBeInTheDocument();
     expect(screen.getByText("Next scheduled bus leaves in")).toBeInTheDocument();
     expect(screen.getByText("30:00")).toBeInTheDocument();
     expect(screen.getByText(/70 min to Patong on the published timetable/i)).toBeInTheDocument();

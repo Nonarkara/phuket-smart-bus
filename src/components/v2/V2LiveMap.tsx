@@ -57,6 +57,9 @@ type V2LiveMapProps = {
   /** Embedded maps own their animation loop. The operations console leaves
    * this false because its single heartbeat drives map, money and clock. */
   autonomous?: boolean;
+  /** Passenger embeds keep the working corridor and buses, without the
+   * operator's aircraft, pier, rain and incident controls competing for it. */
+  variant?: "operations" | "passenger";
 };
 
 const DEFAULT_LAYERS: Record<MapLayerId, boolean> = {
@@ -177,8 +180,8 @@ function syncBusMarker(marker: L.Marker, vehicle: SimState["vehicles"][number], 
 // ---------------------------------------------------------------------------
 const VehicleLayer = forwardRef<
   V2MapHandle,
-  { enabled: boolean; autonomous: boolean; focusedId: string | null; onFocus?: (id: string | null, pinned: boolean) => void }
->(function VehicleLayer({ enabled, autonomous, focusedId, onFocus }, ref) {
+  { enabled: boolean; autonomous: boolean; passenger: boolean; focusedId: string | null; onFocus?: (id: string | null, pinned: boolean) => void }
+>(function VehicleLayer({ enabled, autonomous, passenger, focusedId, onFocus }, ref) {
   const map = useMap();
   const markers = useRef<Map<string, L.Marker>>(new Map());
   const focusedRef = useRef<string | null>(focusedId);
@@ -192,14 +195,15 @@ const VehicleLayer = forwardRef<
       markers.current.clear();
       return;
     }
-    const seen = new Set(vehicles.map((v) => v.id));
+    const visibleVehicles = passenger ? vehicles.filter((vehicle) => !FERRY_ROUTES.has(vehicle.route)) : vehicles;
+    const seen = new Set(visibleVehicles.map((v) => v.id));
     for (const [key, marker] of markers.current) {
       if (!seen.has(key)) {
         map.removeLayer(marker);
         markers.current.delete(key);
       }
     }
-    for (const vehicle of vehicles) {
+    for (const vehicle of visibleVehicles) {
       let marker = markers.current.get(vehicle.id);
       if (!marker) {
         marker = L.marker([vehicle.lat, vehicle.lng], { icon: buildBusMarkerIcon(vehicle) }).addTo(map);
@@ -214,7 +218,7 @@ const VehicleLayer = forwardRef<
       }
       syncBusMarker(marker, vehicle, focusedRef.current === vehicle.id);
     }
-  }, [enabled, map]);
+  }, [enabled, map, passenger]);
 
   useImperativeHandle(ref, () => ({
     syncNow(vehicles) {
@@ -465,9 +469,10 @@ const ROUTE_POLYLINES: { routeId: string; firstStop: LatLngTuple; color: string;
   { routeId: "chalong-racha", firstStop: [7.8281, 98.3613], color: "#5f7d95", weight: 1.5, marine: true },
 ];
 
-function RoutePolylines({ maritimeFlag }: { maritimeFlag?: string }) {
+function RoutePolylines({ maritimeFlag, passenger = false }: { maritimeFlag?: string; passenger?: boolean }) {
   const polylines: { poly: LatLngTuple[]; color: string; weight: number; marine?: boolean; routeId: string }[] = [];
   for (const cfg of ROUTE_POLYLINES) {
+    if (passenger && cfg.marine) continue;
     try {
       const poly = getDirectionPolyline(cfg.routeId as never, cfg.firstStop);
       if (poly.length >= 2) {
@@ -628,20 +633,24 @@ function LayerToggles({
   onChange,
   frame,
   onFrame,
+  variant,
 }: {
   layers: Record<MapLayerId, boolean>;
   onChange: (next: Record<MapLayerId, boolean>) => void;
   frame: MapFrame;
   onFrame: (next: MapFrame) => void;
+  variant: "operations" | "passenger";
 }) {
-  const items: { id: MapLayerId; label: string }[] = [
+  const items = ([
     { id: "buses", label: "Buses" },
     { id: "flights", label: "Flights" },
     { id: "piers", label: "Piers & Sea" },
     { id: "rain", label: "Rain" },
     // Only offered when the build carries the key the layer needs.
     ...(GISTDA_KEY ? [{ id: "incidents" as MapLayerId, label: "Incidents" }] : []),
-  ];
+  ] satisfies { id: MapLayerId; label: string }[]).filter(
+    ({ id }) => variant === "operations" || id === "buses",
+  );
   return (
     <div className="v2-map__layers" role="toolbar" aria-label="Map layers and frame">
       <button
@@ -682,14 +691,15 @@ function LayerToggles({
 // V2LiveMap
 // ---------------------------------------------------------------------------
 export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(function V2LiveMap(
-  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null, onOpenTelemetryModal, autonomous = false },
+  { layers: layersProp, onLayersChange, onFocusVehicle, focusedVehicleId = null, onOpenTelemetryModal, autonomous = false, variant = "operations" },
   ref
 ) {
   const [layers, setLayers] = useState<Record<MapLayerId, boolean>>(() => ({
     ...DEFAULT_LAYERS,
+    ...(variant === "passenger" ? { flights: false, piers: false, rain: false, incidents: false } : {}),
     ...layersProp,
   }));
-  const [frame, setFrame] = useState<MapFrame>("island");
+  const [frame, setFrame] = useState<MapFrame>(variant === "passenger" ? "corridor" : "island");
   const [flightInfo, setFlightInfo] = useState<{ liveCount: number; modelCount: number; status: "live" | "stale" | "empty" }>({
     liveCount: 0,
     modelCount: 0,
@@ -721,9 +731,9 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
   const env = getEnvironmentSnapshot();
 
   return (
-    <div className={`v2-map__frame ${autonomous ? "v2-map__frame--autonomous" : ""}`}>
+    <div className={`v2-map__frame ${autonomous ? "v2-map__frame--autonomous" : ""} ${variant === "passenger" ? "v2-map__frame--passenger" : ""}`}>
       <div className="v2-map__top-controls">
-        <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} />
+        <LayerToggles layers={layers} onChange={setAndNotify} frame={frame} onFrame={setFrame} variant={variant} />
         {onOpenTelemetryModal && (
           <button
             type="button"
@@ -744,7 +754,7 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         </div>
       )}
 
-      {env.maritimeFlag === "red" && (
+      {variant === "operations" && env.maritimeFlag === "red" && (
         <div className="v2-map__maritime-banner is-red" role="alert">
           <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore <span lang="th">(ห้ามเรือเล็กออกจากฝั่ง)</span>
         </div>
@@ -755,9 +765,11 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         <span><i className="is-bus-full" /> full</span>
         <span><i className="is-bus-boarding" /> boarding now</span>
         <span><i className="is-road" /> bus route</span>
-        <span><i className="is-ferry" /> ferry lane</span>
-        <span><i className="is-pier" /> pier/harbor</span>
-        <span><i className="is-live-plane" /> live aircraft</span>
+        {variant === "operations" && <>
+          <span><i className="is-ferry" /> ferry lane</span>
+          <span><i className="is-pier" /> pier/harbor</span>
+          <span><i className="is-live-plane" /> live aircraft</span>
+        </>}
       </div>
       <MapContainer
         center={FRAMES.island.center}
@@ -785,10 +797,10 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
         />
         <RainOverlay enabled={layers.rain} />
         <IncidentOverlay enabled={layers.incidents} />
-        <RoutePolylines maritimeFlag={env.maritimeFlag} />
+        <RoutePolylines maritimeFlag={env.maritimeFlag} passenger={variant === "passenger"} />
         <PiersLayer enabled={layers.piers} />
         <CorridorLandmarksLayer frame={frame} />
-        <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
+        <VehicleLayer ref={ref} enabled={layers.buses} autonomous={autonomous} passenger={variant === "passenger"} focusedId={focusedVehicleId} onFocus={onFocusVehicle} />
         <AircraftLayer enabled={layers.flights} onStatus={setFlightInfo} />
         <SyncMapView frame={frame} />
       </MapContainer>

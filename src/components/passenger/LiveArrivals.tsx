@@ -129,11 +129,11 @@ export function LiveArrivals({
   return (
     <section className="pa-live" aria-labelledby="pa-live-title">
       <header className="pa-live__head">
-        <h2 id="pa-live-title">Next real buses</h2>
+        <h2 id="pa-live-title">Next buses</h2>
         <span className={`pa-live__feed${live ? " is-live" : ""}`} role="status">
           {live
             ? `${reporting} bus${reporting === 1 ? "" : "es"} reporting · updated ${feed.lastOkMs ? ago(feed.lastOkMs, now) : "—"}`
-            : feed.status === "connecting" ? "Connecting to the bus trackers…" : "Bus trackers not answering"}
+            : feed.status === "connecting" ? "Connecting to live trackers…" : "Live trackers unavailable · timetable shown"}
         </span>
       </header>
 
@@ -184,8 +184,18 @@ export function LiveArrivals({
         })}
       </div>
 
-      {/* The map answers the board's own question — where are they — so it follows
-          the board directly. The bus-or-Grab decision and the tickets come after. */}
+      {/* The recommendation and ticket choice are the rider's next action. The
+          map remains live evidence, but no longer separates the arrival board
+          from the decision that board exists to support. */}
+      <RiderDecisionCard
+        currentStopRef={ref}
+        stopName={stop.name}
+        liveEtaMin={bestEtaMin}
+        timetableNextStr={timetableNext}
+      >
+        {children}
+      </RiderDecisionCard>
+
       <Suspense fallback={<div className="pa-map pa-map--loading">Loading the map…</div>}>
         <RiderMap buses={buses} onLine={onLine} line={line} stop={stop} now={now} />
       </Suspense>
@@ -196,14 +206,6 @@ export function LiveArrivals({
         Town buses don't report a line, so they show on the map but not on this board.
       </p>
 
-      <RiderDecisionCard
-        currentStopRef={ref}
-        stopName={stop.name}
-        liveEtaMin={bestEtaMin}
-        timetableNextStr={timetableNext}
-      >
-        {children}
-      </RiderDecisionCard>
     </section>
   );
 }

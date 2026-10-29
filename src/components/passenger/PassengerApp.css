@@ -862,9 +862,9 @@ body.passenger-site-mode #root {
   }
 
   .pa-app-column {
-    width: 440px;
+    width: clamp(400px, 36vw, 1200px);
     min-width: 400px;
-    max-width: 460px;
+    max-width: none;
     height: 100%;
     overflow-y: auto;
     background: var(--pa-bg);
@@ -984,7 +984,7 @@ body.passenger-site-mode #root {
     background: #111722;
   }
   .pa-stage .v2-basemap-tile {
-    filter: grayscale(1) invert(1) brightness(.68) contrast(1.12);
+    filter: invert(1) hue-rotate(180deg) brightness(.86) contrast(.9) saturate(.55);
   }
   .pa-stage .v2-map__top-controls {
     z-index: 1001;
@@ -994,6 +994,20 @@ body.passenger-site-mode #root {
   }
   .pa-stage .leaflet-control-attribution {
     font-size: var(--t-micro);
+  }
+
+  .pa-stage .v2-map__frame--passenger .v2-map__layers {
+    max-width: calc(100% - 20px);
+  }
+
+  .pa-app-column .pa-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .pa-app-column .pa-card {
+    padding: 18px;
   }
 
   .pa-stage__footer {
@@ -1057,6 +1071,7 @@ body.passenger-site-mode #root {
     white-space: nowrap;
   }
   .pa-app-column { width: 400px; min-width: 380px; }
+  .pa-app-column .pa-cards { display: flex; }
   .pa-stage__banner-badges .pa-badge:not(:first-child) { display: none; }
 }
 
@@ -1174,6 +1189,25 @@ body.passenger-site-mode #root {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.pa-decision__detail {
+  border-top: 1px solid var(--pa-line);
+  padding-top: 12px;
+}
+.pa-decision__detail summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--pa-ink);
+  cursor: pointer;
+  list-style: none;
+}
+.pa-decision__detail summary::-webkit-details-marker { display: none; }
+.pa-decision__detail summary::after { content: "+"; color: var(--pa-red); }
+.pa-decision__detail[open] summary::after { content: "−"; }
+.pa-decision__detail[open] .pa-decision__grid { margin-top: 12px; }
 .pa-decision__option {
   border: 1px solid var(--pa-ink);
   background: #fff;
@@ -1267,3 +1301,28 @@ body.passenger-site-mode #root {
 
 /* The rider's pointer to the operations simulator: one line, not a panel. */
 .pa-decision__ops { margin: 0; font-size: var(--t-body); color: var(--pa-muted); }
+
+/* This split needs roughly 800px of usable panel width. At 1920px the 36vw
+   rail is only 691px, so an ordinary desktop clipped the decision column.
+   Reserve the split for canvases where the panel can actually house it. */
+@media (min-width: 2400px) {
+  .pa-app-column .pa-live {
+    display: grid;
+    grid-template-columns: minmax(320px, .9fr) minmax(460px, 1.1fr);
+    grid-template-areas:
+      "head decision"
+      "pick decision"
+      "board decision"
+      "truth decision";
+    align-content: start;
+    gap: 14px 20px;
+  }
+  .pa-app-column .pa-live__head { grid-area: head; }
+  .pa-app-column .pa-live__pick { grid-area: pick; }
+  .pa-app-column .pa-live__note { grid-column: 1 / -1; }
+  .pa-app-column .pa-live__board { grid-area: board; }
+  .pa-app-column .pa-live__truth { grid-area: truth; }
+  .pa-app-column .pa-decision { grid-area: decision; padding-top: 0; }
+  .pa-app-column .pa-airport-context,
+  .pa-app-column .pa-promise { max-width: 720px; }
+}

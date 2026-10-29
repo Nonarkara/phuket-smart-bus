@@ -158,7 +158,7 @@ describe("App", () => {
         { timeout: 15_000 }
       )).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Preview phone/i })).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /Next real buses/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Next buses/i })).toBeInTheDocument();
       expect(screen.getByRole("complementary", { name: /Phuket Island Live Transit Stage/i })).toBeInTheDocument();
       // Toolkit hub heading must NOT appear at / on the rider domain.
       expect(

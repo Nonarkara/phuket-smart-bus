@@ -429,7 +429,7 @@ export function PassengerApp() {
         <div className="pa-portal-header__status">
           <span className="pa-status-chip">
             <span className="pa-status-chip__dot is-live" />
-            <span>{operator.clockLabel} ICT</span>
+            <span>{liveGps ? "Fleet view" : "Model replay"} · {operator.clockLabel} ICT</span>
           </span>
           <span className="pa-status-chip">
             <span>
@@ -474,7 +474,7 @@ export function PassengerApp() {
           <div className="pa-stage__banner">
             <div className="pa-stage__banner-info">
               <strong>Phuket Coastal Corridor — {liveGps ? "Live GPS" : "Timetable simulation"}</strong>
-              <span>{operator.clockLabel} ICT · published duties on 3,944-point road geometry · GPS-ready</span>
+              <span>{liveGps ? "Fleet view" : "Model replay"} · {operator.clockLabel} ICT · published duties on 3,944-point road geometry</span>
             </div>
             <div className="pa-stage__banner-badges">
               <span className="pa-badge">Flat ฿100</span>
@@ -485,7 +485,7 @@ export function PassengerApp() {
 
           <div className="pa-stage__map-wrapper">
             <Suspense fallback={<div className="pa-stage__map-loading">Loading the corridor…</div>}>
-              <PassengerRouteMap autonomous />
+              <PassengerRouteMap autonomous variant="passenger" />
             </Suspense>
           </div>
 
