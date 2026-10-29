@@ -42,6 +42,13 @@ export const ON_LINE_M = 250;
 const LINE_SHARE = 0.6;
 const MIN_LINE_FIXES = 20;
 const END_ZONE_M = 1000;
+/**
+ * How far past a terminal zone a bus must get before the departure counts.
+ * The zone is 1 km; a bus has to be half a kilometre clear of it before the
+ * record will say it left, because a GPS wobble at the kerb can cross the
+ * boundary and come back.
+ */
+const DEPART_CONFIRM_M = 1500;
 const MAX_TRIP_GAP_MS = 15 * 60_000;
 const MAX_STOP_GAP_MS = 5 * 60_000;
 const MOVING_KPH = 5;
@@ -126,6 +133,18 @@ export type Trip = {
   stopMin: (number | null)[];
 };
 
+/**
+ * A bus leaving a terminal — known the moment it is clear of the zone, an
+ * hour or two before the trip it belongs to is published.
+ */
+export type Departure = {
+  plate: string;
+  /** "fwd" = line.from → line.to; "rev" the other way. */
+  dir: "fwd" | "rev";
+  /** The minute of the service day the bus left the terminal. */
+  departMs: number;
+};
+
 /** One fix the bus sent. `along` is null while it is off the drawn line (a detour, the other carriageway). */
 type Pt = { ms: number; lat: number; lng: number; along: number | null };
 type OnPt = Pt & { along: number };
@@ -178,8 +197,9 @@ function terminalAlong(line: Line): [number, number] {
   return [at(names?.[0], 0), at(names?.[1], line.lengthM)];
 }
 
-function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): Trip[] {
+function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): { trips: Trip[]; departures: Departure[] } {
   const trips: Trip[] = [];
+  const departures: Departure[] = [];
   const L = line.lengthM;
   const make = (dir: Trip["dir"], seg: Pt[]): Trip => {
     const on = seg.filter((p): p is OnPt => p.along !== null);
@@ -222,25 +242,48 @@ function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): Tri
       }
       prevOn = p as OnPt;
     }
-    return trips.filter(plausible);
+    return { trips: trips.filter(plausible), departures };
   }
 
   const [fromM, toM] = terminalAlong(line);
   let zone: "from" | "to" | null = null;
   let leftAt = -1; // index of the last fix in the origin zone
+  let left = false; // the bus has left the zone it was last seen in
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i]!;
-    if (i > 0 && broken(pts[i - 1]!, p)) { zone = null; leftAt = -1; }
+    if (i > 0 && broken(pts[i - 1]!, p)) { zone = null; leftAt = -1; left = false; }
     if (p.along === null) continue; // off the drawn line: the trip carries on
     const here = Math.abs(p.along - fromM) <= END_ZONE_M ? "from" : Math.abs(p.along - toM) <= END_ZONE_M ? "to" : null;
-    if (here === null) continue;
+    if (here === null) {
+      // ── the moment the bus leaves a terminal ────────────────────────────
+      // A trip is only published when the bus ARRIVES at the far terminal,
+      // which is an hour or two after it left — so for that whole window the
+      // record says the service had not departed, while the wall was watching
+      // the bus drive away from the airport. The departure is knowable the
+      // moment the bus is clear of the zone, and knowing it is what lets an
+      // operations screen count the seats that have actually gone out.
+      //
+      // "Clear of the zone" is DEPART_CONFIRM_M beyond it, not one metre: a
+      // GPS wobble at the kerb can cross a boundary and come back, and a
+      // departure that is counted on a wobble would be a departure that never
+      // happened.
+      if (zone !== null && leftAt >= 0 && !left) {
+        const clear = zone === "from" ? p.along - fromM : toM - p.along;
+        if (clear >= DEPART_CONFIRM_M) {
+          departures.push({ plate, dir: zone === "from" ? "fwd" : "rev", departMs: pts[leftAt]!.ms });
+          left = true;
+        }
+      }
+      continue;
+    }
     if (zone !== null && here !== zone && leftAt >= 0) {
       trips.push(make(zone === "from" ? "fwd" : "rev", pts.slice(leftAt, i + 1)));
     }
     zone = here;
     leftAt = i;
+    left = false;
   }
-  return trips.filter(plausible);
+  return { trips: trips.filter(plausible), departures };
 }
 
 export type LineDay = {
@@ -254,6 +297,8 @@ export type LineDay = {
   /** Per bus: [minute of service day, km along the line] for each on-line fix. */
   buses: { plate: string; feed: string; points: [number, number][] }[];
   trips: Trip[];
+  /** Buses leaving a terminal, known as they go — the trips above only appear when they arrive. */
+  departures: Departure[];
 };
 
 export type ResearchDay = {
@@ -277,7 +322,7 @@ export function analyzeDay(date: string, rows: ResearchFix[]): ResearchDay {
   const lines = new Map<string, LineDay>(LINES.map((l) => [l.routeId, {
     routeId: l.routeId, name: l.name, from: l.from, to: l.to, loop: l.loop, lengthM: l.lengthM,
     stops: l.stops.map((s) => ({ name: s.name, nameTh: s.nameTh, alongM: s.alongM })),
-    buses: [], trips: [],
+    buses: [], trips: [], departures: [],
   }]));
   const unassigned: ResearchDay["unassigned"] = [];
 
@@ -295,12 +340,15 @@ export function analyzeDay(date: string, rows: ResearchFix[]): ResearchDay {
     });
     const day = lines.get(line.routeId)!;
     day.buses.push({ plate, feed, points: pts.filter((p): p is OnPt => p.along !== null).map((p) => [dayMinute(p.ms, dayStartMs), Math.round(p.along / 10) / 100]) });
-    day.trips.push(...tripsFor(plate, line, pts, dayStartMs));
+    const found = tripsFor(plate, line, pts, dayStartMs);
+    day.trips.push(...found.trips);
+    day.departures.push(...found.departures);
   }
 
   for (const day of lines.values()) {
     day.buses.sort((a, b) => a.plate.localeCompare(b.plate));
     day.trips.sort((a, b) => a.departMs - b.departMs);
+    day.departures.sort((a, b) => a.departMs - b.departMs);
   }
   return { date, fixes: rows.length, lines: [...lines.values()], unassigned: unassigned.sort((a, b) => a.plate.localeCompare(b.plate)) };
 }
@@ -328,6 +376,13 @@ export type ServiceTrip = {
   minutes: number;
 };
 
+export type ServiceDeparture = {
+  plate: string;
+  dir: "fwd" | "rev";
+  /** Minute of the service day the bus left the terminal. */
+  departMin: number;
+};
+
 export type ServiceLine = {
   routeId: string;
   name: string;
@@ -338,6 +393,8 @@ export type ServiceLine = {
   /** Buses that reported on this line that day. */
   buses: number;
   trips: ServiceTrip[];
+  /** Departures, known as the bus goes — the trips above only appear when the bus arrives. */
+  departures: ServiceDeparture[];
 };
 
 export type ServiceDay = {
@@ -374,6 +431,11 @@ export function serviceDayFrom(day: ResearchDay, finished: boolean, computedAt: 
         departMin: serviceMinute(trip.departMs, dayStartMs),
         arriveMin: serviceMinute(trip.arriveMs, dayStartMs),
         minutes: trip.minutes,
+      })),
+      departures: line.departures.map((departure) => ({
+        plate: departure.plate,
+        dir: departure.dir,
+        departMin: serviceMinute(departure.departMs, dayStartMs),
       })),
     })),
     unassigned: day.unassigned.length,

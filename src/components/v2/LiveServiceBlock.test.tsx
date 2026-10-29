@@ -6,7 +6,8 @@ import type { AirportService } from "../../engine/liveService";
 
 const direction = (over: Partial<AirportService["southbound"]> = {}) => ({
   published: [495, 600, 700],
-  recorded: [573, 602],
+  departed: [573, 602],
+  arrived: [704, 727],
   publishedTripMin: 130,
   recordedTripMin: 128,
   publishedGapMin: 102.5,
@@ -22,7 +23,7 @@ const service: AirportService = {
   finished: false,
   computedAt: "2026-10-28T12:00:00.000Z",
   southbound: direction(),
-  northbound: direction({ recorded: [406, 467], recordedTripMin: 125, lastRecordedMin: 467 }),
+  northbound: direction({ departed: [406, 467], arrived: [534, 592], recordedTripMin: 125, lastRecordedMin: 467 }),
   busesSeen: 43,
   tripsRecorded: 50,
   fixes: 26_022,
@@ -36,7 +37,7 @@ describe("LiveServiceBlock", () => {
     expect(screen.getByText("Rawai → Airport")).toBeInTheDocument();
 
     const ran = [...container.querySelectorAll(".v2-service__ran")].map((el) => el.textContent?.trim());
-    expect(ran).toEqual(["2 recorded", "2 recorded"]);
+    expect(ran).toEqual(["2 departed", "2 departed"]);
 
     const trips = [...container.querySelectorAll(".v2-service__trip")].map((el) => el.textContent?.trim());
     expect(trips[0]).toBe("128 min plan 130");
@@ -45,16 +46,17 @@ describe("LiveServiceBlock", () => {
     // The header carries the day's totals, not a difference between them:
     // "21 of 40" would read as a verdict on what ran.
     expect(container.querySelector(".v2-service__head-meta")?.textContent).toBe(
-      "4 recorded · 2 still due · plan 6 a day",
+      "4 departed · 4 arrived · 2 still due · plan 6 a day",
     );
   });
 
   it("states the rule that makes the count what it is", () => {
     render(<LiveServiceBlock service={service} status="live" error={null} />);
-    // Without this the reader would take the recorded count for the whole
-    // service, and the record undercounts by design.
-    expect(screen.getByText(/undercounts the service/i)).toBeInTheDocument();
-    expect(screen.getByText(/end to end/i)).toBeInTheDocument();
+    // Without this the reader would take the count for the whole service, and
+    // the record undercounts by design. The two counts differ all day, and the
+    // block says why.
+    expect(screen.getByText(/both undercount the service/i)).toBeInTheDocument();
+    expect(screen.getByText(/only when it arrives/i)).toBeInTheDocument();
     // The count is of what the record holds. It is not a verdict on what ran.
     expect(screen.getByText(/not a verdict on what ran/i)).toBeInTheDocument();
   });

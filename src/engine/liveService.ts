@@ -32,7 +32,7 @@
  *   service day's midnight (03:00 → 180, 00:30 → 1470) — so a 23:30
  *   departure and a 00:30 arrival are 60 minutes apart, not −1380.
  */
-import type { ServiceDay, ServiceLine, ServiceTrip } from "@shared/research";
+import type { ServiceDay, ServiceDeparture, ServiceLine, ServiceTrip } from "@shared/research";
 import { quantile } from "@shared/insights";
 import {
   getLiveAirportSupply,
@@ -81,8 +81,13 @@ export type LiveServiceDay = ServiceDay & { fleet: FleetTotals | null };
 export type DirectionService = {
   /** Published departure minutes (the plan). */
   published: number[];
-  /** Departure minutes the record holds, from trips that ran end to end. */
-  recorded: number[];
+  /**
+   * Departure minutes the record holds — known as the bus leaves the
+   * terminal, so they are the service that has actually gone out.
+   */
+  departed: number[];
+  /** Arrival minutes of the trips that ran end to end. */
+  arrived: number[];
   /** Median end-to-end minutes of the published trips. */
   publishedTripMin: number | null;
   /** Median end-to-end minutes of the recorded trips. */
@@ -130,28 +135,42 @@ const round1 = (n: number | null): number | null => (n === null ? null : Math.ro
  *
  * `nowMin` is the wall clock in minutes; the published grid is read in the
  * service-day frame so "still due" is right on both sides of midnight.
+ *
+ * The two counts are different facts and are kept apart: `departed` is what
+ * has left the terminal — known the moment the bus does, so the wall can
+ * count the seats that have gone out while the bus is still running — and
+ * `arrived` is what reached the other end, an hour or two later.
  */
 export function directionService(
   published: PublishedTrip[],
   recorded: ServiceTrip[],
+  departures: ServiceDeparture[],
   nowMin: number,
 ): DirectionService {
   const now = toServiceFrame(nowMin);
   const publishedDepartures = published.map((t) => t.departMin).sort((a, b) => a - b);
-  const recordedDepartures = recorded.map((t) => t.departMin).sort((a, b) => a - b);
+  // Every trip that arrived also left; the record holds its departure whether or
+  // not the bus was seen clear of the zone first (an older body has no
+  // departures at all). Keyed by bus and minute so one run is counted once.
+  const left = new Map<string, number>();
+  for (const d of departures) left.set(`${d.plate}@${d.departMin}`, d.departMin);
+  for (const t of recorded) left.set(`${t.plate}@${t.departMin}`, t.departMin);
+  const departed = [...left.values()].sort((a, b) => a - b);
+  const arrived = recorded.map((t) => t.arriveMin).sort((a, b) => a - b);
   const publishedTripMinutes = published.map((t) => t.minutes);
   const recordedTripMinutes = recorded.map((t) => t.minutes);
   const stillDue = publishedDepartures.filter((d) => toServiceFrame(d) > now).length;
   const nextPublished = publishedDepartures.find((d) => toServiceFrame(d) > now) ?? null;
   return {
     published: publishedDepartures,
-    recorded: recordedDepartures,
+    departed,
+    arrived,
     publishedTripMin: round1(quantile(publishedTripMinutes, 0.5)),
     recordedTripMin: round1(quantile(recordedTripMinutes, 0.5)),
     publishedGapMin: round1(medianGap(publishedDepartures)),
-    recordedGapMin: round1(medianGap(recordedDepartures)),
+    recordedGapMin: round1(medianGap(departed)),
     stillDue,
-    lastRecordedMin: recordedDepartures.length ? recordedDepartures[recordedDepartures.length - 1]! : null,
+    lastRecordedMin: departed.length ? departed[departed.length - 1]! : null,
     nextPublishedMin: nextPublished,
   };
 }
@@ -185,6 +204,17 @@ export function parseServiceDay(raw: unknown): LiveServiceDay | null {
         minutes: typeof trip.minutes === "number" ? trip.minutes : 0,
       });
     }
+    // `departures` is newer than the endpoint's first shape: a body without it
+    // (an older cache, an older deploy) has no departures, which is "none
+    // recorded" and not a reason to refuse the day.
+    const departures: ServiceDeparture[] = [];
+    if (Array.isArray(line.departures)) {
+      for (const d of line.departures) {
+        if (d && typeof d.plate === "string" && typeof d.departMin === "number" && Number.isFinite(d.departMin) && (d.dir === "fwd" || d.dir === "rev")) {
+          departures.push({ plate: d.plate, dir: d.dir, departMin: d.departMin });
+        }
+      }
+    }
     lines.push({
       routeId: line.routeId,
       name: typeof line.name === "string" ? line.name : line.routeId,
@@ -194,6 +224,7 @@ export function parseServiceDay(raw: unknown): LiveServiceDay | null {
       lengthM: typeof line.lengthM === "number" ? line.lengthM : 0,
       buses: typeof line.buses === "number" ? line.buses : 0,
       trips,
+      departures,
     });
   }
   return {
@@ -235,12 +266,14 @@ export function airportService(day: LiveServiceDay, nowMin: number): AirportServ
   const airport = day.lines.find((l) => l.routeId === "rawai-airport");
   const southbound = airport?.trips.filter((t) => t.dir === "fwd") ?? [];
   const northbound = airport?.trips.filter((t) => t.dir === "rev") ?? [];
+  const southDepartures = airport?.departures.filter((d) => d.dir === "fwd") ?? [];
+  const northDepartures = airport?.departures.filter((d) => d.dir === "rev") ?? [];
   return {
     date: day.date,
     finished: day.finished,
     computedAt: day.computedAt,
-    southbound: directionService(published.southbound, southbound, nowMin),
-    northbound: directionService(published.northbound, northbound, nowMin),
+    southbound: directionService(published.southbound, southbound, southDepartures, nowMin),
+    northbound: directionService(published.northbound, northbound, northDepartures, nowMin),
     busesSeen: day.lines.reduce((sum, l) => sum + l.buses, 0) + day.unassigned,
     tripsRecorded: day.lines.reduce((sum, l) => sum + l.trips.length, 0),
     fixes: day.fixes,
@@ -263,13 +296,36 @@ export function liveSupplyFrom(day: LiveServiceDay, nowMin: number): LiveAirport
   const now = toServiceFrame(nowMin);
   const published = getPublishedAirportTrips();
 
-  const recordedSouth = airport.trips.filter((t) => t.dir === "fwd").map((t) => t.departMin).sort((a, b) => a - b);
+  // Southbound: only the minute a bus left is needed. A bus is a departure the
+  // moment it is clear of the zone, so the record holds it for the hour or two
+  // before its trip is published; a trip with no recorded departure (the first
+  // fix past the zone was already the far end) is still a departure that ran.
+  const south = new Map<string, number>();
+  for (const d of airport.departures) if (d.dir === "fwd") south.set(`${d.plate}@${d.departMin}`, d.departMin);
+  for (const t of airport.trips) if (t.dir === "fwd") south.set(`${t.plate}@${t.departMin}`, t.departMin);
+  const recordedSouth = [...south.values()].sort((a, b) => a - b);
   const publishedSouthAhead = published.southbound.filter((t) => toServiceFrame(t.departMin) > now).map((t) => t.departMin);
 
-  const recordedNorth: AirportboundTrip[] = airport.trips
+  // Northbound: the engine also needs the minute the bus reaches the airport
+  // curb. A completed trip has it. A bus that has left Rawai and is still on
+  // the road does not, so its arrival is its departure plus the median this
+  // line's recorded northbound trips took (the published median while none has
+  // been recorded). That is a measured pace applied to a known departure — a
+  // model, labelled as one by where it lives (the supply), never shown as a trip.
+  const completedNorth: AirportboundTrip[] = airport.trips
     .filter((t) => t.dir === "rev")
-    .map((t) => ({ originDepMin: t.departMin, airportArriveMin: t.arriveMin }))
-    .sort((a, b) => a.originDepMin - b.originDepMin);
+    .map((t) => ({ originDepMin: t.departMin, airportArriveMin: t.arriveMin }));
+  const completedKeys = new Set(airport.trips.filter((t) => t.dir === "rev").map((t) => `${t.plate}@${t.departMin}`));
+  const northTrips = airport.trips.filter((t) => t.dir === "rev").map((t) => t.minutes);
+  const pace = northTrips.length >= 3
+    ? quantile(northTrips, 0.5)!
+    : quantile(published.northbound.map((t) => t.minutes), 0.5) ?? 0;
+  const onTheRoadNorth: AirportboundTrip[] = pace > 0
+    ? airport.departures
+        .filter((d) => d.dir === "rev" && !completedKeys.has(`${d.plate}@${d.departMin}`))
+        .map((d) => ({ originDepMin: d.departMin, airportArriveMin: Math.round(d.departMin + pace) }))
+    : [];
+  const recordedNorth = [...completedNorth, ...onTheRoadNorth].sort((a, b) => a.originDepMin - b.originDepMin);
   const publishedNorthAhead = published.northbound
     .filter((t) => toServiceFrame(t.departMin) > now)
     .map((t) => ({ originDepMin: t.departMin, airportArriveMin: t.arriveMin }));

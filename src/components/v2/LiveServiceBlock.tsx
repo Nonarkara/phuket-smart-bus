@@ -44,7 +44,8 @@ export function LiveServiceBlock({ service, status, error }: Props) {
     { label: "Airport → Rawai", dir: service.southbound },
     { label: "Rawai → Airport", dir: service.northbound },
   ];
-  const recorded = service.southbound.recorded.length + service.northbound.recorded.length;
+  const departed = service.southbound.departed.length + service.northbound.departed.length;
+  const arrived = service.southbound.arrived.length + service.northbound.arrived.length;
   const stillDue = service.southbound.stillDue + service.northbound.stillDue;
   const planned = service.southbound.published.length + service.northbound.published.length;
 
@@ -53,7 +54,7 @@ export function LiveServiceBlock({ service, status, error }: Props) {
       <header className="v2-service__head">
         <span>Service today · airport line</span>
         <span className="v2-service__head-meta">
-          {recorded} recorded · {stillDue} still due · plan {planned} a day
+          {departed} departed · {arrived} arrived · {stillDue} still due · plan {planned} a day
         </span>
       </header>
 
@@ -62,7 +63,7 @@ export function LiveServiceBlock({ service, status, error }: Props) {
           <div className="v2-service__row" role="listitem" key={row.label}>
             <span className="v2-service__dir">{row.label}</span>
             <span className="v2-service__ran">
-              <b>{row.dir.recorded.length}</b> recorded
+              <b>{row.dir.departed.length}</b> departed
             </span>
             <span className="v2-service__trip">
               {row.dir.recordedTripMin === null ? "—" : `${Math.round(row.dir.recordedTripMin)} min`}
@@ -73,11 +74,9 @@ export function LiveServiceBlock({ service, status, error }: Props) {
       </div>
 
       <p className="v2-service__foot">
-        A count of what the record holds, not a verdict on what ran. Trips are recorded end to end —
-        a bus whose tracker goes quiet mid-run leaves no trip, so this undercounts the service. Last
-        departure in the record:{" "}
-        {service.southbound.lastRecordedMin !== null ? hhmm(service.southbound.lastRecordedMin) : "—"}
-        {service.northbound.lastRecordedMin !== null ? ` / ${hhmm(service.northbound.lastRecordedMin)}` : ""}.
+        A count of what the record holds, not a verdict on what ran. A departure is recorded as the bus
+        leaves the terminal and a trip only when it arrives, so the two differ all day. A bus whose
+        tracker goes quiet leaves no record at all, so both undercount the service.
       </p>
     </section>
   );

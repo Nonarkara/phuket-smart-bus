@@ -7,7 +7,7 @@
  * the difference between "recorded" and "planned".
  */
 import { describe, expect, it } from "vitest";
-import type { ServiceDay, ServiceTrip } from "@shared/research";
+import type { ServiceDay, ServiceDeparture, ServiceTrip } from "@shared/research";
 import {
   airportService,
   directionService,
@@ -26,6 +26,8 @@ const trip = (plate: string, dir: "fwd" | "rev" | "lap", departMin: number, arri
   arriveMin,
   minutes,
 });
+
+const departure = (plate: string, dir: "fwd" | "rev", departMin: number): ServiceDeparture => ({ plate, dir, departMin });
 
 const day = (lines: ServiceDay["lines"], extra: Partial<LiveServiceDay> = {}): LiveServiceDay => ({
   date: "2026-10-28",
@@ -57,22 +59,23 @@ describe("directionService — the plan against the record", () => {
   const recorded = [trip("10-1200", "fwd", 573, 704, 131), trip("10-1201", "fwd", 602, 727, 125)];
 
   it("counts what ran, and what is still due", () => {
-    const d = directionService(published, recorded, 600); // 10:00
+    const d = directionService(published, recorded, [], 600); // 10:00
     expect(d.published).toEqual([495, 600, 700]);
-    expect(d.recorded).toEqual([573, 602]);
+    expect(d.departed).toEqual([573, 602]);
+    expect(d.arrived).toEqual([704, 727]);
     expect(d.stillDue).toBe(1); // the 700 departure is still ahead
     expect(d.nextPublishedMin).toBe(700);
     expect(d.lastRecordedMin).toBe(602);
   });
 
   it("measures the recorded trip against the published one, in minutes", () => {
-    const d = directionService(published, recorded, 600);
+    const d = directionService(published, recorded, [], 600);
     expect(d.recordedTripMin).toBe(128); // (131 + 125) / 2
     expect(d.publishedTripMin).toBe(130);
   });
 
   it("measures the cadence of both", () => {
-    const d = directionService(published, recorded, 600);
+    const d = directionService(published, recorded, [], 600);
     // Published gaps: 495 → 600 is 105, 600 → 700 is 100. The median of two
     // is their mean.
     expect(d.publishedGapMin).toBe(102.5);
@@ -80,11 +83,34 @@ describe("directionService — the plan against the record", () => {
   });
 
   it("reports nothing rather than zero when the record is empty", () => {
-    const d = directionService(published, [], 600);
-    expect(d.recorded).toEqual([]);
+    const d = directionService(published, [], [], 600);
+    expect(d.departed).toEqual([]);
+    expect(d.arrived).toEqual([]);
     expect(d.recordedTripMin).toBeNull();
     expect(d.recordedGapMin).toBeNull();
     expect(d.lastRecordedMin).toBeNull();
+  });
+});
+
+describe("directionService — a bus that has left but not yet arrived", () => {
+  const published = [{ departMin: 495, arriveMin: 615, minutes: 120 }];
+  // 10-1202 left the airport at 09:30 (570) and is still on the road at 10:00.
+  const recorded = [trip("10-1200", "fwd", 480, 611, 131)];
+  const leaving = [departure("10-1200", "fwd", 480), departure("10-1202", "fwd", 570)];
+
+  it("counts the departure now and the arrival only when it comes", () => {
+    const d = directionService(published, recorded, leaving, 600);
+    expect(d.departed).toEqual([480, 570]); // both buses have gone out
+    expect(d.arrived).toEqual([611]);       // only one has got there
+  });
+
+  it("counts a run once when it is both a trip and a departure", () => {
+    const d = directionService(published, recorded, [departure("10-1200", "fwd", 480)], 600);
+    expect(d.departed).toEqual([480]);
+  });
+
+  it("measures the cadence of what has left, not of what has arrived", () => {
+    expect(directionService(published, recorded, leaving, 600).recordedGapMin).toBe(90);
   });
 });
 
@@ -101,6 +127,7 @@ describe("liveSupplyFrom — the supply in force", () => {
       trip("10-1200", "fwd", 573, 704, 131),
       trip("10-1201", "rev", 406, 534, 128),
     ],
+    departures: [departure("10-1200", "fwd", 573), departure("10-1201", "rev", 406)],
   };
 
   it("is the recorded departures plus the published ones still ahead", () => {
@@ -125,6 +152,33 @@ describe("liveSupplyFrom — the supply in force", () => {
     expect(supply.northbound[0]).toEqual({ originDepMin: 406, airportArriveMin: 534 });
   });
 
+  it("counts a bus that has left but not arrived: south as a departure, north at the measured pace", () => {
+    const onRoad = {
+      ...airport,
+      trips: [trip("10-1201", "rev", 406, 534, 128), trip("10-1203", "rev", 440, 566, 126), trip("10-1204", "rev", 470, 600, 130)],
+      departures: [
+        departure("10-1201", "rev", 406), departure("10-1203", "rev", 440), departure("10-1204", "rev", 470),
+        departure("10-1202", "fwd", 585),   // left the airport at 09:45, still driving
+        departure("10-1205", "rev", 590),   // left Rawai at 09:50, still driving
+      ],
+    };
+    const supply = liveSupplyFrom(day([onRoad]), 600)!;
+    expect(supply.southbound).toContain(585);
+    // the three completed northbound trips keep their real arrivals …
+    expect(supply.northbound.find((t) => t.originDepMin === 406)).toEqual({ originDepMin: 406, airportArriveMin: 534 });
+    // … and the one still on the road arrives at its departure + the median of the three (128 min)
+    expect(supply.northbound.find((t) => t.originDepMin === 590)).toEqual({ originDepMin: 590, airportArriveMin: 718 });
+    // a completed trip is never counted twice
+    expect(supply.northbound.filter((t) => t.originDepMin === 406)).toHaveLength(1);
+  });
+
+  it("still works on an older body that carries trips and no departures", () => {
+    const old = { ...airport, departures: [] };
+    const supply = liveSupplyFrom(day([old]), 600)!;
+    expect(supply.southbound).toContain(573);
+    expect(supply.northbound[0]).toEqual({ originDepMin: 406, airportArriveMin: 534 });
+  });
+
   it("is null when the record has no airport line at all", () => {
     expect(liveSupplyFrom(day([]), 600)).toBeNull();
   });
@@ -141,6 +195,7 @@ describe("airportService — the day's numbers", () => {
       lengthM: 54_252,
       buses: 11,
       trips: [trip("10-1200", "fwd", 573, 704, 131), trip("10-1201", "rev", 406, 534, 128)],
+      departures: [departure("10-1200", "fwd", 573), departure("10-1201", "rev", 406)],
     },
     {
       routeId: "patong-old-bus-station",
@@ -151,6 +206,7 @@ describe("airportService — the day's numbers", () => {
       lengthM: 29_333,
       buses: 6,
       trips: [trip("10-1300", "fwd", 500, 560, 60)],
+      departures: [departure("10-1300", "fwd", 500)],
     },
   ];
 
@@ -163,8 +219,10 @@ describe("airportService — the day's numbers", () => {
 
   it("splits the airport line by direction", () => {
     const s = airportService(day(lines), 600);
-    expect(s.southbound.recorded).toEqual([573]);
-    expect(s.northbound.recorded).toEqual([406]);
+    expect(s.southbound.departed).toEqual([573]);
+    expect(s.northbound.departed).toEqual([406]);
+    expect(s.southbound.arrived).toEqual([704]);
+    expect(s.northbound.arrived).toEqual([534]);
   });
 });
 
@@ -187,6 +245,7 @@ describe("parseServiceDay — the endpoint's answer", () => {
           lengthM: 54_252,
           buses: 11,
           trips: [{ plate: "10-1200", dir: "fwd", departMin: 573, arriveMin: 704, minutes: 131 }],
+          departures: [{ plate: "10-1200", dir: "fwd", departMin: 573 }, { plate: "10-1202", dir: "fwd", departMin: 600 }, { plate: "x", dir: "sideways", departMin: 1 }],
         },
       ],
       fleet: { date: "2026-10-28", vehicles: 43, km: 4371.2, kmBasis: "mixed", runs: 220, coveragePct: 99.9 },
@@ -194,7 +253,19 @@ describe("parseServiceDay — the endpoint's answer", () => {
     expect(parsed).not.toBeNull();
     expect(parsed!.fixes).toBe(26_022);
     expect(parsed!.lines[0]!.trips[0]!.departMin).toBe(573);
+    // departures are read, and a malformed one is dropped rather than refusing the day
+    expect(parsed!.lines[0]!.departures).toEqual([
+      { plate: "10-1200", dir: "fwd", departMin: 573 },
+      { plate: "10-1202", dir: "fwd", departMin: 600 },
+    ]);
     expect(parsed!.fleet?.km).toBe(4371.2);
+  });
+
+  it("reads a body with no departures at all as none recorded", () => {
+    const parsed = parseServiceDay({
+      ok: true, date: "2026-10-28", lines: [{ routeId: "rawai-airport", trips: [{ plate: "10-1200", dir: "fwd", departMin: 573, arriveMin: 704, minutes: 131 }] }],
+    });
+    expect(parsed!.lines[0]!.departures).toEqual([]);
   });
 
   it("refuses a body it cannot trust", () => {

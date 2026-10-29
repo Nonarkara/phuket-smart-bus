@@ -71,6 +71,48 @@ describe("schedule research", () => {
     expect(analyzeDay("2026-10-02", rows).lines[0]!.trips).toHaveLength(0);
   });
 
+  it("a bus that has left the airport is a departure now, with no trip until it arrives", () => {
+    // 20 min at the kerb, then 30 min of the 100-min run: well clear of the 1.5 km confirmation.
+    const rows = [...dwell("10-1160", airport.poly[0]!, at(8), 20), ...drive("10-1160", airport.poly, at(8, 20), 100).slice(0, 61)];
+    const line = analyzeDay("2026-10-02", rows).lines.find((l) => l.routeId === "rawai-airport")!;
+    expect(line.trips).toHaveLength(0);
+    expect(line.departures).toHaveLength(1);
+    expect(line.departures[0]).toMatchObject({ plate: "10-1160", dir: "fwd" });
+    // the departure is the last fix at the kerb, not the moment it was confirmed
+    expect(line.departures[0]!.departMs).toBeLessThanOrEqual(at(8, 20) + 60_000);
+  });
+
+  it("a wobble across the terminal boundary is not a departure", () => {
+    // Parked at the kerb; two fixes ~1.2 km out (past the 1 km zone, short of the 1.5 km confirmation), then back.
+    const out = airport.poly[20]!;
+    const near = (m: number) => {
+      let acc = 0;
+      for (let i = 1; i < airport.poly.length; i++) {
+        const a = airport.poly[i - 1]!, b = airport.poly[i]!;
+        const kx = 111_320 * Math.cos((a[0]! * Math.PI) / 180);
+        acc += Math.hypot((b[1]! - a[1]!) * kx, (b[0]! - a[0]!) * 110_540);
+        if (acc >= m) return b;
+      }
+      return out;
+    };
+    const rows = [
+      ...dwell("10-1161", airport.poly[0]!, at(8), 10),
+      { plate: "10-1161", fixMs: at(8, 10), lat: near(1200)[0]!, lng: near(1200)[1]!, speedKph: 20, routeId: "rawai-airport", feed: "token" },
+      { plate: "10-1161", fixMs: at(8, 11), lat: near(1250)[0]!, lng: near(1250)[1]!, speedKph: 20, routeId: "rawai-airport", feed: "token" },
+      ...dwell("10-1161", airport.poly[0]!, at(8, 12), 10),
+    ];
+    const line = analyzeDay("2026-10-02", rows).lines.find((l) => l.routeId === "rawai-airport")!;
+    expect(line.departures).toHaveLength(0);
+  });
+
+  it("a completed trip also has its departure, counted once, at the same minute", () => {
+    const rows = [...dwell("10-1162", airport.poly[0]!, at(7), 20), ...drive("10-1162", airport.poly, at(7, 20), 100), ...dwell("10-1162", airport.poly[airport.poly.length - 1]!, at(9, 1), 20)];
+    const line = analyzeDay("2026-10-02", rows).lines.find((l) => l.routeId === "rawai-airport")!;
+    expect(line.trips).toHaveLength(1);
+    expect(line.departures).toHaveLength(1);
+    expect(line.departures[0]!.departMs).toBe(line.trips[0]!.departMs);
+  });
+
   it("a loop run backwards counts laps too (Dragon runs its loop in reverse)", () => {
     const rows = [0, 1, 2, 3].flatMap((k) => drive("10-1265", dragon.poly, at(10, k * 25), 24, true, "dragon-line"));
     const line = analyzeDay("2026-10-02", rows).lines.find((l) => l.routeId === "dragon-line")!;
