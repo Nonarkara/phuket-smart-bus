@@ -41,6 +41,9 @@ jobs:
   #                   decides whether a finding blocks a deploy.
   #   prove-space   — the spatial-hallucination instrument and its six
   #                   failure modes.
+  #   prove-csp     — the Content-Security-Policy sweep: a page that loads
+  #                   from an unallowed host fails, a clean page passes, a
+  #                   route that is not there is a finding.
   #
   # They need a browser, so the browser is installed here rather than
   # assumed. They are quick — a few minutes — and they are the difference
@@ -64,3 +67,5 @@ jobs:
         run: bash scripts/design/prove-ship.sh
       - name: The spatial instrument bites, and stays quiet
         run: bash scripts/design/prove-space.sh
+      - name: The CSP sweep bites, and stays quiet
+        run: node scripts/design/prove-csp.mjs
