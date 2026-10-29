@@ -110,3 +110,29 @@ describe("a bus that is not moving gets no minutes", () => {
     expect(arrivalsAt(placed, stop, pace, NOW).fwd[0]!.etaMin).toBe(0);
   });
 });
+
+describe("a standing bus at a terminal is waiting there, not stuck", () => {
+  const stop = { routeId: "rawai-airport", index: 3 } as const;
+
+  it("names the terminal it is standing at", () => {
+    const pace = buildPace(days);
+    // 300 m short of the Rawai end, standing, heading for the airport
+    const atRawai = busAt("r1", airport.lengthM - 300, { speedKph: 0 });
+    const placed = [{ bus: atRawai, line: airport, alongM: airport.lengthM - 300, dir: "rev" as const }];
+    const a = arrivalsAt(placed, stop, pace, NOW).rev[0]!;
+    expect(a.terminal).toBe("Rawai");
+    expect(a.etaMin).toBeNull();
+  });
+
+  it("a bus standing mid-route is just standing, and a moving bus at a terminal is not waiting", () => {
+    const pace = buildPace(days);
+    const mid = busAt("m1", 20_000, { speedKph: 0 });
+    const leaving = busAt("m2", airport.lengthM - 300, { speedKph: 30 });
+    const out = arrivalsAt([
+      { bus: mid, line: airport, alongM: 20_000, dir: "rev" as const },
+      { bus: leaving, line: airport, alongM: airport.lengthM - 300, dir: "rev" as const },
+    ], stop, pace, NOW).rev;
+    expect(out.find((r) => r.plate === "m1")!.terminal).toBeNull();
+    expect(out.find((r) => r.plate === "m2")!.terminal).toBeNull();
+  });
+});

@@ -372,7 +372,7 @@ export function getHourPeaks(): HourPeak {
 
 /** ฿ per bus per service hour (฿800k ÷ 365 days ÷ 16 service hours ≈ ฿137). */
 export const HOURLY_OPEX_PER_BUS_THB = ROI_CONSTANTS.operatingCostPerBusYear / 365 / 16;
-/** One Airport↔Rawai trip is ~135 min on the published timetable (130 down, 147 up). */
+/** One Airport↔Rawai trip is ~130 min pooled on the published timetable (130 down, 147 up). */
 const TRIP_MIN = AIRPORT_PUBLISHED.line;
 /** Opex of one extra trip (both directions are separate trips). */
 export const TRIP_OPEX_THB = Math.round(HOURLY_OPEX_PER_BUS_THB * TRIP_MIN / 60);

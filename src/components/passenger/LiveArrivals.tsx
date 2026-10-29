@@ -66,7 +66,7 @@ const minutes = (a: Arrival) =>
   a.etaMin === 0 ? "At stop"
   // A null ETA on a stopped bus is not "unknown" in the vague sense — we know
   // exactly why: it is not moving, so no pace can be applied to it.
-  : a.etaMin === null ? (a.state === "standing" ? "Standing" : "—")
+  : a.etaMin === null ? (a.terminal ? "Waiting" : a.state === "standing" ? "Standing" : "—")
   : a.etaMin < 1 ? "<1 min" : `${Math.round(a.etaMin)} min`;
 const kmText = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
 
@@ -173,7 +173,7 @@ export function LiveArrivals({
                       <strong className={`pa-live__eta${a.etaMin === null ? " is-none" : ""}`}>{minutes(a)}</strong>
                       <span className="pa-live__bus">
                         Bus {a.plate}
-                        <small>{kmText(a.awayM)} away · {a.state === "late" ? `late signal, last seen ${bkkClock(a.fixMs)}` : `seen ${ago(a.fixMs, now)}`}</small>
+                        <small>{a.terminal ? `At ${a.terminal} · ` : ""}{kmText(a.awayM)} away · {a.state === "late" ? `late signal, last seen ${bkkClock(a.fixMs)}` : `seen ${ago(a.fixMs, now)}`}</small>
                       </span>
                     </li>
                   ))}

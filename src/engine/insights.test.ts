@@ -5,7 +5,7 @@ import period from "./__fixtures__/PBUS_2026-10-13_DATA_trips-11-days.json";
 const days = period.days as SlimDay[];
 // The OFFICIAL timetable's end-to-end times (130 min down, 147 up), not the 95-min
 // comparison figure this test and the screens used to call "published".
-const airport = { from: "Airport", to: "Rawai", loop: false, timetableMin: 135, timetableMinByDir: { fwd: 130, rev: 147 } };
+const airport = { from: "Airport", to: "Rawai", loop: false, timetableMin: 130, timetableMinByDir: { fwd: 130, rev: 147 } };
 
 describe("insights across real days (2026-10-02 → 10-12)", () => {
   const ins = lineInsight(days, "rawai-airport", airport)!;

@@ -17,7 +17,7 @@ import type { LiveBus } from "@shared/pksbFeed";
 import type { SlimDay } from "@shared/insights";
 import { quantile } from "@shared/insights";
 import { projectOnLine } from "@shared/research";
-import { LINES, ON_LINE_M, stateOf, type Line, type State } from "../v2/fleetRows";
+import { LINES, ON_LINE_M, TERMINAL_ZONE_M, stateOf, type Line, type State } from "../v2/fleetRows";
 
 export type Dir = "fwd" | "rev";
 export type Stop = Line["stops"][number];
@@ -91,6 +91,8 @@ export type Arrival = {
   etaMin: number | null;
   state: State;
   fixMs: number;
+  /** The terminal a standing bus is waiting at (within TERMINAL_ZONE_M of it) — a layover, not a breakdown. */
+  terminal: string | null;
 };
 
 export type BusOnLine = { bus: LiveBus; line: Line; alongM: number; dir: Dir | null };
@@ -142,6 +144,7 @@ export function arrivalsAt(placed: BusOnLine[], ref: StopRef, pace: Pace, nowMs:
       etaMin: away <= AT_STOP_M ? 0 : perKm === null || st === "standing" ? null : (away / 1000) * perKm,
       state: st,
       fixMs: Date.parse(p.bus.updatedAt),
+      terminal: st !== "standing" || line.loop ? null : p.alongM <= TERMINAL_ZONE_M ? line.from : p.alongM >= line.lengthM - TERMINAL_ZONE_M ? line.to : null,
     });
   }
   for (const d of ["fwd", "rev"] as const) out[d].sort((a, b) => a.awayM - b.awayM);
