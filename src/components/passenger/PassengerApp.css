@@ -714,6 +714,10 @@ body.passenger-site-mode #root {
 
 @media (min-width: 960px) {
   .pa-shell {
+    /* The desktop portal is still a rider surface, not an operations wall.
+       Its status rail and embedded map used the 11px phone micro token,
+       which falls below the portal's 13px reading floor. */
+    --t-micro: 0.8125rem;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -871,6 +875,16 @@ body.passenger-site-mode #root {
   }
 
   .pa-app-column .pa-app {
+    /* This nested app is a complete token scope: its desktop micro step rises
+       to the label floor while the rest of the rider scale stays unchanged. */
+    --t-display: clamp(2.2rem, 9vw, 3rem);
+    --t-hero: 1.6rem;
+    --t-figure: 1.25rem;
+    --t-title: 1.125rem;
+    --t-lead: 1.0625rem;
+    --t-body: 1.0625rem;
+    --t-label: 0.8125rem;
+    --t-micro: 0.8125rem;
     min-height: 100%;
     width: 100%;
   }
@@ -977,6 +991,9 @@ body.passenger-site-mode #root {
   }
   .pa-stage .v2-map__layers {
     position: static;
+  }
+  .pa-stage .leaflet-control-attribution {
+    font-size: var(--t-micro);
   }
 
   .pa-stage__footer {
