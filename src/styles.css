@@ -9827,9 +9827,17 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   color: var(--ax-ink);
 }
 
+/* Six tags, and they are not the same width. A wrapping row at the
+   briefing's 1190px fits five and leaves "Vehicle Cleanliness & Luggage
+   Space" alone on the last line (249px). That is an accidental wrap.
+   Three columns of max-content is two full rows, each tag as wide as its
+   words. The queries below drop to two columns, then to the phone's wrap,
+   when the row gets too narrow to hold them. */
 .v2 .tk-friction-tags {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: start;
+  align-items: start;
   gap: 8px;
 }
 
@@ -9903,13 +9911,18 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 10px;
-  align-items: stretch;
+  /* The four steps do not hold the same amount of text. Stretching them
+     to one row leaves a cushion under the short ones — 58px of nothing
+     in a 270×174 step, which is the dead-space finding. Each step is as
+     tall as what it says. The arrow stays centred on the row. */
+  align-items: start;
 }
 
 .v2 .tk-causal-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   font-size: var(--t-lead);
   color: var(--ax-ink-3);
   font-weight: bold;
@@ -10267,6 +10280,26 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   }
   .v2 .tk-data-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  /* Three max-content columns need ~650px inside the row, about 740px of
+     viewport once the briefing gutter is in. Two columns still fill every
+     row (six tags → three rows of two) and still fit, with margin. */
+  .v2 .tk-friction-tags {
+    grid-template-columns: repeat(2, max-content);
+  }
+}
+
+@media (max-width: 600px) {
+  /* Two max-content columns need ~450px and overflow the phone — the row
+     is 300px at 390, and the longest tag is already 249px. The wrap that
+     was already here stays: pairs where they fit, one tag a line where
+     they don't. On the phone the last tag is most of the row. */
+  .v2 .tk-friction-tags {
+    display: flex;
+    flex-wrap: wrap;
   }
 }
 
