@@ -105,7 +105,7 @@ describe("fleetEfficiency engine", () => {
 
   it("calculates cycle time inflation and fleet sizing recommendations", () => {
     const summary = getFleetEfficiencySummary();
-    expect(summary.recommendation.nominalCycleMin).toBe(95);
+    expect(summary.recommendation.nominalCycleMin).toBe(130); // the timetable's own median, not 95
     expect(summary.recommendation.targetHeadwayMin).toBe(30);
     expect(summary.recommendation.recommendedBuses).toBeGreaterThanOrEqual(6);
     expect(summary.recommendation.summaryText).toContain("cycle time");

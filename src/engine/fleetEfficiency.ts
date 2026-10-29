@@ -19,6 +19,8 @@ import type { LatLngTuple } from "@shared/types";
 import { haversineDistanceMeters } from "../lib/geo";
 import type { LiveGpsPing } from "./liveGpsReceiver";
 import { normalizeVehicleKey } from "./liveGpsReceiver";
+import lineGeometry from "@shared/lineGeometry.json";
+import { AIRPORT_PUBLISHED } from "./publishedRunning";
 
 export type VehicleOperationalState = "in_transit" | "dwelling" | "parked_depot";
 
@@ -123,7 +125,10 @@ const DEPOT_RADIUS_METERS = 450;
 const MIN_MOVE_METERS = 15;
 const MAX_PLAUSIBLE_SPEED_KPH = 120;
 const BUNCHING_DISTANCE_METERS = 600;
-const NOMINAL_AIRPORT_TRIP_MIN = 95;
+/** The timetable's own end-to-end median (130 min pooled), not the 95-min taxi-comparison figure. */
+const NOMINAL_AIRPORT_TRIP_MIN = AIRPORT_PUBLISHED.line;
+/** Pace the timetable implies over the line's real length (~54 km, not the 42 km this once assumed). */
+const NOMINAL_SPEED_KPH = (lineGeometry.find((l) => l.routeId === "rawai-airport")!.lengthM / 1000) / (NOMINAL_AIRPORT_TRIP_MIN / 60);
 const TARGET_AIRPORT_HEADWAY_MIN = 30;
 
 // Financial constants from Phuket Smart Bus tariff & operational model
@@ -452,10 +457,10 @@ export function getFleetEfficiencySummary(now = Date.now()): FleetEfficiencySumm
   const daysCollected = Math.max(1, Object.keys(ledger.dailyBreakdown).length);
 
   // Operational Cycle Time Calibration:
-  // Nominal trip time is 95 min (speed ~26.5 km/h on 42km corridor).
-  // If moving ratio drops below 75% or speed drops below 26.5 km/h,
+  // Nominal trip time is the timetable's pooled 130 min (~25 km/h over the 54 km line).
+  // If moving ratio drops below 75% or speed drops below the nominal pace,
   // cycle time inflates due to tourist traffic and stop dwell times.
-  const speedFactor = avgFleetSpeedKph > 0 ? 26.5 / avgFleetSpeedKph : 1.0;
+  const speedFactor = avgFleetSpeedKph > 0 ? NOMINAL_SPEED_KPH / avgFleetSpeedKph : 1.0;
   const dwellFactor = movingRatioPct > 0 ? 75 / Math.min(95, movingRatioPct) : 1.0;
   const combinedInflation = Math.min(1.6, Math.max(0.9, (speedFactor + dwellFactor) / 2));
 
