@@ -46,13 +46,14 @@ export function LiveServiceBlock({ service, status, error }: Props) {
   ];
   const recorded = service.southbound.recorded.length + service.northbound.recorded.length;
   const stillDue = service.southbound.stillDue + service.northbound.stillDue;
+  const planned = service.southbound.published.length + service.northbound.published.length;
 
   return (
     <section className="v2-service" aria-label="Service today, airport line">
       <header className="v2-service__head">
         <span>Service today · airport line</span>
         <span className="v2-service__head-meta">
-          {recorded} recorded · {stillDue} still due · plan {service.southbound.published.length} each way
+          {recorded} recorded · {stillDue} still due · plan {planned} a day
         </span>
       </header>
 
@@ -72,8 +73,9 @@ export function LiveServiceBlock({ service, status, error }: Props) {
       </div>
 
       <p className="v2-service__foot">
-        Trips recorded end to end — a bus whose tracker goes quiet mid-run leaves no trip, so this
-        undercounts the service. Last departure in the record:{" "}
+        A count of what the record holds, not a verdict on what ran. Trips are recorded end to end —
+        a bus whose tracker goes quiet mid-run leaves no trip, so this undercounts the service. Last
+        departure in the record:{" "}
         {service.southbound.lastRecordedMin !== null ? hhmm(service.southbound.lastRecordedMin) : "—"}
         {service.northbound.lastRecordedMin !== null ? ` / ${hhmm(service.northbound.lastRecordedMin)}` : ""}.
       </p>

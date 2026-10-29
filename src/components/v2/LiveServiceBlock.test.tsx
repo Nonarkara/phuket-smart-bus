@@ -45,7 +45,7 @@ describe("LiveServiceBlock", () => {
     // The header carries the day's totals, not a difference between them:
     // "21 of 40" would read as a verdict on what ran.
     expect(container.querySelector(".v2-service__head-meta")?.textContent).toBe(
-      "4 recorded · 2 still due · plan 3 each way",
+      "4 recorded · 2 still due · plan 6 a day",
     );
   });
 
@@ -55,6 +55,8 @@ describe("LiveServiceBlock", () => {
     // service, and the record undercounts by design.
     expect(screen.getByText(/undercounts the service/i)).toBeInTheDocument();
     expect(screen.getByText(/end to end/i)).toBeInTheDocument();
+    // The count is of what the record holds. It is not a verdict on what ran.
+    expect(screen.getByText(/not a verdict on what ran/i)).toBeInTheDocument();
   });
 
   it("says so when the record has not answered, instead of showing zeroes", () => {
