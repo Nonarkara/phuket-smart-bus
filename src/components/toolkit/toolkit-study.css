@@ -15,7 +15,7 @@
 .tk-try-system__intro p strong { color: var(--tk-ink); }
 .tk-try-system__door { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-top: 38px; padding: 22px; color: #fff !important; background: var(--tk-red); text-decoration: none; }
 .tk-try-system__door span { grid-column: 1 / -1; color: rgba(255,255,255,0.7); font: 700 var(--t-micro)/1 var(--font-body); }
-.tk-try-system__door strong { font: 500 var(--t-figure)/1 var(--font-display); letter-spacing: -0.04em; }
+.tk-try-system__door strong { font: 500 var(--t-figure)/1 var(--font-display); letter-spacing: -0.012em; }
 .tk-try-system__door b { font-size: var(--t-figure); line-height: 1; }
 .tk-try-system__door:hover { color: var(--tk-ink) !important; background: var(--tk-yellow); }
 .tk-try-system__door:hover span { color: rgba(17,24,32,0.62); }
@@ -73,9 +73,9 @@
 .tk-machine-drawing__bus path { fill: none; stroke: #fff; stroke-width: 3; }
 .tk-machine-drawing__bus circle { fill: var(--tk-yellow); stroke: var(--tk-ink); stroke-width: 2; }
 .tk-machine__drawings svg text { fill: var(--tk-ink); font: 700 var(--t-micro)/1 var(--font-body); letter-spacing: 0.04em; }
-.tk-machine__drawings svg .tk-machine-drawing__big { font-size: var(--t-label); letter-spacing: -0.04em; }
-.tk-machine__drawings svg .tk-machine-drawing__hero { font: 700 var(--t-figure)/1 var(--font-body); letter-spacing: -0.08em; }
-.tk-machine__drawings svg .tk-machine-drawing__value { fill: #fff; font-size: var(--t-label); letter-spacing: -0.03em; }
+.tk-machine__drawings svg .tk-machine-drawing__big { font-size: var(--t-label); letter-spacing: -0.012em; }
+.tk-machine__drawings svg .tk-machine-drawing__hero { font: 700 var(--t-figure)/1 var(--font-body); letter-spacing: -0.012em; }
+.tk-machine__drawings svg .tk-machine-drawing__value { fill: #fff; font-size: var(--t-label); letter-spacing: -0.012em; }
 .tk-machine__handoff { display: grid; grid-template-columns: auto 1fr auto auto 1fr auto auto 1fr; gap: 18px; align-items: center; min-height: 100px; padding: 24px 30px; color: var(--tk-ink); background: var(--tk-yellow); }
 .tk-machine__handoff strong { font: 500 var(--t-lead)/1 var(--font-display); }
 .tk-machine__handoff span { font-size: var(--t-label); }

@@ -323,6 +323,9 @@ These read as hits but are not. Each is recorded so a reviewer can test the reas
 
 ## The depa · USDOT toolkit (this branch)
 
+- **The research hub's display face is Source Serif 4, not Josefin Sans (owner's decision, 2026-11-05).** Josefin at 108px/700 with 0.95 leading filled the hub's first screen, cut into the kicker above it, and read as a poster, not a research publication — the owner called it AI-slop and retired it here. The hub now sets its display moments in Source Serif 4 at weight 500, leading 1.05, tracking −0.012em, at a smaller editorial scale (`--t-display` 40–72px, `--t-hero` 32–50px, `--t-figure` 40px), declared once on `.toolkit-site` as `--font-display`. It is the face the preprint is set in, so the hub and the paper read as one publication. Body stays Source Sans 3: still two families. The bus app's own surfaces keep their faces; this decision is scoped to the hub.
+- **The preprint (`/toolkit#paper`).** Built by `npm run paper` from the raw GPS record (`paper/`): an A4, two-column PDF in Source Serif 4 and Source Sans 3, with every number in its prose read from the analysis output. The tab appears only once `public/papers/data-before-rail/manifest.json` exists — no empty tab. The PDF drops the site CSP (`object-src 'none'` blanks Chromium's PDF viewer) and keeps only `frame-ancestors`.
+
 The toolkit is a research surface for a government partner, a lender and a city. It is not the bus app, and it is not a landing page. Its house rules are its own, and they are deliberate:
 
 - **Paper `#f5f5f2`, ink `#111820`, signal red `#ef442f`.** Red is the one signal colour: it marks the claim, the rule, the warning. `--tk-blue` and `--tk-yellow` are structural tones (a table header, a photo caption strip), not competing accents. The branch's own comment in `toolkit-showcase.css` says it: one signal red, hard rules, real photographs, no card confetti.

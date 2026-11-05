@@ -26,7 +26,11 @@
     "test:e2e": "npm run test:e2e:mocked && npm run test:e2e:live",
     "test:e2e:mocked": "playwright test e2e/mocked-ui.spec.ts",
     "test:e2e:live": "playwright test e2e/live-api.spec.ts",
-    "verify": "npm run typecheck && npm test && npm run build && npm run test:e2e"
+    "verify": "npm run typecheck && npm test && npm run build && npm run test:e2e",
+    "paper:fetch": "bash scripts/paper/fetch-record.sh",
+    "paper:analyze": "tsx paper/src/analyze.ts",
+    "paper:build": "tsx paper/src/build.ts",
+    "paper": "tsx paper/src/analyze.ts && tsx paper/src/build.ts"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",
@@ -52,6 +56,9 @@
     "socket.io-parser": "4.2.7"
   },
   "devDependencies": {
+    "@fontsource/ibm-plex-sans-thai": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.1",
+    "@fontsource/source-serif-4": "^5.3.1",
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
@@ -65,13 +72,17 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/supertest": "^7.2.0",
+    "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "concurrently": "^10.0.6",
     "jsdom": "^26.0.0",
+    "pdf-lib": "^1.17.1",
     "supertest": "^7.0.0",
+    "topojson-client": "^3.1.0",
     "tsx": "^4.23.15",
     "typescript": "^5.8.2",
     "vite": "^6.2.1",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "world-atlas": "^2.0.2"
   }
 }

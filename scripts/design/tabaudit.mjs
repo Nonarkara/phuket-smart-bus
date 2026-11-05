@@ -4,7 +4,7 @@
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE || "https://bus.nonarkara.org";
-const TABS = ["overview", "phuket", "evidence", "build", "fieldnotes"];
+const TABS = ["overview", "phuket", "evidence", "build", "fieldnotes", "paper"];
 const WIDTHS = [1440, 390];
 
 const INVENTORY = () => {
@@ -19,7 +19,10 @@ const INVENTORY = () => {
     const w = parseInt(cs.fontWeight, 10) || 400;
     const size = parseFloat(cs.fontSize);
     const label = e.tagName.toLowerCase() + (e.className && typeof e.className === "string" ? "." + e.className.trim().split(/\s+/).slice(0, 2).join(".") : "");
-    if (/Josefin/.test(fam)) {
+    // The hub's display face is Source Serif 4 (owner's decision, 2026-11-05).
+    const hubSerif = /Source Serif 4/.test(fam) && !!e.closest(".toolkit-site");
+    if (hubSerif && size >= 18 && w >= 600) offenders.push({ rule: "hub serif heavier than 500", w, size, el: label, text: e.textContent.trim().slice(0, 40) });
+    if (/Josefin/.test(fam) || hubSerif) {
       if (size < 18) offenders.push({ rule: "display face below 18px", w, size, el: label, text: e.textContent.trim().slice(0, 40) });
       else if (size < 40 && w >= 600) offenders.push({ rule: "display face 600+ below 40px", w, size, el: label, text: e.textContent.trim().slice(0, 40) });
     } else if (!/Source Sans|Plex Sans Thai/i.test(fam) && !/ui-monospace|system-ui|Helvetica|Arial|Georgia|Times/i.test(fam)) {

@@ -32,7 +32,7 @@ const BASE_DEFAULT = "https://bus.nonarkara.org";
 const ALL_ROUTES = [
   "/", "/ops", "/fleet", "/fleet/raw", "/study", "/research", "/capacity",
   "/toolkit", "/toolkit#phuket", "/toolkit#evidence", "/toolkit#build",
-  "/toolkit#fieldnotes",
+  "/toolkit#fieldnotes", "/toolkit#paper",
   "/roi", "/driver", "/v2", "/v2?view=insights", "/v2?view=toolkit",
   "/governor", "/info", "/more", "/stops", "/pass", "/ride", "/compare",
 ];
@@ -77,7 +77,11 @@ const INVENTORY = () => {
     if (ownsText) sizes.add(sizeKey);
 
     // THE RULE
-    const isDisplay = /Josefin/.test(fam);
+    // The research hub's display face is Source Serif 4 (owner's decision,
+    // 2026-11-05, STYLE.md) — inside .toolkit-site and nowhere else. The
+    // same serif anywhere outside the hub is a leak.
+    const hubSerif = /Source Serif 4/.test(fam) && !!e.closest(".toolkit-site");
+    const isDisplay = /Josefin/.test(fam) || hubSerif;
     const isBody = /Source Sans|Plex Sans Thai/i.test(fam);
     const label = e.tagName.toLowerCase() + (e.className && typeof e.className === "string" ? "." + e.className.trim().split(/\s+/).slice(0, 2).join(".") : "");
     // THE FLOOR. The smallest text a reader can be asked to read is 11px.
@@ -111,7 +115,10 @@ const INVENTORY = () => {
     } else if (!isBody && !/ui-monospace|system-ui|Helvetica|Arial|Georgia|Times/i.test(fam)) {
       offenders.push({ rule: "unknown face", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
     }
-    if (/Times|Georgia|serif/i.test(fam)) {
+    if (hubSerif && size >= 18 && w >= 600) {
+      offenders.push({ rule: "hub serif heavier than 500", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
+    }
+    if (!hubSerif && /Times|Georgia|serif/i.test(fam)) {
       offenders.push({ rule: "serif leaking", fam, w, size, el: label, text: e.textContent.trim().slice(0, 40) });
     }
   }
@@ -153,7 +160,7 @@ for (const vp of VIEWPORTS) {
 }
 
 for (const [route, r] of Object.entries(report)) {
-  const display = r.inv.filter(([k]) => /Josefin/.test(k));
+  const display = r.inv.filter(([k]) => /Josefin|Source Serif 4/.test(k));
   const bad = r.offenders.length;
   const over = r.sizeCount > 8;
   const open = KNOWN_OPEN[route];
