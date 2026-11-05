@@ -11,7 +11,7 @@
     "dev:api:test": "tsx server/index.ts",
     "dev:worker": "tsx watch server/worker.ts",
     "dev:worker:test": "tsx server/worker.ts",
-    "typecheck": "npm run typecheck:server && npm run typecheck:app && npm run typecheck:test",
+    "typecheck": "npm run typecheck:server && npm run typecheck:app && npm run typecheck:test && npm run typecheck:paper",
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "typecheck:server": "tsc -p tsconfig.server.json --noEmit",
@@ -30,7 +30,8 @@
     "paper:fetch": "bash scripts/paper/fetch-record.sh",
     "paper:analyze": "tsx paper/src/analyze.ts",
     "paper:build": "tsx paper/src/build.ts",
-    "paper": "tsx paper/src/analyze.ts && tsx paper/src/build.ts"
+    "paper": "tsx paper/src/analyze.ts && tsx paper/src/build.ts",
+    "typecheck:paper": "tsc -p paper/tsconfig.json"
   },
   "dependencies": {
     "@types/compression": "^1.8.1",
