@@ -8,14 +8,17 @@
    fixed, so a reader meets the same sizes on every tab. See STYLE.md,
    "The type scale". */
 .toolkit-site {
-  --t-display: clamp(48px, 7.5vw, 108px);
-  /* The hero's FLOOR is 40px, not 32px: the display face at weight 700 is
-     only allowed at 40px and above, and the toolkit sets several words in it
-     (the A–F flow markers). A floor below that turns the hero into a blob
-     on a phone. */
-  --t-hero:    clamp(40px, 5.3vw, 76px);
-  --t-figure:  48px;
-  --t-title:   30px;
+  /* The display face is Source Serif 4 here — the face the preprint is set in.
+     Josefin Sans at 108px/700 filled the first screen and read as a poster;
+     the owner retired it from the research hub on 2026-11-05. */
+  --font-display: "Source Serif 4", Georgia, serif;
+  --t-display: clamp(40px, 5vw, 72px);
+  /* Hero and figure are both fluid and the hero is never smaller than the
+     figure at any width: a section h2 (hero) must outrank the card h3s
+     (figure) under it, or the hierarchy inverts on a laptop. Monotonic. */
+  --t-hero:    clamp(32px, 3.4vw, 50px);
+  --t-figure:  clamp(26px, 2.8vw, 40px);
+  --t-title:   clamp(24px, 2.3vw, 30px);
   --t-lead:    22px;
   --t-body:    18px;
   --t-label:   15px;
@@ -71,16 +74,29 @@
 .hub-tabs { display: flex; overflow-x: auto; padding: 0 clamp(20px, 4vw, 48px); scrollbar-width: thin; }
 .hub-tab { flex: 0 0 auto; display: flex; align-items: center; padding: 14px 20px; border: 0; border-right: 1px solid var(--tk-line); border-radius: 0; background: transparent; font: 700 var(--t-label)/1 var(--font-body); color: var(--tk-muted); cursor: pointer; white-space: nowrap; transition: color 0.15s, background 0.15s; }
 .hub-tab:last-child { border-right: 0; }
+@media (max-width: 560px) {
+  /* Phones: every section visible at once, two rows of three, each a full
+     44px target. A scrolling strip hid the last tab past the screen's edge. */
+  .hub-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; padding: 0; }
+  .hub-tab { justify-content: center; min-height: 44px; padding: 0 8px; border-bottom: 1px solid var(--tk-line); }
+  .hub-tab:nth-child(3n) { border-right: 0; }
+  .hub-tabs .hub-tab__short { font-size: var(--t-label); }
+  /* Brand row plus two rows of tabs is ~208px — a quarter of a phone. Pinned,
+     that is chrome eating the page on every screen; so on a phone the header
+     scrolls away with the page and the tabs are one scroll up. */
+  .hub-nav { position: static; }
+}
 .hub-tab:hover { color: var(--tk-ink); background: rgba(17,24,32,0.04); }
 .hub-tab.is-active { color: #fff; background: var(--tk-ink); }
 .hub-tab__label { display: inline; }
 .hub-tab__short { display: none; font-size: var(--t-micro); }
 
 .hub-panel { flex: 1; }
+.hub-panel:focus { outline: none; }
 .hub-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .hub-section--intro { background: var(--tk-white); }
 .hub-section__intro-pad { max-width: 72ch; margin-bottom: 48px; }
-.hub-section__intro-pad h2 { font-weight: 500; font-size: var(--t-hero); margin: 16px 0 20px; letter-spacing: -0.04em; }
+.hub-section__intro-pad h2 { font-weight: 500; font-size: var(--t-hero); margin: 16px 0 20px; letter-spacing: -0.012em; }
 .hub-section__intro-pad p { font-size: var(--t-lead); line-height: 1.5; color: var(--tk-muted); }
 
 /* The jump index is a list of four destinations, not four tiles. The tab
@@ -129,8 +145,11 @@
 }
 .hub-tab-nav button:hover strong,
 .hub-tab-nav button:hover small { color: var(--tk-red); }
+.hub-tab-nav--five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 @media (max-width: 920px) {
+  /* Four entries: two and two. Five: three and two — never one stranded. */
   .hub-tab-nav { grid-template-columns: 1fr 1fr; }
+  .hub-tab-nav--five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
   .hub-tab-nav { grid-template-columns: 1fr; }
@@ -163,17 +182,17 @@
 
 .fc-section, .pb-section, .cr-section, .lf-section, .rt-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .fc-section__head, .pb-section__head, .cr-section__head, .lf-section__head, .rt-section__head { max-width: 900px; margin: 0 auto 48px; }
-.fc-section__head h2, .pb-section__head h2, .cr-section__head h2, .lf-section__head h2, .rt-section__head h2 { font-weight: 500; font-size: var(--t-hero); letter-spacing: -0.045em; line-height: 1; margin: 14px 0 20px; text-wrap: balance; }
+.fc-section__head h2, .pb-section__head h2, .cr-section__head h2, .lf-section__head h2, .rt-section__head h2 { font-weight: 500; font-size: var(--t-hero); letter-spacing: -0.012em; line-height: 1; margin: 14px 0 20px; text-wrap: balance; }
 .fc-section__standfirst, .pb-section__standfirst, .cr-section__standfirst, .lf-section__standfirst, .rt-section__standfirst { max-width: 72ch; font-size: var(--t-lead); line-height: 1.5; color: var(--tk-muted); }
 
 .fc-stats, .pb-stats, .cr-stats, .lf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); border: 1px solid var(--tk-ink); margin-bottom: 48px; }
 .fc-stats > div, .pb-stats > div, .cr-stats > div, .lf-stats > div { display: flex; flex-direction: column; gap: 4px; padding: 22px; border-right: 1px solid var(--tk-ink); }
 .fc-stats > div:last-child, .pb-stats > div:last-child, .cr-stats > div:last-child, .lf-stats > div:last-child { border-right: 0; }
-.fc-stats strong, .pb-stats strong, .cr-stats strong, .lf-stats strong { font: 500 var(--t-figure)/1 var(--font-display); letter-spacing: -0.03em; }
+.fc-stats strong, .pb-stats strong, .cr-stats strong, .lf-stats strong { font: 500 var(--t-figure)/1 var(--font-display); letter-spacing: -0.012em; }
 .fc-stats span, .pb-stats span, .cr-stats span, .lf-stats span { font-size: var(--t-label); font-weight: 700; }
 .fc-stats small, .pb-stats small, .cr-stats small, .lf-stats small { color: var(--tk-muted); font-size: var(--t-micro); }
 
-.pb-subhead, .cr-subhead, .lf-subhead, .rt-subhead { font: 500 var(--t-figure)/1.1 var(--font-display); letter-spacing: -0.03em; margin-bottom: 20px; }
+.pb-subhead, .cr-subhead, .lf-subhead, .rt-subhead { font: 500 var(--t-figure)/1.1 var(--font-display); letter-spacing: -0.012em; margin-bottom: 20px; }
 .pb-intro-note, .cr-intro-note, .lf-intro-note, .rt-intro-note { max-width: 68ch; margin-bottom: 32px; color: var(--tk-muted); font-size: var(--t-label); line-height: 1.55; }
 
 /* --------------------------------------------------------------------------
@@ -196,7 +215,7 @@
 .fc-station__place { color: var(--tk-muted); font: 700 var(--t-micro)/1.4 var(--font-body); text-transform: uppercase; letter-spacing: 0.04em; }
 
 .fc-station__body { min-width: 0; padding: 30px 0 42px clamp(24px, 3.5vw, 52px); }
-.fc-station__title { max-width: 26ch; font-size: var(--t-figure); line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 16px; }
+.fc-station__title { max-width: 26ch; font-size: var(--t-figure); line-height: 1.08; letter-spacing: -0.012em; margin-bottom: 16px; }
 .fc-station__summary { max-width: 70ch; font-size: var(--t-lead); line-height: 1.5; margin-bottom: 22px; }
 
 .fc-photos { display: grid; gap: 18px; margin-bottom: 24px; }
@@ -231,7 +250,7 @@
 .fc-memorial figure { margin: 0; }
 .fc-memorial img { width: 100%; aspect-ratio: 4/3; object-fit: cover; filter: saturate(0.82) contrast(1.02); border: 1px solid var(--tk-ink); }
 .fc-memorial figcaption { padding-top: 8px; font: 700 var(--t-micro)/1.2 var(--font-body); color: var(--tk-muted); }
-.fc-memorial__copy h3 { font-weight: 500; font-size: var(--t-figure); line-height: 1.05; letter-spacing: -0.03em; margin: 10px 0 18px; }
+.fc-memorial__copy h3 { font-weight: 500; font-size: var(--t-figure); line-height: 1.05; letter-spacing: -0.012em; margin: 10px 0 18px; }
 .fc-memorial__lead { font-size: var(--t-lead); line-height: 1.5; margin-bottom: 14px; }
 .fc-memorial__copy > p:not(.fc-memorial__lead):not(.tk-kicker) { max-width: 60ch; color: var(--tk-muted); font-size: var(--t-label); line-height: 1.6; margin-bottom: 12px; }
 
@@ -483,12 +502,12 @@
   padding: clamp(64px, 8vw, 120px) var(--pc-pad) 48px;
 }
 
-.pc-section__head h2 { font-weight: 700;
+.pc-section__head h2 { font-weight: 500;
   max-width: 1100px;
   margin: 16px 0 28px;
   font-size: var(--t-display);
-  line-height: 0.91;
-  letter-spacing: -0.065em;
+  line-height: 1.06;
+  letter-spacing: -0.012em;
 }
 
 .pc-section__standfirst {
@@ -532,7 +551,7 @@
   border-bottom: 1px solid var(--tk-ink);
 }
 .pc-hero__stats li:last-child { border-bottom: 0; }
-.pc-hero__stats strong { font: 500 var(--t-hero)/0.95 var(--font-display); letter-spacing: -0.04em; }
+.pc-hero__stats strong { font: 500 var(--t-hero)/1.05 var(--font-display); letter-spacing: -0.012em; }
 .pc-hero__stats span { margin-top: 7px; font-weight: 700; }
 .pc-hero__stats small { margin-top: 3px; color: var(--tk-muted); font: 700 var(--t-micro)/1.3 var(--font-body); text-transform: uppercase; }
 
@@ -556,7 +575,7 @@
   background: var(--tk-white);
 }
 .pc-figure figcaption { margin-bottom: 24px; }
-.pc-figure figcaption strong { display: block; margin: 8px 0 12px; font: 500 var(--t-figure)/1.02 var(--font-display); letter-spacing: -0.035em; }
+.pc-figure figcaption strong { display: block; margin: 8px 0 12px; font: 500 var(--t-figure)/1.02 var(--font-display); letter-spacing: -0.012em; }
 .pc-figure figcaption p { color: var(--tk-muted); font-size: var(--t-label); line-height: 1.55; }
 .pc-chart, .pc-map { width: 100%; height: auto; }
 
@@ -571,7 +590,7 @@
   scroll-margin-top: 116px;
 }
 .pc-system-map__copy { display: flex; flex-direction: column; margin: 0; padding: clamp(28px, 4vw, 48px); color: #fff; }
-.pc-system-map__copy h3 { font-weight: 500; margin: 14px 0 20px; color: #fff; font-size: var(--t-hero); line-height: 0.94; letter-spacing: -0.05em; }
+.pc-system-map__copy h3 { font-weight: 500; margin: 14px 0 20px; color: #fff; font-size: var(--t-figure); line-height: 1.06; letter-spacing: -0.012em; }
 .pc-system-map__copy > p:not(.tk-kicker) { color: rgba(255,255,255,0.72); font-size: var(--t-body); line-height: 1.55; }
 .pc-system-map__copy > a { margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.35); color: #fff; font-weight: 700; text-decoration: none; }
 .pc-system-map__copy > a:hover { color: var(--tk-yellow); }
@@ -606,7 +625,7 @@
 .pc-timeline__list p { max-width: 72ch; margin-top: 8px; color: var(--tk-muted); line-height: 1.55; }
 .pc-spread--stack { grid-template-columns: 1.1fr 0.9fr; }
 .pc-callout { padding: clamp(28px, 4vw, 48px); color: #fff; background: var(--tk-blue); border: 1px solid var(--tk-ink); }
-.pc-callout h3 { font-weight: 500; color: #fff; font-size: var(--t-hero); }
+.pc-callout h3 { font-weight: 500; color: #fff; font-size: var(--t-figure); }
 .pc-callout ul { margin: 28px 0 0; padding: 0; list-style: none; }
 .pc-callout li { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.25); }
 .pc-callout li p { margin-top: 7px; color: rgba(255,255,255,0.72); font-size: var(--t-label); line-height: 1.5; }
@@ -647,7 +666,7 @@
 }
 
 @media (max-width: 680px) {
-  .pc-section__head h2 { font-weight: 700; font-size: var(--t-hero); }
+  .pc-section__head h2 { font-weight: 500; font-size: var(--t-hero); }
   .pc-hero { grid-template-columns: 1fr; min-height: 0; }
   .pc-hero__photo { min-height: 310px; }
   .pc-hero__stats { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; border-top: 1px solid var(--tk-ink); border-left: 0; }
@@ -730,7 +749,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 .dp-section__head { max-width: 78ch; margin-bottom: 32px; }
 .dp-section__head h2 { font-weight: 500;
   font-size: var(--t-figure);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
   text-wrap: balance;
@@ -883,8 +902,8 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .cr-section__head { max-width: 78ch; margin-bottom: 40px; }
 .cr-section__head h2 { font-weight: 500;
-  font-size: var(--t-figure);
-  letter-spacing: -0.03em;
+  font-size: var(--t-hero);
+  letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
   text-wrap: balance;
@@ -899,7 +918,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 .cr-block { margin-bottom: 48px; }
 .cr-block__title {
   font-size: var(--t-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin: 0 0 18px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--tk-ink);
@@ -1078,7 +1097,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 .gl-section__head { max-width: 78ch; margin-bottom: 32px; }
 .gl-section__head h2 { font-weight: 500;
   font-size: var(--t-figure);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
 }
@@ -1180,8 +1199,8 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .ra-section__head { max-width: 78ch; margin-bottom: 40px; }
 .ra-section__head h2 { font-weight: 500;
-  font-size: var(--t-figure);
-  letter-spacing: -0.03em;
+  font-size: var(--t-hero);
+  letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
   text-wrap: balance;
@@ -1221,7 +1240,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .ra-item h3 { font-weight: 500;
   font-size: var(--t-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   line-height: 1.15;
   margin: 0;
   color: var(--tk-ink);
@@ -1310,4 +1329,86 @@ html.high-contrast-mode .toolkit-site .abc-controls {
     background: transparent;
     border-bottom: 1px solid var(--tk-line);
   }
+}
+
+/* ── Paper — the preprint ─────────────────────────────────────────────────
+   One record and one reader. The record is the catalogue card a library
+   gives a paper: title, authors, the download, the abstract, the data, the
+   citation — set as text with hairlines, no boxes. The reader is the paper
+   itself and takes the larger share of the screen, the way the map does on
+   the operations wall, and it stays in view below the sticky nav while the
+   record scrolls beside it. On a narrow screen the paper comes straight
+   after the download. Every word on the record comes from the manifest the
+   paper's build writes, so the tab cannot say what the PDF does not.
+   Paragraph margins are scoped through .paper because `.toolkit-site p`
+   zeroes every paragraph margin and outranks a single class. */
+.paper {
+  display: grid;
+  grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+  grid-template-areas: "head reader" "details reader";
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(28px, 3.5vw, 56px);
+  align-items: start;
+  padding: clamp(24px, 3vw, 40px) clamp(20px, 5vw, 80px) clamp(48px, 6vw, 90px);
+  border-bottom: 1px solid var(--tk-ink);
+}
+.paper__head { grid-area: head; min-width: 0; }
+.paper__details { grid-area: details; min-width: 0; }
+.paper__reader { grid-area: reader; min-width: 0; align-self: start; position: sticky; top: calc(var(--hub-nav-h, 130px) + 16px); }
+.toolkit-site .paper__title {
+  margin: 12px 0 14px;
+  font: 500 var(--t-title)/1.16 var(--font-display);
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+.paper .paper__authors { margin: 0 0 6px; font: 700 var(--t-body)/1.4 var(--font-body); }
+.paper__authors sup, .paper__affiliations sup { font-size: var(--t-micro); font-weight: 400; color: var(--tk-muted); margin-left: 1px; }
+.paper__authors [lang="th"] { font-weight: 400; color: var(--tk-muted); white-space: nowrap; }
+.paper__affiliations { list-style: none; margin: 0 0 20px; padding: 0; font: 400 var(--t-label)/1.45 var(--font-body); color: var(--tk-muted); }
+.paper__affiliations sup { margin: 0 3px 0 0; }
+.paper__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 16px 0; border-top: 2px solid var(--tk-ink); border-bottom: 1px solid var(--tk-line); }
+.toolkit-site .paper__download {
+  display: inline-flex; flex-direction: column; justify-content: center; gap: 2px;
+  min-height: 44px; padding: 8px 16px;
+  background: var(--tk-ink); color: #fff; text-decoration: none;
+  font: 700 var(--t-label)/1.2 var(--font-body);
+}
+.paper__download small { font: 400 var(--t-micro)/1.2 var(--font-body); color: rgba(255, 255, 255, 0.78); font-variant-numeric: tabular-nums; }
+.toolkit-site .paper__download:hover, .toolkit-site .paper__download:focus-visible { background: var(--tk-red); }
+.paper__cite {
+  min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--tk-ink);
+  font: 700 var(--t-label)/1.2 var(--font-body);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px;
+}
+.paper__cite:hover { color: var(--tk-red); }
+.paper__status { flex-basis: 100%; font: 400 var(--t-label)/1.35 var(--font-body); color: var(--tk-muted); }
+.paper__status:empty { display: none; }
+.toolkit-site .paper__label {
+  margin: 24px 0 8px;
+  font: 700 var(--t-micro)/1.2 var(--font-body);
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--tk-ink);
+}
+.paper__details > .paper__label:first-child { margin-top: 24px; }
+.paper .paper__abstract p { margin: 0 0 12px; max-width: 65ch; font: 400 var(--t-label)/1.55 var(--font-body); }
+.paper__abstract b { font-weight: 700; }
+.paper .paper__note { margin: 0; max-width: 65ch; font: 400 var(--t-label)/1.5 var(--font-body); color: var(--tk-muted); }
+.paper .paper__citation { color: var(--tk-ink); }
+.paper__data { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--tk-line); }
+.paper__data li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; border-bottom: 1px solid var(--tk-line); font: 400 var(--t-label)/1.35 var(--font-body); }
+.paper__data a { display: inline-flex; align-items: center; min-height: 44px; color: var(--tk-ink); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.paper__data a:hover { color: var(--tk-red); }
+.paper__data span { color: var(--tk-muted); font-variant-numeric: tabular-nums; }
+.paper__frame {
+  display: block; width: 100%;
+  height: calc(100vh - var(--hub-nav-h, 130px) - 56px);
+  min-height: 560px;
+  border: 1px solid var(--tk-ink); background: var(--tk-white);
+}
+.paper__pages { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.paper__pages a { display: block; }
+.paper__pages img { display: block; width: 100%; height: auto; border: 1px solid var(--tk-line); background: var(--tk-white); }
+@media (max-width: 1100px) {
+  .paper { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "reader" "details"; grid-template-rows: auto; }
+  .paper__reader { position: static; margin-top: 20px; }
+  .paper__frame { height: 86vh; }
 }

@@ -36,3 +36,5 @@ non-slop-shots/
 
 # Local runtime state (not part of the product)
 .mavis/
+paper/data/
+paper/build/

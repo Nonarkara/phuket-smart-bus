@@ -9,6 +9,7 @@ The reference is Braun's control surfaces and civil-aviation operations boards �
 ## Type
 
 - Display: **Josefin Sans**. Geometric, high x-height, drawn-on-a-device feel. Used for the few display moments only.
+- **Exception — the research hub (`/toolkit`, `.toolkit-site`):** its display face is **Source Serif 4** at weight 500, by the owner's decision of 2026-11-05 (see "The depa · USDOT toolkit" below). It replaces Josefin there, so the hub still carries two families. Source Serif 4 anywhere outside the hub is a leak, and the audits fail it.
 - Body: **Source Sans 3**. Humanist, warm, legible at 17px on a phone in sunlight. Thai: **IBM Plex Sans Thai** (non-looped — Sarabun is banned). Chinese: Simplified, falls back to the system CJK face.
 - **No third family. There is no monospace UI face.** JetBrains Mono was removed 2026-10-19: it set "4 min" in a code-editor face at 44px on the rider's phone and read as a developer console, which is what it is. Figures that must line up use `font-variant-numeric: tabular-nums` in the body face. Do not reintroduce a monospace as a typographic voice — weight and colour do that job.
 - A monospace is allowed in exactly one place, via `--font-code` (the platform's face, never a download): `<pre>`/`<code>`, raw tracker JSON, ticket numbers. Braces and indentation have to line up there and nowhere else.
@@ -276,6 +277,7 @@ node scripts/design/space.mjs "/v2?view=toolkit" /ops --base http://127.0.0.1:41
 - font "Josefin Sans": display face, geometric, chosen
 - font "Source Sans 3": body face, humanist, chosen
 - font "IBM Plex Sans Thai": non-looped Thai, required — Sarabun is banned
+- font "Source Serif 4": the research hub's display face and the preprint's text face — owner's decision 2026-11-05; scoped to `.toolkit-site`
 - font "--font-code": monospace is correct for code and ticket identifiers; never a UI voice
 - colour #a23a26: PKSB operator livery red, brand not accent
 - colour #0f7a47: the earned green — what was boarded, what was saved, what is live. The one accent.
@@ -322,6 +324,9 @@ These read as hits but are not. Each is recorded so a reviewer can test the reas
 - rule glass in src/styles.css: **no blur renders anywhere in this product.** Measured across all seven routes at 1440: zero elements with a computed `backdrop-filter`. The declarations this rule matches are on elements that render at 0x0 (`.v2-map__stat`, `.v2-map__next` — in the DOM, not on screen) or are explicitly `backdrop-filter: none`. Two blurs that did render were removed: `.v2-map__maritime-banner` (blur over a 92%-opaque red) and `.hero-section` on the rider desktop (`saturate(1.8) blur(10px)` over a 96%-opaque white).
 
 ## The depa · USDOT toolkit (this branch)
+
+- **The research hub's display face is Source Serif 4, not Josefin Sans (owner's decision, 2026-11-05).** Josefin at 108px/700 with 0.95 leading filled the hub's first screen, cut into the kicker above it, and read as a poster, not a research publication — the owner called it AI-slop and retired it here. The hub now sets its display moments in Source Serif 4 at weight 500, leading 1.05, tracking −0.012em, at a smaller editorial scale (`--t-display` 40–72px, `--t-hero` 32–50px, `--t-figure` 40px), declared once on `.toolkit-site` as `--font-display`. It is the face the preprint is set in, so the hub and the paper read as one publication. Body stays Source Sans 3: still two families. The bus app's own surfaces keep their faces; this decision is scoped to the hub.
+- **The preprint (`/toolkit#paper`).** Built by `npm run paper` from the raw GPS record (`paper/`): an A4, two-column PDF in Source Serif 4 and Source Sans 3, with every number in its prose read from the analysis output. The tab appears only once `public/papers/data-before-rail/manifest.json` exists — no empty tab. The page frames the PDF from its own origin, so the site CSP's `frame-src` carries `'self'`; the PDF keeps the full site policy (checked: Chromium's viewer renders under `object-src 'none'`). `scripts/design/headingrank.mjs` checks that every section h2 outranks the h3s under it, and the hero outranks every h2, at 1440, 1024 and 390 — the hub's scale is fluid, and a rule that holds at 1440 inverted at 1024 twice in one day. When the first real paper is published, add `/toolkit#paper` back to `typeaudit2`, `cspsweep`, `verify-design.sh` and `toolkitsizes`. The design gates report the tab as NOT MEASURED until a paper is published — a hash route that silently renders Overview is not a measured Paper tab.
 
 The toolkit is a research surface for a government partner, a lender and a city. It is not the bus app, and it is not a landing page. Its house rules are its own, and they are deliberate:
 

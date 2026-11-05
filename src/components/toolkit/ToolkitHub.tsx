@@ -10,10 +10,11 @@
  *   3. Evidence   — Vegas case + global benchmarks
  *   4. Build      — method + prototype + feasibility + law
  *   5. Field notes — one chronological chronicle (journey, toolkit, system, people) + sources
+ *   6. Paper      — the preprint: the PDF, its abstract, its data, its citation
  */
 
 import { VisitorPrivacyNotice } from "../VisitorPrivacyNotice";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { LandingPage } from "./LandingPage";
 import { PhuketContext } from "./PhuketContext";
 import { PhuketBusSystems } from "./PhuketBusSystems";
@@ -24,6 +25,7 @@ import { LegalFramework } from "./LegalFramework";
 import { FeasibilityStudy, DesignThinkingStudy, TryLiveSystem } from "./ToolkitStudy";
 import { AbcdefFramework } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
+import { PaperTab, loadPaperManifest, type PaperManifest } from "./PaperTab";
 import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
 import { CriticalReading } from "./CriticalReading";
@@ -39,14 +41,15 @@ const BUS_URL = "https://bus.nonarkara.org/";
 
 const PARTNERS = ["Volpe Center", "USC", "Chulalongkorn University"];
 
-type TabId = "overview" | "phuket" | "evidence" | "build" | "fieldnotes";
+type TabId = "overview" | "phuket" | "evidence" | "build" | "fieldnotes" | "paper";
 
 const TABS: { id: TabId; label: string; short: string; kicker: string }[] = [
   { id: "overview", label: "Overview", short: "Home", kicker: "The argument in 5 minutes" },
   { id: "phuket", label: "Phuket", short: "Phuket", kicker: "The island + the bus systems" },
   { id: "evidence", label: "Evidence", short: "Proof", kicker: "Vegas + global benchmarks" },
   { id: "build", label: "Build & Finance", short: "Build", kicker: "Method + prototype + deal" },
-  { id: "fieldnotes", label: "Field Notes", short: "Notes", kicker: "People + history + sources" }
+  { id: "fieldnotes", label: "Field Notes", short: "Notes", kicker: "People + history + sources" },
+  { id: "paper", label: "Paper", short: "Paper", kicker: "The preprint, as a PDF" }
 ];
 
 function getTabFromHash(): TabId {
@@ -65,6 +68,30 @@ function getTabFromHash(): TabId {
 
 export default function ToolkitHub() {
   const [activeTab, setActiveTab] = useState<TabId>(() => getTabFromHash());
+  // The Paper tab exists only once a paper has been built from the real
+  // record and published beside the site: undefined while we ask, null when
+  // there is none (no tab, not an empty one), the manifest when there is.
+  const [paper, setPaper] = useState<PaperManifest | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    loadPaperManifest().then((m) => live && setPaper(m));
+    return () => {
+      live = false;
+    };
+  }, []);
+  const paperReady = !!paper;
+  const tabs = paperReady ? TABS : TABS.filter((t) => t.id !== "paper");
+  // The sticky nav's real height, for anything that must sit just below it.
+  const navRef = useRef<HTMLElement>(null);
+  const [navH, setNavH] = useState(0);
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setNavH(Math.round(el.getBoundingClientRect().height)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const shownTab: TabId = activeTab === "paper" && paper === null ? "overview" : activeTab;
 
   useEffect(() => {
     document.documentElement.classList.add("toolkit-site-mode");
@@ -106,12 +133,23 @@ export default function ToolkitHub() {
   }
 
   return (
-    <div className="toolkit-site toolkit-hub">
+    <div className="toolkit-site toolkit-hub" style={navH ? ({ "--hub-nav-h": `${navH}px` } as CSSProperties) : undefined}>
       {/* Skip-to-content for keyboard / screen-reader users */}
-      <a className="hub-skip" href="#panel-overview">Skip to main content</a>
+      <a
+        className="hub-skip"
+        href={`#panel-${shownTab}`}
+        onClick={(e) => {
+          // Move focus, not the hash: the hash names the tab, and a skip link
+          // that rewrote it would send the reader back to Overview.
+          e.preventDefault();
+          document.getElementById(`panel-${shownTab}`)?.focus();
+        }}
+      >
+        Skip to main content
+      </a>
 
       {/* Top navigation — brand + tab bar */}
-      <header className="hub-nav" role="banner">
+      <header className="hub-nav" role="banner" ref={navRef}>
         <div className="hub-nav__brand-row">
           <a className="hub-nav__brand" href="#overview" aria-label="Home" onClick={(e) => { e.preventDefault(); selectTab("overview"); }}>
             <span className="hub-nav__hosts" aria-label="Hosted by depa, Smart City Thailand Office and the U.S. Department of Transportation">
@@ -155,15 +193,15 @@ export default function ToolkitHub() {
           <a className="hub-nav__live" href={BUS_URL}>Live system ↗</a>
         </div>
         <nav className="hub-tabs" role="tablist" aria-label="Research sections">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               role="tab"
               id={`tab-${tab.id}`}
-              aria-selected={activeTab === tab.id}
+              aria-selected={shownTab === tab.id}
               aria-controls={`panel-${tab.id}`}
-              className={`hub-tab ${activeTab === tab.id ? "is-active" : ""}`}
+              className={`hub-tab ${shownTab === tab.id ? "is-active" : ""}`}
               onClick={() => selectTab(tab.id)}
             >
               <span className="hub-tab__label">{tab.label}</span>
@@ -175,12 +213,14 @@ export default function ToolkitHub() {
 
       {/* Active panel */}
       <main
-        id={`panel-${activeTab}`}
+        id={`panel-${shownTab}`}
         role="tabpanel"
-        aria-labelledby={`tab-${activeTab}`}
+        aria-labelledby={tabs.some((t) => t.id === shownTab) ? `tab-${shownTab}` : undefined}
+        aria-busy={shownTab === "paper" && paper === undefined ? true : undefined}
         className="hub-panel"
+        tabIndex={-1}
       >
-        <TabContent tabId={activeTab} />
+        <TabContent tabId={shownTab} paper={paper} />
       </main>
 
       {/* Persistent live-system ticker (bottom-right) — keeps the research
@@ -206,10 +246,11 @@ export default function ToolkitHub() {
   );
 }
 
-function TabContent({ tabId }: { tabId: TabId }): ReactNode {
+function TabContent({ tabId, paper }: { tabId: TabId; paper: PaperManifest | null | undefined }): ReactNode {
+  const paperReady = !!paper;
   switch (tabId) {
     case "overview":
-      return <OverviewTab />;
+      return <OverviewTab paperReady={paperReady} />;
     case "phuket":
       return <PhuketTab />;
     case "evidence":
@@ -218,13 +259,17 @@ function TabContent({ tabId }: { tabId: TabId }): ReactNode {
       return <BuildTab />;
     case "fieldnotes":
       return <FieldNotesTab />;
+    case "paper":
+      // While the manifest is still on its way, an empty panel — not Overview
+      // flashing in and out from under a #paper deep link.
+      return paper ? <PaperTab manifest={paper} /> : null;
     default:
-      return <OverviewTab />;
+      return <OverviewTab paperReady={paperReady} />;
   }
 }
 
 /* ── OVERVIEW ─────────────────────────────────────────────────────────── */
-function OverviewTab() {
+function OverviewTab({ paperReady }: { paperReady: boolean }) {
   return (
     <>
       <LandingPage />
@@ -235,16 +280,16 @@ function OverviewTab() {
           <p className="tk-kicker">Start here · use the tabs above to go deeper</p>
           <h2>This is a research hub, not a slide deck.</h2>
           <p>
-            The overview is the five-minute argument. Four reading paths take it deeper: the island and its transport
-            system; the evidence and comparisons; the method, prototype and deal; and the people and sources behind
-            the work. Every number traces back to a source or a calculation.
+            The overview is the five-minute argument. {paperReady ? "Five" : "Four"} reading paths take it deeper: the island and its transport
+            system; the evidence and comparisons; the method, prototype and deal;{paperReady ? " the people and sources behind the work; and the research paper, with its data." : " and the people and sources behind the work."} Every number traces back to a source or a calculation.
           </p>
         </div>
-        <nav className="hub-tab-nav" aria-label="Jump to section">
+        <nav className={`hub-tab-nav${paperReady ? " hub-tab-nav--five" : ""}`} aria-label="Jump to section">
           <button onClick={() => window.location.hash = "phuket"}><span>01</span><strong>Phuket</strong><small>The island + bus systems</small></button>
           <button onClick={() => window.location.hash = "evidence"}><span>02</span><strong>Evidence</strong><small>Vegas + global benchmarks</small></button>
           <button onClick={() => window.location.hash = "build"}><span>03</span><strong>Build & Finance</strong><small>Method + prototype + deal</small></button>
           <button onClick={() => window.location.hash = "fieldnotes"}><span>04</span><strong>Field Notes</strong><small>People + history + sources</small></button>
+          {paperReady && <button onClick={() => window.location.hash = "paper"}><span>05</span><strong>Paper</strong><small>The preprint, as a PDF</small></button>}
         </nav>
       </section>
     </>
