@@ -49,7 +49,7 @@ export function isPaperManifest(m: unknown): m is PaperManifest {
   const rec = x.record as Record<string, unknown> | undefined;
   return (
     isStr(x.title) && isStr(x.version) && isStr(x.issued) && isStr(x.status) && isStr(x.citation) &&
-    Array.isArray(x.authors) && x.authors.every((a) => a && isStr(a.name) && Array.isArray(a.affiliations)) &&
+    Array.isArray(x.authors) && x.authors.every((a) => a && isStr(a.name) && Array.isArray(a.affiliations) && a.affiliations.every(isNum) && (a.nameTh === undefined || isStr(a.nameTh))) &&
     Array.isArray(x.affiliations) && x.affiliations.every((a) => a && isNum(a.n) && isStr(a.en)) &&
     Array.isArray(x.abstract) && x.abstract.every(isStr) &&
     !!rec && isStr(rec.firstDay) && isStr(rec.lastDay) && isNum(rec.serviceDays) && isNum(rec.fixes) &&

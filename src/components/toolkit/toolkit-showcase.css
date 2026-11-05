@@ -1212,7 +1212,7 @@ html.toolkit-site-mode #root {
 }
 @media (max-width: 560px) {
   .lp-hero { padding-top: 48px; }
-  .lp-hero .lp-hero__title { font-weight: 500; font-size: var(--t-figure); }
+  .lp-hero .lp-hero__title { font-weight: 500; font-size: var(--t-display); }
   .lp-hero__status { flex-direction: column; gap: 6px; }
   .lp-handover__chapters { grid-template-columns: 1fr; }
   .lp-card { padding: 24px 20px; }

@@ -18,7 +18,7 @@
      (figure) under it, or the hierarchy inverts on a laptop. Monotonic. */
   --t-hero:    clamp(32px, 3.4vw, 50px);
   --t-figure:  clamp(26px, 2.8vw, 40px);
-  --t-title:   30px;
+  --t-title:   clamp(24px, 2.3vw, 30px);
   --t-lead:    22px;
   --t-body:    18px;
   --t-label:   15px;
@@ -590,7 +590,7 @@
   scroll-margin-top: 116px;
 }
 .pc-system-map__copy { display: flex; flex-direction: column; margin: 0; padding: clamp(28px, 4vw, 48px); color: #fff; }
-.pc-system-map__copy h3 { font-weight: 500; margin: 14px 0 20px; color: #fff; font-size: var(--t-hero); line-height: 1.06; letter-spacing: -0.012em; }
+.pc-system-map__copy h3 { font-weight: 500; margin: 14px 0 20px; color: #fff; font-size: var(--t-figure); line-height: 1.06; letter-spacing: -0.012em; }
 .pc-system-map__copy > p:not(.tk-kicker) { color: rgba(255,255,255,0.72); font-size: var(--t-body); line-height: 1.55; }
 .pc-system-map__copy > a { margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.35); color: #fff; font-weight: 700; text-decoration: none; }
 .pc-system-map__copy > a:hover { color: var(--tk-yellow); }
@@ -625,7 +625,7 @@
 .pc-timeline__list p { max-width: 72ch; margin-top: 8px; color: var(--tk-muted); line-height: 1.55; }
 .pc-spread--stack { grid-template-columns: 1.1fr 0.9fr; }
 .pc-callout { padding: clamp(28px, 4vw, 48px); color: #fff; background: var(--tk-blue); border: 1px solid var(--tk-ink); }
-.pc-callout h3 { font-weight: 500; color: #fff; font-size: var(--t-hero); }
+.pc-callout h3 { font-weight: 500; color: #fff; font-size: var(--t-figure); }
 .pc-callout ul { margin: 28px 0 0; padding: 0; list-style: none; }
 .pc-callout li { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.25); }
 .pc-callout li p { margin-top: 7px; color: rgba(255,255,255,0.72); font-size: var(--t-label); line-height: 1.5; }
@@ -902,7 +902,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .cr-section__head { max-width: 78ch; margin-bottom: 40px; }
 .cr-section__head h2 { font-weight: 500;
-  font-size: var(--t-figure);
+  font-size: var(--t-hero);
   letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
@@ -1400,7 +1400,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 .paper__data span { color: var(--tk-muted); font-variant-numeric: tabular-nums; }
 .paper__frame {
   display: block; width: 100%;
-  height: calc(100vh - var(--hub-nav-h, 130px) - 32px);
+  height: calc(100vh - var(--hub-nav-h, 130px) - 56px);
   min-height: 560px;
   border: 1px solid var(--tk-ink); background: var(--tk-white);
 }

@@ -215,7 +215,8 @@ export default function ToolkitHub() {
       <main
         id={`panel-${shownTab}`}
         role="tabpanel"
-        aria-labelledby={`tab-${shownTab}`}
+        aria-labelledby={tabs.some((t) => t.id === shownTab) ? `tab-${shownTab}` : undefined}
+        aria-busy={shownTab === "paper" && paper === undefined ? true : undefined}
         className="hub-panel"
         tabIndex={-1}
       >
