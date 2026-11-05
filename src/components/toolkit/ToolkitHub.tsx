@@ -14,7 +14,7 @@
  */
 
 import { VisitorPrivacyNotice } from "../VisitorPrivacyNotice";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { LandingPage } from "./LandingPage";
 import { PhuketContext } from "./PhuketContext";
 import { PhuketBusSystems } from "./PhuketBusSystems";
@@ -25,7 +25,7 @@ import { LegalFramework } from "./LegalFramework";
 import { FeasibilityStudy, DesignThinkingStudy, TryLiveSystem } from "./ToolkitStudy";
 import { AbcdefFramework } from "./ProgramArchive";
 import { ReferencesTab } from "./ReferencesTab";
-import { PaperTab } from "./PaperTab";
+import { PaperTab, loadPaperManifest, type PaperManifest } from "./PaperTab";
 import { LiveSystemTicker } from "./LiveSystemTicker";
 import { DataProvenance } from "./DataProvenance";
 import { CriticalReading } from "./CriticalReading";
@@ -66,25 +66,32 @@ function getTabFromHash(): TabId {
   return "overview";
 }
 
-const PAPER_MANIFEST = `${import.meta.env.BASE_URL}papers/data-before-rail/manifest.json`;
-
 export default function ToolkitHub() {
   const [activeTab, setActiveTab] = useState<TabId>(() => getTabFromHash());
   // The Paper tab exists only once a paper has been built from the real
-  // record and published beside the site. Until then there is no tab, not
-  // an empty one.
-  const [paperReady, setPaperReady] = useState(false);
+  // record and published beside the site: undefined while we ask, null when
+  // there is none (no tab, not an empty one), the manifest when there is.
+  const [paper, setPaper] = useState<PaperManifest | null | undefined>(undefined);
   useEffect(() => {
     let live = true;
-    fetch(PAPER_MANIFEST, { method: "HEAD", cache: "no-cache" })
-      .then((r) => live && setPaperReady(r.ok && (r.headers.get("content-type") ?? "").includes("json")))
-      .catch(() => undefined);
+    loadPaperManifest().then((m) => live && setPaper(m));
     return () => {
       live = false;
     };
   }, []);
+  const paperReady = !!paper;
   const tabs = paperReady ? TABS : TABS.filter((t) => t.id !== "paper");
-  const shownTab: TabId = activeTab === "paper" && !paperReady ? "overview" : activeTab;
+  // The sticky nav's real height, for anything that must sit just below it.
+  const navRef = useRef<HTMLElement>(null);
+  const [navH, setNavH] = useState(0);
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setNavH(Math.round(el.getBoundingClientRect().height)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const shownTab: TabId = activeTab === "paper" && paper === null ? "overview" : activeTab;
 
   useEffect(() => {
     document.documentElement.classList.add("toolkit-site-mode");
@@ -126,12 +133,23 @@ export default function ToolkitHub() {
   }
 
   return (
-    <div className="toolkit-site toolkit-hub">
+    <div className="toolkit-site toolkit-hub" style={navH ? ({ "--hub-nav-h": `${navH}px` } as CSSProperties) : undefined}>
       {/* Skip-to-content for keyboard / screen-reader users */}
-      <a className="hub-skip" href="#panel-overview">Skip to main content</a>
+      <a
+        className="hub-skip"
+        href={`#panel-${shownTab}`}
+        onClick={(e) => {
+          // Move focus, not the hash: the hash names the tab, and a skip link
+          // that rewrote it would send the reader back to Overview.
+          e.preventDefault();
+          document.getElementById(`panel-${shownTab}`)?.focus();
+        }}
+      >
+        Skip to main content
+      </a>
 
       {/* Top navigation — brand + tab bar */}
-      <header className="hub-nav" role="banner">
+      <header className="hub-nav" role="banner" ref={navRef}>
         <div className="hub-nav__brand-row">
           <a className="hub-nav__brand" href="#overview" aria-label="Home" onClick={(e) => { e.preventDefault(); selectTab("overview"); }}>
             <span className="hub-nav__hosts" aria-label="Hosted by depa, Smart City Thailand Office and the U.S. Department of Transportation">
@@ -199,8 +217,9 @@ export default function ToolkitHub() {
         role="tabpanel"
         aria-labelledby={`tab-${shownTab}`}
         className="hub-panel"
+        tabIndex={-1}
       >
-        <TabContent tabId={shownTab} paperReady={paperReady} />
+        <TabContent tabId={shownTab} paper={paper} />
       </main>
 
       {/* Persistent live-system ticker (bottom-right) — keeps the research
@@ -226,7 +245,8 @@ export default function ToolkitHub() {
   );
 }
 
-function TabContent({ tabId, paperReady }: { tabId: TabId; paperReady: boolean }): ReactNode {
+function TabContent({ tabId, paper }: { tabId: TabId; paper: PaperManifest | null | undefined }): ReactNode {
+  const paperReady = !!paper;
   switch (tabId) {
     case "overview":
       return <OverviewTab paperReady={paperReady} />;
@@ -239,7 +259,9 @@ function TabContent({ tabId, paperReady }: { tabId: TabId; paperReady: boolean }
     case "fieldnotes":
       return <FieldNotesTab />;
     case "paper":
-      return <PaperTab />;
+      // While the manifest is still on its way, an empty panel — not Overview
+      // flashing in and out from under a #paper deep link.
+      return paper ? <PaperTab manifest={paper} /> : null;
     default:
       return <OverviewTab paperReady={paperReady} />;
   }
@@ -258,8 +280,7 @@ function OverviewTab({ paperReady }: { paperReady: boolean }) {
           <h2>This is a research hub, not a slide deck.</h2>
           <p>
             The overview is the five-minute argument. {paperReady ? "Five" : "Four"} reading paths take it deeper: the island and its transport
-            system; the evidence and comparisons; the method, prototype and deal; the people and sources behind
-            the work{paperReady ? "; and the research paper, with its data" : ""}. Every number traces back to a source or a calculation.
+            system; the evidence and comparisons; the method, prototype and deal;{paperReady ? " the people and sources behind the work; and the research paper, with its data." : " and the people and sources behind the work."} Every number traces back to a source or a calculation.
           </p>
         </div>
         <nav className={`hub-tab-nav${paperReady ? " hub-tab-nav--five" : ""}`} aria-label="Jump to section">

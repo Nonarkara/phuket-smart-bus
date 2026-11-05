@@ -65,7 +65,7 @@ run() {
 ROUTES=(
   "/" "/ops" "/fleet" "/fleet/raw" "/study" "/research" "/capacity"
   "/toolkit" "/toolkit#phuket" "/toolkit#evidence" "/toolkit#build"
-  "/toolkit#fieldnotes" "/toolkit#paper"
+  "/toolkit#fieldnotes"
   "/roi" "/driver" "/v2" "/v2?view=insights" "/v2?view=toolkit"
   "/governor" "/info" "/more" "/stops" "/pass" "/ride" "/compare"
 )

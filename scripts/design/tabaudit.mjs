@@ -52,6 +52,13 @@ for (const width of WIDTHS) {
     // "build" matched the wrong buttons. The instrument reported 0 violations
     // for a click that never happened — the same false pass STYLE.md names.
     // The real tablist is `.hub-tab`, one per tab, with id `tab-<id>`.
+    // The Paper tab exists only once a paper is published. Its absence is
+    // reported as NOT MEASURED — never as a clean tab, and never as a failure
+    // of a build that has no paper to show.
+    if (tab === "paper" && !(await p.$("#tab-paper"))) {
+      console.log(`${width}px  tab=paper      NOT MEASURED — no paper published on this build`);
+      continue;
+    }
     const click = await p.evaluate((id) => {
       const btn = document.querySelector(`#tab-${id}`);
       if (!btn) return { clicked: false, reason: "no #tab-" + id };

@@ -13,12 +13,11 @@
      the owner retired it from the research hub on 2026-11-05. */
   --font-display: "Source Serif 4", Georgia, serif;
   --t-display: clamp(40px, 5vw, 72px);
-  /* The hero's FLOOR is 40px, not 32px: the display face at weight 700 is
-     only allowed at 40px and above, and the toolkit sets several words in it
-     (the A–F flow markers). A floor below that turns the hero into a blob
-     on a phone. */
+  /* Hero and figure are both fluid and the hero is never smaller than the
+     figure at any width: a section h2 (hero) must outrank the card h3s
+     (figure) under it, or the hierarchy inverts on a laptop. Monotonic. */
   --t-hero:    clamp(32px, 3.4vw, 50px);
-  --t-figure:  40px;
+  --t-figure:  clamp(26px, 2.8vw, 40px);
   --t-title:   30px;
   --t-lead:    22px;
   --t-body:    18px;
@@ -75,12 +74,25 @@
 .hub-tabs { display: flex; overflow-x: auto; padding: 0 clamp(20px, 4vw, 48px); scrollbar-width: thin; }
 .hub-tab { flex: 0 0 auto; display: flex; align-items: center; padding: 14px 20px; border: 0; border-right: 1px solid var(--tk-line); border-radius: 0; background: transparent; font: 700 var(--t-label)/1 var(--font-body); color: var(--tk-muted); cursor: pointer; white-space: nowrap; transition: color 0.15s, background 0.15s; }
 .hub-tab:last-child { border-right: 0; }
+@media (max-width: 560px) {
+  /* Phones: every section visible at once, two rows of three, each a full
+     44px target. A scrolling strip hid the last tab past the screen's edge. */
+  .hub-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; padding: 0; }
+  .hub-tab { justify-content: center; min-height: 44px; padding: 0 8px; border-bottom: 1px solid var(--tk-line); }
+  .hub-tab:nth-child(3n) { border-right: 0; }
+  .hub-tabs .hub-tab__short { font-size: var(--t-label); }
+  /* Brand row plus two rows of tabs is ~208px — a quarter of a phone. Pinned,
+     that is chrome eating the page on every screen; so on a phone the header
+     scrolls away with the page and the tabs are one scroll up. */
+  .hub-nav { position: static; }
+}
 .hub-tab:hover { color: var(--tk-ink); background: rgba(17,24,32,0.04); }
 .hub-tab.is-active { color: #fff; background: var(--tk-ink); }
 .hub-tab__label { display: inline; }
 .hub-tab__short { display: none; font-size: var(--t-micro); }
 
 .hub-panel { flex: 1; }
+.hub-panel:focus { outline: none; }
 .hub-section { padding: clamp(48px, 6vw, 90px) clamp(20px, 5vw, 80px); border-bottom: 1px solid var(--tk-ink); }
 .hub-section--intro { background: var(--tk-white); }
 .hub-section__intro-pad { max-width: 72ch; margin-bottom: 48px; }
@@ -906,7 +918,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 .cr-block { margin-bottom: 48px; }
 .cr-block__title {
   font-size: var(--t-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin: 0 0 18px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--tk-ink);
@@ -1228,7 +1240,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .ra-item h3 { font-weight: 500;
   font-size: var(--t-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   line-height: 1.15;
   margin: 0;
   color: var(--tk-ink);
@@ -1324,64 +1336,79 @@ html.high-contrast-mode .toolkit-site .abc-controls {
    gives a paper: title, authors, the download, the abstract, the data, the
    citation — set as text with hairlines, no boxes. The reader is the paper
    itself and takes the larger share of the screen, the way the map does on
-   the operations wall. Every word on the record comes from the manifest the
-   paper's build writes, so the tab cannot say what the PDF does not. */
+   the operations wall, and it stays in view below the sticky nav while the
+   record scrolls beside it. On a narrow screen the paper comes straight
+   after the download. Every word on the record comes from the manifest the
+   paper's build writes, so the tab cannot say what the PDF does not.
+   Paragraph margins are scoped through .paper because `.toolkit-site p`
+   zeroes every paragraph margin and outranks a single class. */
 .paper {
   display: grid;
   grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
-  gap: clamp(28px, 3.5vw, 56px);
+  grid-template-areas: "head reader" "details reader";
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(28px, 3.5vw, 56px);
   align-items: start;
-  padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 80px) clamp(48px, 6vw, 90px);
+  padding: clamp(24px, 3vw, 40px) clamp(20px, 5vw, 80px) clamp(48px, 6vw, 90px);
   border-bottom: 1px solid var(--tk-ink);
 }
-.paper--empty { display: block; }
-.paper__state { margin: 12px 0 0; font: 400 var(--t-body)/1.5 var(--font-body); color: var(--tk-muted); }
-.paper__record { min-width: 0; }
+.paper__head { grid-area: head; min-width: 0; }
+.paper__details { grid-area: details; min-width: 0; }
+.paper__reader { grid-area: reader; min-width: 0; align-self: start; position: sticky; top: calc(var(--hub-nav-h, 130px) + 16px); }
 .toolkit-site .paper__title {
-  margin: 14px 0 16px;
+  margin: 12px 0 14px;
   font: 500 var(--t-title)/1.16 var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   text-wrap: balance;
 }
-.paper__authors { margin: 0 0 6px; font: 700 var(--t-body)/1.4 var(--font-body); }
+.paper .paper__authors { margin: 0 0 6px; font: 700 var(--t-body)/1.4 var(--font-body); }
 .paper__authors sup, .paper__affiliations sup { font-size: var(--t-micro); font-weight: 400; color: var(--tk-muted); margin-left: 1px; }
 .paper__authors [lang="th"] { font-weight: 400; color: var(--tk-muted); white-space: nowrap; }
-.paper__abstract b { font-weight: 700; }
-.paper__affiliations { list-style: none; margin: 0 0 22px; padding: 0; font: 400 var(--t-label)/1.45 var(--font-body); color: var(--tk-muted); }
+.paper__affiliations { list-style: none; margin: 0 0 20px; padding: 0; font: 400 var(--t-label)/1.45 var(--font-body); color: var(--tk-muted); }
 .paper__affiliations sup { margin: 0 3px 0 0; }
-.paper__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 18px 0; border-top: 2px solid var(--tk-ink); border-bottom: 1px solid var(--tk-line); }
+.paper__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 16px 0; border-top: 2px solid var(--tk-ink); border-bottom: 1px solid var(--tk-line); }
 .toolkit-site .paper__download {
-  display: inline-flex; flex-direction: column; gap: 2px;
-  padding: 10px 16px;
+  display: inline-flex; flex-direction: column; justify-content: center; gap: 2px;
+  min-height: 44px; padding: 8px 16px;
   background: var(--tk-ink); color: #fff; text-decoration: none;
   font: 700 var(--t-label)/1.2 var(--font-body);
 }
 .paper__download small { font: 400 var(--t-micro)/1.2 var(--font-body); color: rgba(255, 255, 255, 0.78); font-variant-numeric: tabular-nums; }
 .toolkit-site .paper__download:hover, .toolkit-site .paper__download:focus-visible { background: var(--tk-red); }
 .paper__cite {
-  padding: 10px 0; border: 0; background: none; cursor: pointer; color: var(--tk-ink);
+  min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--tk-ink);
   font: 700 var(--t-label)/1.2 var(--font-body);
   text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px;
 }
 .paper__cite:hover { color: var(--tk-red); }
-.toolkit-site .paper__head {
-  margin: 26px 0 8px;
+.paper__status { flex-basis: 100%; font: 400 var(--t-label)/1.35 var(--font-body); color: var(--tk-muted); }
+.paper__status:empty { display: none; }
+.toolkit-site .paper__label {
+  margin: 24px 0 8px;
   font: 700 var(--t-micro)/1.2 var(--font-body);
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--tk-ink);
 }
-.paper__abstract p { margin: 0 0 12px; max-width: 65ch; font: 400 var(--t-label)/1.55 var(--font-body); }
-.paper__note { margin: 0; max-width: 65ch; font: 400 var(--t-label)/1.5 var(--font-body); color: var(--tk-muted); }
-.paper__citation { color: var(--tk-ink); }
+.paper__details > .paper__label:first-child { margin-top: 24px; }
+.paper .paper__abstract p { margin: 0 0 12px; max-width: 65ch; font: 400 var(--t-label)/1.55 var(--font-body); }
+.paper__abstract b { font-weight: 700; }
+.paper .paper__note { margin: 0; max-width: 65ch; font: 400 var(--t-label)/1.5 var(--font-body); color: var(--tk-muted); }
+.paper .paper__citation { color: var(--tk-ink); }
 .paper__data { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--tk-line); }
-.paper__data li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; padding: 8px 0; border-bottom: 1px solid var(--tk-line); font: 400 var(--t-label)/1.35 var(--font-body); }
-.paper__data a { color: var(--tk-ink); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.paper__data li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; border-bottom: 1px solid var(--tk-line); font: 400 var(--t-label)/1.35 var(--font-body); }
+.paper__data a { display: inline-flex; align-items: center; min-height: 44px; color: var(--tk-ink); font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .paper__data a:hover { color: var(--tk-red); }
 .paper__data span { color: var(--tk-muted); font-variant-numeric: tabular-nums; }
-.paper__reader { min-width: 0; }
-.paper__frame { display: block; width: 100%; height: min(calc(100vh - 32px), 1500px); min-height: 640px; border: 1px solid var(--tk-ink); background: var(--tk-white); }
+.paper__frame {
+  display: block; width: 100%;
+  height: calc(100vh - var(--hub-nav-h, 130px) - 32px);
+  min-height: 560px;
+  border: 1px solid var(--tk-ink); background: var(--tk-white);
+}
 .paper__pages { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.paper__pages a { display: block; }
 .paper__pages img { display: block; width: 100%; height: auto; border: 1px solid var(--tk-line); background: var(--tk-white); }
 @media (max-width: 1100px) {
-  .paper { grid-template-columns: minmax(0, 1fr); }
-  .paper__frame { height: 88vh; }
+  .paper { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "reader" "details"; grid-template-rows: auto; }
+  .paper__reader { position: static; margin-top: 20px; }
+  .paper__frame { height: 86vh; }
 }

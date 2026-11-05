@@ -540,7 +540,7 @@ html.toolkit-site-mode #root {
 }
 .vc-section__divider h3 { font-weight: 500;
   font-size: var(--t-figure);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.012em;
   margin-top: 8px;
 }
 
@@ -571,7 +571,7 @@ html.toolkit-site-mode #root {
 }
 .vc-problem__text h3 { font-weight: 500;
   font-size: var(--t-figure);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin-bottom: 18px;
   line-height: 1.05;
 }
@@ -599,7 +599,7 @@ html.toolkit-site-mode #root {
   line-height: 1.05;
   margin-bottom: 16px;
   color: #fff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
 }
 .vc-callout p {
   font-size: var(--t-body);
@@ -622,7 +622,7 @@ html.toolkit-site-mode #root {
   font-family: var(--font-display);
   font-size: var(--t-title);
   line-height: 1.05;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin-bottom: 8px;
 }
 .vc-figure figcaption p {
@@ -644,7 +644,7 @@ html.toolkit-site-mode #root {
 .vc-compare__side h3 { font-weight: 500;
   font-family: var(--font-display);
   font-size: var(--t-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.012em;
   margin-top: 4px;
 }
 .vc-compare__side dl { margin: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -737,7 +737,7 @@ html.toolkit-site-mode #root {
   padding: clamp(40px, 5vw, 72px) var(--lp-pad) clamp(28px, 4vw, 48px);
   border-bottom: 1px solid var(--tk-ink);
 }
-.lp-hero__kicker { display: block; margin-bottom: 20px; }
+.lp-hero .lp-hero__kicker { display: block; margin-bottom: 20px; }
 .lp-hero .lp-hero__title { font-weight: 500;
   font-size: var(--t-display);
   letter-spacing: -0.012em;
@@ -746,7 +746,7 @@ html.toolkit-site-mode #root {
   margin-bottom: 28px;
   text-wrap: balance;
 }
-.lp-hero__sub {
+.lp-hero .lp-hero__sub {
   max-width: 60ch;
   font-size: var(--t-lead);
   line-height: 1.4;

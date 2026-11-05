@@ -46,11 +46,8 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'self' https://depa-usdot.nonarkara.org; script-src 'self' https://static.cloudflareinsights.com 'sha256-ZML5YxVKV7K+QNY5ZeL17DzSRM1lD8PVjTdp8UkPTl4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.tile.openstreetmap.org https://*.tile.opentopomap.org https://tile.openstreetmap.org https://server.arcgisonline.com https://tiles.openfreemap.org https://tilecache.rainviewer.com https://api-gateway.gistda.or.th https://ocean.gistda.or.th https://gibs.earthdata.nasa.gov; connect-src 'self' https://cloudflareinsights.com https://api.rainviewer.com https://pm25.gistda.or.th https://api.airplanes.live; frame-src 'self' https://bus.nonarkara.org https://app.powerbi.com; worker-src 'self'
 
-# The preprint (/toolkit#paper). The page frames the PDF from its own origin,
-# so frame-src carries 'self' above. The PDF itself is NOT a page: Chromium's
-# PDF viewer is a plugin, and the site policy's object-src 'none' leaves it a
-# blank frame. So the PDF and its page images drop the site policy and keep
-# only the framing rule — the same two ancestors as every other path.
-/papers/*
-  ! Content-Security-Policy
-  Content-Security-Policy: frame-ancestors 'self' https://depa-usdot.nonarkara.org
+# The preprint (/toolkit#paper) frames its PDF from this origin, so
+# frame-src carries 'self' above. Nothing else changes for /papers/*: the PDF
+# keeps the site policy (Chromium's viewer renders under object-src 'none';
+# what blocked it was the missing frame-src), and an unknown /papers/ path —
+# answered by the app shell — keeps the full policy too.
