@@ -31,6 +31,7 @@ The public tracker already supplies fleet telemetry. What remains is the bus com
 - The `dataProvider.ts` layer swaps from engine to API calls — UI code doesn't change
 - The ingest endpoints already exist in `server/app.ts`: `/api/integrations/vehicle-telemetry`
 - The passenger counter is the open item on this phase: no APC has ever read above zero, so riders and fares are unknown rather than measured
+- **The rider's ETA is measured, not scheduled**: `GET /api/research/pace` serves the median pace the buses actually ran per line, direction and hour (~1 kB), and the board divides the road metres still to drive by it. The rules are in `shared/pace.ts` and are called by both the endpoint and the browser, so the two cannot disagree
 
 ### Phase 3: FUTURE — Camera + On-Demand Intelligence
 - Seat cameras → real occupancy data (the `SeatAvailability` type is ready)

@@ -6,6 +6,7 @@
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { LiveBus } from "@shared/pksbFeed";
+import { paceFromJson } from "@shared/pace";
 import type { SlimDay } from "@shared/insights";
 import { getLiveBusesRaw, getLiveFeedState, getLiveLedgerSnapshot, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
@@ -44,13 +45,52 @@ function usePace(): { pace: Pace; trips: number; since: string | null } {
   const [state, setState] = useState<{ pace: Pace; trips: number; since: string | null }>({ pace: new Map(), trips: 0, since: null });
   useEffect(() => {
     let live = true;
-    fetch(appPath("/api/research/period"))
+    // The PACE, not the days. The board needs about forty medians; the days
+    // they come from are 210 kB and up to fifteen seconds on a cold cache, and
+    // a rider's ETA waited for all of it. The endpoint computes the medians
+    // where the record is, with the same shared/pace.ts the browser would
+    // have used.
+    //
+    // If it does not answer, the old road is still there: the days, and the
+    // medians computed from them in the browser. Slower and heavier, and the
+    // rider keeps their ETA.
+    fetch(appPath("/api/research/pace"))
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { days?: SlimDay[]; firstDay?: string } | null) => {
-        const days = d?.days ?? [];
-        if (live) setState({ pace: buildPace(days), trips: days.reduce((n, day) => n + day.lines.reduce((m, l) => m + l.trips.length, 0), 0), since: d?.firstDay ?? null });
+      .then((d: { pace?: Record<string, number>; trips?: number; from?: string } | null) => {
+        if (!live) return;
+        if (d && d.pace && Object.keys(d.pace).length > 0) {
+          setState({ pace: paceFromJson(d.pace), trips: d.trips ?? 0, since: d.from ?? null });
+          return;
+        }
+        fetch(appPath("/api/research/period"))
+          .then((r) => (r.ok ? r.json() : null))
+          .then((p: { days?: SlimDay[]; firstDay?: string } | null) => {
+            if (!live || !p?.days) return;
+            const days = p.days;
+            setState({
+              pace: buildPace(days),
+              trips: days.reduce((n, day) => n + day.lines.reduce((m, l) => m + l.trips.length, 0), 0),
+              since: p.firstDay ?? null,
+            });
+          })
+          .catch(() => {});
       })
-      .catch(() => {});
+      .catch(() => {
+        // The pace endpoint itself failed; try the days directly.
+        if (!live) return;
+        fetch(appPath("/api/research/period"))
+          .then((r) => (r.ok ? r.json() : null))
+          .then((p: { days?: SlimDay[]; firstDay?: string } | null) => {
+            if (!live || !p?.days) return;
+            const days = p.days;
+            setState({
+              pace: buildPace(days),
+              trips: days.reduce((n, day) => n + day.lines.reduce((m, l) => m + l.trips.length, 0), 0),
+              since: p.firstDay ?? null,
+            });
+          })
+          .catch(() => {});
+      });
     return () => { live = false; };
   }, []);
   return state;

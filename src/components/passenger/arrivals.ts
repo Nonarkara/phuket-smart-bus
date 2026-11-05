@@ -18,6 +18,7 @@ import type { SlimDay } from "@shared/insights";
 import { quantile } from "@shared/insights";
 import { projectOnLine } from "@shared/research";
 import { LINES, ON_LINE_M, TERMINAL_ZONE_M, ago, stateOf, type Line, type State } from "../v2/fleetRows";
+import { buildPace as buildPaceShared, minPerKm as minPerKmShared, type Pace, type PaceDay } from "@shared/pace";
 
 export type Dir = "fwd" | "rev";
 export type Stop = Line["stops"][number];
@@ -31,33 +32,42 @@ export const MOVE_M = 40;
 const bkkHour = (ms: number) => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", hour12: false }).format(new Date(ms))) % 24;
 
 // ── pace from recorded trips ───────────────────────────────────────────────
-export type Pace = Map<string, number>; // key → median minutes per km
+//
+// The rules are in shared/pace.ts, and the endpoint that serves the pace
+// calls the same function. When the browser computed the medians itself it
+// had to download 33 service days — 210 kB, up to fifteen seconds on a cold
+// cache — to derive about forty numbers, and a rider's ETA waited for all of
+// it. The browser still knows how to build a pace from days (the tests do
+// it), so the function is kept here as the bridge from a day's trips to the
+// shared one.
+
+export type { Pace } from "@shared/pace";
+
+/** A day's trips, in the shape the shared pace builder reads. */
+export function paceDaysFrom(days: SlimDay[]): PaceDay[] {
+  return days.map((day) => ({
+    lines: day.lines
+      .map((l) => {
+        const line = LINES.find((x) => x.routeId === l.routeId);
+        if (!line) return null;
+        return {
+          routeId: l.routeId,
+          loop: line.loop,
+          lengthM: line.lengthM,
+          trips: l.trips.map((t) => ({ dir: t.dir, departMs: t.departMs, minutes: t.minutes })),
+        };
+      })
+      .filter((l): l is NonNullable<typeof l> => l !== null),
+  }));
+}
 
 export function buildPace(days: SlimDay[]): Pace {
-  const buckets = new Map<string, number[]>();
-  const push = (k: string, v: number) => { const b = buckets.get(k); if (b) b.push(v); else buckets.set(k, [v]); };
-  for (const day of days) {
-    for (const l of day.lines) {
-      const line = LINES.find((x) => x.routeId === l.routeId);
-      if (!line) continue;
-      for (const t of l.trips) {
-        if (!(t.minutes > 0)) continue;
-        const perKm = t.minutes / (line.lengthM / 1000);
-        push(`${l.routeId}|${t.dir}|${bkkHour(t.departMs)}`, perKm);
-        push(`${l.routeId}|${t.dir}`, perKm);
-        push(l.routeId, perKm);
-      }
-    }
-  }
-  const pace: Pace = new Map();
-  // An hour needs 3 trips before its own median is trusted, like /research.
-  for (const [k, v] of buckets) if (k.split("|").length < 3 || v.length >= 3) pace.set(k, quantile(v, 0.5)!);
-  return pace;
+  return buildPaceShared(paceDaysFrom(days));
 }
 
 export function minPerKm(pace: Pace, routeId: string, dir: Dir, hour: number): number | null {
   const d = LINES.find((l) => l.routeId === routeId)?.loop ? "lap" : dir;
-  return pace.get(`${routeId}|${d}|${hour}`) ?? pace.get(`${routeId}|${d}`) ?? pace.get(routeId) ?? null;
+  return minPerKmShared(pace, routeId, d, hour);
 }
 
 // ── which way a bus is going ───────────────────────────────────────────────

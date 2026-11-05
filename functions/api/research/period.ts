@@ -2,13 +2,20 @@
  * GET /api/research/period — every finished service day in the research record,
  * slimmed to its trips (no traces, no stop crossings), for cross-day insight.
  *
- * Reads the per-day analyses /api/research/day caches in KV. A finished day
- * no one has opened yet is analysed and cached here — at most two per request,
- * so a cold call stays cheap; the response says which days are still pending.
+ * Reads the per-day analyses /api/research/day caches in KV, through the
+ * SMALL projection /api/research/pace also writes: a day's trips and the line
+ * they ran on, about 8 kB, where the full analysis is 144 kB because it
+ * carries every bus's time–distance trace. Thirty-three days of the small
+ * projection is a quarter of a megabyte; of the full analysis, 4.7 MB.
+ *
+ * A finished day no one has opened yet is analysed and cached here — at most
+ * two per request, so a cold call stays cheap; the response says which days
+ * are still pending.
  */
 import { analyzeDay } from "../../../shared/research";
 import { JSON_HEADERS, readFixes, serviceDateOf, toResearchFix, type D1Read } from "../../../shared/researchStore";
 import { serviceDayWindow } from "../../../shared/research";
+import { slimDay, type CachedSlimDay } from "../../../shared/pace";
 
 type Env = { FIXES?: D1Read; GPS_HISTORY?: { get(k: string): Promise<string | null>; put(k: string, v: string): Promise<void> } };
 /** Same cache generation as day.ts — bump both together. */
@@ -17,18 +24,38 @@ const RULES = "v2";
 const FIRST_DAY = "2026-10-02";
 const MAX_DAYS = 45;
 const COMPUTE_PER_REQUEST = 2;
+/** The small per-day projection both this endpoint and pace.ts read. */
+const SLIM_KEY = (date: string) => `research:slim:${RULES}:${date}`;
 
 type SlimTrip = { plate: string; dir: string; departMs: number; arriveMs: number; minutes: number };
 type SlimDay = { date: string; lines: { routeId: string; trips: SlimTrip[] }[] };
 
-function slim(day: { date: string; lines: { routeId: string; trips: SlimTrip[] }[] }): SlimDay {
+function slim(day: CachedSlimDay): SlimDay {
   return {
     date: day.date,
     lines: day.lines.map((l) => ({
       routeId: l.routeId,
-      trips: l.trips.map(({ plate, dir, departMs, arriveMs, minutes }) => ({ plate, dir, departMs, arriveMs, minutes })),
+      trips: l.trips.map((t) => ({
+        plate: t.plate ?? "",
+        dir: t.dir,
+        departMs: t.departMs,
+        arriveMs: t.arriveMs ?? t.departMs,
+        minutes: t.minutes,
+      })),
     })),
   };
+}
+
+/** A cached day, from either the small projection or the full analysis. */
+function readDay(raw: string): CachedSlimDay | null {
+  try {
+    const day = JSON.parse(raw) as CachedSlimDay;
+    if (!day || !Array.isArray(day.lines)) return null;
+    if (!day.lines.every((l) => typeof l.routeId === "string" && typeof l.lengthM === "number" && Array.isArray(l.trips))) return null;
+    return { date: day.date, lines: day.lines };
+  } catch {
+    return null;
+  }
 }
 
 export async function onRequestGet(context: { request: Request; env: Env }): Promise<Response> {
@@ -49,9 +76,21 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
   const pending: string[] = [];
   let computed = 0;
   for (const date of dates.slice(-MAX_DAYS)) {
+    // The small projection first: it is what the pace endpoint writes, and it
+    // is a fiftieth of the size of the full analysis.
+    const slimHit = await env.GPS_HISTORY.get(SLIM_KEY(date));
+    const fromSlim = slimHit ? readDay(slimHit) : null;
+    if (fromSlim) { days.push(slim(fromSlim)); continue; }
     const key = `research:${RULES}:${date}`;
     const hit = await env.GPS_HISTORY.get(key);
-    if (hit) { days.push(slim(JSON.parse(hit))); continue; }
+    if (hit) {
+      const day = readDay(hit);
+      if (day) {
+        days.push(slim(day));
+        await env.GPS_HISTORY.put(SLIM_KEY(date), JSON.stringify(slimDay(day)));
+        continue;
+      }
+    }
     const window = serviceDayWindow(date);
     if (!window || computed >= COMPUTE_PER_REQUEST) { pending.push(date); continue; }
     const rows = await readFixes(env.FIXES, window);
@@ -60,7 +99,9 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     const analysed = { ok: true, rules: RULES, finished: true, computedAt: new Date(now).toISOString(), ...analyzeDay(date, rows.map(toResearchFix)) };
     const body = JSON.stringify(analysed);
     await env.GPS_HISTORY.put(key, body);
-    days.push(slim(analysed));
+    const projection = slimDay(analysed);
+    await env.GPS_HISTORY.put(SLIM_KEY(date), JSON.stringify(projection));
+    days.push(slim(projection));
   }
 
   return new Response(JSON.stringify({ ok: true, rules: RULES, firstDay: FIRST_DAY, through: dates[dates.length - 1] ?? null, days, pending }), {
