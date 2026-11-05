@@ -1199,7 +1199,7 @@ html.high-contrast-mode .toolkit-site .abc-controls {
 }
 .ra-section__head { max-width: 78ch; margin-bottom: 40px; }
 .ra-section__head h2 { font-weight: 500;
-  font-size: var(--t-figure);
+  font-size: var(--t-hero);
   letter-spacing: -0.012em;
   line-height: 1.05;
   margin: 12px 0 20px;
