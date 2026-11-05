@@ -75,11 +75,13 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
   const days: SlimDay[] = [];
   const pending: string[] = [];
   let computed = 0;
-  for (const date of dates.slice(-MAX_DAYS)) {
-    // The small projection first: it is what the pace endpoint writes, and it
-    // is a fiftieth of the size of the full analysis.
-    const slimHit = await env.GPS_HISTORY.get(SLIM_KEY(date));
-    const fromSlim = slimHit ? readDay(slimHit) : null;
+  // The small projections first, all at once: thirty-four parallel reads of
+  // eight kilobytes beat thirty-four sequential ones, and the operations wall
+  // waits on this to put the day's real service in force.
+  const slimHits = await Promise.all(dates.slice(-MAX_DAYS).map((date) => env.GPS_HISTORY!.get(SLIM_KEY(date))));
+  for (let i = 0; i < dates.slice(-MAX_DAYS).length; i++) {
+    const date = dates.slice(-MAX_DAYS)[i]!;
+    const fromSlim = slimHits[i] ? readDay(slimHits[i]!) : null;
     if (fromSlim) { days.push(slim(fromSlim)); continue; }
     const key = `research:${RULES}:${date}`;
     const hit = await env.GPS_HISTORY.get(key);

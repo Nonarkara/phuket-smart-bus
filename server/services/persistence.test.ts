@@ -16,9 +16,22 @@ import {
   getDemandHotspots,
   recordDemandRequest
 } from "./demandRequestStore.js";
+import { getDatabaseHealth } from "../lib/db.js";
 
 describe("SQLite-backed persistence", () => {
   beforeEach(() => {
+    // The store's writes are no-ops when the database did not open, and every
+    // read comes back empty. That reads as "the persistence is broken", when
+    // the truth is usually a native module that does not match the running
+    // Node — a better-sqlite3 binary built for another ABI. Say so here, in
+    // the failure, instead of leaving it to be guessed from an array diff.
+    const database = getDatabaseHealth();
+    if (!database.available) {
+      throw new Error(
+        `the SQLite store did not open (${database.reason ?? "no reason recorded"}). ` +
+          `If the reason names the native module, rebuild it for this Node: npm rebuild better-sqlite3`
+      );
+    }
     clearOperationsStore();
     clearDemandRequestStore();
   });

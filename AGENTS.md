@@ -317,6 +317,15 @@ All money surfaces (accum bar, week card, alert banner, hero cards) carry BOTH d
 
 ---
 
+## Running it locally
+
+`npm ci` builds `better-sqlite3`, a native module, against the Node version that runs it. Change
+Node and the binary no longer loads — the store opens nothing, every write becomes a no-op, and
+every read comes back empty. The symptom is a failing persistence test, not a database error, so
+`npm rebuild better-sqlite3` is the first thing to try. The store now says so itself:
+`/api/health` carries `database.reason`, and the ingest routes answer 503 rather than 202 when
+the store is down, because a device that is told "accepted" stops retrying.
+
 ## What Needs Work
 
 1. **Boat schedules** — ferry stops have updated times from phi-phi.com but the simulation doesn't model ferry passenger demand. Boat mode flights appear in the schedule rail as "BOAT" but contribute 0 to the bus queue.

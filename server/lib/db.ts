@@ -31,6 +31,17 @@ export type PersistedDemandRequest = {
 
 let db: import("better-sqlite3").Database | null = null;
 let dbPath: string | null = null;
+/**
+ * Why the store is unavailable, when it is.
+ *
+ * The failure is otherwise invisible: every write becomes a no-op, every read
+ * comes back empty, and the API answers 202 to a device that just handed it
+ * telemetry. An empty fleet and a broken store are different facts, and the
+ * difference has to be readable — by the health endpoint, by the device
+ * operator, and by the person whose Node version does not match the native
+ * module.
+ */
+let dbUnavailableReason: string | null = null;
 
 try {
   const Database = (await import("better-sqlite3")).default;
@@ -180,9 +191,10 @@ try {
       ON demand_requests(requested_at);
   `);
 } catch (error) {
+  dbUnavailableReason = (error as Error).message;
   console.warn(
     "[db] SQLite unavailable (serverless environment) — running without persistence:",
-    (error as Error).message
+    dbUnavailableReason
   );
   db = null;
   dbPath = null;
@@ -602,7 +614,9 @@ export function getDatabaseHealth() {
     available: Boolean(db),
     writable: Boolean(db),
     mode: db ? ("sqlite" as const) : ("memory" as const),
-    path: dbPath
+    path: dbPath,
+    /** Why it is unavailable, when it is — the reason a support call needs. */
+    reason: dbUnavailableReason
   };
 }
 

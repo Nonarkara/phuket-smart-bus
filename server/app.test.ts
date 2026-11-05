@@ -302,7 +302,7 @@ async function createTestApp(options: AppHarnessOptions = {}) {
   const weatherStatus = options.weatherStatus ?? createSourceStatus("weather", "live");
   const aqiStatus = options.aqiStatus ?? createSourceStatus("aqi", "live");
   const database =
-    options.database ?? { available: true, writable: true, mode: "sqlite" as const, path: ":memory:" };
+    options.database ?? { available: true, writable: true, mode: "sqlite" as const, path: ":memory:", reason: null };
   const freshHeartbeatAt = new Date().toISOString();
   const workerHeartbeat =
     options.workerHeartbeat === undefined ? { updated_at: freshHeartbeatAt } : options.workerHeartbeat;
@@ -585,6 +585,44 @@ describe("server app API", () => {
 
     expect(response.status).toBe(202);
     expect(response.body.accepted).toBe(1);
+  });
+
+  it("refuses ingest when the store cannot keep what it is given", async () => {
+    // The store's writes are no-ops when the database did not open. A device
+    // that gets 202 believes its telemetry arrived; a device that gets 503
+    // retries. Answering 202 to a store that dropped the samples is the one
+    // answer that makes both wrong.
+    const app = await createTestApp({
+      database: {
+        available: false,
+        writable: false,
+        mode: "memory",
+        path: null,
+        reason: "better-sqlite3 could not load under this Node"
+      }
+    });
+    const response = await request(app)
+      .post("/api/integrations/vehicle-telemetry")
+      .set("Authorization", "Bearer test-ingest-key")
+      .send({
+        samples: [
+          {
+            deviceId: "tracker-1",
+            vehicleId: "bus-1",
+            routeId: "rawai-airport",
+            licensePlate: "10-1151",
+            coordinates: [8.10846, 98.30655],
+            heading: 24,
+            speedKph: 35,
+            destinationHint: "Airport",
+            capturedAt: new Date().toISOString()
+          }
+        ]
+      });
+
+    expect(response.status).toBe(503);
+    expect(response.body.accepted).toBeUndefined();
+    expect(response.body.reason).toMatch(/better-sqlite3/);
   });
 
   it("rejects ingest requests without an Authorization bearer token", async () => {

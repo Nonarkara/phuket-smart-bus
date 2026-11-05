@@ -449,6 +449,25 @@ export function createApp() {
   app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
   app.use("/api/integrations", requireIngestKey, ingestRateLimit);
 
+  /**
+   * A device hands over telemetry and gets 202 Accepted. That answer is a
+   * PROMISE — the samples are kept. If the store cannot open, every write
+   * becomes a no-op and the promise is a lie: the camera believes its data
+   * arrived, and it is gone.
+   *
+   * So the ingest routes refuse when the store is down, and say why. A
+   * device that gets 503 retries; a device that gets 202 does not.
+   */
+  const requireStore = (response: express.Response): boolean => {
+    const database = getDatabaseHealth();
+    if (database.available) return true;
+    response.status(503).json({
+      error: "the store is unavailable; nothing was kept",
+      reason: database.reason
+    });
+    return false;
+  };
+
   app.get("/health/live", (_request, response) => {
     response.status(200).json({
       status: "ok",
@@ -635,6 +654,7 @@ export function createApp() {
 
   app.post("/api/integrations/vehicle-telemetry", (request, response, next) => {
     try {
+      if (!requireStore(response)) return;
       const { samples } = vehicleTelemetryBatchSchema.parse(request.body ?? {});
       recordVehicleTelemetry(samples);
       clearBusSnapshotCache();
@@ -646,6 +666,7 @@ export function createApp() {
 
   app.post("/api/integrations/seat-camera", (request, response, next) => {
     try {
+      if (!requireStore(response)) return;
       const { samples } = seatCameraBatchSchema.parse(request.body ?? {});
       recordSeatCameraSamples(samples);
       response.status(202).json({ accepted: samples.length });
@@ -656,6 +677,7 @@ export function createApp() {
 
   app.post("/api/integrations/driver-monitor", (request, response, next) => {
     try {
+      if (!requireStore(response)) return;
       const { samples } = driverMonitorBatchSchema.parse(request.body ?? {});
       recordDriverMonitorSamples(samples);
       response.status(202).json({ accepted: samples.length });
@@ -666,6 +688,7 @@ export function createApp() {
 
   app.post("/api/integrations/passenger-flow", (request, response, next) => {
     try {
+      if (!requireStore(response)) return;
       const { events } = passengerFlowBatchSchema.parse(request.body ?? {});
       recordPassengerFlowSamples(events);
       response.status(202).json({ accepted: events.length });
