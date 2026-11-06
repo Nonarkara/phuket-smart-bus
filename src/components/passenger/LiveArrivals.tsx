@@ -6,7 +6,9 @@
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { LiveBus } from "@shared/pksbFeed";
+import type { OperationalRouteId } from "@shared/types";
 import { paceFromJson } from "@shared/pace";
+import { getNextPublishedArrival } from "../../engine/riderDeparture";
 import type { SlimDay } from "@shared/insights";
 import { getLiveBusesRaw, getLiveFeedState, getLiveLedgerSnapshot, startLiveFeed, subscribeLiveFeed } from "../../engine/liveOps";
 import { appPath } from "../../lib/paths";
@@ -96,6 +98,13 @@ function usePace(): { pace: Pace; trips: number; since: string | null } {
   return state;
 }
 
+/** A published minute, on the wall clock — and "tomorrow" when it wraps past midnight. */
+function clockLabel(minute: number): string {
+  const h = String(Math.floor(minute / 60) % 24).padStart(2, "0");
+  const m = String(Math.floor(minute % 60)).padStart(2, "0");
+  return minute >= 1440 ? `tomorrow ${h}:${m}` : `${h}:${m}`;
+}
+
 function useNow(ms: number) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), ms); return () => clearInterval(id); }, [ms]);
@@ -120,6 +129,15 @@ export function LiveArrivals({
   const { buses, feed } = useLiveBuses();
   const { pace, trips, since } = usePace();
   const now = useNow(5_000);
+  const nowMinutes = useMemo(
+    () => {
+      const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date(now));
+      const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+      const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+      return hour * 60 + minute;
+    },
+    [now]
+  );
   const [ref, setRef] = useState<StopRef>(readStop);
   const [locating, setLocating] = useState<string | null>(null);
 
@@ -214,13 +232,17 @@ export function LiveArrivals({
       <div className="pa-live__board">
         {dirs.map((d) => {
           const rows = board[d].slice(0, 3);
+          // What the timetable says about THIS stop, in THIS direction. It is
+          // the fallback for a rider with no bus on the way — and the arrival
+          // at their stop, not the departure from the other end of the line.
+          const published = getNextPublishedArrival(ref.routeId as OperationalRouteId | null, stop.name, d, nowMinutes);
           return (
             <div className="pa-live__dir" key={d}>
               <h3>{towardLabel(line, d)}</h3>
               {rows.length === 0 ? (
                 <p className="pa-live__none">
                   No bus on its way here right now.
-                  {d === "fwd" && ref.routeId === "rawai-airport" && ref.index === 0 && timetableNext ? ` Timetable: next departure ${timetableNext}.` : ""}
+                  {published ? ` Timetable: next departure ${clockLabel(published.arrivalMin)}.` : ""}
                 </p>
               ) : (
                 <ol>
