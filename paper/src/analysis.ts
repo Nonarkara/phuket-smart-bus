@@ -49,8 +49,9 @@ const COVERAGE_FROM_MIN = 5 * 60;
 const COVERAGE_TO_MIN = 24 * 60;
 /** TCQSM on-time window: up to 1 minute early, up to 5 minutes late. */
 const ON_TIME: [number, number] = [-1, 5];
-// Half the shortest published headway (30 min): a wider window pairs a published
-// slot with the next bus when the real service runs every 30 min (review, 2026-11-22).
+// Half the typical published headway (30 min; the shortest, Rawai's, is 25): a
+// wider window pairs a published slot with the next bus when the real service
+// runs every 30 min (review, 2026-11-22).
 export const MATCH_WINDOW_MIN = 15;
 /** A served day has a fix on the line by 09:00 and after 19:00 (service minutes). */
 export const SERVED_SPAN: [number, number] = [9 * 60, 19 * 60];
@@ -279,7 +280,7 @@ export type Results = {
     busesOnLine: Summary;
     days: DirectionDay[];
     recurringUnpublished: Record<"fwd" | "rev", { servedDays: number; slots: { slotMin: number; days: number }[] }>;
-    delivery: Record<"fwd" | "rev", { recordedPerDay: Summary; completePerDay: Summary; publishedPerDay: number; ratio: number | null }>;
+    delivery: Record<"fwd" | "rev", { recordedPerDay: Summary; completePerDay: Summary; publishedPerDay: number; ratio: number | null; completedShare: number | null }>;
     running: Record<"fwd" | "rev", { recorded: Summary; published: Summary; shareSlowerThanPublishedMedian: number | null }>;
     runningByHour: { dir: "fwd" | "rev"; hour: number; n: number; p50: number | null; p85: number | null }[];
     /** Every matched departure's recorded − published minutes, for the histogram. */
@@ -354,8 +355,12 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
     for (const dir of DIRS) {
       const sched = PUBLISHED[dir].trips.filter((t) => t.startsAtTerminal).map((t) => t.departMin);
       const obs = d.departures.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).map((x) => x.departMin).sort((a, b) => a - b);
-      const complete = d.trips.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).length;
-      const m = matchToSchedule(obs, sched, MATCH_WINDOW_MIN);
+      // A SERVICE departure is one that reached the far terminal: 32% of departures
+      // from the airport zone never did (deadheads, short workings), so a raw
+      // zone departure is not a bus a rider could take to Rawai (review round 2).
+      const service = d.trips.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).map((x) => x.departMin).sort((a, b) => a - b);
+      const complete = service.length;
+      const m = matchToSchedule(service, sched, MATCH_WINDOW_MIN);
       const busesOnLine = d.busesByLine["rawai-airport"] ?? 0;
       // A day the line does not report across is a gap in the record, not a day of no service:
       // it is kept in the count of days but left out of every rate. "Across" = a fix on the
@@ -368,8 +373,8 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
         adherenceCounts[dir].matched += m.pairs.length;
         deviations[dir].push(...m.pairs.map((p) => p.deviation));
       }
-      if (served) slotDays[dir].push(obs);
-      const hw = gaps(obs);
+      if (served) slotDays[dir].push(service);
+      const hw = gaps(service);
       dirDays.push({
         date: d.date, dow: d.dow, dir, busesOnLine, served,
         published: PUBLISHED[dir].trips.length,
@@ -377,8 +382,8 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
         completeTrips: complete,
         matched: m.pairs.length,
         onTime: m.pairs.filter((p) => p.deviation >= ON_TIME[0] && p.deviation <= ON_TIME[1]).length,
-        firstDepartureMin: obs[0] ?? null,
-        lastDepartureMin: obs[obs.length - 1] ?? null,
+        firstDepartureMin: service[0] ?? null,
+        lastDepartureMin: service[service.length - 1] ?? null,
         medianHeadwayMin: round(median(hw), 1),
         headwayCv: round(headwayCv(hw), 3),
         longestGapMin: hw.length ? round(Math.max(...hw), 1) : null,
@@ -395,7 +400,9 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
     const pub = PUBLISHED[dir].trips.map((t) => t.departMin);
     const out: { slotMin: number; days: number }[] = [];
     for (let slot = 4 * 60; slot <= 26 * 60; slot += 30) {
-      if (pub.some((m) => Math.abs(m - slot) < 15)) continue;
+      // A late published bus is not a new slot: skip any slot with a published
+      // departure in the 20 min before it or the 15 after it.
+      if (pub.some((m) => m - slot > -20 && m - slot < 15)) continue;
       const n = slotDays[dir].filter((obs) => obs.some((m) => Math.abs(m - slot) <= 7)).length;
       if (n * 2 >= slotDays[dir].length && n > 0) out.push({ slotMin: slot, days: n });
     }
@@ -407,18 +414,21 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
     const recorded = rows.map((x) => x.recordedDepartures);
     // Only a published departure that starts at the terminal can produce a terminal departure.
     const pubN = PUBLISHED[dir].trips.filter((t) => t.startsAtTerminal).length;
-    const med = median(recorded);
+    const med = median(rows.map((x) => x.completeTrips));
     return [dir, {
       recordedPerDay: summarize(recorded),
       completePerDay: summarize(rows.map((x) => x.completeTrips)),
       publishedPerDay: pubN,
-      // The median day against the timetable: the same median the prose quotes.
+      // The median day's SERVICE departures against the timetable.
       ratio: med !== null && pubN ? round(med / pubN, 3) : null,
+      completedShare: recorded.reduce((a, b) => a + b, 0) ? round(rows.reduce((a, x) => a + x.completeTrips, 0) / recorded.reduce((a, b) => a + b, 0), 3) : null,
     }];
   })) as Results["airport"]["delivery"];
 
+  const servedDates = new Set(servedDays.map((x) => x.date));
+  const servedTrips = airportTrips.filter((t) => servedDates.has(t.date));
   const running = Object.fromEntries(DIRS.map((dir) => {
-    const rec = airportTrips.filter((t) => t.dir === dir).map((t) => t.minutes);
+    const rec = servedTrips.filter((t) => t.dir === dir).map((t) => t.minutes);
     const pubMin = PUBLISHED[dir].trips.map((t) => t.endToEndMin);
     const pubMedian = median(pubMin);
     return [dir, {
@@ -431,7 +441,7 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
   const runningByHour: Results["airport"]["runningByHour"] = [];
   for (const dir of DIRS) {
     for (let h = 0; h < 24; h++) {
-      const v = airportTrips.filter((t) => t.dir === dir && hourOf(t.departMin) === h).map((t) => t.minutes);
+      const v = servedTrips.filter((t) => t.dir === dir && hourOf(t.departMin) === h).map((t) => t.minutes);
       if (v.length) runningByHour.push({ dir, hour: h, n: v.length, p50: round(quantile(v, 0.5), 1), p85: round(quantile(v, 0.85), 1) });
     }
   }
@@ -452,7 +462,7 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
 
   const headway = Object.fromEntries(DIRS.map((dir) => {
     const rows = servedDays.filter((x) => x.dir === dir);
-    const all = days.flatMap((d) => gaps(d.departures.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).map((x) => x.departMin)));
+    const all = days.filter((d) => servedDates.has(d.date)).flatMap((d) => gaps(d.trips.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).map((x) => x.departMin).sort((a, b) => a - b)));
     const schedMedian = median(gaps(PUBLISHED[dir].trips.map((t) => t.departMin)));
     return [dir, {
       recordedMedian: round(median(all), 1),
@@ -535,7 +545,7 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
       deviations: { fwd: deviations.fwd.map((v) => round(v, 1)!), rev: deviations.rev.map((v) => round(v, 1)!) },
       adherence,
       headway,
-      speedKph: summarize(airportTrips.map((t) => t.avgKph)),
+      speedKph: summarize(servedTrips.map((t) => t.avgKph)),
     },
     otherLines,
     town: {

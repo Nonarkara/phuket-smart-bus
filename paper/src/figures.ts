@@ -192,7 +192,7 @@ export function figDailyDepartures(r: Results): string {
   const panelH = (H - L.t - L.b - 12) / 2;
   const x = (i: number) => L.l + (i + 0.5) * ((W - L.l - L.r) / dates.length);
   const bw = Math.max(1.2, ((W - L.l - L.r) / dates.length) * 0.7);
-  const top = Math.max(22, ...r.airport.days.map((d) => d.recordedDepartures));
+  const top = Math.max(22, ...r.airport.days.map((d) => d.completeTrips));
   let body = "";
   (["fwd", "rev"] as const).forEach((dir, k) => {
     const y0 = L.t + k * (panelH + 12);
@@ -201,17 +201,18 @@ export function figDailyDepartures(r: Results): string {
     body += yAxis(y, [0, 10, 20], L.l, W - L.r);
     dates.forEach((date, i) => {
       const d = r.airport.days.find((x) => x.date === date && x.dir === dir)!;
-      const fill = d.busesOnLine === 0 ? "none" : RED;
-      body += `<rect x="${n2(x(i) - bw / 2)}" y="${n2(y(d.recordedDepartures))}" width="${n2(bw)}" height="${n2(y(0) - y(d.recordedDepartures))}" fill="${fill}"/>`;
-      if (d.busesOnLine === 0) body += text(x(i), y(0) - 2, "·", `text-anchor="middle" fill="${MID}"`);
+      // Bars are SERVICE departures (a trip that reached the far terminal); a day
+      // the line did not report across is a dot, not a bar, and enters no rate.
+      if (d.served) body += `<rect x="${n2(x(i) - bw / 2)}" y="${n2(y(d.completeTrips))}" width="${n2(bw)}" height="${n2(y(0) - y(d.completeTrips))}" fill="${RED}"/>`;
+      else body += text(x(i), y(0) - 2, "·", `text-anchor="middle" fill="${MID}"`);
     });
-    const pubN = PUBLISHED[dir].trips.length;
+    const pubN = PUBLISHED[dir].trips.filter((t) => t.startsAtTerminal).length;
     body += line(L.l, y(pubN), W - L.r, y(pubN), `stroke="${PUB}" stroke-width="0.9" stroke-dasharray="2.2 1.6"`);
   });
   const ticks = dates.map((d, i) => ({ d, i })).filter(({ d }) => d.endsWith("-01") || d.endsWith("-08") || d.endsWith("-15") || d.endsWith("-22"));
   body += ticks.map(({ d, i }) => text(x(i), H - 6, d.slice(5).replace("-", "/"), `text-anchor="middle" fill="${MID}"`)).join("");
   body += legendItem(W - 120, 8, "published", "pub") + legendItem(W - 62, 8, "recorded", "box");
-  return svg(W, H, body, "Recorded terminal departures per day against the published timetable");
+  return svg(W, H, body, "Recorded service departures per day against the published timetable");
 }
 
 // ── Fig. 4 — running time, recorded against published ──────────────────────

@@ -50,7 +50,9 @@ function readCsv(path: string): Record<string, string>[] {
   // The derived tables carry no quoted commas (dates, plates, route ids, numbers).
   return rows.map((r) => Object.fromEntries(r.split(",").map((v, i) => [cols[i]!, v])));
 }
-const trips = readCsv(need[2]!).map((t) => ({ dir: t.dir!, minutes: Number(t.minutes), routeId: t.routeId! }));
+// Served days only, the same days every rate in the paper uses (Fig. 4's dots must match Table 2's n).
+const servedDates = new Set(results.airport.days.filter((d) => d.served).map((d) => d.date));
+const trips = readCsv(need[2]!).filter((t) => t.routeId !== "rawai-airport" || servedDates.has(t.date!)).map((t) => ({ dir: t.dir!, minutes: Number(t.minutes), routeId: t.routeId! }));
 
 // ── fonts, embedded ────────────────────────────────────────────────────────
 const FONTS: { family: string; pkg: string; subsets: string[]; faces: [number, "normal" | "italic"][] }[] = [
