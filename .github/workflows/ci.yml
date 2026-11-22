@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.58 cannot install Chromium on ubuntu-latest (26.04), 2026-11-22
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,7 +49,7 @@ jobs:
   # assumed. They are quick — a few minutes — and they are the difference
   # between an instrument and a decoration.
   design:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.58 cannot install Chromium on ubuntu-latest (26.04), 2026-11-22
     # A hung proof must not burn a runner's afternoon.
     timeout-minutes: 20
     steps:
