@@ -49,6 +49,16 @@ const END_ZONE_M = 1000;
  * boundary and come back.
  */
 const DEPART_CONFIRM_M = 1500;
+/**
+ * A bus back in the zone it left within this long cannot have reached the far
+ * terminal and returned (a round trip on these lines is four hours or more), so
+ * the departure was an excursion. Any sighting in the far zone clears it first,
+ * so only a round trip whose far-end visit fell wholly inside a tracker silence
+ * is wrongly withdrawn. ponytail: one constant for every line; the Patong
+ * line's round trip is ~70 min, so that silence case is possible there — make
+ * it per line if the Patong counts ever matter.
+ */
+const EXCURSION_MS = 120 * 60_000;
 const MAX_TRIP_GAP_MS = 15 * 60_000;
 const MAX_STOP_GAP_MS = 5 * 60_000;
 const MOVING_KPH = 5;
@@ -249,6 +259,8 @@ function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): { t
   let zone: "from" | "to" | null = null;
   let leftAt = -1; // index of the last fix in the origin zone
   let left = false; // the bus has left the zone it was last seen in
+  // The last departure, kept across tracker silences (a silence resets `zone`).
+  let lastDep: { zone: "from" | "to"; ms: number } | null = null;
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i]!;
     if (i > 0 && broken(pts[i - 1]!, p)) { zone = null; leftAt = -1; left = false; }
@@ -271,10 +283,22 @@ function tripsFor(plate: string, line: Line, pts: Pt[], dayStartMs: number): { t
         const clear = zone === "from" ? p.along - fromM : toM - p.along;
         if (clear >= DEPART_CONFIRM_M) {
           departures.push({ plate, dir: zone === "from" ? "fwd" : "rev", departMs: pts[leftAt]!.ms });
+          lastDep = { zone, ms: pts[leftAt]!.ms };
           left = true;
         }
       }
       continue;
+    }
+    // Back in the zone it departed from, inside EXCURSION_MS and without reaching
+    // the far terminal: an excursion (a layover spot past the confirm line, a
+    // depot run, a turn-back), not a service departure. Kept across tracker
+    // silences on purpose: the commonest case is a bus parked 1.7 km out of the
+    // airport whose tracker sleeps, so the silence would otherwise hide the return.
+    // Measured 2026-11-22: without this, the airport counted 42 departures a day
+    // against 20 published.
+    if (lastDep) {
+      if (here === lastDep.zone && p.ms - lastDep.ms < EXCURSION_MS) departures.pop();
+      lastDep = null;
     }
     if (zone !== null && here !== zone && leftAt >= 0) {
       trips.push(make(zone === "from" ? "fwd" : "rev", pts.slice(leftAt, i + 1)));

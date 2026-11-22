@@ -19,7 +19,7 @@
  * The running day is re-analysed at most every two minutes. A finished day is
  * analysed once and never changes, so it is cached for good.
  *
- * Rules: shared/research.ts. Cached under research:service:v3:<date>.
+ * Rules: shared/research.ts. Cached under research:service:<rules>:<shape>:<date>.
  */
 import { analyzeDay, serviceDayFrom, serviceDayWindow } from "../../../shared/research";
 import { JSON_HEADERS, readFixes, toResearchFix, type D1Read } from "../../../shared/researchStore";
@@ -34,8 +34,8 @@ type Env = {
   };
 };
 
-/** Same analysis rules as day.ts. */
-const RULES = "v2";
+/** Same analysis rules as day.ts; part of the cache key, so a rule change re-analyses finished days. */
+const RULES = "v3";
 /**
  * The cached body's SHAPE. v3 (2026-10-29) adds `departures` to every line;
  * a v2 body — finished days are cached for good — has none, and the wall
@@ -46,7 +46,7 @@ const SHAPE = "v3";
 const RUNNING_TTL_MS = 120_000;
 
 function cacheKey(date: string): string {
-  return `research:service:${SHAPE}:${date}`;
+  return `research:service:${RULES}:${SHAPE}:${date}`;
 }
 
 /** A cached running day is good until this long after it was computed. */

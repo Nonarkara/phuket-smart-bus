@@ -8,7 +8,7 @@ import { analyzeDay } from "../../../shared/research";
 import { JSON_HEADERS, parseDate, readFixes, toResearchFix, type D1Read } from "../../../shared/researchStore";
 
 type Env = { FIXES?: D1Read; GPS_HISTORY?: { get(k: string): Promise<string | null>; put(k: string, v: string): Promise<void> } };
-const RULES = "v2"; // v2 2026-10-04: real terminals, reverse loops, off-line detours, ground-speed trips
+const RULES = "v3"; // v2 2026-10-04: real terminals, reverse loops, off-line detours, ground-speed trips. v3 2026-11-22: a departure the bus returns from within 2 h is withdrawn (excursion)
 
 export async function onRequestGet(context: { request: Request; env: Env }): Promise<Response> {
   const { env } = context;
