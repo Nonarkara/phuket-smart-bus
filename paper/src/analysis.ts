@@ -248,6 +248,8 @@ export type Results = {
     firstDay: string;
     lastDay: string;
     serviceDays: number;
+    /** Days with fewer fixes than a service day can hold, left out of every rate. */
+    excludedDays?: { date: string; fixes: number }[];
     fixes: number;
     fixesByFeed: Record<string, number>;
     platesByFeed: Record<string, number>;

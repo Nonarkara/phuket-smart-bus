@@ -116,7 +116,7 @@ export function renderPaper(input: PaperInputs): string {
           <tr><td>…of which above zero</td><td class="n">—</td><td class="n">${fmt(r.record.counterPositive)}</td></tr>
         </tbody>
       </table>
-      <div class="table__note">${fmt(days)} service days (03:00–03:00 Bangkok): ${r.record.daysByDow.map((n, i) => `${DOW[i]!.slice(0, 3)} ${n}`).join(", ")}.</div>
+      <div class="table__note">${fmt(days)} service days (03:00–03:00 Bangkok): ${r.record.daysByDow.map((n, i) => `${DOW[i]!.slice(0, 3)} ${n}`).join(", ")}.${r.record.excludedDays?.length ? ` Left out: ${r.record.excludedDays.map((d) => `${dateLong(d.date)} (${fmt(d.fixes)} ${d.fixes === 1 ? "fix" : "fixes"})`).join(", ")}, the collector being switched on.` : ""}</div>
     </div>`;
 
   const serviceRow = (label: string, f: string, rv: string) => `<tr><td>${label}</td><td class="n">${f}</td><td class="n">${rv}</td></tr>`;

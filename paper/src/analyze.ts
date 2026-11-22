@@ -25,10 +25,15 @@ if (dates.length === 0) {
   process.exit(1);
 }
 
+// A day holding a handful of fixes is the collector being switched on, not a
+// service day: counting it would put empty days into every per-day rate.
+// ponytail: fixed floor; a real day here holds 20,000-36,000 fixes.
+const MIN_FIXES = 1000;
+const excluded: { date: string; fixes: number }[] = [];
 const days: DayResult[] = [];
 for (const date of dates) {
   const rows = readServiceDay(dataDir, date);
-  if (rows.length === 0) continue;
+  if (rows.length < MIN_FIXES) { excluded.push({ date, fixes: rows.length }); continue; }
   const day = analyzeServiceDay(date, rows);
   days.push(day);
   console.log(`${date}  ${String(rows.length).padStart(6)} fixes  ${String(day.trips.length).padStart(3)} trips  ${day.town.filter((b) => b.hoursMoving > 0).length} town buses moving`);
@@ -37,6 +42,7 @@ for (const date of dates) {
 const periodPath = join(dataDir, "meta", "period.json");
 const period = existsSync(periodPath) ? JSON.parse(readFileSync(periodPath, "utf8")) : null;
 const results = aggregate(days, readWeekRows(dataDir), period);
+results.record.excludedDays = excluded;
 writeFileSync(join(outDir, "results.json"), JSON.stringify(results, null, 2));
 
 const marey = days.find((d) => d.date === results.mareyDay)?.research.lines.find((l) => l.routeId === "rawai-airport") ?? null;
