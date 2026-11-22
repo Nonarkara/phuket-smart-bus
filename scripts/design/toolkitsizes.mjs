@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 const BASE = process.env.BASE || "https://bus.nonarkara.org";
-const TABS = ["overview","phuket","evidence","build","fieldnotes"];
+const TABS = ["overview","phuket","evidence","build","fieldnotes","paper"];
 const b = await chromium.launch();
 const c = await b.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
 const p = await c.newPage();
