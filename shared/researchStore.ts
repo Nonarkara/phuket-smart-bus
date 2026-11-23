@@ -6,6 +6,37 @@ export type D1Read = {
 
 export const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };
 
+/**
+ * Single cache-generation token shared by day.ts, service.ts, period.ts, and pace.ts.
+ * Bump here so every research endpoint invalidates and shares the same KV keys together:
+ * - v2 (2026-10-04): real terminals, reverse loops, off-line detours, ground-speed trips.
+ * - v3 (2026-11-22): a departure the bus returns from within 2 h is withdrawn (excursion).
+ */
+export const RESEARCH_RULES = "v3";
+
+/** First full service day of the two-fleet record (token feed wired 2026-10-01 late evening). */
+export const RESEARCH_FIRST_DAY = "2026-10-02";
+
+/**
+ * Most recent finished service dates before `today` (exclusive), starting no
+ * earlier than `firstDay` and capped to the latest `maxDays` days so rolling
+ * endpoints never freeze at `firstDay + maxDays`.
+ */
+export function finishedServiceDates(
+  today: string,
+  firstDay = RESEARCH_FIRST_DAY,
+  maxDays = 45
+): string[] {
+  const startMs = Date.parse(`${firstDay}T12:00:00Z`);
+  const endMs = Date.parse(`${today}T12:00:00Z`);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs || maxDays <= 0) return [];
+  const all: string[] = [];
+  for (let ms = startMs; ms < endMs; ms += 86_400_000) {
+    all.push(new Date(ms).toISOString().slice(0, 10));
+  }
+  return all.slice(-maxDays);
+}
+
 /** The service day a Bangkok clock reading belongs to (before 03:00 = the previous day). */
 export function serviceDateOf(ms: number): string {
   return new Date(ms + 7 * 3_600_000 - SERVICE_DAY_START_H * 3_600_000).toISOString().slice(0, 10);

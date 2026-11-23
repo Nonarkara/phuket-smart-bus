@@ -12,16 +12,11 @@
  * two per request, so a cold call stays cheap; the response says which days
  * are still pending.
  */
-import { analyzeDay } from "../../../shared/research";
-import { JSON_HEADERS, readFixes, serviceDateOf, toResearchFix, type D1Read } from "../../../shared/researchStore";
-import { serviceDayWindow } from "../../../shared/research";
+import { analyzeDay, serviceDayWindow } from "../../../shared/research";
+import { finishedServiceDates, JSON_HEADERS, readFixes, RESEARCH_FIRST_DAY, RESEARCH_RULES as RULES, serviceDateOf, toResearchFix, type D1Read } from "../../../shared/researchStore";
 import { slimDay, type CachedSlimDay } from "../../../shared/pace";
 
 type Env = { FIXES?: D1Read; GPS_HISTORY?: { get(k: string): Promise<string | null>; put(k: string, v: string): Promise<void> } };
-/** Same cache generation as day.ts — bump both together. */
-const RULES = "v2";
-/** First full service day of the two-fleet record (token feed wired 2026-10-01 late evening). */
-const FIRST_DAY = "2026-10-02";
 const MAX_DAYS = 45;
 const COMPUTE_PER_REQUEST = 2;
 /** The small per-day projection both this endpoint and pace.ts read. */
@@ -65,22 +60,17 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
   }
   const now = Date.now();
   const today = serviceDateOf(now);
-  const dates: string[] = [];
-  for (let ms = Date.parse(`${FIRST_DAY}T12:00:00Z`); dates.length < MAX_DAYS; ms += 86_400_000) {
-    const d = new Date(ms).toISOString().slice(0, 10);
-    if (d >= today) break; // today is still running: /api/research/day covers it
-    dates.push(d);
-  }
+  const dates = finishedServiceDates(today, RESEARCH_FIRST_DAY, MAX_DAYS);
 
   const days: SlimDay[] = [];
   const pending: string[] = [];
   let computed = 0;
-  // The small projections first, all at once: thirty-four parallel reads of
-  // eight kilobytes beat thirty-four sequential ones, and the operations wall
+  // The small projections first, all at once: parallel reads of eight kilobytes
+  // beat sequential reads of a hundred and forty, and the operations wall
   // waits on this to put the day's real service in force.
-  const slimHits = await Promise.all(dates.slice(-MAX_DAYS).map((date) => env.GPS_HISTORY!.get(SLIM_KEY(date))));
-  for (let i = 0; i < dates.slice(-MAX_DAYS).length; i++) {
-    const date = dates.slice(-MAX_DAYS)[i]!;
+  const slimHits = await Promise.all(dates.map((date) => env.GPS_HISTORY!.get(SLIM_KEY(date))));
+  for (let i = 0; i < dates.length; i++) {
+    const date = dates[i]!;
     const fromSlim = slimHits[i] ? readDay(slimHits[i]!) : null;
     if (fromSlim) { days.push(slim(fromSlim)); continue; }
     const key = `research:${RULES}:${date}`;
@@ -106,7 +96,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     days.push(slim(projection));
   }
 
-  return new Response(JSON.stringify({ ok: true, rules: RULES, firstDay: FIRST_DAY, through: dates[dates.length - 1] ?? null, days, pending }), {
+  return new Response(JSON.stringify({ ok: true, rules: RULES, firstDay: dates[0] ?? RESEARCH_FIRST_DAY, through: dates[dates.length - 1] ?? null, days, pending }), {
     headers: { ...JSON_HEADERS, "cache-control": pending.length ? "public, max-age=60" : "public, max-age=1800" },
   });
 }

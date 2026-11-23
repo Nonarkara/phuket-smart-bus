@@ -37,7 +37,7 @@
  *   }
  */
 import { analyzeDay, serviceDayWindow } from "../../../shared/research";
-import { JSON_HEADERS, readFixes, serviceDateOf, toResearchFix, type D1Read } from "../../../shared/researchStore";
+import { finishedServiceDates, JSON_HEADERS, readFixes, RESEARCH_FIRST_DAY, RESEARCH_RULES as RULES, serviceDateOf, toResearchFix, type D1Read } from "../../../shared/researchStore";
 import { buildPace, countTrips, paceToJson, slimDay, type CachedSlimDay, type PaceDay } from "../../../shared/pace";
 
 type Env = {
@@ -45,10 +45,6 @@ type Env = {
   GPS_HISTORY?: { get(k: string): Promise<string | null>; put(k: string, v: string): Promise<void> };
 };
 
-/** Same cache generation as day.ts and period.ts — bump them together. */
-const RULES = "v2";
-/** First full service day of the two-fleet record. */
-const FIRST_DAY = "2026-10-02";
 const MAX_DAYS = 45;
 const COMPUTE_PER_REQUEST = 2;
 /** The pace is a historical measure: it is rebuilt once a service day. */
@@ -84,12 +80,7 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     return new Response(cached, { headers: { ...JSON_HEADERS, "cache-control": "public, max-age=900", "x-research-cache": "hit" } });
   }
 
-  const dates: string[] = [];
-  for (let ms = Date.parse(`${FIRST_DAY}T12:00:00Z`); dates.length < MAX_DAYS; ms += 86_400_000) {
-    const d = new Date(ms).toISOString().slice(0, 10);
-    if (d >= today) break; // today is still running: it is not a finished day
-    dates.push(d);
-  }
+  const dates = finishedServiceDates(today, RESEARCH_FIRST_DAY, MAX_DAYS);
 
   // The small projections first, all at once: thirty-three parallel reads of
   // six kilobytes beat thirty-three sequential reads of a hundred and forty.
@@ -132,6 +123,9 @@ export async function onRequestGet(context: { request: Request; env: Env }): Pro
     pending,
     pace: paceToJson(pace),
   });
-  await env.GPS_HISTORY.put(cacheKey, body);
+  // Only cache the rolled-up pace for the day once every date in the window has
+  // been analysed; caching a partial response with `pending` would freeze the
+  // incomplete pace in KV until tomorrow.
+  if (pending.length === 0) await env.GPS_HISTORY.put(cacheKey, body);
   return new Response(body, { headers: { ...JSON_HEADERS, "cache-control": pending.length ? "public, max-age=60" : "public, max-age=900" } });
 }

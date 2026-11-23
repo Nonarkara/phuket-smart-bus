@@ -22,7 +22,7 @@
  * Rules: shared/research.ts. Cached under research:service:<rules>:<shape>:<date>.
  */
 import { analyzeDay, serviceDayFrom, serviceDayWindow } from "../../../shared/research";
-import { JSON_HEADERS, readFixes, toResearchFix, type D1Read } from "../../../shared/researchStore";
+import { JSON_HEADERS, readFixes, RESEARCH_RULES as RULES, toResearchFix, type D1Read } from "../../../shared/researchStore";
 import { bangkokDate, summarizeGpsDay, type GpsDay } from "../../../shared/gpsBatch";
 
 type Env = {
@@ -34,8 +34,6 @@ type Env = {
   };
 };
 
-/** Same analysis rules as day.ts; part of the cache key, so a rule change re-analyses finished days. */
-const RULES = "v3";
 /**
  * The cached body's SHAPE. v3 (2026-10-29) adds `departures` to every line;
  * a v2 body — finished days are cached for good — has none, and the wall
