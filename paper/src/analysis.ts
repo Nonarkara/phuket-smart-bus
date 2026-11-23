@@ -343,8 +343,9 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
       lastMin: Math.max(...times),
       // Terminal-to-terminal runs only: a run starting part-way (Kata Palm) is not one.
       endToEnd: summarize(p.trips.filter((t) => t.startsAtTerminal).map((t) => t.endToEndMin)),
-      headway: summarize(gaps(times)),
-      headwayCv: round(headwayCv(gaps(times)), 3),
+      // Terminal departures only, the same set the recorded headways are drawn from.
+      headway: summarize(gaps(fromTerminal.map((t) => t.departMin))),
+      headwayCv: round(headwayCv(gaps(fromTerminal.map((t) => t.departMin))), 3),
     };
   };
   const published = { fwd: pub("fwd"), rev: pub("rev") };
@@ -457,7 +458,7 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
   const servedTrips = airportTrips.filter((t) => servedDates.has(t.date));
   const running = Object.fromEntries(DIRS.map((dir) => {
     const rec = servedTrips.filter((t) => t.dir === dir).map((t) => t.minutes);
-    const pubMin = PUBLISHED[dir].trips.map((t) => t.endToEndMin);
+    const pubMin = PUBLISHED[dir].trips.filter((t) => t.startsAtTerminal).map((t) => t.endToEndMin);
     const pubMedian = median(pubMin);
     return [dir, {
       recorded: summarize(rec),
@@ -491,7 +492,7 @@ export function aggregate(days: DayResult[], week: WeekRow[], period: { days?: {
   const headway = Object.fromEntries(DIRS.map((dir) => {
     const rows = servedDays.filter((x) => x.dir === dir);
     const all = days.filter((d) => servedDates.has(d.date)).flatMap((d) => gaps(d.trips.filter((x) => x.routeId === "rawai-airport" && x.dir === dir).map((x) => x.departMin).sort((a, b) => a - b)));
-    const schedMedian = median(gaps(PUBLISHED[dir].trips.map((t) => t.departMin)));
+    const schedMedian = median(gaps(PUBLISHED[dir].trips.filter((t) => t.startsAtTerminal).map((t) => t.departMin)));
     return [dir, {
       recordedMedian: round(median(all), 1),
       cvMedianDays: round(median(rows.map((x) => x.headwayCv).filter((v): v is number => v !== null)), 3),
