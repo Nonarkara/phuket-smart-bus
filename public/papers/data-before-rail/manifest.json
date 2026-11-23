@@ -1,0 +1,98 @@
+{
+  "title": "Data before rail? An open-GPS audit of Phuket Smart Bus, and what it would take for buses to win trips from private vehicles",
+  "version": "v1",
+  "issued": "2026-11-23",
+  "status": "Preprint · not peer reviewed",
+  "authors": [
+    {
+      "name": "Poon Thiengburanathum",
+      "nameTh": "ปุ่น เที่ยงบูรณธรรม",
+      "affiliations": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Non Arkaraprasertkul",
+      "nameTh": "นน อัครประเสริฐกุล",
+      "affiliations": [
+        3
+      ]
+    }
+  ],
+  "affiliations": [
+    {
+      "n": 1,
+      "en": "Faculty of Engineering, Chiang Mai University, Chiang Mai, Thailand"
+    },
+    {
+      "n": 2,
+      "en": "Research and Innovation Acceleration Agency for Competitiveness and Area Development (Public Organization) (RCAD), Thailand",
+      "th": "สำนักงานเร่งรัดการวิจัยและนวัตกรรมเพื่อเพิ่มความสามารถการแข่งขันและการพัฒนาพื้นที่ (องค์การมหาชน)"
+    },
+    {
+      "n": 3,
+      "en": "Digital Economy Promotion Agency (depa), Thailand",
+      "th": "สำนักงานส่งเสริมเศรษฐกิจดิจิทัล"
+    }
+  ],
+  "keywords": [
+    "bus transit",
+    "automatic vehicle location",
+    "GPS data",
+    "service reliability",
+    "timetable adherence",
+    "mode shift",
+    "light rail",
+    "Phuket",
+    "Thailand"
+  ],
+  "abstract": [
+    "Background. Phuket, an island whose airport handled 17.47 million passengers in 2025, moves almost entirely by private car and motorcycle. A light-rail line was first costed in 2018; on the current plan it opens no earlier than December 2031. We ask whether the island’s existing buses can be made a credible alternative to driving sooner, by using data rather than new infrastructure, starting with Phuket Smart Bus.",
+    "Methods. We archived every position the operator’s two public trackers published over 51 service days (2 October 2026 to 21 November 2026): 1,548,336 distinct GPS fixes from 49 buses. Terminal-to-terminal trips, terminal departures and running times were reconstructed with published, versioned rules and compared with the official timetable.",
+    "Results. The record holds two fleets: 25 line buses, and 24 town buses that came within 1 km of the airport on 0% of their bus-days. On the Airport–Rawai line on a median day 15 departures from the airport reached Rawai and 16 made the reverse trip, against 20 and 18 published from those terminals. Most of the shortfall is in the evening: 219 departures from the airport after 17:00 ran 40 km or more and ended short of Rawai, mostly between Karon and Sai Yuan, although every published run goes to Rawai. 4 unpublished half-hour departures from the airport recur on most days, which suggests the buses run to a timetable other than the one published. Median end-to-end times were 125 and 142 min against the timetable’s 130 and 147; 86% and 71% of service departures matched to the timetable left within the 1-early/5-late window. No passenger counter reported a rider.",
+    "Conclusions. We read the record as pointing to frequency and information as the constraint, not the speed of the road. Publishing the timetable the buses actually run, with running times set to the measured tail, publishing real-time positions in an open format, enabling passenger counting and adding departures where the record shows hour-long gaps are each achievable within months and at a small fraction of the cost of light rail. Whether they move people out of cars is the next measurement."
+  ],
+  "record": {
+    "firstDay": "2026-10-02",
+    "lastDay": "2026-11-21",
+    "serviceDays": 51,
+    "fixes": 1548336
+  },
+  "citation": "Thiengburanathum P, Arkaraprasertkul N. Data before rail? An open-GPS audit of Phuket Smart Bus, and what it would take for buses to win trips from private vehicles. Preprint v1. 2026 [issued 2026-11-23]. Available from: https://bus.nonarkara.org/toolkit#paper",
+  "pdf": {
+    "file": "thiengburanathum-arkaraprasertkul-2026-data-before-rail-v1.pdf",
+    "bytes": 1933365,
+    "sha256": "c4fc6e5d3a6b8309cbf220c433fd63910b5534646f613f8c495e147bab9f0e01",
+    "pages": 9
+  },
+  "pages": [
+    "pages/p-1.jpg",
+    "pages/p-2.jpg",
+    "pages/p-3.jpg",
+    "pages/p-4.jpg",
+    "pages/p-5.jpg",
+    "pages/p-6.jpg",
+    "pages/p-7.jpg",
+    "pages/p-8.jpg",
+    "pages/p-9.jpg"
+  ],
+  "data": [
+    {
+      "file": "data/trips.csv",
+      "rows": 3235
+    },
+    {
+      "file": "data/departures.csv",
+      "rows": 3229
+    },
+    {
+      "file": "data/service-days.csv",
+      "rows": 102
+    },
+    {
+      "file": "data/town-bus-days.csv",
+      "rows": 1169
+    }
+  ]
+}
