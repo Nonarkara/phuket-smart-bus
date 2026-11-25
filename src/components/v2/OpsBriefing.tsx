@@ -19,7 +19,7 @@ interface OpsBriefingProps {
   nextDeparture: number | null;
   hourlyBalance: HourlyBalance[];
   /** Set in LIVE: real tracker buses and today's observed/estimated totals. */
-  live?: { busesMoving: number; trips: number; km: number; riders: number; fareThb: number } | null;
+  live?: { gps: "current" | "last-seen" | "unavailable"; busesMoving: number; trips: number | null; km: number | null; riders: number; ridersCounted: number; fareThb: number } | null;
 }
 
 function hourLabel(hour: number): string {
@@ -51,7 +51,7 @@ export function OpsBriefing({
 }: OpsBriefingProps) {
   const priorityHours = useMemo(
     () => [...hourlyBalance]
-      .sort((left, right) => right.missedThb - left.missedThb || right.gapPax - left.gapPax)
+      .sort((left, right) => right.missedThb - left.missedThb || right.busesToAdd - left.busesToAdd)
       .slice(0, 3),
     [hourlyBalance]
   );
@@ -59,46 +59,36 @@ export function OpsBriefing({
   const hasQueue = waiting > 25;
   const hourIsShort = currentBusDemand > currentSupplySeats;
   const headline = hasQueue
-    ? `Send ${standbyBuses} standby ${standbyBuses === 1 ? "bus" : "buses"}`
+    ? `Test ${standbyBuses} standby ${standbyBuses === 1 ? "bus" : "buses"}`
     : hourIsShort
       ? "Protect the next airport departure"
-      : "Current service covers demand";
+      : "No modelled airport curb shortfall";
 
   return (
     <main className="v2-brief" aria-label="Mobile operations briefing">
+      <section className="v2-brief__map" aria-labelledby="brief-map-title">
+        <div className="v2-brief__map-frame">
+          <V2LiveMap ref={mapRef} />
+        </div>
+        <header className="v2-brief__map-key">
+          <h2 id="brief-map-title">{!live ? "Fleet map · simulation" : live.gps === "current" ? "Fleet map · live GPS" : live.gps === "last-seen" ? "Fleet map · last GPS fixes" : "Fleet map · GPS unavailable"}</h2>
+          <strong>{live && live.gps !== "current" ? "No current count" : `${live ? live.busesMoving : movingBuses} moving`}</strong>
+        </header>
+      </section>
+
       <section className={`v2-brief__decision ${hasQueue ? "is-warning" : "is-stable"}`}>
-        <span className="v2-brief__eyebrow">Decision now</span>
+        <span className="v2-brief__eyebrow">Modelled dispatch</span>
         <h2>{headline}</h2>
         <p>
           {hasQueue
-            ? `${waiting.toLocaleString()} modelled arrivals are waiting. At 25 seats each, ${standbyBuses} additional buses would clear the queue.`
+            ? `${waiting.toLocaleString()} modelled arrivals are waiting. At 25 seats per bus, this is the estimated capacity needed. Check actual boardings before dispatch.`
             : `${currentBusDemand.toLocaleString()} modelled riders meet ${currentSupplySeats.toLocaleString()} ${live ? "seats on today's service" : "scheduled seats"} this hour.`}
         </p>
         {nextDeparture !== null && (
           <span className="v2-brief__next">
-            Next {live ? "departure" : "scheduled departure"} in {nextDeparture} min
+            Next departure in the service plan: {nextDeparture} min
           </span>
         )}
-      </section>
-
-      <PhuketConditionsStrip />
-
-      <section className="v2-brief__map" aria-labelledby="brief-map-title">
-        <header className="v2-brief__section-head">
-          <div>
-            <span className="v2-brief__eyebrow">Live fleet</span>
-            <h2 id="brief-map-title">Where the buses are</h2>
-          </div>
-          <strong>{live ? live.busesMoving : movingBuses} moving</strong>
-        </header>
-        <div className="v2-brief__map-frame">
-          <V2LiveMap ref={mapRef} />
-        </div>
-        <p className="v2-brief__note">
-          {live
-            ? "Positions are live GPS from the PKSB tracker. Trips and km are observed; riders and fares are estimated from each trip's modelled load."
-            : "Positions currently follow the published timetable and road geometry. GPS can replace the simulation without changing this screen."}
-        </p>
       </section>
 
       <section className="v2-brief__evidence" aria-labelledby="brief-evidence-title">
@@ -109,19 +99,19 @@ export function OpsBriefing({
           </div>
         </header>
         <ol className="v2-brief__chain">
-          <li><span>Flight passengers this hour</span><strong>{currentDemandPax.toLocaleString()}</strong></li>
-          <li><span>Likely bus riders</span><strong>{currentBusDemand.toLocaleString()}</strong></li>
-          <li><span>{live ? "Seats offered today" : "Seats on the timetable"}</span><strong>{currentSupplySeats.toLocaleString()}</strong></li>
-          <li><span>Queue right now</span><strong>{waiting.toLocaleString()}</strong></li>
+          <li><span>Modelled flight arrivals this hour</span><strong>{currentDemandPax.toLocaleString()}</strong></li>
+          <li><span>Likely riders from the airport</span><strong>{currentBusDemand.toLocaleString()}</strong></li>
+          <li><span>Seats leaving the airport this hour</span><strong>{currentSupplySeats.toLocaleString()}</strong></li>
+          <li><span>Modelled queue now</span><strong>{waiting.toLocaleString()}</strong></li>
         </ol>
       </section>
 
       {live ? (
         <section className="v2-brief__totals" aria-label="Today's live totals">
-          <div><span>Trips · GPS</span><strong>{live.trips.toLocaleString()}</strong></div>
-          <div><span>Km · GPS</span><strong>{live.km.toLocaleString()}</strong></div>
-          <div><span>Riders · est.</span><strong>{live.riders.toLocaleString()}</strong></div>
-          <div><span>Fares · est.</span><strong>฿{live.fareThb.toLocaleString()}</strong></div>
+          <div><span>Trips · GPS</span><strong>{live.trips?.toLocaleString() ?? "—"}</strong></div>
+          <div><span>Km · GPS</span><strong>{live.km?.toLocaleString() ?? "—"}</strong></div>
+          <div><span>{live.riders === 0 ? "Riders · not measured" : live.riders === live.ridersCounted ? "Riders · counted" : "Riders · partly modelled"}</span><strong>{live.riders > 0 ? live.riders.toLocaleString() : "—"}</strong></div>
+          <div><span>Fares · derived</span><strong>{live.riders > 0 ? `฿${live.fareThb.toLocaleString()}` : "—"}</strong></div>
         </section>
       ) : (
         <section className="v2-brief__totals" aria-label="Today's operating totals">
@@ -143,13 +133,20 @@ export function OpsBriefing({
           {priorityHours.map((row) => (
             <button key={row.hour} type="button" onClick={() => scrubToHour(row.hour)}>
               <span>{hourLabel(row.hour)}</span>
-              <span>{Math.max(0, row.gapPax).toLocaleString()} seat gap</span>
+              <span>{(Math.max(0, row.inGapPax) + Math.max(0, row.outGapPax)).toLocaleString()} seats short</span>
               <strong>฿{row.missedThb.toLocaleString()} missed</strong>
               <span aria-hidden="true">→</span>
             </button>
           ))}
         </div>
       </section>
+
+      <PhuketConditionsStrip />
+      <p className="v2-brief__note">
+        {live
+          ? "Positions are GPS fixes from the PKSB tracker. Trips and distance are observed; the queue and dispatch estimate are modelled. Fares are derived from riders, not observed payments."
+          : "Replay positions follow the recorded service or published timetable along road geometry. Demand, boardings, and fares are modelled."}
+      </p>
     </main>
   );
 }

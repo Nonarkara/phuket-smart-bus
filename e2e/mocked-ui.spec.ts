@@ -76,6 +76,45 @@ test("ops console separates the replay from the live fleet", async ({ page }) =>
   await expect(page.getByRole("button", { name: /^LIVE/ })).toBeVisible();
 });
 
+for (const { width, height } of [{ width: 390, height: 844 }, { width: 1024, height: 768 }]) {
+  test(`compact ops keeps the working map and modelled dispatch together at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page, "/ops?source=sim");
+    const briefing = page.getByRole("main", { name: "Mobile operations briefing" });
+    const map = briefing.locator(".leaflet-container");
+    const flightStatus = briefing.locator(".v2-map__flight-badge");
+    const flightToggle = briefing.getByRole("button", { name: "Flights", exact: true });
+    const decision = briefing.locator(".v2-brief__decision h2");
+    await expect(map).toBeVisible();
+    await expect(flightStatus).toBeVisible();
+    await page.evaluate(async () => { await document.fonts.ready; });
+
+    const mapBox = (await map.boundingBox())!;
+    const decisionBox = (await decision.boundingBox())!;
+    expect(mapBox.y, "weather, decision and evidence cannot push down the map").toBeLessThanOrEqual(225);
+    const visibleMapArea = mapBox.width * Math.min(mapBox.height, height - mapBox.y);
+    expect(visibleMapArea / (width * height)).toBeGreaterThanOrEqual(0.56);
+    expect(decisionBox.y - (mapBox.y + mapBox.height)).toBeLessThanOrEqual(80);
+    expect(decisionBox.y + decisionBox.height).toBeLessThanOrEqual(height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    if (width === 390) {
+      const slider = page.getByRole("slider", { name: "Simulation time" });
+      expect((await slider.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+
+    // An overlapping badge used to intercept this pointer action on phones.
+    await flightToggle.click();
+    await expect(flightToggle).toHaveAttribute("aria-pressed", "false");
+    await expect(flightStatus).toHaveCount(0);
+    await flightToggle.press("Space");
+    await expect(flightStatus).toBeVisible();
+    await expect(briefing.getByRole("region", { name: "Phuket conditions" })).toContainText("MODEL ONLY");
+
+    await page.getByRole("link", { name: "CAPACITY", exact: true }).focus();
+    expect((await page.locator(".v2-header").boundingBox())!.x).toBe(0);
+  });
+}
+
 test("fleet monitor leads with evidence and states its blind spot", async ({ page }) => {
   await open(page, "/fleet");
 
@@ -83,6 +122,16 @@ test("fleet monitor leads with evidence and states its blind spot", async ({ pag
   await expect(page.getByRole("heading", { name: /fleet is outside our field of view|buses are visible on the road/i })).toBeVisible();
   await expect(page.getByText("Passenger load not measured")).toBeVisible();
   await expect(page.getByText(/does not claim occupancy, ridership, revenue, or demand/i)).toBeVisible();
+});
+
+test("compact live ops does not turn an unavailable feed into observed zeroes", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/live-buses", (route) => route.fulfill({ status: 503, body: "unavailable" }));
+  await open(page, "/ops?source=live");
+  await expect(page.getByText("Tracker unreachable", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fleet map · GPS unavailable" })).toBeVisible();
+  const totals = page.getByRole("region", { name: "Today's live totals" });
+  await expect(totals.getByText("—", { exact: true })).toHaveCount(4);
 });
 
 test("capacity monitor keeps modelled demand separate from live telemetry", async ({ page }) => {

@@ -45,7 +45,7 @@ export default defineConfig({
       reuseExistingServer: false
     },
     {
-      command: `API_PORT=${apiPort} PLAYWRIGHT_PORT=${port} npm run dev:web:test`,
+      command: `API_PORT=${apiPort} npm run dev:web:test -- --port ${port}`,
       url: baseURL,
       reuseExistingServer: false
     }

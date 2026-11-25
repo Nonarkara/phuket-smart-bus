@@ -8318,10 +8318,6 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   outline-offset: -1px;
 }
 .v2-map__flight-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
   padding: 6px 10px;
   background: rgba(10, 14, 20, 0.88);
   border: 1px solid rgba(245, 158, 11, 0.45);
@@ -8336,7 +8332,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   position: absolute;
   left: 10px;
   right: 10px;
-  bottom: 10px;
+  bottom: 28px;
   z-index: 1000;
   display: flex;
   /* Seven keys do not fit on one line once the map column is this narrow —
@@ -10485,7 +10481,7 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   overflow-y: auto;
   overscroll-behavior-y: contain;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   gap: 1px;
   padding: 1px;
@@ -10497,11 +10493,12 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-self: start;
 }
-.v2-brief__map { grid-column: 1; }
+.v2-brief__map { grid-column: 1 / -1; }
 .v2-brief__evidence { grid-column: 2; }
 .v2-brief__decision {
-  grid-column: 1 / -1;
-  padding: 20px 22px;
+  align-self: start;
+  grid-column: 1;
+  padding: 12px 18px;
   border-left: 4px solid var(--ax-accent);
 }
 .v2-brief__decision.is-warning { border-left-color: var(--ax-warn); }
@@ -10551,10 +10548,25 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.v2-brief__map-frame { height: 65vh; min-height: 440px; }
+.v2-brief__map-frame { height: 60svh; }
 .v2-brief__map-frame > .v2-map__frame,
 .v2-brief__map-frame .v2-map__canvas { height: 100%; min-height: 0; }
-.v2-brief__note { padding: 12px 18px; font-size: var(--t-micro) !important; }
+.v2-brief__map-key {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 6px 18px;
+}
+.v2-brief__map-key h2 { font-size: var(--t-label); margin: 0; }
+.v2-brief__map-key strong { color: var(--ax-accent); font-size: var(--t-label); }
+.v2-brief .v2-brief__note {
+  grid-column: 1 / -1;
+  padding: 12px 18px;
+  font-size: var(--t-micro);
+  background: var(--ax-panel);
+}
 .v2-brief__chain {
   list-style: none;
   margin: 0;
@@ -10706,9 +10718,8 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   .v2 .v2-timebar__day-sweep { padding-inline: 10px; }
 
   .v2-brief { display: flex; flex-direction: column; }
-  .v2-brief__decision { padding: 18px 16px; }
+  .v2-brief__decision { padding: 10px 16px; }
   .v2-brief h2 { font-size: var(--t-title); }
-  .v2-brief__map-frame { height: 65vh; min-height: 420px; }
   .v2-brief__totals { grid-template-columns: 1fr 1fr; flex: none; }
   .v2-brief__totals strong { font-size: var(--t-title); }
   .v2-brief__hours { grid-template-columns: 1fr; }
@@ -11682,11 +11693,25 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
   position: absolute;
   top: 12px;
   left: 12px;
-  z-index: 400;
+  right: 12px;
+  z-index: 1000;
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   align-items: center;
+  pointer-events: none;
 }
+.v2-map__top-controls > * { pointer-events: auto; }
+.v2-map__top-controls .v2-map__layers {
+  position: static;
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+.v2-map__top-controls .v2-map__layer-btn { flex: 0 0 auto; white-space: nowrap; }
+.v2-map__top-controls .v2-map__flight-badge { margin-left: auto; }
+.v2 .v2-map__top-controls .v2-map__maritime-banner { position: static; max-width: 100%; }
 .v2-map__telemetry-badge {
   display: inline-flex;
   align-items: center;
@@ -13478,6 +13503,41 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
      scroll sideways to read the evidence panel. One column at phone width. */
   .v2-brief { grid-template-columns: minmax(0, 1fr); }
   .v2-brief__map, .v2-brief__evidence { grid-column: 1; }
+}
+
+/* Compact briefing chrome: put identity and the clock on the same line.
+   Keep the three following control groups in DOM order, with their full
+   targets available; only the source strip scrolls sideways as needed. */
+.v2--compact-ops .v2-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+}
+.v2--compact-ops .v2-header > .v2-header__brand { grid-column: 1 !important; grid-row: 1 !important; }
+.v2--compact-ops .v2-header > .v2-header__clock { grid-column: 2 !important; grid-row: 1 !important; }
+.v2--compact-ops .v2-header > :is(.v2-mode-toggle, .v2-source, .v2-timebar) {
+  grid-column: 1 / -1 !important;
+  grid-row: auto !important;
+  min-width: 0;
+}
+.v2--compact-ops .v2-header > .v2-source { margin-left: 0; max-width: 100%; }
+.v2--compact-ops .v2-header > .v2-timebar { padding-block: 0; row-gap: 4px; }
+.v2--compact-ops .v2-timebar__slider:focus-visible {
+  outline: 2px solid var(--ax-warn);
+  outline-offset: 2px;
+}
+@media (max-width: 720px) {
+  .v2--compact-ops .v2-header { padding-inline: 12px; }
+  .v2--compact-ops .v2-header > .v2-timebar:not(.v2-livebar) { column-gap: 4px; }
+  .v2--compact-ops .v2-timebar:not(.v2-livebar) > .v2-timebar__slider {
+    flex: 1 1 80px;
+    height: 44px;
+    margin: 0;
+    /* The thumb needs a touch target; the painted track stays a hairline. */
+    background: color-mix(in srgb, var(--ax-ink) 18%, transparent) center / 100% 4px no-repeat;
+  }
+  .v2--compact-ops .v2-timebar__label { min-width: 0; }
+  .v2--compact-ops .v2-timebar:not(.v2-livebar) > .v2-timebar__speeds { gap: 4px; }
+  .v2 .v2-map__top-controls .v2-map__layers { max-width: 100%; }
 }
 @media (max-width: 720px) {
   /* The day chips and the transport controls together wanted 472px of a

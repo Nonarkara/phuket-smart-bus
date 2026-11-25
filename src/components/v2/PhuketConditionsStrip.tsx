@@ -1,6 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { getEnvironmentSnapshot, getWeatherIntelligence } from "../../engine/environmentSimulator";
-import { getMaritimeOverview } from "../../engine/maritimeData";
 
 /**
  * Compact Phuket living & operational conditions:
@@ -13,7 +12,6 @@ import { getMaritimeOverview } from "../../engine/maritimeData";
 export function PhuketConditionsStrip() {
   const env = useMemo(() => getEnvironmentSnapshot(), []);
   const wx = useMemo(() => getWeatherIntelligence(), []);
-  const marine = useMemo(() => getMaritimeOverview(env.waveHeightM, env.windKph, wx.monsoonSeason), [env, wx]);
 
   const aqiTone = env.aqi <= 50 ? "good" : env.aqi <= 100 ? "moderate" : "poor";
   const floodTone =
@@ -33,26 +31,11 @@ export function PhuketConditionsStrip() {
         ? "YELLOW FLAG · CAUTION"
         : "GREEN FLAG · ALL CLEAR";
 
-  // Cycle alerts between driver road warning and maritime departure order
-  const allAlerts = [
-    ...(wx.driverAlerts || []),
-    ...(wx.maritimeAdvisories || []),
-  ];
-  const [alertIndex, setAlertIndex] = useState(0);
-
-  useEffect(() => {
-    if (allAlerts.length <= 1) return;
-    const interval = setInterval(() => {
-      setAlertIndex((prev) => (prev + 1) % allAlerts.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [allAlerts.length]);
-
   return (
     <div className="v2-conditions" role="region" aria-label="Phuket conditions">
       {/* 1. Weather & Road Friction */}
       <div className="v2-conditions__item">
-        <span className="v2-conditions__label">Weather &amp; Roads</span>
+        <span className="v2-conditions__label">Weather &amp; Roads · model</span>
         <strong className="v2-conditions__value">
           {env.tempC.toFixed(0)}°C · {env.conditionLabel}
         </strong>
@@ -63,14 +46,14 @@ export function PhuketConditionsStrip() {
 
       {/* 2. Sea State & Pier Departure Feasibility */}
       <div className={`v2-conditions__item v2-conditions__item--marine-${maritimeTone}`}>
-        <span className="v2-conditions__label">Sea State · Pier Departures</span>
+        <span className="v2-conditions__label">Sea State · model</span>
         <strong className="v2-conditions__value">
           <span className={`v2-marine-flag-dot is-${maritimeTone}`} />
           {seaLabel}
         </strong>
         <span className="v2-conditions__detail">
-          Waves {env.waveHeightM ?? 1.1}m · Wind {env.windKph} km/h ·{" "}
-          {env.smallBoatsAllowed ? "Small boats cleared" : "Small boats prohibited"}
+          Waves {env.waveHeightM ?? "—"} m · Wind {env.windKph} km/h ·{" "}
+          {env.smallBoatsAllowed ? "Below model’s closure threshold" : "Model flags small-boat risk"}
         </span>
       </div>
 
@@ -98,12 +81,10 @@ export function PhuketConditionsStrip() {
         </span>
       </div>
 
-      {/* Dynamic Alert Banner (Road Slowdown / Marine Order) */}
-      {allAlerts.length > 0 && (
-        <div className={`v2-conditions__alerts ${maritimeTone === "red" ? "is-red-alert" : ""}`} role="status">
-          <span className="v2-conditions__alert-tag">ADVISORY:</span> {allAlerts[alertIndex]}
-        </div>
-      )}
+      <div className={`v2-conditions__alerts ${maritimeTone === "red" ? "is-red-alert" : ""}`}>
+        <div><span className="v2-conditions__alert-tag">MODEL ONLY:</span> Confirm sea conditions and departure restrictions with the operator.</div>
+        {wx.driverAlerts.map((alert) => <div key={alert}>{alert}</div>)}
+      </div>
     </div>
   );
 }

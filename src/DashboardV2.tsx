@@ -446,7 +446,7 @@ export default function DashboardV2() {
   }, []);
 
   return (
-    <div className={`v2 v2--${viewMode}`} style={{ zoom: opsScale }}>
+    <div className={`v2 v2--${viewMode}${isCompact && (viewMode === "operations" || viewMode === "live") ? " v2--compact-ops" : ""}`} style={{ zoom: opsScale }}>
       {/* Actionable Intelligence Banner — numbers from the engine, not vibes */}
       {source === "sim" && serviceGap > 25 && (
         <div className="v2-alert-banner">
@@ -644,10 +644,12 @@ export default function DashboardV2() {
           nextDeparture={state.nextDeparture}
           hourlyBalance={hourlyBalance}
           live={source === "live" ? {
+            gps: liveAvailable ? "current" : liveSummary.busesReporting > 0 ? "last-seen" : "unavailable",
             busesMoving: liveSummary.busesMoving,
-            trips: liveSummary.tripsCompleted,
-            km: liveSummary.kmDriven,
+            trips: recordTrips ?? (liveSummary.observedSinceMin !== null ? liveSummary.tripsCompleted : null),
+            km: recordKm ?? (liveSummary.observedSinceMin !== null ? liveSummary.kmDriven : null),
             riders: liveSummary.riders,
+            ridersCounted: liveSummary.ridersCounted,
             fareThb: liveSummary.fareThb,
           } : null}
         />

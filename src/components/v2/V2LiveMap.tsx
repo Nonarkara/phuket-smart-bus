@@ -511,7 +511,7 @@ function RoutePolylines({ maritimeFlag, passenger = false }: { maritimeFlag?: st
   );
 }
 
-/** Pier markers showing Marine Department flag status and small boat clearance */
+/** Pier markers showing wave-model risk, not official maritime restrictions. */
 function PiersLayer({ enabled }: { enabled: boolean }) {
   if (!enabled) return null;
   const env = getEnvironmentSnapshot();
@@ -537,7 +537,7 @@ function PiersLayer({ enabled }: { enabled: boolean }) {
               <div className="v2-pier-tip">
                 <strong>{pier.nameEn} ({pier.nameTh})</strong>
                 <span className={`v2-pier-flag-badge is-${pier.flag}`}>
-                  {pier.flag.toUpperCase()} FLAG · {pier.smallBoatsAllowed ? "DEPARTURES PERMITTED" : "SMALL BOATS PROHIBITED"}
+                  MODEL · {pier.flag.toUpperCase()} FLAG · {pier.smallBoatsAllowed ? "BELOW CLOSURE THRESHOLD" : "SMALL-BOAT RISK"}
                 </span>
                 <span className="v2-pier-stat">Waves: {pier.waveHeightM}m · Wind: {pier.windSpeedKph} km/h</span>
                 <span className="v2-pier-dests">Destinations: {pier.destinations.join(", ")}</span>
@@ -567,8 +567,9 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
     const chromePadding = () => {
       const host = map.getContainer().parentElement;
       const h = (sel: string) => host?.querySelector<HTMLElement>(sel)?.offsetHeight ?? 0;
-      const top = Math.max(h(".v2-map__top-controls"), h(".v2-map__flight-badge"), h(".v2-map__maritime-banner")) + 14;
-      const bottom = h(".v2-map__legend") + 14;
+      const top = h(".v2-map__top-controls") + 14;
+      const legend = host?.querySelector<HTMLElement>(".v2-map__legend");
+      const bottom = h(".v2-map__legend") + (legend ? parseFloat(getComputedStyle(legend).bottom) || 0 : 0) + 4;
       return { paddingTopLeft: [16, top] as [number, number], paddingBottomRight: [16, bottom] as [number, number] };
     };
 
@@ -584,6 +585,10 @@ function SyncMapView({ frame }: { frame: MapFrame }) {
     });
     const ro = new ResizeObserver(fix);
     ro.observe(map.getContainer());
+    for (const selector of [".v2-map__top-controls", ".v2-map__legend"]) {
+      const region = map.getContainer().parentElement?.querySelector(selector);
+      if (region) ro.observe(region);
+    }
     return () => { cancelAnimationFrame(raf); ro.disconnect(); map.off("dragstart", onDrag); };
   }, [map, frame]);
   return null;
@@ -652,7 +657,18 @@ function LayerToggles({
     ({ id }) => variant === "operations" || id === "buses",
   );
   return (
-    <div className="v2-map__layers" role="toolbar" aria-label="Map layers and frame">
+    <div
+      className="v2-map__layers"
+      role="group"
+      aria-label="Map layers and frame"
+      onFocus={(event) => {
+        const strip = event.currentTarget;
+        const button = event.target.getBoundingClientRect();
+        const frame = strip.getBoundingClientRect();
+        if (button.right > frame.right) strip.scrollLeft += button.right - frame.right + 2;
+        if (button.left < frame.left) strip.scrollLeft -= frame.left - button.left + 2;
+      }}
+    >
       <button
         type="button"
         className={`v2-map__layer-btn v2-map__layer-btn--frame ${frame === "corridor" ? "is-active" : ""}`}
@@ -745,20 +761,22 @@ export const V2LiveMap = React.memo(forwardRef<V2MapHandle, V2LiveMapProps>(func
             {isGpsActive ? `LIVE GPS (${liveGpsCount} BUSES)` : "TIMETABLE SIMULATION"}
           </button>
         )}
+        {layers.flights && (
+          <div className="v2-map__flight-badge">
+            {flightInfo.status === "live"
+              ? `ADS-B · ${flightInfo.liveCount} live`
+              : flightInfo.status === "stale"
+                ? `ADS-B · ${flightInfo.liveCount} last seen`
+                : "No live aircraft"}
+            {" · "}{flightInfo.modelCount} modelled
+          </div>
+        )}
+        {variant === "operations" && env.maritimeFlag === "red" && (
+          <div className="v2-map__maritime-banner is-red">
+            <strong>MODELLED SEA RISK:</strong> Waves {env.waveHeightM} m · Confirm sailings with the operator.
+          </div>
+        )}
       </div>
-
-      {layers.flights && (
-        <div className="v2-map__flight-badge" aria-live="polite">
-          {flightInfo.liveCount} live aircraft · {flightInfo.modelCount} timetable ·{" "}
-          {flightInfo.status === "live" ? "ADS-B current" : flightInfo.status === "stale" ? "ADS-B last seen" : "model only"}
-        </div>
-      )}
-
-      {variant === "operations" && env.maritimeFlag === "red" && (
-        <div className="v2-map__maritime-banner is-red" role="alert">
-          <strong>RED FLAG ALERT:</strong> Waves {env.waveHeightM}m — Small boats strictly prohibited from leaving shore <span lang="th">(ห้ามเรือเล็กออกจากฝั่ง)</span>
-        </div>
-      )}
 
       <div className="v2-map__legend" aria-label="Map key">
         <span><i className="is-bus-empty" /> empty</span>
