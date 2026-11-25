@@ -13533,8 +13533,11 @@ html .leaflet-container .leaflet-bar a { font-weight: 500; font-size: 18px; line
     height: 44px;
     margin: 0;
     /* The thumb needs a touch target; the painted track stays a hairline. */
-    background: color-mix(in srgb, var(--ax-ink) 18%, transparent) center / 100% 4px no-repeat;
+    background: transparent;
   }
+  .v2--compact-ops .v2-timebar__slider::-webkit-slider-runnable-track { height: 4px; background: var(--ax-line-2); }
+  .v2--compact-ops .v2-timebar__slider::-webkit-slider-thumb { margin-top: -5px; }
+  .v2--compact-ops .v2-timebar__slider::-moz-range-track { height: 4px; background: var(--ax-line-2); }
   .v2--compact-ops .v2-timebar__label { min-width: 0; }
   .v2--compact-ops .v2-timebar:not(.v2-livebar) > .v2-timebar__speeds { gap: 4px; }
   .v2 .v2-map__top-controls .v2-map__layers { max-width: 100%; }
